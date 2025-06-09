@@ -26,6 +26,7 @@ export default function NotFound() {
           size="lg"
         >
           {t('gotohome')}
+          here are test
         </Button>
       </div>
     </div>
