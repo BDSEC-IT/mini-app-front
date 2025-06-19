@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Header from './Header'
+import Header from './header'
 import BottomNavigation from './BottomNavigation'
 import { ClientProviders } from '../providers/ClientProviders'
 
