@@ -1,29 +1,72 @@
-import React from 'react';
-import { SidebarTrigger } from '../ui/sidebar';
-import { Separator } from '../ui/separator';
-import { Breadcrumbs } from '../breadcrumbs';
-import SearchInput from '../search-input';
-import { UserNav } from './user-nav';
-import ThemeToggle from './ThemeToggle/theme-toggle';
-import LocaleSwitcher from '../Controls/LocaleSwitcher';
+'use client'
 
-export default function Header() {
+import { useState } from 'react'
+import { Bell, Menu } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import SideMenu from './SideMenu'
+import Image from 'next/image'
+import { useTheme } from '@/contexts/ThemeContext'
+
+const Header = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { t } = useTranslation()
+  const { theme } = useTheme()
+  
+  // Increased icon size by 20%
+  const iconSize = 26
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen)
+  }
+
+  // Use the correct image paths
+  const logoSrc = theme === 'dark' 
+    ? '/images/Group_2085662328_reriki (1).png'
+    : '/images/light_bdsec_drlars (2).png';
+
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-      <div className="flex items-center gap-2 px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <Breadcrumbs />
-      </div>
-
-      <div className="flex items-center gap-2 px-4">
-        <div className="hidden md:flex">
-          <SearchInput />
+    <header className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+      <div className="flex items-center justify-between h-16 px-4">
+        {/* Logo - use different logo based on theme */}
+        <div className="flex items-center">
+          <div className="relative h-10 w-40">
+            <Image
+              src={logoSrc}
+              alt="BDSec Logo"
+              width={160}
+              height={40}
+              style={{
+                objectFit: 'contain',
+                objectPosition: 'left'
+              }}
+              priority
+            />
+          </div>
         </div>
-        <LocaleSwitcher />
-        <UserNav />
-        <ThemeToggle />
+        
+        {/* Right side icons */}
+        <div className="flex items-center space-x-4">
+          <button
+            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            aria-label={t('header.notifications')}
+          >
+            <Bell size={iconSize} />
+          </button>
+          
+          <button
+            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            onClick={toggleMenu}
+            aria-label={t('header.menu')}
+          >
+            <Menu size={iconSize} />
+          </button>
+        </div>
       </div>
+      
+      {/* Side Menu */}
+      <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
     </header>
-  );
+  )
 }
+
+export default Header 

@@ -1,0 +1,133 @@
+{
+  "nav": {
+    "home": "Home",
+    "assets": "Assets",
+    "orders": "Orders",
+    "ipo": "IPO"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error occurred",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "language": "Language",
+    "theme": "Theme",
+    "noResults": "No results found"
+  },
+  "header": {
+    "notifications": "Notifications",
+    "menu": "Menu"
+  },
+  "profile": {
+    "name": "Bold Erdene",
+    "kyc": "KYC Verification",
+    "general": "General Information",
+    "id": "ID Card",
+    "contract": "Contract Signature",
+    "risk": "Risk Assessment"
+  },
+  "menu": {
+    "about": "ABOUT US",
+    "faq": "FREQUENTLY ASKED QUESTIONS",
+    "news": "NEWS & INFORMATION",
+    "withdraw": "WITHDRAW MONEY"
+  },
+  "dashboard": {
+    "price": "Stock Price",
+    "trending": "Trending",
+    "change": "Change",
+    "marketCap": "Market Cap",
+    "volume": "Volume",
+    "popularStocks": "Popular Stocks",
+    "viewAll": "View All",
+    "mostActive": "Most Active",
+    "gainers": "Gainers",
+    "losers": "Losers",
+    "sort": "Sort",
+    "orderBook": "Order Book",
+    "asOf": "As of",
+    "sell": "Sell",
+    "buy": "Buy",
+    "stockDetails": "Stock Details",
+    "companyCode": "Company Code",
+    "totalShares": "Total Shares",
+    "listedShares": "Listed Shares",
+    "listingDate": "Listing Date",
+    "email": "Email",
+    "loadingStocks": "Loading stocks...",
+    "stock": "Stock",
+    "noSellOrders": "No sell orders",
+    "noBuyOrders": "No buy orders",
+    "bdsIndex": "BDSec Index",
+    "marketOverview": "Market Overview"
+  },
+  "about": {
+    "title": "About Us",
+    "services": "Our Services",
+    "broker": "Broker",
+    "dealer": "Dealer",
+    "underwriter": "Underwriter",
+    "investment": "Investment Advisory",
+    "consulting": "Financial Consulting",
+    "exchange": "Exchange Member",
+    "yearsExperience": "Years of experience",
+    "billionAssets": "Billion MNT in assets",
+    "ipoDeals": "IPO deals",
+    "address": "Address",
+    "addressLine1": "Mongolia, Ulaanbaatar, Sukhbaatar district, 8th khoroo",
+    "addressLine2": "Baga toiruu, BDSec Securities building",
+    "contact": "Contact Us"
+  },
+  "allStocks": {
+    "title": "All Stocks",
+    "active": "Active",
+    "all": "All",
+    "symbol": "Symbol",
+    "price": "Price",
+    "bid": "Bid",
+    "ask": "Ask",
+    "change": "Change",
+    "volume": "Volume",
+    "showing": "Showing {{count}} of {{total}} stocks",
+    "lastUpdated": "Last updated",
+    "stockList": "Stock List",
+    "filter": "Filter",
+    "sort": "Sort",
+    "highToLow": "High to Low",
+    "lowToHigh": "Low to High",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "language": {
+    "mongolian": "Монгол",
+    "english": "English"
+  },
+  "kyc": {
+    "title": "KYC VERIFICATION",
+    "pending": "{{count}} pending",
+    "completed": "Completed",
+    "error": "Requires attention"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "search": "Search questions",
+    "categories": "Categories",
+    "popular": "Popular Questions",
+    "viewAll": "View All",
+    "noResults": "No questions found",
+    "all": "All",
+    "account": "Account",
+    "trading": "Trading",
+    "fees": "Fees"
+  }
+} 

@@ -1,8 +1,4 @@
-// import { NextConfig } from "next";
-import createNextIntlPlugin from 'next-intl/plugin';
-
-const withNextIntl = createNextIntlPlugin();
-
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true
@@ -23,10 +19,15 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'assets.aceternity.com',
         port: ''
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: ''
       }
     ]
   },
   transpilePackages: ['geist']
-};
+}
 
-export default withNextIntl(nextConfig);
+export default nextConfig
