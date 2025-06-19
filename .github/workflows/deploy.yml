@@ -19,11 +19,25 @@ jobs:
 
       - name: Deploy via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} << EOF
+            set -e
+            BRANCH="${{ github.ref_name }}"
             cd /home/damdinsuren/projects/mini-app || exit 1
-            git pull origin main
-            docker stop mini-app || true
-            docker rm mini-app || true
-            docker build -t mini-app .
-            docker run -d -p 3110:3110 --name mini-app mini-app
+
+git fetch origin \$BRANCH
+git checkout \$BRANCH
+git reset --hard origin/\$BRANCH
+
+            if [ "\$BRANCH" = "test" ]; then
+              CONTAINER_NAME="mini-app-test"
+              PORT_MAPPING="3111:3110"
+            else
+              CONTAINER_NAME="mini-app"
+              PORT_MAPPING="3110:3110"
+            fi
+
+            docker stop \$CONTAINER_NAME || true
+            docker rm \$CONTAINER_NAME || true
+            docker build -t \$CONTAINER_NAME .
+            docker run -d -p \$PORT_MAPPING --name \$CONTAINER_NAME \$CONTAINER_NAME
           EOF
