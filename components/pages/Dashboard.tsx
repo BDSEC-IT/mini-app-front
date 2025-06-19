@@ -386,10 +386,10 @@ const DashboardContent = () => {
         {/* Filter Tabs */}
         <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
           {[
-            { id: 'trending', label: t('dashboard.trending'), icon: TrendingUp },
-            { id: 'mostActive', label: t('dashboard.mostActive'), icon: Activity },
-            { id: 'gainers', label: t('dashboard.gainers'), icon: ArrowUp },
-            { id: 'losers', label: t('dashboard.losers'), icon: ArrowDown }
+            { id: 'trending', label: 'dashboard.trending', icon: TrendingUp },
+            { id: 'mostActive', label: 'dashboard.mostActive', icon: Activity },
+            { id: 'gainers', label: 'dashboard.gainers', icon: ArrowUp },
+            { id: 'losers', label: 'dashboard.losers', icon: ArrowDown }
           ].map((filter) => (
             <button
               key={filter.id}
@@ -401,7 +401,7 @@ const DashboardContent = () => {
               onClick={() => setActiveFilter(filter.id)}
             >
               <filter.icon size={14} className="mr-1" />
-              {filter.label}
+              {t(filter.label)}
             </button>
           ))}
           

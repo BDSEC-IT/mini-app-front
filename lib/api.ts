@@ -38,6 +38,9 @@ interface StockData {
   dates: string;
   createdAt: string;
   updatedAt: string;
+  BestBidPx?: number; // For backward compatibility
+  BestOfferPx?: number; // For backward compatibility
+  category?: string; // Stock category (I, II, III)
 }
 
 interface OrderBookEntry {

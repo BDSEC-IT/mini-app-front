@@ -16,7 +16,8 @@
     "search": "Хайх",
     "language": "Хэл",
     "theme": "Загвар",
-    "noResults": "Үр дүн олдсонгүй"
+    "noResults": "Үр дүн олдсонгүй",
+    "settings": "Тохиргоо"
   },
   "header": {
     "notifications": "Мэдэгдэл",
@@ -90,6 +91,8 @@
     "price": "Үнэ",
     "bid": "Авах үнэ",
     "ask": "Зарах үнэ",
+    "high": "Өндөр үнэ",
+    "low": "Бага үнэ",
     "change": "Өөрчлөлт",
     "volume": "Эргэлт",
     "showing": "{{total}} хувьцаанаас {{count}} харуулж байна",
@@ -102,7 +105,13 @@
     "today": "Өнөөдөр",
     "yesterday": "Өчигдөр",
     "thisWeek": "Энэ долоо хоног",
-    "thisMonth": "Энэ сар"
+    "thisMonth": "Энэ сар",
+    "category": "Ангилал",
+    "categories": "Ангилалууд",
+    "categoryI": "I ангилал",
+    "categoryII": "II ангилал",
+    "categoryIII": "III ангилал",
+    "timeFilter": "Хугацааны шүүлтүүр"
   },
   "theme": {
     "light": "Цагаан",

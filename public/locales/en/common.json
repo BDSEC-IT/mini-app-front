@@ -16,7 +16,8 @@
     "search": "Search",
     "language": "Language",
     "theme": "Theme",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "settings": "Settings"
   },
   "header": {
     "notifications": "Notifications",
@@ -90,6 +91,8 @@
     "price": "Price",
     "bid": "Bid",
     "ask": "Ask",
+    "high": "High",
+    "low": "Low",
     "change": "Change",
     "volume": "Volume",
     "showing": "Showing {{count}} of {{total}} stocks",
@@ -102,7 +105,13 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "thisWeek": "This Week",
-    "thisMonth": "This Month"
+    "thisMonth": "This Month",
+    "category": "Category",
+    "categories": "Categories",
+    "categoryI": "Category I",
+    "categoryII": "Category II",
+    "categoryIII": "Category III",
+    "timeFilter": "Time Period"
   },
   "theme": {
     "light": "Light",
