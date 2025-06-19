@@ -24,9 +24,10 @@ jobs:
             BRANCH="${{ github.ref_name }}"
             cd /home/damdinsuren/projects/mini-app || exit 1
 
-            git fetch origin \$BRANCH
-            git checkout \$BRANCH
-            git pull origin \$BRANCH
+           git fetch origin \$BRANCH
+git checkout \$BRANCH
+git reset --hard origin/\$BRANCH
+
 
             if [ "\$BRANCH" = "test" ]; then
               CONTAINER_NAME="mini-app-test"
