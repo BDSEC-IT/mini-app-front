@@ -38,6 +38,8 @@ interface StockData {
   dates: string;
   createdAt: string;
   updatedAt: string;
+  BestBidPx?: number;
+  BestOfferPx?: number;
 }
 
 interface OrderBookEntry {

@@ -77,13 +77,16 @@ const AllStocks = () => {
     if (!sortConfig.key) return filteredStocks
     
     return [...filteredStocks].sort((a, b) => {
-      if (a[sortConfig.key!] === null) return 1
-      if (b[sortConfig.key!] === null) return -1
+      const aValue = a[sortConfig.key!];
+      const bValue = b[sortConfig.key!];
       
-      if (a[sortConfig.key!] < b[sortConfig.key!]) {
+      if (aValue === null || aValue === undefined) return 1
+      if (bValue === null || bValue === undefined) return -1
+      
+      if (aValue < bValue) {
         return sortConfig.direction === 'asc' ? -1 : 1
       }
-      if (a[sortConfig.key!] > b[sortConfig.key!]) {
+      if (aValue > bValue) {
         return sortConfig.direction === 'asc' ? 1 : -1
       }
       return 0
