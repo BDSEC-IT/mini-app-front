@@ -17,24 +17,26 @@ const BottomNavigation = () => {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 z-10">
+    <div className="fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 z-10 ">
       {/* Center button with curved background */}
       <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
-        <div className="bg-white dark:bg-gray-950 h-12 w-24 rounded-t-full border-t border-l border-r border-gray-200 dark:border-gray-800"></div>
+     
         <Link 
           href="/orders" 
           className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/4 flex items-center justify-center w-16 h-16 rounded-full bg-indigo-900 text-white shadow-lg hover:bg-indigo-800 transition-colors"
         >
           {/* Exchange icon - similar to the one in the screenshot */}
-          <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M7 10L3 14L7 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M17 14L21 10L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M3 14H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M25.625 18.7373L19.3625 25.0123" stroke="white" strokeWidth="3" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+<path d="M4.375 18.7373H25.625" stroke="white" strokeWidth="3" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+<path d="M4.375 11.2623L10.6375 4.9873" stroke="white" strokeWidth="3" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+<path d="M25.625 11.2627H4.375" stroke="white" strokeWidth="3" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+
         </Link>
       </div>
       
-      <div className="flex justify-around items-center h-full px-6">
+      <div className="flex justify-around items-center h-full px-6 ">
         <Link 
           href="/" 
           className={`flex flex-col items-center justify-center ${

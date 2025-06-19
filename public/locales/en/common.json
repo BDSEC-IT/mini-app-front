@@ -37,6 +37,16 @@
     "news": "NEWS & INFORMATION",
     "withdraw": "WITHDRAW MONEY"
   },
+  "chart": {
+    "1d": "1D",
+    "1w": "1W",
+    "1m": "1M",
+    "3m": "3M",
+    "1y": "1Y",
+    "all": "ALL",
+    "noData": "No data available for selected period",
+    "tryAnother": "Try selecting a different time period or stock symbol"
+  },
   "dashboard": {
     "price": "Stock Price",
     "trending": "Trending",

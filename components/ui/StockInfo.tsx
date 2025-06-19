@@ -9,7 +9,7 @@ interface StockInfoProps {
   onSymbolSelect?: (symbol: string) => void;
 }
 
-export default function StockInfo({ symbol = 'KHAN', onSymbolSelect }: StockInfoProps) {
+export default function StockInfo({ symbol = 'BDS', onSymbolSelect }: StockInfoProps) {
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [allStocks, setAllStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,19 +28,15 @@ export default function StockInfo({ symbol = 'KHAN', onSymbolSelect }: StockInfo
 
   const fetchData = useCallback(async () => {
     try {
+      setLoading(true);
       setError(null);
       
       // Fetch specific stock data
-      const response = await fetchStockData(symbol);
+      console.log(`Fetching stock data for symbol: ${symbol}`);
+      const response = await fetchStockData(`${symbol}-O-0000`);
       if ('data' in response && !Array.isArray(response.data)) {
         const newData = response.data as StockData;
-        setStockData(prev => {
-          // Only update if data has changed
-          if (!prev || JSON.stringify(prev) !== JSON.stringify(newData)) {
-            return newData;
-          }
-          return prev;
-        });
+        setStockData(newData);
       }
 
       // Fetch all stocks for the dropdown only if we don't have them yet
@@ -64,11 +60,25 @@ export default function StockInfo({ symbol = 'KHAN', onSymbolSelect }: StockInfo
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  const handleSymbolChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSymbol = e.target.value;
+    console.log(`Symbol changed to: ${newSymbol}`);
+    if (onSymbolSelect) {
+      onSymbolSelect(newSymbol);
+    }
+  };
+
   if (loading && !stockData) return <div className="animate-pulse">Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
   if (!stockData) return null;
 
-  const isPositiveChange = stockData.Changes >= 0;
+  const isPositiveChange = (stockData.Changes || 0) >= 0;
+
+  // Helper function to safely format numbers
+  const formatNumber = (value: number | undefined | null) => {
+    if (value === undefined || value === null) return '-';
+    return value.toLocaleString();
+  };
 
   return (
     <div className="bg-card rounded-lg p-4 shadow-lg">
@@ -76,58 +86,62 @@ export default function StockInfo({ symbol = 'KHAN', onSymbolSelect }: StockInfo
         <select 
           className="bg-background text-foreground px-3 py-2 rounded-md"
           value={symbol}
-          onChange={(e) => onSymbolSelect?.(e.target.value)}
+          onChange={handleSymbolChange}
         >
-          {uniqueStocks.map((stock) => (
-            <option key={`${stock.Symbol}-${stock.pkId}`} value={stock.Symbol}>
-              {stock.Symbol} - {stock.mnName}
-            </option>
-          ))}
+          {uniqueStocks.map((stock) => {
+            // Extract the base symbol without the -O-0000 suffix
+            const baseSymbol = stock.Symbol.split('-')[0];
+            return (
+              <option key={`${baseSymbol}-${stock.pkId}`} value={baseSymbol}>
+                {baseSymbol} - {stock.mnName || stock.enName}
+              </option>
+            );
+          })}
         </select>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="space-y-1">
           <h3 className="text-sm text-muted-foreground">Last Price</h3>
-          <p className="text-lg font-semibold">{stockData.LastTradedPrice.toLocaleString()}</p>
+          <p className="text-lg font-semibold">{formatNumber(stockData.LastTradedPrice)}</p>
         </div>
 
         <div className="space-y-1">
           <h3 className="text-sm text-muted-foreground">Change</h3>
           <p className={`text-lg font-semibold flex items-center ${isPositiveChange ? 'text-green-500' : 'text-red-500'}`}>
             {isPositiveChange ? <ArrowUpIcon className="w-4 h-4 mr-1" /> : <ArrowDownIcon className="w-4 h-4 mr-1" />}
-            {stockData.Changes.toLocaleString()} ({stockData.Changep.toFixed(2)}%)
+            {formatNumber(stockData.Changes)} ({stockData.Changep?.toFixed(2) || '0.00'}%)
           </p>
         </div>
 
         <div className="space-y-1">
           <h3 className="text-sm text-muted-foreground">Volume</h3>
-          <p className="text-lg font-semibold">{stockData.Volume.toLocaleString()}</p>
+          <p className="text-lg font-semibold">{formatNumber(stockData.Volume)}</p>
         </div>
 
         <div className="space-y-1">
           <h3 className="text-sm text-muted-foreground">Turnover</h3>
-          <p className="text-lg font-semibold">{stockData.Turnover.toLocaleString()}</p>
+          <p className="text-lg font-semibold">{formatNumber(stockData.Turnover)}</p>
         </div>
 
         <div className="space-y-1">
           <h3 className="text-sm text-muted-foreground">High</h3>
-          <p className="text-lg font-semibold">{stockData.HighPrice.toLocaleString()}</p>
+          <p className="text-lg font-semibold">{formatNumber(stockData.HighPrice)}</p>
         </div>
 
         <div className="space-y-1">
           <h3 className="text-sm text-muted-foreground">Low</h3>
-          <p className="text-lg font-semibold">{stockData.LowPrice.toLocaleString()}</p>
+          <p className="text-lg font-semibold">{formatNumber(stockData.LowPrice)}</p>
         </div>
 
         <div className="space-y-1">
           <h3 className="text-sm text-muted-foreground">VWAP</h3>
-          <p className="text-lg font-semibold">{stockData.VWAP.toLocaleString()}</p>
+          <p className="text-lg font-semibold">{formatNumber(stockData.VWAP)}</p>
         </div>
 
         <div className="space-y-1">
           <h3 className="text-sm text-muted-foreground">Trades</h3>
-          <p className="text-lg font-semibold">{stockData.trades.toLocaleString()}</p>
+          <p className="text-lg font-semibold">{formatNumber(stockData.trades)}</p>
         </div>
       </div>
 
@@ -137,11 +151,11 @@ export default function StockInfo({ symbol = 'KHAN', onSymbolSelect }: StockInfo
           <div className="space-y-2">
             <div className="flex justify-between">
               <span>VWAP</span>
-              <span className="font-semibold">{stockData.BuyOrderVWAP.toLocaleString()}</span>
+              <span className="font-semibold">{formatNumber(stockData.BuyOrderVWAP)}</span>
             </div>
             <div className="flex justify-between">
               <span>Quantity</span>
-              <span className="font-semibold">{stockData.BuyOrderQty.toLocaleString()}</span>
+              <span className="font-semibold">{formatNumber(stockData.BuyOrderQty)}</span>
             </div>
           </div>
         </div>
@@ -151,11 +165,11 @@ export default function StockInfo({ symbol = 'KHAN', onSymbolSelect }: StockInfo
           <div className="space-y-2">
             <div className="flex justify-between">
               <span>VWAP</span>
-              <span className="font-semibold">{stockData.SellOrderVWAP.toLocaleString()}</span>
+              <span className="font-semibold">{formatNumber(stockData.SellOrderVWAP)}</span>
             </div>
             <div className="flex justify-between">
               <span>Quantity</span>
-              <span className="font-semibold">{stockData.SellOrderQty.toLocaleString()}</span>
+              <span className="font-semibold">{formatNumber(stockData.SellOrderQty)}</span>
             </div>
           </div>
         </div>

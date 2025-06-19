@@ -82,7 +82,6 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
   const pointsRef = useRef<Point[]>([])
   const { t } = useTranslation()
   const [isMobile, setIsMobile] = useState(false)
-  const [activePeriod, setActivePeriod] = useState(period)
 
   // Check if we're on a mobile device
   useEffect(() => {
@@ -94,11 +93,6 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
-
-  // Update active period when prop changes
-  useEffect(() => {
-    setActivePeriod(period)
-  }, [period])
 
   // Filter data based on the selected time period
   const filterDataByPeriod = (data: TradingHistoryData[], period: string): TradingHistoryData[] => {
@@ -170,7 +164,7 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
         setIsLoading(true)
         setError(null)
         
-        console.log(`TradingViewChart: Fetching data for symbol ${symbol}, period ${activePeriod}`)
+        console.log(`TradingViewChart: Fetching data for symbol ${symbol}, period ${period}`)
         
         let allData: TradingHistoryData[] = []
         let currentPage = 1
@@ -209,18 +203,18 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
           
           console.log(`Total data points after sorting: ${sortedData.length}`)
           console.log(`First date: ${new Date(sortedData[0].dates).toISOString()}, Last date: ${new Date(sortedData[sortedData.length-1].dates).toISOString()}`)
-          console.log(`Applying filter for period: ${activePeriod}`)
+          console.log(`Applying filter for period: ${period}`)
           
           // Apply period filter
-          const filteredData = filterDataByPeriod(sortedData, activePeriod)
+          const filteredData = filterDataByPeriod(sortedData, period)
           
-          console.log(`Data points after filtering for ${activePeriod}: ${filteredData.length}`)
+          console.log(`Data points after filtering for ${period}: ${filteredData.length}`)
           if (filteredData.length > 0) {
             console.log(`Filtered data first date: ${new Date(filteredData[0].dates).toISOString()}, last date: ${new Date(filteredData[filteredData.length-1].dates).toISOString()}`)
             setChartData(filteredData)
             setError(null)
           } else {
-            console.error(`No data available after filtering for period ${activePeriod}`)
+            console.error(`No data available after filtering for period ${period}`)
             setError('No data available for selected period')
           }
         }
@@ -233,7 +227,7 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
     }
     
     fetchAllData()
-  }, [symbol, activePeriod])
+  }, [symbol, period])
 
   useEffect(() => {
     if (!mounted || !canvasRef.current || !containerRef.current || chartData.length === 0) return
@@ -269,7 +263,7 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
       
       // Sample data points to make the chart smoother
       // Limit to fewer points on mobile for better performance
-      const maxPoints = isMobile ? 50 : 100
+      const maxPoints = isMobile ? 30 : 50
       const sampleInterval = Math.max(1, Math.floor(allPrices.length / maxPoints))
       const prices = allPrices.filter((_, i) => i % sampleInterval === 0 || i === allPrices.length - 1)
       
@@ -277,10 +271,10 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
       const minPrice = Math.min(...prices.map(p => p.close))
       const maxPrice = Math.max(...prices.map(p => p.close))
       
-      // Calculate price range with 10% padding (reduced from 15% for sharper look)
-      const priceRange = (maxPrice - minPrice) * 1.1
-      const scaledMinPrice = minPrice - priceRange * 0.05
-      const scaledMaxPrice = maxPrice + priceRange * 0.05
+      // Calculate price range with 15% padding
+      const priceRange = (maxPrice - minPrice) * 1.15
+      const scaledMinPrice = minPrice - priceRange * 0.075
+      const scaledMaxPrice = maxPrice + priceRange * 0.075
       
       // Scale functions - use full canvas area
       const xScale = (date: Date) => {
@@ -297,10 +291,10 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
       // Create gradient fill under the line
       const gradient = ctx.createLinearGradient(0, 0, 0, rect.height)
       if (theme === 'dark') {
-        gradient.addColorStop(0, 'rgba(139, 92, 246, 0.4)')  // Purple with opacity
+        gradient.addColorStop(0, 'rgba(139, 92, 246, 0.5)')  // Purple with opacity
         gradient.addColorStop(1, 'rgba(139, 92, 246, 0)')    // Transparent
       } else {
-        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.2)')  // Indigo with opacity
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.3)')  // Indigo with opacity
         gradient.addColorStop(1, 'rgba(99, 102, 241, 0)')    // Transparent
       }
       
@@ -323,7 +317,7 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
       // Store points for tooltip interaction
       pointsRef.current = points
       
-      // Draw a smoother curve using cardinal spline interpolation
+      // Draw a smooth curve using cardinal spline interpolation
       for (let i = 0; i < points.length - 1; i++) {
         const p0 = i > 0 ? points[i - 1] : points[i]
         const p1 = points[i]
@@ -331,8 +325,8 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
         const p3 = i < points.length - 2 ? points[i + 2] : p2
         
         // Catmull-Rom to Bezier conversion
-        // Use less tension for sharper curves
-        const tension = 0.2
+        // Use less tension on mobile for smoother curves
+        const tension = isMobile ? 0.2 : 0.3
         
         const cp1x = p1.x + (p2.x - p0.x) * tension
         const cp1y = p1.y + (p2.y - p0.y) * tension
@@ -360,7 +354,7 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
         const p3 = i < points.length - 2 ? points[i + 2] : p2
         
         // Catmull-Rom to Bezier conversion
-        const tension = 0.2
+        const tension = isMobile ? 0.2 : 0.3
         
         const cp1x = p1.x + (p2.x - p0.x) * tension
         const cp1y = p1.y + (p2.y - p0.y) * tension
@@ -370,24 +364,24 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
         ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y)
       }
       
-      // Set line style - sharper look with thinner line
+      // Set line style - thinner on mobile
       ctx.strokeStyle = theme === 'dark' ? '#a78bfa' : '#818cf8' // Purple/indigo color
-      ctx.lineWidth = 2 // Thinner line for sharper look
+      ctx.lineWidth = isMobile ? 2 : 3
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
       ctx.shadowColor = theme === 'dark' ? 'rgba(139, 92, 246, 0.5)' : 'rgba(99, 102, 241, 0.5)'
-      ctx.shadowBlur = 4 // Reduced blur for sharper look
+      ctx.shadowBlur = isMobile ? 4 : 8
       ctx.stroke()
       
       // Draw tooltip if visible
       if (tooltip.visible) {
         // Draw point at tooltip position
         ctx.beginPath()
-        ctx.arc(tooltip.x, tooltip.y, 5, 0, Math.PI * 2)
+        ctx.arc(tooltip.x, tooltip.y, isMobile ? 4 : 6, 0, Math.PI * 2)
         ctx.fillStyle = theme === 'dark' ? '#fff' : '#4338ca'
         ctx.fill()
         ctx.strokeStyle = theme === 'dark' ? '#1e1b4b' : '#fff'
-        ctx.lineWidth = 2
+        ctx.lineWidth = isMobile ? 1 : 2
         ctx.stroke()
       }
     }
@@ -501,12 +495,7 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
         containerRef.current.removeEventListener('click', handleClick)
       }
     }
-  }, [mounted, chartData, theme, activePeriod, tooltip.visible, isMobile])
-
-  // Handle period change
-  const handlePeriodChange = (newPeriod: string) => {
-    setActivePeriod(newPeriod)
-  }
+  }, [mounted, chartData, theme, period, tooltip.visible, isMobile])
 
   // Return null if not mounted yet
   if (!mounted) return null
@@ -538,54 +527,27 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
-      {/* Chart container - take most of the height */}
-      <div ref={containerRef} className="w-full flex-grow relative">
-        <canvas ref={canvasRef} className="w-full h-full"></canvas>
-        
-        {/* Tooltip - smaller on mobile */}
-        {tooltip.visible && (
-          <div 
-            className={`absolute pointer-events-none bg-white dark:bg-gray-800 shadow-lg rounded-md px-3 py-2 text-sm z-10 transform -translate-x-1/2 -translate-y-full ${isMobile ? 'text-xs' : 'text-sm'}`}
-            style={{ 
-              left: tooltip.x, 
-              top: tooltip.y - (isMobile ? 5 : 10),
-              borderLeft: `${isMobile ? 2 : 3}px solid ${theme === 'dark' ? '#a78bfa' : '#818cf8'}`
-            }}
-          >
-            <div className="font-medium text-indigo-600 dark:text-indigo-300">
-              {tooltip.value.toLocaleString()} ₮
-            </div>
-            <div className="text-gray-500 dark:text-gray-400 text-xs">
-              {tooltip.date.toLocaleDateString()} {isMobile ? '' : tooltip.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-            </div>
-          </div>
-        )}
-      </div>
+    <div ref={containerRef} className="w-full h-full relative">
+      <canvas ref={canvasRef} className="w-full h-full"></canvas>
       
-      {/* Time filter buttons at bottom */}
-      <div className="mt-2 flex justify-center border-t pt-2">
-        {[
-          { id: '1D', label: t('chart.1d', '1D') },
-          { id: '1W', label: t('chart.1w', '1W') },
-          { id: '1M', label: t('chart.1m', '1M') },
-          { id: '3M', label: t('chart.3m', '3M') },
-          { id: '1Y', label: t('chart.1y', '1Y') },
-          { id: 'ALL', label: t('chart.all', 'ALL') }
-        ].map((periodOption) => (
-          <button
-            key={periodOption.id}
-            className={`px-4 py-1.5 text-xs rounded-md mx-1 transition-colors ${
-              activePeriod === periodOption.id 
-                ? 'bg-indigo-900 text-white shadow-sm' 
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-            onClick={() => handlePeriodChange(periodOption.id)}
-          >
-            {periodOption.label}
-          </button>
-        ))}
-      </div>
+      {/* Tooltip - smaller on mobile */}
+      {tooltip.visible && (
+        <div 
+          className={`absolute pointer-events-none bg-white dark:bg-gray-800 shadow-lg rounded-md px-3 py-2 text-sm z-10 transform -translate-x-1/2 -translate-y-full ${isMobile ? 'text-xs' : 'text-sm'}`}
+          style={{ 
+            left: tooltip.x, 
+            top: tooltip.y - (isMobile ? 5 : 10),
+            borderLeft: `${isMobile ? 2 : 3}px solid ${theme === 'dark' ? '#a78bfa' : '#818cf8'}`
+          }}
+        >
+          <div className="font-medium text-indigo-600 dark:text-indigo-300">
+            {tooltip.value.toLocaleString()} ₮
+          </div>
+          <div className="text-gray-500 dark:text-gray-400 text-xs">
+            {tooltip.date.toLocaleDateString()} {isMobile ? '' : tooltip.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

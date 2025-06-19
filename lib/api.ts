@@ -72,6 +72,41 @@ interface AllStocksResponse {
   data: StockData[];
 }
 
+interface TradingHistoryResponse {
+  success: boolean;
+  data: TradingHistoryData[];
+  pagination: {
+    total: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  };
+}
+
+interface TradingHistoryData {
+  id: number;
+  Symbol: string;
+  MDSubOrderBookType: string;
+  OpeningPrice: number;
+  ClosingPrice: number;
+  HighPrice: number;
+  LowPrice: number;
+  VWAP: number;
+  Volume: number;
+  HighestBidPrice: number;
+  LowestOfferPrice: number;
+  PreviousClose: number;
+  BuyOrderQty: number;
+  SellOrderQty: number;
+  Turnover: number;
+  Trades: number;
+  MDEntryTime: string;
+  companycode: number;
+  MarketSegmentID: string;
+  securityType: string;
+  dates: string;
+}
+
 const BASE_URL = 'https://miniapp.bdsec.mn/apitest';
 
 export const fetchStockData = async (symbol?: string): Promise<ApiResponse> => {
@@ -106,4 +141,14 @@ export const fetchAllStocks = async (): Promise<AllStocksResponse> => {
   return response.json();
 };
 
-export type { StockData, ApiResponse, OrderBookEntry, OrderBookResponse, AllStocksResponse }; 
+export const fetchTradingHistory = async (symbol: string, page: number = 1, limit: number = 100): Promise<TradingHistoryResponse> => {
+  const url = `${BASE_URL}/securities/trading-history?page=${page}&limit=${limit}&sortField&sortOrder=desc&symbol=${symbol}`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to fetch trading history data');
+  }
+  return response.json();
+};
+
+export type { StockData, ApiResponse, OrderBookEntry, OrderBookResponse, AllStocksResponse, TradingHistoryResponse, TradingHistoryData }; 

@@ -32,12 +32,12 @@ const AllStocks = () => {
   }>({ key: null, direction: 'asc' })
 
   // Stock categories
-  const categories: Category[] = [
-    { id: 'all', name: t('allStocks.all'), mnName: 'Бүгд' },
-    { id: 'I', name: t('allStocks.categoryI'), mnName: 'I ангилал' },
-    { id: 'II', name: t('allStocks.categoryII'), mnName: 'II ангилал' },
-    { id: 'III', name: t('allStocks.categoryIII'), mnName: 'III ангилал' }
-  ]
+  const categories: Category[] = useMemo(() => [
+    { id: 'all', name: t('allStocks.all'), mnName: t('allStocks.all') },
+    { id: 'I', name: t('allStocks.categoryI'), mnName: t('allStocks.categoryI') },
+    { id: 'II', name: t('allStocks.categoryII'), mnName: t('allStocks.categoryII') },
+    { id: 'III', name: t('allStocks.categoryIII'), mnName: t('allStocks.categoryIII') }
+  ], [t]);
 
   // Fetch all stocks data
   const fetchStocksData = useCallback(async () => {
@@ -247,7 +247,20 @@ const AllStocks = () => {
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
       <div className="px-4 py-6">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-xl font-bold">{t('allStocks.title')}</h1>
+          <div className="flex items-center gap-3">
+            <a 
+              href="/" 
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+            >
+              <ChevronRight className="transform rotate-180" size={18} />
+            </a>
+            <h1 className="text-xl font-bold">{t('allStocks.title')}</h1>
+          </div>
+          <div className="text-sm text-gray-500">
+            {t('allStocks.lastUpdated')}: {new Date().toLocaleTimeString()}
+          </div>
+        </div>
+        <div className="flex justify-between items-center mb-4">
           <button 
             onClick={toggleFilters}
             className="flex items-center gap-1 text-sm text-indigo-600 dark:text-indigo-400"

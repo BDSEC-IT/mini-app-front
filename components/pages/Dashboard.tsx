@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import TradingViewChart from '../ui/TradingViewChart'
+import { TradingViewChart } from '../ui/TradingViewChart'
 import StockInfo from '../ui/StockInfo'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useTranslation } from 'react-i18next'
@@ -31,10 +31,10 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 }
 
 const DashboardContent = () => {
-  const [selectedSymbol, setSelectedSymbol] = useState('KHAN')
+  const [selectedSymbol, setSelectedSymbol] = useState('BDS')
   const { theme } = useTheme()
   const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState('1D')
+  const [activeTab, setActiveTab] = useState('ALL')
   const [activeFilter, setActiveFilter] = useState('trending')
   const [orderBookData, setOrderBookData] = useState<OrderBookEntry[]>([])
   const [loading, setLoading] = useState(false)
@@ -113,7 +113,7 @@ const DashboardContent = () => {
   
   // Mock data for stock details - updated to be dynamic based on selected stock
   const getStockDetails = useMemo(() => {
-    const selectedStockData = allStocks.find(stock => stock.Symbol === selectedSymbol);
+    const selectedStockData = allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol);
     
     return {
       isin: `MN00SBM${selectedStockData?.id || '05643'}`,
@@ -244,6 +244,12 @@ const DashboardContent = () => {
     return points;
   };
   
+  // Format price with thousand separators
+  const formatPrice = (price: number | undefined) => {
+    if (price === undefined || price === null) return '-';
+    return price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  };
+  
   // Fetch order book data on component mount and when symbol changes
   useEffect(() => {
     fetchOrderBookData();
@@ -258,12 +264,6 @@ const DashboardContent = () => {
   useEffect(() => {
     fetchStocksData();
   }, [fetchStocksData]);
-  
-  // Format price with commas
-  const formatPrice = (price: number | undefined) => {
-    if (!price) return '-';
-    return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
   
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
@@ -313,7 +313,7 @@ const DashboardContent = () => {
                 </button>
               </div>
             ) : (
-              <button 
+              <button
                 onClick={handleSearchClick}
                 className="flex items-center border rounded-full px-3 py-2 bg-gray-100 dark:bg-gray-800"
               >
@@ -348,266 +348,267 @@ const DashboardContent = () => {
           </div>
         </div>
         
-        {/* Chart Period Selector */}
-        <div className="mt-6 flex border-b">
-          {['1H', '1D', '1W', '1M', '1Y', 'All'].map((period) => (
-            <button
-              key={period}
-              className={`px-4 py-2 text-sm ${
-                activeTab === period 
-                  ? 'bg-indigo-900 text-white rounded-t-md' 
-                  : 'text-gray-500'
-              }`}
-              onClick={() => setActiveTab(period)}
-            >
-              {period}
-            </button>
-          ))}
-        </div>
-        
-        {/* Chart */}
-        <div className="h-[220px] mt-4">
+        {/* Chart - Using our enhanced TradingViewChart with real data */}
+        <div className="h-[300px] sm:h-[350px] md:h-[400px] lg:h-[500px] mt-4 rounded-lg overflow-hidden bg-transparent">
           <TradingViewChart 
-            symbol={`MSE:${selectedSymbol}`}
+            symbol={`${selectedSymbol}-O-0000`}
             theme={theme}
+            period={activeTab}
           />
         </div>
       </div>
       
-      {/* Stock List Section */}
-      <div className="px-4 mt-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-medium">{t('dashboard.popularStocks')}</h2>
-          <Link href="/stocks" className="text-indigo-600 flex items-center text-sm">
-            {t('dashboard.viewAll')} <ChevronRight size={16} className="ml-1" />
-          </Link>
+      {/* Stock List and Order Book Sections */}
+      <div className="px-4 grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        {/* Stock Info Card */}
+        <div className="lg:col-span-2">
+          <StockInfo 
+            symbol={selectedSymbol}
+            onSymbolSelect={handleStockSelect}
+          />
         </div>
         
-        {/* Filter Tabs */}
-        <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
-          {[
-            { id: 'trending', label: 'dashboard.trending', icon: TrendingUp },
-            { id: 'mostActive', label: 'dashboard.mostActive', icon: Activity },
-            { id: 'gainers', label: 'dashboard.gainers', icon: ArrowUp },
-            { id: 'losers', label: 'dashboard.losers', icon: ArrowDown }
-          ].map((filter) => (
-            <button
-              key={filter.id}
-              className={`px-4 py-2 text-sm rounded-full whitespace-nowrap flex items-center ${
-                activeFilter === filter.id
-                  ? 'bg-indigo-900 text-white'
-                  : 'border text-gray-500'
-              }`}
-              onClick={() => setActiveFilter(filter.id)}
-            >
-              <filter.icon size={14} className="mr-1" />
-              {t(filter.label)}
-            </button>
-          ))}
-          
-          <div className="ml-auto">
-            <button className="border rounded-md px-3 py-1 flex items-center text-sm">
-              {t('dashboard.sort')} <ChevronDown size={14} className="ml-1" />
-            </button>
-          </div>
-        </div>
-        
-        {/* Stock Cards Carousel */}
-        <div className="mt-4" ref={animationParent}>
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-              skipSnaps: false,
-              containScroll: "trimSnaps",
-            }}
-            plugins={[autoplayPlugin.current]}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-2 md:-ml-4">
-              {filteredStocks.length > 0 ? (
-                filteredStocks.map((stock, index) => {
-                  // Generate random chart points for each stock
-                  const isPositive = stock.Changep >= 0;
-                  const chartPoints = generateChartData(isPositive);
-                  const pointsString = chartPoints.join(',');
-                  
-                  return (
-                    <CarouselItem key={`${stock.Symbol}-${index}`} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
-                      <div 
-                        className="bg-gradient-to-br from-indigo-900 to-indigo-700 text-white p-4 rounded-lg cursor-pointer shadow-md hover:shadow-lg transition-shadow"
-                        onClick={() => handleStockSelect(stock.Symbol)}
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <h3 className="font-bold text-lg">{stock.Symbol.split('-')[0]}</h3>
-                            <p className="text-xs text-gray-300 truncate max-w-[100px]">{stock.mnName || stock.enName}</p>
-                          </div>
-                          <div className={`text-xs px-2 py-1 rounded-full ${isPositive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                            {isPositive ? '+' : ''}{stock.Changep?.toFixed(2)}%
-                          </div>
-                        </div>
-                        
-                        <div className="relative h-16 mb-2">
-                          <svg width="100%" height="100%" viewBox="0 0 100 30" preserveAspectRatio="none">
-                            {/* Area fill */}
-                            <defs>
-                              <linearGradient id={`gradient-${index}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stopColor={isPositive ? "#4ade80" : "#f87171"} stopOpacity="0.3" />
-                                <stop offset="100%" stopColor={isPositive ? "#4ade80" : "#f87171"} stopOpacity="0.05" />
-                              </linearGradient>
-                            </defs>
-                            
-                            {/* Chart line */}
-                            <polyline
-                              points={chartPoints.map((point, i) => `${i * (100 / (chartPoints.length - 1))},${30 - (point / 100) * 30}`).join(' ')}
-                              fill="none"
-                              stroke={isPositive ? "#4ade80" : "#f87171"}
-                              strokeWidth="2"
-                            />
-                            
-                            {/* Area fill */}
-                            <path
-                              d={`M0,${30 - (chartPoints[0] / 100) * 30} ${chartPoints.map((point, i) => `L${i * (100 / (chartPoints.length - 1))},${30 - (point / 100) * 30}`).join(' ')} L100,30 L0,30 Z`}
-                              fill={`url(#gradient-${index})`}
-                            />
-                          </svg>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <div className="text-lg font-bold">{formatPrice(stock.LastTradedPrice)} ₮</div>
-                          <div className="text-xs text-gray-300">Vol: {(stock.Volume || 0).toLocaleString()}</div>
-                        </div>
-                      </div>
-                    </CarouselItem>
-                  );
-                })
-              ) : (
-                <CarouselItem className="pl-2 md:pl-4 basis-full">
-                  <div className="h-24 flex items-center justify-center">
-                    <p className="text-gray-500">{loading ? t('dashboard.loadingStocks') : t('common.noResults')}</p>
-                  </div>
-                </CarouselItem>
-              )}
-            </CarouselContent>
-            <CarouselPrevious className="left-0 bg-indigo-900 text-white border-none" />
-            <CarouselNext className="right-0 bg-indigo-900 text-white border-none" />
-          </Carousel>
-        </div>
-        
-        {/* Order Book Section */}
-        <div className="mt-8 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-medium">{t('dashboard.orderBook')} - {selectedSymbol}</h2>
-            <div className="text-xs text-gray-500">{t('dashboard.asOf')} {lastUpdated}</div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-6 mt-3 min-h-[200px]">
-            <div className="bg-white dark:bg-gray-900 p-3 rounded-lg shadow-sm">
-              <h3 className="text-sm text-red-500 font-medium mb-2 flex items-center">
-                <ArrowDown size={14} className="mr-1" /> {t('dashboard.sell')}
-              </h3>
-              <div className="space-y-2">
-                {loading ? (
-                  // Loading placeholders for sell orders
-                  Array(5).fill(0).map((_, index) => (
-                    <div key={`sell-loading-${index}`} className="flex justify-between text-sm border-b pb-1 last:border-0 animate-pulse">
-                      <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                      <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    </div>
-                  ))
-                ) : processedOrderBook.sell.length > 0 ? (
-                  processedOrderBook.sell.map((order, index) => {
-                    // Calculate opacity based on position (higher = more opaque)
-                    const opacity = 0.2 + (index / processedOrderBook.sell.length) * 0.8;
-                    return (
-                      <div 
-                        key={`sell-${order.id}-${index}`} 
-                        className="flex justify-between text-sm border-b pb-1 last:border-0"
-                        style={{ 
-                          background: `linear-gradient(to left, rgba(239, 68, 68, ${opacity * 0.1}), transparent)`
-                        }}
-                      >
-                        <span className="text-red-500 font-medium">{order.MDEntryPx.toLocaleString()} ₮</span>
-                        <span>{order.MDEntrySize.toLocaleString()}</span>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center text-gray-400 text-sm py-2">{t('dashboard.noSellOrders')}</div>
-                )}
+        {/* Order Book and Trending Stocks */}
+        <div className="space-y-6">
+          {/* Stock List Section */}
+          <div className="mt-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-medium">{t('dashboard.popularStocks')}</h2>
+              <Link 
+                href="/stocks" 
+                className="flex items-center px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-md hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
+              >
+                {t('dashboard.viewAll')} <ChevronRight size={16} className="ml-1" />
+              </Link>
+            </div>
+            
+            {/* Filter Tabs */}
+            <div className="flex gap-2 mt-2 overflow-x-auto pb-2">
+              {[
+                { id: 'trending', label: t('dashboard.trending'), icon: TrendingUp },
+                { id: 'mostActive', label: t('dashboard.mostActive'), icon: Activity },
+                { id: 'gainers', label: t('dashboard.gainers'), icon: ArrowUp },
+                { id: 'losers', label: t('dashboard.losers'), icon: ArrowDown }
+              ].map((filter) => (
+                <button
+                  key={filter.id}
+                  className={`px-4 py-2 text-sm rounded-full whitespace-nowrap flex items-center ${
+                    activeFilter === filter.id
+                      ? 'bg-indigo-900 text-white'
+                      : 'border text-gray-500'
+                  }`}
+                  onClick={() => setActiveFilter(filter.id)}
+                >
+                  <filter.icon size={14} className="mr-1" />
+                  {filter.label}
+                </button>
+              ))}
+              
+              <div className="ml-auto">
+                <button className="border rounded-md px-3 py-1 flex items-center text-sm">
+                  {t('dashboard.sort')} <ChevronDown size={14} className="ml-1" />
+                </button>
               </div>
             </div>
             
-            <div className="bg-white dark:bg-gray-900 p-3 rounded-lg shadow-sm">
-              <h3 className="text-sm text-green-500 font-medium mb-2 flex items-center">
-                <ArrowUp size={14} className="mr-1" /> {t('dashboard.buy')}
-              </h3>
-              <div className="space-y-2">
-                {loading ? (
-                  // Loading placeholders for buy orders
-                  Array(5).fill(0).map((_, index) => (
-                    <div key={`buy-loading-${index}`} className="flex justify-between text-sm border-b pb-1 last:border-0 animate-pulse">
-                      <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                      <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    </div>
-                  ))
-                ) : processedOrderBook.buy.length > 0 ? (
-                  processedOrderBook.buy.map((order, index) => {
-                    // Calculate opacity based on position (higher = more opaque)
-                    const opacity = 0.2 + (index / processedOrderBook.buy.length) * 0.8;
-                    return (
-                      <div 
-                        key={`buy-${order.id}-${index}`} 
-                        className="flex justify-between text-sm border-b pb-1 last:border-0"
-                        style={{ 
-                          background: `linear-gradient(to right, rgba(34, 197, 94, ${opacity * 0.1}), transparent)`
-                        }}
-                      >
-                        <span className="text-green-500 font-medium">{order.MDEntryPx.toLocaleString()} ₮</span>
-                        <span>{order.MDEntrySize.toLocaleString()}</span>
+            {/* Stock Cards Carousel */}
+            <div className="mt-4" ref={animationParent}>
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                  skipSnaps: false,
+                  containScroll: "trimSnaps",
+                }}
+                plugins={[autoplayPlugin.current]}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-2 md:-ml-4">
+                  {filteredStocks.length > 0 ? (
+                    filteredStocks.map((stock, index) => {
+                      // Generate random chart points for each stock
+                      const isPositive = stock.Changep >= 0;
+                      const chartPoints = generateChartData(isPositive);
+                      const pointsString = chartPoints.join(',');
+                      
+                      return (
+                        <CarouselItem key={`${stock.Symbol}-${index}`} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
+                          <div 
+                            className="bg-gradient-to-br from-indigo-900 to-indigo-700 text-white p-4 rounded-lg cursor-pointer shadow-md hover:shadow-lg transition-shadow"
+                            onClick={() => handleStockSelect(stock.Symbol)}
+                          >
+                            <div className="flex justify-between items-start mb-3">
+                              <div>
+                                <h3 className="font-bold text-lg">{stock.Symbol.split('-')[0]}</h3>
+                                <p className="text-xs text-gray-300 truncate max-w-[100px]">{stock.mnName || stock.enName}</p>
+                              </div>
+                              <div className={`text-xs px-2 py-1 rounded-full ${isPositive ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                {isPositive ? '+' : ''}{stock.Changep?.toFixed(2)}%
+                              </div>
+                            </div>
+                            
+                            <div className="relative h-16 mb-2">
+                              <svg width="100%" height="100%" viewBox="0 0 100 30" preserveAspectRatio="none">
+                                {/* Area fill */}
+                                <defs>
+                                  <linearGradient id={`gradient-${index}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stopColor={isPositive ? "#4ade80" : "#f87171"} stopOpacity="0.3" />
+                                    <stop offset="100%" stopColor={isPositive ? "#4ade80" : "#f87171"} stopOpacity="0.05" />
+                                  </linearGradient>
+                                </defs>
+                                
+                                {/* Chart line */}
+                                <polyline
+                                  points={chartPoints.map((point, i) => `${i * (100 / (chartPoints.length - 1))},${30 - (point / 100) * 30}`).join(' ')}
+                                  fill="none"
+                                  stroke={isPositive ? "#4ade80" : "#f87171"}
+                                  strokeWidth="2"
+                                />
+                                
+                                {/* Area fill */}
+                                <path
+                                  d={`M0,${30 - (chartPoints[0] / 100) * 30} ${chartPoints.map((point, i) => `L${i * (100 / (chartPoints.length - 1))},${30 - (point / 100) * 30}`).join(' ')} L100,30 L0,30 Z`}
+                                  fill={`url(#gradient-${index})`}
+                                />
+                              </svg>
+                            </div>
+                            
+                            <div className="flex justify-between items-center">
+                              <div className="text-lg font-bold">{formatPrice(stock.LastTradedPrice)} ₮</div>
+                              {/* <div className="text-xs text-gray-300">Vol: {(stock.Volume || 0).toLocaleString()}</div> */}
+                            </div>
+                          </div>
+                        </CarouselItem>
+                      );
+                    })
+                  ) : (
+                    <CarouselItem className="pl-2 md:pl-4 basis-full">
+                      <div className="h-24 flex items-center justify-center">
+                        <p className="text-gray-500">{loading ? t('dashboard.loadingStocks') : t('common.noResults')}</p>
                       </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center text-gray-400 text-sm py-2">{t('dashboard.noBuyOrders')}</div>
-                )}
+                    </CarouselItem>
+                  )}
+                </CarouselContent>
+                <CarouselPrevious className="left-0 bg-indigo-900 text-white border-none" />
+                <CarouselNext className="right-0 bg-indigo-900 text-white border-none" />
+              </Carousel>
+            </div>
+          </div>
+          
+          {/* Order Book Section */}
+          <div className="mt-8 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-medium">{t('dashboard.orderBook')} - {selectedSymbol}</h2>
+              <div className="text-xs text-gray-500">{t('dashboard.asOf')} {lastUpdated}</div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-6 mt-3 min-h-[200px]">
+              <div className="bg-white dark:bg-gray-900 p-3 rounded-lg shadow-sm">
+                <h3 className="text-sm text-red-500 font-medium mb-2 flex items-center">
+                  <ArrowDown size={14} className="mr-1" /> {t('dashboard.sell')}
+                </h3>
+                <div className="space-y-2">
+                  {loading ? (
+                    // Loading placeholders for sell orders
+                    Array(5).fill(0).map((_, index) => (
+                      <div key={`sell-loading-${index}`} className="flex justify-between text-sm border-b pb-1 last:border-0 animate-pulse">
+                        <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      </div>
+                    ))
+                  ) : processedOrderBook.sell.length > 0 ? (
+                    processedOrderBook.sell.map((order, index) => {
+                      // Calculate opacity based on position (higher = more opaque)
+                      const opacity = 0.2 + (index / processedOrderBook.sell.length) * 0.8;
+                      return (
+                        <div 
+                          key={`sell-${order.id}-${index}`} 
+                          className="flex justify-between text-sm border-b pb-1 last:border-0"
+                          style={{ 
+                            background: `linear-gradient(to left, rgba(239, 68, 68, ${opacity * 0.1}), transparent)`
+                          }}
+                        >
+                          <span className="text-red-500 font-medium">{order.MDEntryPx.toLocaleString()} ₮</span>
+                          <span>{order.MDEntrySize.toLocaleString()}</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center text-gray-400 text-sm py-2">{t('dashboard.noSellOrders')}</div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-900 p-3 rounded-lg shadow-sm">
+                <h3 className="text-sm text-green-500 font-medium mb-2 flex items-center">
+                  <ArrowUp size={14} className="mr-1" /> {t('dashboard.buy')}
+                </h3>
+                <div className="space-y-2">
+                  {loading ? (
+                    // Loading placeholders for buy orders
+                    Array(5).fill(0).map((_, index) => (
+                      <div key={`buy-loading-${index}`} className="flex justify-between text-sm border-b pb-1 last:border-0 animate-pulse">
+                        <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      </div>
+                    ))
+                  ) : processedOrderBook.buy.length > 0 ? (
+                    processedOrderBook.buy.map((order, index) => {
+                      // Calculate opacity based on position (higher = more opaque)
+                      const opacity = 0.2 + (index / processedOrderBook.buy.length) * 0.8;
+                      return (
+                        <div 
+                          key={`buy-${order.id}-${index}`} 
+                          className="flex justify-between text-sm border-b pb-1 last:border-0"
+                          style={{ 
+                            background: `linear-gradient(to right, rgba(34, 197, 94, ${opacity * 0.1}), transparent)`
+                          }}
+                        >
+                          <span className="text-green-500 font-medium">{order.MDEntryPx.toLocaleString()} ₮</span>
+                          <span>{order.MDEntrySize.toLocaleString()}</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center text-gray-400 text-sm py-2">{t('dashboard.noBuyOrders')}</div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        
-        {/* Stock Details Section */}
-        <div className="mt-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-          <h2 className="text-lg font-medium mb-3">{t('dashboard.stockDetails')} - {selectedSymbol}</h2>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm p-2 bg-white dark:bg-gray-900 rounded">
-                <span className="text-gray-500">ISIN:</span>
-                <span className="font-medium">{getStockDetails.isin}</span>
+          {/* Stock Details Section */}
+          <div className="mt-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+            <h2 className="text-lg font-medium mb-3">{t('dashboard.stockDetails')} - {selectedSymbol}</h2>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm p-2 bg-white dark:bg-gray-900 rounded">
+                  <span className="text-gray-500">ISIN:</span>
+                  <span className="font-medium">{getStockDetails.isin}</span>
+                </div>
+                <div className="flex justify-between text-sm p-2 bg-white dark:bg-gray-900 rounded">
+                  <span className="text-gray-500">{t('dashboard.companyCode')}:</span>
+                  <span className="font-medium">{getStockDetails.companyCode}</span>
+                </div>
+                <div className="flex justify-between text-sm p-2 bg-white dark:bg-gray-900 rounded">
+                  <span className="text-gray-500">{t('dashboard.totalShares')}:</span>
+                  <span className="font-medium">{getStockDetails.totalShares}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm p-2 bg-white dark:bg-gray-900 rounded">
-                <span className="text-gray-500">{t('dashboard.companyCode')}:</span>
-                <span className="font-medium">{getStockDetails.companyCode}</span>
-              </div>
-              <div className="flex justify-between text-sm p-2 bg-white dark:bg-gray-900 rounded">
-                <span className="text-gray-500">{t('dashboard.totalShares')}:</span>
-                <span className="font-medium">{getStockDetails.totalShares}</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm p-2 bg-white dark:bg-gray-900 rounded">
-                <span className="text-gray-500">{t('dashboard.listedShares')}:</span>
-                <span className="font-medium">{getStockDetails.listedShares}</span>
-              </div>
-              <div className="flex justify-between text-sm p-2 bg-white dark:bg-gray-900 rounded">
-                <span className="text-gray-500">{t('dashboard.listingDate')}:</span>
-                <span className="font-medium">{getStockDetails.listingDate}</span>
-              </div>
-              <div className="flex justify-between text-sm p-2 bg-white dark:bg-gray-900 rounded">
-                <span className="text-gray-500">{t('dashboard.email')}:</span>
-                <span className="font-medium">{getStockDetails.email}</span>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm p-2 bg-white dark:bg-gray-900 rounded">
+                  <span className="text-gray-500">{t('dashboard.listedShares')}:</span>
+                  <span className="font-medium">{getStockDetails.listedShares}</span>
+                </div>
+                <div className="flex justify-between text-sm p-2 bg-white dark:bg-gray-900 rounded">
+                  <span className="text-gray-500">{t('dashboard.listingDate')}:</span>
+                  <span className="font-medium">{getStockDetails.listingDate}</span>
+                </div>
+                <div className="flex justify-between text-sm p-2 bg-white dark:bg-gray-900 rounded">
+                  <span className="text-gray-500">{t('dashboard.email')}:</span>
+                  <span className="font-medium">{getStockDetails.email}</span>
+                </div>
               </div>
             </div>
           </div>
