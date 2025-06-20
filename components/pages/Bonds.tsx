@@ -102,25 +102,16 @@ const Bonds = () => {
     fetchBondsData()
   }, [fetchBondsData])
 
-  // Format date
-  const formatDate = (dateString: string) => {
+  // Format date - improved to handle different formats
+  const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return '-'
-    
-    // Handle different date formats
-    if (dateString.includes('.')) {
-      return dateString // Already formatted
-    }
-    
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('en-GB', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      }).replace(/\//g, '.')
-    } catch (e) {
-      return dateString
-    }
+    return dateString
+  }
+
+  // Format nominal value with safe handling of null/undefined
+  const formatNominalValue = (value: number | null | undefined) => {
+    if (value === null || value === undefined || isNaN(value)) return '-'
+    return value.toLocaleString() + ' ₮'
   }
 
   return (
@@ -249,7 +240,7 @@ const Bonds = () => {
                     <td className="px-4 py-3">{bond.BondmnName}</td>
                     <td className="px-4 py-3">{bond.Issuer}</td>
                     <td className="px-4 py-3">{bond.Interest}</td>
-                    <td className="px-4 py-3">{bond.NominalValue.toLocaleString()} ₮</td>
+                    <td className="px-4 py-3">{formatNominalValue(bond.NominalValue)}</td>
                     <td className="px-4 py-3">{formatDate(bond.TradedDate)}</td>
                     <td className="px-4 py-3">{formatDate(bond.RefundDate)}</td>
                     <td className="px-4 py-3">

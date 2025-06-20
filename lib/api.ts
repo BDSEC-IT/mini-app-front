@@ -76,6 +76,11 @@ interface WeekHighLowData {
   last_closing_price: number;
 }
 
+// Type guard to check if a key is '52high' or '52low'
+function is52WeekKey(key: string): key is "52high" | "52low" {
+  return key === "52high" || key === "52low";
+}
+
 interface OrderBookEntry {
   id: number;
   Symbol: string;

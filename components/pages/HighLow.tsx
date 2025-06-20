@@ -71,17 +71,29 @@ const HighLow = () => {
     switch (activeTab) {
       case 'high':
         // Sort by 52-week high price (descending)
-        filtered.sort((a, b) => b['52high'] - a['52high'])
+        filtered.sort((a, b) => (b['52high'] || 0) - (a['52high'] || 0))
         break
       case 'low':
         // Sort by 52-week low price (ascending)
-        filtered.sort((a, b) => a['52low'] - b['52low'])
+        filtered.sort((a, b) => (a['52low'] || 0) - (b['52low'] || 0))
         break
     }
     
     // Apply sorting
     if (sortConfig.key) {
       filtered.sort((a, b) => {
+        // Handle special cases for 52high and 52low with bracket notation
+        if (sortConfig.key === '52high' as keyof WeekHighLowData || 
+            sortConfig.key === '52low' as keyof WeekHighLowData) {
+          const aValue = a[sortConfig.key as keyof WeekHighLowData] as number;
+          const bValue = b[sortConfig.key as keyof WeekHighLowData] as number;
+          
+          if (aValue === null || aValue === undefined) return 1
+          if (bValue === null || bValue === undefined) return -1
+          
+          return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+        
         const aValue = a[sortConfig.key!];
         const bValue = b[sortConfig.key!];
         
@@ -96,12 +108,10 @@ const HighLow = () => {
         }
         
         // Handle number comparison
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
         }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1
-        }
+        
         return 0
       })
     }
@@ -116,16 +126,18 @@ const HighLow = () => {
 
   // Format price
   const formatPrice = (price?: number) => {
-    if (price === undefined || isNaN(price)) return '-'
+    if (price === undefined || price === null || isNaN(price)) return '-'
     return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
 
   // Format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
     if (!dateString) return '-'
     
     try {
       const date = new Date(dateString)
+      if (isNaN(date.getTime())) return dateString // Return original if invalid date
+      
       return date.toLocaleDateString('en-GB', {
         year: 'numeric',
         month: '2-digit',
@@ -236,20 +248,20 @@ const HighLow = () => {
                       )}
                     </div>
                   </th>
-                  <th className="px-4 py-3 cursor-pointer" onClick={() => handleSort('52high')}>
+                  <th className="px-4 py-3 cursor-pointer" onClick={() => handleSort('52high' as keyof WeekHighLowData)}>
                     <div className="flex items-center">
                       {t('highLow.high', '52W High')}
-                      {sortConfig.key === '52high' && (
+                      {sortConfig.key === '52high' as keyof WeekHighLowData && (
                         sortConfig.direction === 'asc' 
                           ? <ArrowUp className="ml-1 h-4 w-4" /> 
                           : <ArrowDown className="ml-1 h-4 w-4" />
                       )}
                     </div>
                   </th>
-                  <th className="px-4 py-3 cursor-pointer" onClick={() => handleSort('52low')}>
+                  <th className="px-4 py-3 cursor-pointer" onClick={() => handleSort('52low' as keyof WeekHighLowData)}>
                     <div className="flex items-center">
                       {t('highLow.low', '52W Low')}
-                      {sortConfig.key === '52low' && (
+                      {sortConfig.key === '52low' as keyof WeekHighLowData && (
                         sortConfig.direction === 'asc' 
                           ? <ArrowUp className="ml-1 h-4 w-4" /> 
                           : <ArrowDown className="ml-1 h-4 w-4" />
@@ -290,8 +302,12 @@ const HighLow = () => {
               </thead>
               <tbody>
                 {filteredData.map((item) => {
-                  const isNearHigh = item.last_closing_price >= item['52high'] * 0.95;
-                  const isNearLow = item.last_closing_price <= item['52low'] * 1.05;
+                  const high52 = item['52high'] || 0;
+                  const low52 = item['52low'] || 0;
+                  const lastPrice = item.last_closing_price || 0;
+                  
+                  const isNearHigh = lastPrice >= high52 * 0.95;
+                  const isNearLow = lastPrice <= low52 * 1.05;
                   
                   return (
                     <tr 
@@ -301,16 +317,16 @@ const HighLow = () => {
                       <td className="px-4 py-3 font-medium">{item.Symbol}</td>
                       <td className="px-4 py-3">{item.mnTitle}</td>
                       <td className="px-4 py-3 text-green-500 dark:text-green-400 font-medium">
-                        {formatPrice(item['52high'])} ₮
+                        {formatPrice(high52)} ₮
                       </td>
                       <td className="px-4 py-3 text-red-500 dark:text-red-400 font-medium">
-                        {formatPrice(item['52low'])} ₮
+                        {formatPrice(low52)} ₮
                       </td>
                       <td className={`px-4 py-3 font-medium ${
                         isNearHigh ? 'text-green-500 dark:text-green-400' : 
                         isNearLow ? 'text-red-500 dark:text-red-400' : ''
                       }`}>
-                        {formatPrice(item.last_closing_price)} ₮
+                        {formatPrice(lastPrice)} ₮
                       </td>
                       <td className="px-4 py-3">
                         {formatDate(item.last_closing_date)}
