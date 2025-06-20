@@ -14,6 +14,18 @@ export default function StockInfo({ symbol = 'BDS', onSymbolSelect }: StockInfoP
   const [allStocks, setAllStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if we're on a mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Deduplicate stocks by symbol
   const uniqueStocks = useMemo(() => {
@@ -25,6 +37,15 @@ export default function StockInfo({ symbol = 'BDS', onSymbolSelect }: StockInfoP
     });
     return Array.from(stockMap.values());
   }, [allStocks]);
+
+  // Format stock options for dropdown to be shorter on mobile
+  const formatStockOption = (stock: StockData) => {
+    const baseSymbol = stock.Symbol.split('-')[0];
+    if (isMobile) {
+      return `${baseSymbol}`;
+    }
+    return `${baseSymbol} - ${stock.mnName || stock.enName}`;
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -84,7 +105,7 @@ export default function StockInfo({ symbol = 'BDS', onSymbolSelect }: StockInfoP
     <div className="bg-card rounded-lg p-4 shadow-lg">
       <div className="flex justify-between items-center mb-4">
         <select 
-          className="bg-background text-foreground px-3 py-2 rounded-md"
+          className="bg-background text-foreground px-3 py-2 rounded-md text-sm max-w-[180px] md:max-w-none truncate"
           value={symbol}
           onChange={handleSymbolChange}
         >
@@ -92,12 +113,17 @@ export default function StockInfo({ symbol = 'BDS', onSymbolSelect }: StockInfoP
             // Extract the base symbol without the -O-0000 suffix
             const baseSymbol = stock.Symbol.split('-')[0];
             return (
-              <option key={`${baseSymbol}-${stock.pkId}`} value={baseSymbol}>
-                {baseSymbol} - {stock.mnName || stock.enName}
+              <option key={`${baseSymbol}-${stock.pkId}`} value={baseSymbol} className="truncate">
+                {formatStockOption(stock)}
               </option>
             );
           })}
         </select>
+        {stockData && isMobile && (
+          <span className="text-xs bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-full truncate max-w-[120px]">
+            {stockData.mnName || stockData.enName}
+          </span>
+        )}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

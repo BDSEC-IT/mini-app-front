@@ -122,7 +122,7 @@ const FAQ = () => {
                 key={category.id}
                 className={`px-3 py-1 text-sm rounded-full ${
                   activeCategory === category.id
-                    ? 'bg-indigo-900 text-white'
+                    ? 'bg-bdsec text-white'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
                 }`}
                 onClick={() => setActiveCategory(category.id)}

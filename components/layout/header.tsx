@@ -26,8 +26,8 @@ const Header = () => {
     : '/images/light_bdsec_drlars (2).png';
 
   return (
-    <header className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-      <div className="flex items-center justify-between h-16 px-4 container mx-auto">
+    <header className="sticky top-0 z-20 mx-auto max-w-[1400px] px-4 md:px-6 lg:px-8 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+      <div className="flex items-center justify-between h-16 ">
         {/* Logo - use different logo based on theme */}
         <div className="flex items-center">
           <div className="relative h-10 w-40">
@@ -47,17 +47,17 @@ const Header = () => {
         
         {/* Right side icons */}
         <div className="flex items-center space-x-4">
-          <LanguageToggle />
+          {/* <LanguageToggle /> */}
           
           <button
-            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            className="text-bdsec dark:text-indigo-400 hover:text-gray-500 dark:hover:text-white"
             aria-label={t('header.notifications')}
           >
             <Bell size={iconSize} />
           </button>
           
           <button
-            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            className="text-bdsec dark:text-indigo-400 hover:text-gray-500 dark:hover:text-white"
             onClick={toggleMenu}
             aria-label={t('header.menu')}
           >

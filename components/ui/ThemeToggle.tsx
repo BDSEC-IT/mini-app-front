@@ -40,14 +40,7 @@ const ThemeToggle = () => {
           <Sun size={12} className="text-yellow-500" />
         )}
       </span>
-      
-      {/* Background context icons - only show when circle is not covering them */}
-      <span className="absolute left-1 top-1">
-        <Sun size={10} className={`transition-opacity duration-300 ${theme === 'light' ? 'opacity-0' : 'opacity-40'} text-white`} />
-      </span>
-      <span className="absolute right-1 top-1">
-        <Moon size={10} className={`transition-opacity duration-300 ${theme === 'dark' ? 'opacity-0' : 'opacity-40'} text-gray-600`} />
-      </span>
+    
     </button>
   )
 }

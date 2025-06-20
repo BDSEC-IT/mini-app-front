@@ -43,6 +43,39 @@ interface StockData {
   category?: string; // Stock category (I, II, III)
 }
 
+interface BondData {
+  pkId: number;
+  id: number;
+  Symbol: string;
+  BondmnName: string;
+  BondenName: string;
+  Issuer: string;
+  IssuerEn: string;
+  Interest: string;
+  Date: string;
+  NominalValue: number;
+  mnInterestConditions: string;
+  enInterestConditions: string;
+  MoreInfo: string;
+  updatedAt: string;
+  TradedDate: string;
+  RefundDate: string;
+  Isdollar: string | null;
+  createdAt: string;
+}
+
+interface WeekHighLowData {
+  Symbol: string;
+  trade_count: number;
+  mnTitle: string;
+  enTitle: string;
+  avg_52_week_closing_price: number;
+  "52low": number;
+  "52high": number;
+  last_closing_date: string;
+  last_closing_price: number;
+}
+
 interface OrderBookEntry {
   id: number;
   Symbol: string;
@@ -70,6 +103,16 @@ interface OrderBookResponse {
 interface AllStocksResponse {
   success: boolean;
   data: StockData[];
+}
+
+interface BondsResponse {
+  success: boolean;
+  data: BondData[];
+}
+
+interface WeekHighLowResponse {
+  success: boolean;
+  data: WeekHighLowData[];
 }
 
 interface TradingHistoryResponse {
@@ -151,4 +194,36 @@ export const fetchTradingHistory = async (symbol: string, page: number = 1, limi
   return response.json();
 };
 
-export type { StockData, ApiResponse, OrderBookEntry, OrderBookResponse, AllStocksResponse, TradingHistoryResponse, TradingHistoryData }; 
+export const fetchBonds = async (page: number = 1, limit: number = 5000): Promise<BondsResponse> => {
+  const url = `${BASE_URL}/securities/bonds?page=${page}&limit=${limit}&sortField`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to fetch bonds data');
+  }
+  return response.json();
+};
+
+export const fetch52WeekHighLow = async (): Promise<WeekHighLowResponse> => {
+  const url = `${BASE_URL}/securities/52-week-high-low`;
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to fetch 52-week high-low data');
+  }
+  return response.json();
+};
+
+export type { 
+  StockData, 
+  ApiResponse, 
+  OrderBookEntry, 
+  OrderBookResponse, 
+  AllStocksResponse, 
+  TradingHistoryResponse, 
+  TradingHistoryData,
+  BondData,
+  BondsResponse,
+  WeekHighLowData,
+  WeekHighLowResponse
+}; 

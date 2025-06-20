@@ -79,6 +79,11 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
     date: new Date(),
     value: 0
   })
+  // Track if we've ever shown a tooltip
+  const [hasInteracted, setHasInteracted] = useState(false)
+  // Store the last valid tooltip
+  const lastValidTooltipRef = useRef<{x: number, y: number, date: Date, value: number} | null>(null)
+  
   const pointsRef = useRef<Point[]>([])
   const { t } = useTranslation()
   const [isMobile, setIsMobile] = useState(false)
@@ -282,7 +287,7 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
       const scaledMinPrice = minPrice - priceRange * 0.05
       const scaledMaxPrice = maxPrice + priceRange * 0.05
       
-      // Scale functions - use full canvas area
+      // Scale functions - use full canvas width with NO padding
       const xScale = (date: Date) => {
         const minDate = prices[0].date
         const maxDate = prices[prices.length - 1].date
@@ -370,26 +375,17 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
         ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y)
       }
       
-      // Set line style - sharper look with thinner line
+      // Set line style - use border instead of shadow
       ctx.strokeStyle = theme === 'dark' ? '#a78bfa' : '#818cf8' // Purple/indigo color
       ctx.lineWidth = 2 // Thinner line for sharper look
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
-      ctx.shadowColor = theme === 'dark' ? 'rgba(139, 92, 246, 0.5)' : 'rgba(99, 102, 241, 0.5)'
-      ctx.shadowBlur = 4 // Reduced blur for sharper look
+      // Remove shadow
+      ctx.shadowColor = 'transparent'
+      ctx.shadowBlur = 0
       ctx.stroke()
       
-      // Draw tooltip if visible
-      if (tooltip.visible) {
-        // Draw point at tooltip position
-        ctx.beginPath()
-        ctx.arc(tooltip.x, tooltip.y, 5, 0, Math.PI * 2)
-        ctx.fillStyle = theme === 'dark' ? '#fff' : '#4338ca'
-        ctx.fill()
-        ctx.strokeStyle = theme === 'dark' ? '#1e1b4b' : '#fff'
-        ctx.lineWidth = 2
-        ctx.stroke()
-      }
+      // No tooltip point drawing - removed
     }
 
     drawChart()
@@ -419,11 +415,9 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
         }
       })
       
-      // Only show tooltip if mouse is close enough to a point
-      // Use a larger threshold on mobile for easier interaction
+      // Update tooltip when mouse is near a point
       const threshold = isMobile ? 40 : 30
       if (closestPoint && minDistance < threshold) {
-        // Using type assertion to fix TypeScript error
         const point = closestPoint as Point
         setTooltip({
           visible: true,
@@ -432,17 +426,29 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
           date: point.date,
           value: point.value
         })
-      } else {
-        setTooltip(prev => ({ ...prev, visible: false }))
+        
+        // Store this as the last valid tooltip
+        lastValidTooltipRef.current = {
+          x: point.x,
+          y: point.y,
+          date: point.date,
+          value: point.value
+        }
+        
+        // Mark that we've interacted with the chart
+        setHasInteracted(true)
+        
+        // Redraw the chart
+        requestAnimationFrame(() => drawChart())
       }
     }
     
-    // Handle mouse leave
+    // Handle mouse leave - keep the last tooltip visible
     const handleMouseLeave = () => {
-      setTooltip(prev => ({ ...prev, visible: false }))
+      // Do nothing, keep the last tooltip visible
     }
     
-    // Handle click to toggle tooltip
+    // Handle click to set tooltip
     const handleClick = (e: MouseEvent) => {
       if (!containerRef.current || pointsRef.current.length === 0) return
       
@@ -462,30 +468,33 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
         }
       })
       
-      // Toggle tooltip visibility if click is close enough to a point
-      // Use a larger threshold on mobile for easier interaction
+      // Set tooltip if click is close enough to a point
       const threshold = isMobile ? 40 : 30
       if (closestPoint && minDistance < threshold) {
-        // Using type assertion to fix TypeScript error
         const point = closestPoint as Point
         
-        if (tooltip.visible && tooltip.x === point.x && tooltip.y === point.y) {
-          // If clicking the same point, hide tooltip
-          setTooltip(prev => ({ ...prev, visible: false }))
-        } else {
-          // Show tooltip for the new point
-          setTooltip({
-            visible: true,
-            x: point.x,
-            y: point.y,
-            date: point.date,
-            value: point.value
-          })
+        setTooltip({
+          visible: true,
+          x: point.x,
+          y: point.y,
+          date: point.date,
+          value: point.value
+        })
+        
+        // Store this as the last valid tooltip
+        lastValidTooltipRef.current = {
+          x: point.x,
+          y: point.y,
+          date: point.date,
+          value: point.value
         }
-      } else {
-        // Hide tooltip if clicking away from points
-        setTooltip(prev => ({ ...prev, visible: false }))
+        
+        // Mark that we've interacted with the chart
+        setHasInteracted(true)
       }
+      
+      // Always redraw after click
+      requestAnimationFrame(() => drawChart())
     }
     
     window.addEventListener('resize', handleResize)
@@ -539,52 +548,63 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
 
   return (
     <div className="w-full h-full flex flex-col">
-      {/* Chart container - take most of the height */}
-      <div ref={containerRef} className="w-full flex-grow relative">
+      {/* Chart container - take most of the height, with no horizontal padding */}
+      <div ref={containerRef} className="w-full h-[calc(100%-50px)] relative">
         <canvas ref={canvasRef} className="w-full h-full"></canvas>
         
-        {/* Tooltip - smaller on mobile */}
-        {tooltip.visible && (
+        {/* Show tooltip if visible or if we have interacted with the chart before */}
+        {(tooltip.visible || (hasInteracted && lastValidTooltipRef.current)) && (
           <div 
-            className={`absolute pointer-events-none bg-white dark:bg-gray-800 shadow-lg rounded-md px-3 py-2 text-sm z-10 transform -translate-x-1/2 -translate-y-full ${isMobile ? 'text-xs' : 'text-sm'}`}
+            className="absolute pointer-events-none bg-white dark:bg-gray-800 border border-soft border-opacity-50 rounded-md px-3 py-2 z-10 transform -translate-x-1/2 -translate-y-full text-xs"
             style={{ 
-              left: tooltip.x, 
-              top: tooltip.y - (isMobile ? 5 : 10),
-              borderLeft: `${isMobile ? 2 : 3}px solid ${theme === 'dark' ? '#a78bfa' : '#818cf8'}`
+              left: tooltip.visible ? tooltip.x : (lastValidTooltipRef.current?.x || 0), 
+              top: (tooltip.visible ? tooltip.y : (lastValidTooltipRef.current?.y || 0)) - 8,
+              transform: 'translate(-50%, -100%)'
             }}
           >
             <div className="font-medium text-indigo-600 dark:text-indigo-300">
-              {tooltip.value.toLocaleString()} ₮
+              {tooltip.visible 
+                ? tooltip.value.toLocaleString() 
+                : (lastValidTooltipRef.current?.value || 0).toLocaleString()
+              } ₮
             </div>
             <div className="text-gray-500 dark:text-gray-400 text-xs">
-              {tooltip.date.toLocaleDateString()} {isMobile ? '' : tooltip.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              {tooltip.visible 
+                ? tooltip.date.toLocaleDateString() 
+                : (lastValidTooltipRef.current?.date || new Date()).toLocaleDateString()
+              } {isMobile ? '' : (tooltip.visible 
+                ? tooltip.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                : (lastValidTooltipRef.current?.date || new Date()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+              )}
             </div>
           </div>
         )}
       </div>
       
-      {/* Time filter buttons at bottom */}
-      <div className="mt-2 flex justify-center border-t pt-2">
-        {[
-          { id: '1D', label: t('chart.1d', '1D') },
-          { id: '1W', label: t('chart.1w', '1W') },
-          { id: '1M', label: t('chart.1m', '1M') },
-          { id: '3M', label: t('chart.3m', '3M') },
-          { id: '1Y', label: t('chart.1y', '1Y') },
-          { id: 'ALL', label: t('chart.all', 'ALL') }
-        ].map((periodOption) => (
-          <button
-            key={periodOption.id}
-            className={`px-4 py-1.5 text-xs rounded-md mx-1 transition-colors ${
-              activePeriod === periodOption.id 
-                ? 'bg-indigo-900 text-white shadow-sm' 
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-            onClick={() => handlePeriodChange(periodOption.id)}
-          >
-            {periodOption.label}
-          </button>
-        ))}
+      {/* Time filter buttons at bottom - with fixed height and prominent styling */}
+      <div className="h-[50px] flex justify-center items-center border-t border-soft border-opacity-50 pt-2 pb-2 bg-white dark:bg-gray-900 rounded-b-lg">
+        <div className="flex flex-wrap justify-center items-center gap-1">
+          {[
+            { id: '1D', label: '1D' },
+            { id: '1W', label: '1W' },
+            { id: '1M', label: '1M' },
+            { id: '3M', label: '3M' },
+            { id: '1Y', label: '1Y' },
+            { id: 'ALL', label: 'ALL' }
+          ].map((periodOption) => (
+            <button
+              key={periodOption.id}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md mx-1 transition-colors ${
+                activePeriod === periodOption.id 
+                  ? 'bg-indigo-900 text-white border border-soft border-opacity-50' 
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 border border-soft border-opacity-30'
+              }`}
+              onClick={() => handlePeriodChange(periodOption.id)}
+            >
+              {periodOption.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )

@@ -114,7 +114,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
                   href={item.href} 
                   className={`flex items-center py-3 px-4 rounded-lg transition-colors ${
                     pathname === item.href 
-                      ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300' 
+                      ? 'bg-bdsec/5 text-bdsec dark:bg-bdsec-dark/20 dark:text-bdsec-dark/90' 
                       : 'hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                   onClick={onClose}

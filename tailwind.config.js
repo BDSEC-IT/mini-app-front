@@ -14,7 +14,12 @@ module.exports = {
   theme: {
     container: {
       center: 'true',
-      padding: '2rem',
+      padding: {
+        DEFAULT: '0.5rem',  // 8px for smallest screens
+        sm: '1rem',         // 16px for small screens
+        md: '1.5rem',       // 24px for medium screens
+        lg: '2rem',         // 32px for large screens
+      },
       screens: {
         '2xl': '1400px'
       }
@@ -32,6 +37,8 @@ module.exports = {
         '2xl': ['24px', { lineHeight: '36px', letterSpacing: '0.005em' }],
         '3xl': ['30px', { lineHeight: '40px', letterSpacing: '0.005em' }],
         '4xl': ['36px', { lineHeight: '48px', letterSpacing: '0.005em' }],
+        '2xs': ['10px', { lineHeight: '14px', letterSpacing: '0.01em' }],
+        '3xs': ['8px', { lineHeight: '12px', letterSpacing: '0.01em' }],
       },
       spacing: {
         'default': '16px',
@@ -46,14 +53,22 @@ module.exports = {
         // BDSEC Brand Colors
         'bdsec': {
           DEFAULT: '#21214f',
-          dark: '#1a1a3e'
+          dark: '#6366f1' // Indigo-500 for dark mode
         },
         'soft': {
           DEFAULT: '#585E72',
           dark: '#6B7280'
         },
-        'green': '#4ECCA3',
-        'red': '#E63946',
+        'green': {
+          DEFAULT: '#2E8B57', // Darker sea green
+          light: '#4ECCA3',   // Original color
+          dark: '#2D8659'     // Dark mode variant
+        },
+        'red': {
+          DEFAULT: '#CF3A47', // Darker red
+          light: '#E63946',   // Original color
+          dark: '#BF2F3C'     // Dark mode variant
+        },
         'label': {
           DEFAULT: '#4A4A4A',
           dark: '#D1D5DB'
@@ -61,6 +76,20 @@ module.exports = {
         'placeholder': {
           DEFAULT: '#A0A0A0',
           dark: '#9CA3AF'
+        },
+        // Indigo colors for dark mode
+        'indigo': {
+          50: '#eef2ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#6366f1',
+          600: '#4f46e5',
+          700: '#4338ca',
+          800: '#3730a3',
+          900: '#312e81',
+          950: '#1e1b4b',
         },
         // Dark theme colors
         'dark': {
