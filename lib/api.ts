@@ -38,47 +38,8 @@ interface StockData {
   dates: string;
   createdAt: string;
   updatedAt: string;
-  BestBidPx?: number; // For backward compatibility
-  BestOfferPx?: number; // For backward compatibility
-  category?: string; // Stock category (I, II, III)
-}
-
-interface BondData {
-  pkId: number;
-  id: number;
-  Symbol: string;
-  BondmnName: string;
-  BondenName: string;
-  Issuer: string;
-  IssuerEn: string;
-  Interest: string;
-  Date: string;
-  NominalValue: number;
-  mnInterestConditions: string;
-  enInterestConditions: string;
-  MoreInfo: string;
-  updatedAt: string;
-  TradedDate: string;
-  RefundDate: string;
-  Isdollar: string | null;
-  createdAt: string;
-}
-
-interface WeekHighLowData {
-  Symbol: string;
-  trade_count: number;
-  mnTitle: string;
-  enTitle: string;
-  avg_52_week_closing_price: number;
-  "52low": number;
-  "52high": number;
-  last_closing_date: string;
-  last_closing_price: number;
-}
-
-// Type guard to check if a key is '52high' or '52low'
-function is52WeekKey(key: string): key is "52high" | "52low" {
-  return key === "52high" || key === "52low";
+  BestBidPx?: number;
+  BestOfferPx?: number;
 }
 
 interface OrderBookEntry {
