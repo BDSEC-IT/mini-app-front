@@ -1,8 +1,11 @@
 {
   "nav": {
     "home": "Нүүр",
+    "orders": "Захиалга өгөх",
+    "shareholders": "Хувьцаа эзэмшигчдэд",
+    "about": "Бидний тухай",
+    "more": "Дэлгэрэнгүй",
     "assets": "Хөрөнгө",
-    "orders": "Захиалга",
     "ipo": "IPO"
   },
   "common": {
@@ -17,11 +20,27 @@
     "language": "Хэл",
     "theme": "Загвар",
     "noResults": "Үр дүн олдсонгүй",
-    "settings": "Тохиргоо"
+    "settings": "Тохиргоо",
+    "searchForCountry": "Улс хайх...",
+    "viewAll": "Бүгдийг харах",
+    "next": "Дараах",
+    "finish": "Дуусгах",
+    "searchPlaceholder": "Хувьцаа хайх...",
+    "noResultsFound": "Илэрц олдсонгүй",
+    "stocks": "Хувьцаа",
+    "bonds": "Бонд",
+    "highLow": "Өндөр/Намуу",
+    "aboutUs": "Бидний тухай",
+    "faq": "Түгээмэл асуулт",
+    "menu": "Цэс",
+    "light": "Цагаан",
+    "dark": "Хар"
   },
   "header": {
     "notifications": "Мэдэгдэл",
-    "menu": "Цэс"
+    "menu": "Цэс",
+    "trading": "Арилжаа",
+    "fees": "Хураамж"
   },
   "profile": {
     "name": "Болд Эрдэнэ",
@@ -157,7 +176,10 @@
     "nationalityHelpText": "Таны мэдээллийг баталгаажуулахын тулд таны улсыг мэдэх шаардлагатай.",
     "enterYourRegisterNumber": "Та регистрийн дугаараа оруулна уу",
     "registerHelpText": "Таны {{country}} улсын регистрийн дугаар.",
-    "registerNumber": "Регистрийн дугаар"
+    "registerNumber": "Регистрийн дугаар",
+    "verifyAccount": "Үргэлжлүүлэх",
+    "accountNotFound": "Регистрийн дугаар олдсонгүй. Дахин шалгаад оролдоно уу.",
+    "verificationFailed": "Регистрийн дугаарыг баталгаажуулахад алдаа гарлаа"
   },
   "bottomNav": {
     "dashboard": "Нүүр"

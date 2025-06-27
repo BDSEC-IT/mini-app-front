@@ -577,6 +577,42 @@ export const fetch52WeekHighLow = async (): Promise<WeekHighLowResponse> => {
   }
 };
 
+export const sendRegistrationNumber = async (registrationNumber: string) => {
+  const url = `${BASE_URL}/helper/search-account/${registrationNumber}`;
+  
+  try {
+    const response = await fetchWithTimeout(url);
+    
+    // Parse the response regardless of status code
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      // If response is not ok, return the error from the server
+      return {
+        success: false,
+        message: responseData.message || `HTTP error! status: ${response.status}`,
+        data: null
+      };
+    }
+    
+    // Success case - return the data
+    return {
+      success: true,
+      message: responseData.message || 'Account found',
+      data: responseData.data || responseData
+    };
+  } catch (error) {
+    console.error('Error searching account:', error);
+    
+    // Network or parsing error
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to search account',
+      data: null
+    };
+  }
+};
+
 export type { 
   StockData, 
   ApiResponse, 

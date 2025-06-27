@@ -13,22 +13,19 @@ const Header = () => {
   const { t } = useTranslation()
   const { theme } = useTheme()
   
-  // Increased icon size by 20%
   const iconSize = 26
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen)
   }
 
-  // Use the correct image paths
   const logoSrc = theme === 'dark' 
     ? '/images/Group_2085662328_reriki (1).png'
     : '/images/light_bdsec_drlars (2).png';
 
   return (
     <header className="sticky top-0 z-20 mx-auto max-w-[1400px] px-4 md:px-6 lg:px-8 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-      <div className="flex items-center justify-between h-16 ">
-        {/* Logo - use different logo based on theme */}
+      <div className="flex items-center justify-between h-16">
         <div className="flex items-center">
           <div className="relative h-10 w-40">
             <Image
@@ -45,9 +42,8 @@ const Header = () => {
           </div>
         </div>
         
-        {/* Right side icons */}
         <div className="flex items-center space-x-4">
-          {/* <LanguageToggle /> */}
+          <LanguageToggle />
           
           <button
             className="text-bdsec dark:text-indigo-400 hover:text-gray-500 dark:hover:text-white"
@@ -66,10 +62,9 @@ const Header = () => {
         </div>
       </div>
       
-      {/* Side Menu */}
       <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
     </header>
   )
 }
 
-export default Header 
+export default Header

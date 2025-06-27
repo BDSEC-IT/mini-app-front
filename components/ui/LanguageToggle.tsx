@@ -1,54 +1,30 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
-import i18n from '@/lib/i18n'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useTranslation } from 'react-i18next'
+import { Globe } from 'lucide-react'
 
 const LanguageToggle = () => {
   const { language, setLanguage } = useLanguage()
-  const { i18n: i18nInstance } = useTranslation()
-  const [mounted, setMounted] = useState(false)
-  
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-  
-  const handleLanguageChange = (lang: 'en' | 'mn') => {
-    setLanguage(lang)
-    i18nInstance.changeLanguage(lang)
+  const { i18n } = useTranslation()
+
+  const handleLanguageChange = () => {
+    const newLang = language === 'en' ? 'mn' : 'en'
+    setLanguage(newLang)
+    i18n.changeLanguage(newLang)
     if (typeof window !== 'undefined') {
-      localStorage.setItem('language', lang)
+      localStorage.setItem('language', newLang)
     }
-  }
-  
-  if (!mounted) {
-    return <div className="w-16 h-8 bg-gray-200 dark:bg-gray-700 rounded-full" />
   }
 
   return (
-    <div className="flex items-center p-1 space-x-1 bg-gray-200 dark:bg-gray-700 rounded-full">
-      <button
-        onClick={() => handleLanguageChange('mn')}
-        className={`w-8 h-6 flex items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
-          language === 'mn'
-            ? 'bg-white dark:bg-gray-900 text-bdsec dark:text-white shadow-sm'
-            : 'text-gray-500 dark:text-gray-400'
-        }`}
-      >
-        MN
-      </button>
-      <button
-        onClick={() => handleLanguageChange('en')}
-        className={`w-8 h-6 flex items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
-          language === 'en'
-            ? 'bg-white dark:bg-gray-900 text-bdsec dark:text-white shadow-sm'
-            : 'text-gray-500 dark:text-gray-400'
-        }`}
-      >
-        EN
-      </button>
-    </div>
+    <button
+      onClick={handleLanguageChange}
+      className="flex items-center space-x-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-bdsec dark:hover:text-indigo-400 transition-colors"
+    >
+      <Globe size={18} />
+      <span>{language.toUpperCase()}</span>
+    </button>
   )
 }
 

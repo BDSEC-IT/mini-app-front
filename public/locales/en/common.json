@@ -1,8 +1,11 @@
 {
   "nav": {
     "home": "Home",
-    "assets": "Assets",
     "orders": "Orders",
+    "shareholders": "For Shareholders",
+    "about": "About",
+    "more": "More",
+    "assets": "Assets",
     "ipo": "IPO"
   },
   "common": {
@@ -20,7 +23,18 @@
     "settings": "Settings",
     "viewAll": "View All",
     "next": "Next",
-    "finish": "Finish"
+    "finish": "Finish",
+    "searchForCountry": "Search for a country...",
+    "searchPlaceholder": "Search stocks...",
+    "noResultsFound": "No results found",
+    "stocks": "Stocks",
+    "bonds": "Bonds",
+    "highLow": "High/Low",
+    "aboutUs": "About Us",
+    "faq": "FAQ",
+    "menu": "Menu",
+    "light": "Light",
+    "dark": "Dark"
   },
   "header": {
     "notifications": "Notifications",
@@ -160,7 +174,10 @@
     "nationalityHelpText": "We need to know your country to verify your information.",
     "enterYourRegisterNumber": "Enter Your Register Number",
     "registerHelpText": "Your registration number in {{country}}.",
-    "registerNumber": "Register Number"
+    "registerNumber": "Register Number",
+    "verifyAccount": "Continue",
+    "accountNotFound": "Registration number not found. Please check and try again.",
+    "verificationFailed": "Failed to verify registration number"
   },
   "bottomNav": {
     "dashboard": "Dashboard"
