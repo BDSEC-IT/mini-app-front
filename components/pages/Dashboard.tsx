@@ -6,7 +6,7 @@ import StockInfo from '../ui/StockInfo'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useTranslation } from 'react-i18next'
 import { Search, ChevronDown, ArrowDown, ArrowUp, X, TrendingUp, Activity, ChevronRight, BarChart3 } from 'lucide-react'
-import { fetchOrderBook, fetchAllStocks, type OrderBookEntry, type StockData } from '@/lib/api'
+import { fetchOrderBook, fetchAllStocks, fetchStockData, type OrderBookEntry, type StockData } from '@/lib/api'
 import {
   Carousel,
   CarouselContent,
@@ -46,6 +46,10 @@ const DashboardContent = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [animationParent] = useAutoAnimate()
+  const [hoveredPrice, setHoveredPrice] = useState<number | null>(null)
+  const [hoveredChange, setHoveredChange] = useState<number | null>(null)
+  const [hoveredChangePercent, setHoveredChangePercent] = useState<number | null>(null)
+  const [selectedStockData, setSelectedStockData] = useState<StockData | null>(null)
   
   // Autoplay plugin configuration
   const autoplayPlugin = useRef(
@@ -55,11 +59,6 @@ const DashboardContent = () => {
       stopOnMouseEnter: true,
     })
   )
-  
-  // Get the selected stock data
-  const selectedStockData = useMemo(() => {
-    return allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol) || null;
-  }, [selectedSymbol, allStocks]);
   
   // Fetch all stocks data
   const fetchStocksData = useCallback(async () => {
@@ -73,6 +72,20 @@ const DashboardContent = () => {
       console.error('Error fetching stocks:', err);
     }
   }, []);
+  
+  // Fetch specific stock data for the selected symbol
+  const fetchSelectedStockData = useCallback(async () => {
+    try {
+      const response = await fetchStockData(`${selectedSymbol}-O-0000`);
+      if (response.success && response.data) {
+        // The API returns a single StockData object when fetching by symbol
+        const stockData = Array.isArray(response.data) ? response.data[0] : response.data;
+        setSelectedStockData(stockData);
+      }
+    } catch (err) {
+      console.error('Error fetching selected stock data:', err);
+    }
+  }, [selectedSymbol]);
   
   // Fetch order book data
   const fetchOrderBookData = useCallback(async () => {
@@ -91,6 +104,17 @@ const DashboardContent = () => {
       setLoading(false);
     }
   }, [selectedSymbol]);
+
+  // Fetch data when component mounts or selectedSymbol changes
+  useEffect(() => {
+    fetchStocksData();
+    fetchSelectedStockData();
+  }, [fetchStocksData, fetchSelectedStockData]);
+
+  // Fetch order book when selectedSymbol changes
+  useEffect(() => {
+    fetchOrderBookData();
+  }, [fetchOrderBookData]);
 
   // Process order book data
   const processedOrderBook = useMemo(() => {
@@ -229,6 +253,18 @@ const DashboardContent = () => {
       .finally(() => {
         setLoading(false);
       });
+    
+    // Also fetch the specific stock data
+    fetchStockData(`${baseSymbol}-O-0000`)
+      .then(response => {
+        if (response.success && response.data) {
+          const stockData = Array.isArray(response.data) ? response.data[0] : response.data;
+          setSelectedStockData(stockData);
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching selected stock data:', err);
+      });
   };
   
   // Generate chart data points for mini charts
@@ -250,20 +286,11 @@ const DashboardContent = () => {
     return price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   };
   
-  // Fetch order book data on component mount and when symbol changes
-  useEffect(() => {
-    fetchOrderBookData();
-    
-    // Set up polling interval
-    const interval = setInterval(fetchOrderBookData, 10000); // Poll every 10 seconds
-    
-    return () => clearInterval(interval);
-  }, [fetchOrderBookData]);
-  
-  // Fetch all stocks data on component mount
-  useEffect(() => {
-    fetchStocksData();
-  }, [fetchStocksData]);
+  const handlePriceHover = (price: number | null, change?: number, changePercent?: number) => {
+    setHoveredPrice(price);
+    setHoveredChange(change ?? null);
+    setHoveredChangePercent(changePercent ?? null);
+  };
   
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
@@ -281,17 +308,11 @@ const DashboardContent = () => {
             </div>
             
             <div className="mt-2">
-              <h1 className="text-3xl font-bold">
-                {selectedStockData ? formatPrice(selectedStockData.LastTradedPrice) : '-'} ₮
-              </h1>
-              {selectedStockData && (
-                <div className={`flex items-center text-sm ${selectedStockData.Changep >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {selectedStockData.Changep >= 0 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
-                  <span>
-                    {selectedStockData.Changes?.toFixed(2)} ({selectedStockData.Changep?.toFixed(2)}%)
-                  </span>
-                </div>
-              )}
+              <div className="">
+                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+                  {selectedStockData ? formatPrice(selectedStockData.PreviousClose) : '-'} ₮
+                </h1>
+              </div>
             </div>
           </div>
           
@@ -312,10 +333,24 @@ const DashboardContent = () => {
                   <X size={16} className="text-gray-500" />
                 </button>
               </div>
+            ) : selectedStockData ? (
+              <div className="flex items-center border rounded-full px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                <Search size={16} className="text-blue-500 mr-2" />
+                <div className="flex items-center text-sm">
+                  <span className="font-semibold text-blue-700 dark:text-blue-300">{selectedSymbol}</span>
+                  <span className="mx-2 text-blue-400 text-lg">•</span>
+                  <span className="text-blue-600 dark:text-blue-400 truncate max-w-32">
+                    {selectedStockData.mnName || selectedStockData.enName || ''}
+                  </span>
+                </div>
+                <button onClick={handleSearchClick} className="ml-2">
+                  <ChevronDown size={16} className="text-blue-500" />
+                </button>
+              </div>
             ) : (
               <button
                 onClick={handleSearchClick}
-                className="flex items-center border rounded-full px-3 py-2 bg-gray-100 dark:bg-gray-800"
+                className="flex items-center border rounded-full px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 <Search size={16} className="text-gray-500 mr-2" />
                 <span className="text-sm text-gray-500">{t('common.search')}</span>
@@ -324,24 +359,28 @@ const DashboardContent = () => {
             
             {/* Search Results Dropdown */}
             {isSearchOpen && searchTerm && (
-              <div className="absolute top-full right-0 mt-1 w-64 max-h-60 overflow-y-auto bg-white dark:bg-gray-800 border rounded-md shadow-lg z-50">
+              <div className="absolute top-full right-0 mt-1 w-80 max-h-60 overflow-y-auto bg-white dark:bg-gray-800 border rounded-md shadow-lg z-50">
                 {searchResults.length > 0 ? (
                   searchResults.map((stock, index) => {
                     // Get clean symbol without suffix
                     const cleanSymbol = stock.Symbol.split('-')[0];
+                    const companyName = stock.mnName || stock.enName || '';
                     return (
                       <button
                         key={`search-${cleanSymbol}-${index}`}
-                        className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
+                        className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition-colors"
                         onClick={() => handleStockSelect(stock.Symbol)}
                       >
-                        <div className="font-medium">{cleanSymbol}</div>
-                        <div className="text-xs text-gray-500">{stock.mnName || stock.enName}</div>
+                        <div className="flex items-center">
+                          <span className="font-semibold text-gray-900 dark:text-white">{cleanSymbol}</span>
+                          <span className="mx-2 text-gray-400 text-lg">•</span>
+                          <span className="text-gray-600 dark:text-gray-300 truncate">{companyName}</span>
+                        </div>
                       </button>
                     );
                   })
                 ) : (
-                  <div className="px-3 py-2 text-sm text-gray-500">{t('common.noResults')}</div>
+                  <div className="px-4 py-3 text-sm text-gray-500">{t('common.noResults')}</div>
                 )}
               </div>
             )}
@@ -351,10 +390,27 @@ const DashboardContent = () => {
         {/* Chart section with proper spacing for the filter buttons */}
         <div className="relative">
           <div className="h-[370px] sm:h-[420px] md:h-[470px] lg:h-[570px] mt-4 mb-4 rounded-lg overflow-visible bg-transparent">
+            <div className="flex justify-between items-center mb-2 px-4">
+              <div className="text-sm text-gray-500">
+                {hoveredPrice ? (
+                  <span className="font-medium text-bdsec dark:text-indigo-400">
+                    {hoveredPrice.toLocaleString()} ₮
+                  </span>
+                ) : selectedStockData?.PreviousClose ? (
+                  <span className="font-medium text-bdsec dark:text-indigo-400">
+                    {selectedStockData.PreviousClose.toLocaleString()} ₮
+                  </span>
+                ) : null}
+              </div>
+              <div className="text-xs text-gray-500">
+                {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              </div>
+            </div>
             <TradingViewChart 
               symbol={`${selectedSymbol}-O-0000`}
               theme={theme}
               period={activeTab}
+              onPriceHover={handlePriceHover}
             />
           </div>
           {/* No extra padding needed anymore since we've fixed the button layout */}
@@ -476,7 +532,7 @@ const DashboardContent = () => {
                           </div>
                           
                           <div className="flex justify-between items-center relative z-10">
-                            <div className="text-lg font-bold">{formatPrice(stock.LastTradedPrice)} ₮</div>
+                            <div className="text-lg font-bold">{formatPrice(stock.PreviousClose)} ₮</div>
                             {/* <div className="text-xs text-gray-300">Vol: {(stock.Volume || 0).toLocaleString()}</div> */}
                           </div>
                         </div>

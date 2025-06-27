@@ -17,7 +17,10 @@
     "language": "Language",
     "theme": "Theme",
     "noResults": "No results found",
-    "settings": "Settings"
+    "settings": "Settings",
+    "viewAll": "View All",
+    "next": "Next",
+    "finish": "Finish"
   },
   "header": {
     "notifications": "Notifications",
@@ -151,5 +154,15 @@
     "account": "Account",
     "trading": "Trading",
     "fees": "Fees"
+  },
+  "auth": {
+    "selectYourNationality": "Select Your Nationality",
+    "nationalityHelpText": "We need to know your country to verify your information.",
+    "enterYourRegisterNumber": "Enter Your Register Number",
+    "registerHelpText": "Your registration number in {{country}}.",
+    "registerNumber": "Register Number"
+  },
+  "bottomNav": {
+    "dashboard": "Dashboard"
   }
 } 

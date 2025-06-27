@@ -151,5 +151,15 @@
     "account": "Данс",
     "trading": "Арилжаа",
     "fees": "Хураамж"
+  },
+  "auth": {
+    "selectYourNationality": "Та өөрийн улсаа сонгоно уу",
+    "nationalityHelpText": "Таны мэдээллийг баталгаажуулахын тулд таны улсыг мэдэх шаардлагатай.",
+    "enterYourRegisterNumber": "Та регистрийн дугаараа оруулна уу",
+    "registerHelpText": "Таны {{country}} улсын регистрийн дугаар.",
+    "registerNumber": "Регистрийн дугаар"
+  },
+  "bottomNav": {
+    "dashboard": "Нүүр"
   }
 } 
