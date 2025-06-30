@@ -288,43 +288,44 @@ export function TradingViewChart({
     return filteredData
   }, [])
 
-  // Fetch and process data
+  // Fetch all data at once
   const fetchAllData = async () => {
-    if (dataFetchedRef.current && allDataRef.current.length > 0) {
-      console.log('Using cached data')
-      const filtered = filterDataByPeriod(allDataRef.current, activePeriod)
-      setChartData(filtered)
-      setIsLoading(false)
-      return
-    }
-    
     setIsLoading(true)
     setError(null)
     
     try {
-      console.log(`Fetching trading history for ${symbol}`)
-      // Fetch with a large limit to get as much historical data as possible
-      const response = await fetchTradingHistory(symbol, 1, 1000)
+      // If we've already fetched data, use it
+      if (dataFetchedRef.current && allDataRef.current.length > 0) {
+        // Filter the already fetched data based on the selected period
+        const filteredData = filterDataByPeriod(allDataRef.current, activePeriod)
+        setChartData(filteredData)
+        setIsLoading(false)
+        return
+      }
       
-      if (response.success && response.data && response.data.length > 0) {
-        console.log(`Received ${response.data.length} data points`)
-        
-        // Store all fetched data
+      // Fetch data from API
+      const response = await fetchTradingHistory(symbol, 1, 500)
+      
+      if (response.success && response.data) {
+        // Store all data in ref
         allDataRef.current = response.data
         dataFetchedRef.current = true
         
-        // Filter based on active period
-        const filtered = filterDataByPeriod(response.data, activePeriod)
-        setChartData(filtered)
+        // Filter based on selected period
+        const filteredData = filterDataByPeriod(response.data, activePeriod)
+        setChartData(filteredData)
+        
+        // Check if we're using fallback data
+        setIsFallbackData(response.data.length > 0 && !response.data[0].dates.includes('-'))
       } else {
-        console.error('No data in response or unsuccessful response')
-        setError('No data available')
-        setChartData([])
+        console.error('Failed to fetch trading history data')
+        setError('Failed to load chart data')
+        setIsFallbackData(true)
       }
     } catch (err) {
       console.error('Error fetching chart data:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch chart data')
-      setChartData([])
+      setError('Failed to load chart data')
+      setIsFallbackData(true)
     } finally {
       setIsLoading(false)
     }
@@ -399,8 +400,8 @@ export function TradingViewChart({
     ctx.strokeStyle = theme === 'dark' ? 'rgba(100, 116, 139, 0.2)' : 'rgba(148, 163, 184, 0.2)'
     ctx.lineWidth = 1
     
-    // Horizontal grid lines
-    const numHLines = 5
+    // Horizontal grid lines - responsive to screen size
+    const numHLines = rect.width < 400 ? 3 : 4
     for (let i = 0; i <= numHLines; i++) {
       const y = rect.height * 0.1 + (rect.height * 0.8 * i) / numHLines
       ctx.beginPath()
@@ -411,14 +412,23 @@ export function TradingViewChart({
       // Price labels
       const price = maxPrice - (priceRange * i) / numHLines
       ctx.fillStyle = theme === 'dark' ? 'rgba(203, 213, 225, 0.8)' : 'rgba(71, 85, 105, 0.8)'
-      ctx.font = '10px sans-serif'
+      ctx.font = rect.width < 400 ? '9px sans-serif' : '10px sans-serif'
       ctx.textAlign = 'left'
-      ctx.fillText(price.toLocaleString(), 5, y - 3)
+      
+      // Format price based on screen size
+      const priceText = rect.width < 400 
+        ? price.toLocaleString(undefined, { maximumFractionDigits: 0 })
+        : price.toLocaleString()
+      
+      ctx.fillText(priceText, 5, y - 3)
     }
     
-    // Vertical grid lines - only if we have enough data points
-    if (sortedData.length > 10) {
-      const numVLines = Math.min(sortedData.length, 10)
+    // Vertical grid lines - responsive to screen size
+    if (sortedData.length > 5) {
+      // Determine number of vertical lines based on screen width
+      const maxVLines = rect.width < 400 ? 3 : rect.width < 600 ? 4 : 6
+      const numVLines = Math.min(sortedData.length, maxVLines)
+      
       for (let i = 0; i <= numVLines; i++) {
         const x = (rect.width * i) / numVLines
         ctx.beginPath()
@@ -426,14 +436,20 @@ export function TradingViewChart({
         ctx.lineTo(x, rect.height)
         ctx.stroke()
         
-        // Date labels
-        if (i < numVLines) { // Skip the last one to avoid clipping
+        // Date labels - only show on selected lines to prevent stacking
+        if (i < numVLines && i % (rect.width < 400 ? 1 : 1) === 0) {
           const dataIndex = Math.floor((sortedData.length - 1) * i / numVLines)
           const date = new Date(sortedData[dataIndex].dates)
           ctx.fillStyle = theme === 'dark' ? 'rgba(203, 213, 225, 0.8)' : 'rgba(71, 85, 105, 0.8)'
-          ctx.font = '10px sans-serif'
+          ctx.font = rect.width < 400 ? '9px sans-serif' : '10px sans-serif'
           ctx.textAlign = 'center'
-          ctx.fillText(date.toLocaleDateString(), x, rect.height - 5)
+          
+          // Format date based on screen size
+          const dateText = rect.width < 400 
+            ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            : date.toLocaleDateString()
+          
+          ctx.fillText(dateText, x, rect.height - 5)
         }
       }
     }
@@ -665,9 +681,8 @@ export function TradingViewChart({
       
       {/* Time filter buttons at bottom - with fixed height and prominent styling */}
       <div className="h-[50px] flex justify-center items-center border-t border-soft border-opacity-50 pt-2 pb-2 bg-white dark:bg-gray-900 rounded-b-lg">
-        <div className="flex flex-wrap justify-center items-center gap-1">
+        <div className="flex justify-center items-center gap-1 sm:gap-2">
           {[
-            { id: '1W', label: '1W' },
             { id: '1M', label: '1M' },
             { id: '3M', label: '3M' },
             { id: '1Y', label: '1Y' },
@@ -675,7 +690,7 @@ export function TradingViewChart({
           ].map((periodOption) => (
             <button
               key={periodOption.id}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md mx-1 transition-colors ${
+              className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-colors ${
                 activePeriod === periodOption.id 
                   ? 'bg-indigo-900 text-white border border-soft border-opacity-50' 
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 border border-soft border-opacity-30'

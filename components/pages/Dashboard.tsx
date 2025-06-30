@@ -67,9 +67,12 @@ const DashboardContent = () => {
       if (response.success && response.data) {
         setAllStocks(response.data);
         setFilteredStocks(response.data);
+      } else {
+        console.log('Received unsuccessful response:', response);
       }
     } catch (err) {
       console.error('Error fetching stocks:', err);
+      // Don't throw the error again, just log it
     }
   }, []);
   
@@ -295,11 +298,11 @@ const DashboardContent = () => {
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
       {/* Stock Index Section */}
-      <div className="px-4 md:px-6 lg:px-8 py-6 relative">
+      <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 relative">
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold">{selectedSymbol}</h2>
+              <h2 className="text-lg sm:text-xl font-bold">{selectedSymbol}</h2>
               {selectedStockData && (
                 <span className="text-xs bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-full">
                   {selectedStockData.mnName || selectedStockData.enName || t('dashboard.stock')}
@@ -309,57 +312,57 @@ const DashboardContent = () => {
             
             <div className="mt-2">
               <div className="">
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">
                   {selectedStockData ? formatPrice(selectedStockData.PreviousClose) : '-'} ₮
                 </h1>
               </div>
             </div>
           </div>
           
-          {/* Search bar - moved to top right */}
+          {/* Search bar - optimized for mobile */}
           <div className="relative">
             {isSearchOpen ? (
-              <div className="flex items-center border rounded-full px-3 py-2 bg-gray-100 dark:bg-gray-800">
-                <Search size={16} className="text-gray-500 mr-2" />
+              <div className="flex items-center border rounded-md px-2 py-1 bg-gray-100 dark:bg-gray-800 w-44 sm:w-52">
+                <Search size={12} className="text-gray-500 mr-1.5" />
                 <input
                   ref={searchInputRef}
                   type="text"
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="bg-transparent outline-none w-40 text-sm"
+                  className="bg-transparent outline-none flex-1 text-xs sm:text-sm"
                   placeholder={t('common.search')}
                 />
-                <button onClick={handleSearchClose} className="ml-2">
-                  <X size={16} className="text-gray-500" />
+                <button onClick={handleSearchClose} className="ml-1">
+                  <X size={12} className="text-gray-500" />
                 </button>
               </div>
             ) : selectedStockData ? (
-              <div className="flex items-center border rounded-full px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                <Search size={16} className="text-blue-500 mr-2" />
-                <div className="flex items-center text-sm">
-                  <span className="font-semibold text-blue-700 dark:text-blue-300">{selectedSymbol}</span>
-                  <span className="mx-2 text-blue-400 text-lg">•</span>
-                  <span className="text-blue-600 dark:text-blue-400 truncate max-w-32">
-                    {selectedStockData.mnName || selectedStockData.enName || ''}
+              <div className="flex items-center border rounded-md px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 max-w-44 sm:max-w-52">
+                <Search size={12} className="text-blue-500 mr-1" />
+                <div className="flex items-center text-xs min-w-0 overflow-hidden">
+                  <span className="font-semibold text-blue-700 dark:text-blue-300 flex-shrink-0">{selectedSymbol}</span>
+                  <span className="mx-1 text-blue-400 text-xs flex-shrink-0">•</span>
+                  <span className="text-blue-600 dark:text-blue-400 truncate text-xs">
+                    {(selectedStockData.mnName || selectedStockData.enName || '').substring(0, 8)}
                   </span>
                 </div>
-                <button onClick={handleSearchClick} className="ml-2">
-                  <ChevronDown size={16} className="text-blue-500" />
+                <button onClick={handleSearchClick} className="ml-1 flex-shrink-0">
+                  <ChevronDown size={12} className="text-blue-500" />
                 </button>
               </div>
             ) : (
               <button
                 onClick={handleSearchClick}
-                className="flex items-center border rounded-full px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="flex items-center border rounded-md px-2 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
-                <Search size={16} className="text-gray-500 mr-2" />
-                <span className="text-sm text-gray-500">{t('common.search')}</span>
+                <Search size={12} className="text-gray-500 mr-1" />
+                <span className="text-xs text-gray-500">{t('common.search')}</span>
               </button>
             )}
             
-            {/* Search Results Dropdown */}
+            {/* Search Results Dropdown - more compact */}
             {isSearchOpen && searchTerm && (
-              <div className="absolute top-full right-0 mt-1 w-80 max-h-60 overflow-y-auto bg-white dark:bg-gray-800 border rounded-md shadow-lg z-50">
+              <div className="absolute top-full right-0 mt-1 w-64 sm:w-72 max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border rounded-md shadow-lg z-50">
                 {searchResults.length > 0 ? (
                   searchResults.map((stock, index) => {
                     // Get clean symbol without suffix
@@ -368,29 +371,29 @@ const DashboardContent = () => {
                     return (
                       <button
                         key={`search-${cleanSymbol}-${index}`}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm transition-colors"
+                        className="w-full text-left px-2.5 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm transition-colors"
                         onClick={() => handleStockSelect(stock.Symbol)}
                       >
                         <div className="flex items-center">
                           <span className="font-semibold text-gray-900 dark:text-white">{cleanSymbol}</span>
-                          <span className="mx-2 text-gray-400 text-lg">•</span>
-                          <span className="text-gray-600 dark:text-gray-300 truncate">{companyName}</span>
+                          <span className="mx-1.5 text-gray-400 text-xs">•</span>
+                          <span className="text-gray-600 dark:text-gray-300 truncate text-xs">{companyName}</span>
                         </div>
                       </button>
                     );
                   })
                 ) : (
-                  <div className="px-4 py-3 text-sm text-gray-500">{t('common.noResults')}</div>
+                  <div className="px-2.5 py-2 text-xs text-gray-500">{t('common.noResults')}</div>
                 )}
               </div>
             )}
           </div>
         </div>
         
-        {/* Chart section with proper spacing for the filter buttons */}
-        <div className="relative">
-          <div className="h-[370px] sm:h-[420px] md:h-[470px] lg:h-[570px] mt-4 mb-4 rounded-lg overflow-visible bg-transparent">
-            <div className="flex justify-between items-center mb-2 px-4">
+        {/* Chart section with full width on mobile */}
+        <div className="relative -mx-2 sm:mx-0">
+          <div className="h-[350px] sm:h-[380px] md:h-[400px] lg:h-[420px] mt-4 mb-8 sm:mb-12 rounded-none sm:rounded-lg overflow-visible bg-transparent">
+            <div className="flex justify-between items-center mb-2 px-2 sm:px-4">
               <div className="text-sm text-gray-500">
                 {hoveredPrice ? (
                   <span className="font-medium text-bdsec dark:text-indigo-400">
@@ -406,19 +409,20 @@ const DashboardContent = () => {
                 {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </div>
             </div>
-            <TradingViewChart 
-              symbol={`${selectedSymbol}-O-0000`}
-              theme={theme}
-              period={activeTab}
-              onPriceHover={handlePriceHover}
-            />
+            <div className="relative z-10">
+              <TradingViewChart 
+                symbol={`${selectedSymbol}-O-0000`}
+                theme={theme}
+                period={activeTab}
+                onPriceHover={handlePriceHover}
+              />
+            </div>
           </div>
-          {/* No extra padding needed anymore since we've fixed the button layout */}
         </div>
       </div>
       
-      {/* Stock List and Order Book Sections with single column layout */}
-      <div className="px-4 flex flex-col gap-6 mt-8">
+      {/* Stock List and Order Book Sections with reduced margins */}
+      <div className="px-2 sm:px-4 flex flex-col gap-4 sm:gap-6 mt-10 sm:mt-12">
         {/* Stock Info Card */}
         <div className="w-full">
           <StockInfo 
@@ -557,30 +561,34 @@ const DashboardContent = () => {
         <div className="w-full">
           <div className="mt-8 p-4 ">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium flex items-center">
-                <Activity size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
+              <h2 className="text-base sm:text-lg font-medium flex items-center">
+                <Activity size={16} className="mr-2 text-bdsec dark:text-indigo-400" />
                 {t('dashboard.orderBook')} - {selectedSymbol}
               </h2>
-              <div className="text-xs w-[100px] text-right text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-xl">
-                 {lastUpdated}
+              <div className="text-xs text-right text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
+                <div className="hidden sm:block">{t('dashboard.lastUpdated')}</div>
+                <div className="text-xs">{lastUpdated}</div>
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-6 mt-3 min-h-[200px]">
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 mt-3 min-h-[200px]">
               {/* Sell Orders */}
-              <div className=" overflow-hidden">
-                <div className=" px-4 py-3">
-                  <h3 className="text-sm text-red-500 font-medium flex items-center">
-                    <ArrowDown size={14} className="mr-1" /> {t('dashboard.sell')}
+              <div className="overflow-hidden">
+                <div className="px-2 sm:px-4 py-2 bg-red-50 dark:bg-red-900/10">
+                  <h3 className="text-xs sm:text-sm text-red-500 font-medium flex items-center justify-between">
+                    <span className="flex items-center">
+                      <ArrowDown size={12} className="mr-1" /> {t('dashboard.sell')}
+                    </span>
+                    <span className="text-xs text-gray-500">{t('dashboard.quantity')}</span>
                   </h3>
                 </div>
-                <div className="p-3">
+                <div className="p-2 sm:p-3">
                   {loading ? (
                     // Loading placeholders for sell orders
                     Array(5).fill(0).map((_, index) => (
-                      <div key={`sell-loading-${index}`} className="flex justify-between text-sm py-2 animate-pulse">
-                        <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      <div key={`sell-loading-${index}`} className="flex justify-between text-xs sm:text-sm py-2 animate-pulse">
+                        <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
                       </div>
                     ))
                   ) : processedOrderBook.sell.length > 0 ? (
@@ -589,12 +597,12 @@ const DashboardContent = () => {
                       return (
                         <div 
                           key={`sell-${order.id}-${index}`} 
-                          className="flex justify-between text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+                          className="flex justify-between text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                         >
                           <span className="text-red-500 font-medium" >
                             {order.MDEntryPx.toLocaleString()} ₮
                           </span>
-                          <span className="bg-red-50 dark:bg-red-900/10 px-2 rounded text-gray-700 dark:text-gray-300">
+                          <span className="bg-red-50 dark:bg-red-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs">
                             {order.MDEntrySize.toLocaleString()}
                           </span>
                         </div>
@@ -607,19 +615,22 @@ const DashboardContent = () => {
               </div>
               
               {/* Buy Orders */}
-              <div className=" overflow-hidden">
-                <div className=" px-4 py-3">
-                  <h3 className="text-sm text-green-500 font-medium flex items-center">
-                    <ArrowUp size={14} className="mr-1" /> {t('dashboard.buy')}
+              <div className="overflow-hidden">
+                <div className="px-2 sm:px-4 py-2 bg-green-50 dark:bg-green-900/10">
+                  <h3 className="text-xs sm:text-sm text-green-500 font-medium flex items-center justify-between">
+                    <span className="flex items-center">
+                      <ArrowUp size={12} className="mr-1" /> {t('dashboard.buy')}
+                    </span>
+                    <span className="text-xs text-gray-500">{t('dashboard.quantity')}</span>
                   </h3>
                 </div>
-                <div className="p-3">
+                <div className="p-2 sm:p-3">
                   {loading ? (
                     // Loading placeholders for buy orders
                     Array(5).fill(0).map((_, index) => (
-                      <div key={`buy-loading-${index}`} className="flex justify-between text-sm py-2 animate-pulse">
-                        <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                        <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      <div key={`buy-loading-${index}`} className="flex justify-between text-xs sm:text-sm py-2 animate-pulse">
+                        <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
                       </div>
                     ))
                   ) : processedOrderBook.buy.length > 0 ? (
@@ -629,12 +640,12 @@ const DashboardContent = () => {
                       return (
                         <div 
                           key={`buy-${order.id}-${index}`} 
-                          className="flex justify-between text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+                          className="flex justify-between text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                         >
                           <span className="text-green-500 font-medium" >
                             {order.MDEntryPx.toLocaleString()} ₮
                           </span>
-                          <span className="bg-green-50 dark:bg-green-900/10 px-2 rounded text-gray-700 dark:text-gray-300">
+                          <span className="bg-green-50 dark:bg-green-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs">
                             {order.MDEntrySize.toLocaleString()}
                           </span>
                         </div>

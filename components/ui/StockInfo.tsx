@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/solid';
+import { useTranslation } from 'react-i18next';
 import { fetchStockData, type StockData } from '@/lib/api';
 
 interface StockDetails {
@@ -31,6 +32,7 @@ export default function StockInfo({
   changePercent,
   details
 }: StockInfoProps) {
+  const { t } = useTranslation();
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [allStocks, setAllStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +121,7 @@ export default function StockInfo({
     }
   };
 
-  if (loading && !stockData && price === undefined) return <div className="animate-pulse">Loading...</div>;
+  if (loading && !stockData && price === undefined) return <div className="animate-pulse">{t('dashboard.loading')}</div>;
   if (error) return <div className="text-red-500">{error}</div>;
   if (!stockData && price === undefined) return null;
 
@@ -136,11 +138,11 @@ export default function StockInfo({
   };
 
   return (
-    <div className="bg-card rounded-lg p-4">
+    <div className="bg-card rounded-lg p-3 sm:p-4">
       {onSymbolSelect && (
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-3 sm:mb-4">
           <select 
-            className="bg-background text-foreground px-3 py-2 rounded-md text-sm max-w-[180px] md:max-w-none truncate"
+            className="bg-background text-foreground px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm max-w-[150px] sm:max-w-[180px] md:max-w-none truncate"
             value={symbol}
             onChange={handleSymbolChange}
           >
@@ -155,21 +157,21 @@ export default function StockInfo({
             })}
           </select>
           {stockData && isMobile && (
-            <span className="text-xs bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-full truncate max-w-[120px]">
+            <span className="text-xs bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-full truncate max-w-[100px]">
               {stockData.mnName || stockData.enName}
             </span>
           )}
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <div className="space-y-1">
-          <h3 className="text-sm text-muted-foreground">Last Price</h3>
+          <h3 className="text-sm text-muted-foreground">{t('dashboard.price')}</h3>
           <p className="text-lg font-semibold">{formatNumber(displayPrice)}</p>
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-sm text-muted-foreground">Change</h3>
+          <h3 className="text-sm text-muted-foreground">{t('dashboard.change')}</h3>
           <p className={`text-lg font-semibold flex items-center ${isPositiveChange ? 'text-green-500' : 'text-red-500'}`}>
             {isPositiveChange ? <ArrowUpIcon className="w-4 h-4 mr-1" /> : <ArrowDownIcon className="w-4 h-4 mr-1" />}
             {formatNumber(displayChange)} ({displayChangePercent?.toFixed(2) || '0.00'}%)
@@ -177,32 +179,32 @@ export default function StockInfo({
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-sm text-muted-foreground">Volume</h3>
+          <h3 className="text-sm text-muted-foreground">{t('dashboard.volume')}</h3>
           <p className="text-lg font-semibold">{formatNumber(stockData?.Volume)}</p>
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-sm text-muted-foreground">Turnover</h3>
+          <h3 className="text-sm text-muted-foreground">{t('dashboard.turnover')}</h3>
           <p className="text-lg font-semibold">{formatNumber(stockData?.Turnover)}</p>
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-sm text-muted-foreground">High</h3>
+          <h3 className="text-sm text-muted-foreground">{t('dashboard.high')}</h3>
           <p className="text-lg font-semibold">{formatNumber(stockData?.HighPrice)}</p>
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-sm text-muted-foreground">Low</h3>
+          <h3 className="text-sm text-muted-foreground">{t('dashboard.low')}</h3>
           <p className="text-lg font-semibold">{formatNumber(stockData?.LowPrice)}</p>
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-sm text-muted-foreground">VWAP</h3>
+          <h3 className="text-sm text-muted-foreground" title={t('dashboard.vwapTooltip')}>{t('dashboard.vwap')}</h3>
           <p className="text-lg font-semibold">{formatNumber(stockData?.VWAP)}</p>
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-sm text-muted-foreground">Trades</h3>
+          <h3 className="text-sm text-muted-foreground">{t('dashboard.orders')}</h3>
           <p className="text-lg font-semibold">{formatNumber(stockData?.trades)}</p>
         </div>
       </div>
@@ -216,11 +218,11 @@ export default function StockInfo({
                 <span className="font-semibold">{details.isin}</span>
               </div>
               <div className="flex justify-between">
-                <span>Company Code</span>
+                <span>{t('dashboard.companyCode')}</span>
                 <span className="font-semibold">{details.companyCode}</span>
               </div>
               <div className="flex justify-between">
-                <span>Email</span>
+                <span>{t('dashboard.email')}</span>
                 <span className="font-semibold">{details.email}</span>
               </div>
             </div>
@@ -229,15 +231,15 @@ export default function StockInfo({
           <div className="bg-muted p-3 rounded-lg">
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span>Total Shares</span>
+                <span>{t('dashboard.totalShares')}</span>
                 <span className="font-semibold">{details.totalShares}</span>
               </div>
               <div className="flex justify-between">
-                <span>Listed Shares</span>
+                <span>{t('dashboard.listedShares')}</span>
                 <span className="font-semibold">{details.listedShares}</span>
               </div>
               <div className="flex justify-between">
-                <span>Listing Date</span>
+                <span>{t('dashboard.listingDate')}</span>
                 <span className="font-semibold">{details.listingDate}</span>
               </div>
             </div>
@@ -248,28 +250,28 @@ export default function StockInfo({
       {stockData && !details && (
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div className="bg-muted p-3 rounded-lg">
-            <h3 className="text-sm text-muted-foreground mb-2">Buy Orders</h3>
+            <h3 className="text-sm text-muted-foreground mb-2">{t('dashboard.buy')} {t('dashboard.orders')}</h3>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span>VWAP</span>
+                <span>{t('dashboard.vwap')}</span>
                 <span className="font-semibold">{formatNumber(stockData.BuyOrderVWAP)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Quantity</span>
+                <span>{t('dashboard.quantity')}</span>
                 <span className="font-semibold">{formatNumber(stockData.BuyOrderQty)}</span>
               </div>
             </div>
           </div>
 
           <div className="bg-muted p-3 rounded-lg">
-            <h3 className="text-sm text-muted-foreground mb-2">Sell Orders</h3>
+            <h3 className="text-sm text-muted-foreground mb-2">{t('dashboard.sell')} {t('dashboard.orders')}</h3>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span>VWAP</span>
+                <span>{t('dashboard.vwap')}</span>
                 <span className="font-semibold">{formatNumber(stockData.SellOrderVWAP)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Quantity</span>
+                <span>{t('dashboard.quantity')}</span>
                 <span className="font-semibold">{formatNumber(stockData.SellOrderQty)}</span>
               </div>
             </div>

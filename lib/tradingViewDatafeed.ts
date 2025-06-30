@@ -1,3 +1,5 @@
+import { fetchStockData } from './api';
+
 interface Bar {
   time: number;
   open: number;
@@ -32,6 +34,9 @@ interface ApiResponse {
   success: boolean;
   data: StockData | StockData[];
 }
+
+// API base URL
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
 
 // Generate mock historical data
 function generateMockData(symbol: string, days: number): Bar[] {
@@ -88,7 +93,7 @@ class Datafeed {
 
   async searchSymbols(userInput: string) {
     try {
-      const response = await fetch('https://miniapp.bdsec.mn/apitest/securities/trading-status');
+      const response = await fetch(`${BASE_URL}/securities/trading-status`);
       const data = await response.json() as ApiResponse;
       
       if (!data.success) return [];
@@ -117,7 +122,7 @@ class Datafeed {
   async resolveSymbol(symbolName: string) {
     try {
       const symbol = symbolName.replace('MSE:', '');
-      const response = await fetch(`https://miniapp.bdsec.mn/apitest/securities/trading-status/${symbol}`);
+      const response = await fetch(`${BASE_URL}/securities/trading-status/${symbol}`);
       const data = await response.json() as ApiResponse;
       
       if (!data.success || Array.isArray(data.data)) throw new Error('Symbol not found');

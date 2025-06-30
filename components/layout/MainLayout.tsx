@@ -12,7 +12,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
       <Header />
-      <main className="pb-24 mx-auto max-w-[1400px]">
+      <main className="pb-26 sm:pb-30 mx-auto max-w-[1400px] px-0">
         {children}
       </main>
       <BottomNavigation />

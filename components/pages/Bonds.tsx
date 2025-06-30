@@ -231,9 +231,9 @@ const Bonds = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredBonds.map((bond) => (
+                {filteredBonds.map((bond, index) => (
                   <tr 
-                    key={bond.Symbol} 
+                    key={bond.pkId || `${bond.Symbol}-${index}`} 
                     className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                   >
                     <td className="px-4 py-3 font-medium">{bond.Symbol}</td>
