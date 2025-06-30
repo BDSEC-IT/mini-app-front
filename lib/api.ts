@@ -1077,146 +1077,58 @@ interface AccountSetupResponse {
   errorCode?: string;
 }
 
-export const submitAccountSetup = async (formData: AccountSetupFormData, token?: string): Promise<AccountSetupResponse> => {
+export const submitAccountSetup = async (data: any, token: string) => {
   try {
-    // For development, log the token being used
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Using token for account setup:', token ? `${token.substring(0, 15)}...` : 'No token provided')
-    }
-
-    // Set up headers with authorization token
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json'
-    }
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
-
-    // Prepare the payload based on whether it's an adult or child
-    const payload = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      birthDate: formData.birthDate || new Date().toISOString().split('T')[0],
-      gender: formData.gender || "Unknown",
-      homePhone: formData.homePhone || "",
-      mobilePhone: formData.phoneNumber,
-      occupation: formData.isAdult ? formData.occupation : "",
-      homeAddress: formData.homeAddress,
-      customerType: formData.isAdult ? "1" : "2", // 1 for adult, 2 for child
-      bankCode: formData.bankCode,
-      bankName: formData.bankName || mongolianBanks.find(bank => bank.code === formData.bankCode)?.name || "",
-      bankAccountNumber: formData.accountNumber,
-      country: {
-        code: "MNG",
-        name: "Mongolia"
-      },
-      parentRegisterNumber: !formData.isAdult ? formData.parentRegisterNumber : undefined,
-      registerNumber: formData.isAdult ? formData.registerNumber : formData.childRegisterNumber
-    }
-
-    // Log the payload in development mode
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Account setup payload:', payload)
-    }
-
-    // Make the API request
-    const response = await fetchWithTimeout(`${BASE_URL}/user/send-account-status-request`, {
+    const response = await fetch(`${BASE_URL}/user/mcsd-request`, {
       method: 'POST',
-      headers,
-      body: JSON.stringify(payload)
-    })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        // Format country as an object with code and name
+        country: {
+          code: data.nationality,
+          name: data.nationalityName || 'Mongolia' // Default to Mongolia if name not provided
+        },
+        firstName: data.firstName,
+        lastName: data.lastName,
+        register: data.register,
+        phone: data.phone,
+        email: data.email,
+        bankCode: data.bankCode,
+        bankName: data.bankName,
+        accountNumber: data.accountNumber
+      })
+    });
 
-    // Safely parse the response
-    let data;
-    try {
-      const text = await response.text();
-      data = text ? JSON.parse(text) : {};
-      
-      // Log the response in development mode
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Account setup response:', {
-          status: response.status,
-          ok: response.ok,
-          data
-        })
-      }
-    } catch (parseError) {
-      console.error('Error parsing response:', parseError);
-      // Return a formatted error if the response is not valid JSON
-      return {
-        success: false,
-        message: 'Invalid response from server',
-        statusCode: response.status,
-        errorCode: 'PARSE_ERROR'
-      };
-    }
+    const result = await response.json();
     
-    // If response is not ok, provide better error information
-    if (!response.ok) {
-      const errorMessage = data.message || `HTTP error! status: ${response.status}`;
-      console.error('Account setup failed:', errorMessage);
-      
-      // Log more details in development mode
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error details:', {
-          status: response.status,
-          data,
-          payload
-        });
-      }
-      
-      return {
-        success: false,
-        message: errorMessage,
-        data: data.data,
-        statusCode: response.status,
-        errorCode: data.errorCode || 'API_ERROR'
-      };
-    }
-    
-    // Return the data
-    return {
-      success: response.ok,
-      message: data.message || (response.ok ? 'Account setup successful' : 'Failed to setup account'),
-      data: data.data,
-      statusCode: response.status,
-      errorCode: data.errorCode
-    }
-  } catch (error) {
-    console.error('Error submitting account setup:', error)
-    
-    // For development purposes, return a mock success response
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Using mock success response for development');
+    if (response.ok) {
       return {
         success: true,
-        message: 'Mock account setup successful (development mode)',
-        statusCode: 200,
-        data: {
-          mcsdStateRequest: 'SUBMITTED'
-        }
-      }
+        data: result
+      };
+    } else {
+      return {
+        success: false,
+        message: result.message || 'Failed to submit account setup',
+        errorCode: result.errorCode || 'UNKNOWN_ERROR'
+      };
     }
-    
-    // Return error response
+  } catch (error) {
+    console.error('Error submitting account setup:', error);
     return {
       success: false,
-      message: 'Failed to submit account setup',
-      statusCode: 500
-    }
+      message: 'Network error',
+      errorCode: 'NETWORK_ERROR'
+    };
   }
-}
+};
 
-/**
- * Get the account status request information
- */
-export const getAccountStatusRequest = async (token: string | undefined): Promise<ApiResponse<any>> => {
+// Get account status request
+export const getAccountStatusRequest = async (token: string) => {
   try {
-    if (!token) {
-      console.error('No auth token provided');
-      return { success: false, message: 'No auth token provided', data: null };
-    }
-
     const response = await fetch(`${BASE_URL}/user/get-account-status-request`, {
       method: 'GET',
       headers: {
@@ -1225,34 +1137,34 @@ export const getAccountStatusRequest = async (token: string | undefined): Promis
       }
     });
 
-    const data = await response.json();
+    const result = await response.json();
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Account status request response:', data);
-    }
-
     if (response.ok) {
-      return { success: true, message: 'Account status request retrieved successfully', data: data.data };
+      return {
+        success: true,
+        data: result
+      };
     } else {
-      return { success: false, message: data.message || 'Failed to retrieve account status request', data: null };
+      return {
+        success: false,
+        message: result.message || 'Failed to get account status request',
+        errorCode: result.errorCode || 'UNKNOWN_ERROR'
+      };
     }
   } catch (error) {
-    console.error('Error retrieving account status request:', error);
-    return { success: false, message: 'An error occurred while retrieving account status request', data: null };
+    console.error('Error getting account status request:', error);
+    return {
+      success: false,
+      message: 'Network error',
+      errorCode: 'NETWORK_ERROR'
+    };
   }
 };
 
-/**
- * Create or renew an invoice for registration
- */
-export const createOrRenewInvoice = async (token: string | undefined): Promise<ApiResponse<any>> => {
+// Create or renew invoice
+export const createOrRenewInvoice = async (token: string) => {
   try {
-    if (!token) {
-      console.error('No auth token provided');
-      return { success: false, message: 'No auth token provided', data: null };
-    }
-
-    const response = await fetch(`${BASE_URL}/user/create-or-renew-invoice-register`, {
+    const response = await fetch(`${BASE_URL}/user/create-or-renew-invoice`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1260,43 +1172,33 @@ export const createOrRenewInvoice = async (token: string | undefined): Promise<A
       }
     });
 
-    const data = await response.json();
+    const result = await response.json();
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Create invoice response:', data);
-    }
-
     if (response.ok) {
-      return { success: true, message: 'Invoice created successfully', data: data.data };
+      return {
+        success: true,
+        data: result
+      };
     } else {
-      return { 
-        success: false, 
-        message: data.message || 'Failed to create invoice', 
-        data: null,
-        errorCode: data.errorCode
+      return {
+        success: false,
+        message: result.message || 'Failed to create invoice',
+        errorCode: result.errorCode || 'UNKNOWN_ERROR'
       };
     }
   } catch (error) {
     console.error('Error creating invoice:', error);
-    return { 
-      success: false, 
-      message: 'An error occurred while creating invoice', 
-      data: null,
+    return {
+      success: false,
+      message: 'Network error',
       errorCode: 'NETWORK_ERROR'
     };
   }
 };
 
-/**
- * Check the status of an invoice
- */
-export const checkInvoiceStatus = async (token: string | undefined): Promise<ApiResponse<any>> => {
+// Check invoice status
+export const checkInvoiceStatus = async (token: string) => {
   try {
-    if (!token) {
-      console.error('No auth token provided');
-      return { success: false, message: 'No auth token provided', data: null };
-    }
-
     const response = await fetch(`${BASE_URL}/user/check-invoice-status`, {
       method: 'GET',
       headers: {
@@ -1305,28 +1207,25 @@ export const checkInvoiceStatus = async (token: string | undefined): Promise<Api
       }
     });
 
-    const data = await response.json();
+    const result = await response.json();
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Check invoice status response:', data);
-    }
-
     if (response.ok) {
-      return { success: true, message: 'Invoice status checked successfully', data: data.data };
+      return {
+        success: true,
+        data: result
+      };
     } else {
-      return { 
-        success: false, 
-        message: data.message || 'Failed to check invoice status', 
-        data: null,
-        errorCode: data.errorCode
+      return {
+        success: false,
+        message: result.message || 'Failed to check invoice status',
+        errorCode: result.errorCode || 'UNKNOWN_ERROR'
       };
     }
   } catch (error) {
     console.error('Error checking invoice status:', error);
-    return { 
-      success: false, 
-      message: 'An error occurred while checking invoice status', 
-      data: null,
+    return {
+      success: false,
+      message: 'Network error',
       errorCode: 'NETWORK_ERROR'
     };
   }

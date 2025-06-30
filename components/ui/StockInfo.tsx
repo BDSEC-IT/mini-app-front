@@ -71,12 +71,6 @@ export default function StockInfo({
   };
 
   const fetchData = useCallback(async () => {
-    // If we have external data provided, don't fetch
-    if (price !== undefined && details) {
-      setLoading(false);
-      return;
-    }
-    
     try {
       setLoading(true);
       setError(null);
@@ -84,15 +78,15 @@ export default function StockInfo({
       // Fetch specific stock data
       console.log(`Fetching stock data for symbol: ${symbol}`);
       const response = await fetchStockData(`${symbol}-O-0000`);
-      if ('data' in response && !Array.isArray(response.data)) {
-        const newData = response.data as StockData;
+      if ('data' in response && response.data && Array.isArray(response.data) && response.data.length > 0) {
+        const newData = response.data[0] as StockData;
         setStockData(newData);
       }
 
       // Fetch all stocks for the dropdown only if we don't have them yet
       if (allStocks.length === 0) {
         const allStocksResponse = await fetchStockData();
-        if ('data' in allStocksResponse && Array.isArray(allStocksResponse.data)) {
+        if ('data' in allStocksResponse && allStocksResponse.data && Array.isArray(allStocksResponse.data)) {
           setAllStocks(allStocksResponse.data);
         }
       }

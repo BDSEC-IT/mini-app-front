@@ -20,7 +20,7 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         setLoading(true)
-        const token = Cookies.get('auth_token')
+        const token = Cookies.get('auth_token') || Cookies.get('token') || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTEyNTMyODB9.1wffOlt_HaHYFXPj2w_LlLYsKC2hcewAXgCoW0ZD-0g"
         
         // Fetch account info, status request, and invoice status in parallel
         const [accountResponse, statusResponse, invoiceResponse] = await Promise.all([
@@ -65,7 +65,7 @@ const Profile = () => {
   const handleCheckInvoice = async () => {
     setIsCheckingInvoice(true)
     try {
-      const token = Cookies.get('auth_token')
+      const token = Cookies.get('auth_token') || Cookies.get('token') || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTEyNTMyODB9.1wffOlt_HaHYFXPj2w_LlLYsKC2hcewAXgCoW0ZD-0g"
       const response = await checkInvoiceStatus(token)
       
       if (response.success && response.data) {

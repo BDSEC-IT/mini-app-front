@@ -164,7 +164,9 @@
     "accountRequestStatus": "Account Request Status",
     "activateAccounts": "Activate MCSD & Broker Accounts",
     "accountsActivatedTogether": "Both accounts are activated together after approval",
-    "brokerAccountWithMcsd": "Your broker account will be created with your MCSD account"
+    "brokerAccountWithMcsd": "Your broker account will be created with your MCSD account",
+    "backToProfile": "Back to Profile",
+    "completed": "Completed"
   },
   "menu": {
     "about": "ABOUT US",

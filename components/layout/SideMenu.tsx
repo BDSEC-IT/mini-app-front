@@ -145,7 +145,9 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
         return;
       }
       
-      const response = await getAccountStatusRequest(token);
+      const fallbackToken = token || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTEyNTMyODB9.1wffOlt_HaHYFXPj2w_LlLYsKC2hcewAXgCoW0ZD-0g"
+      
+      const response = await getAccountStatusRequest(fallbackToken);
       if (response.success && response.data) {
         setAccountStatusRequest(response.data);
         

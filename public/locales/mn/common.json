@@ -183,7 +183,10 @@
     "completing": "Дуусгаж байна...",
     "activateAccounts": "МҮЦДС & Брокерийн данс идэвхжүүлэх",
     "accountsActivatedTogether": "Хоёр данс зэрэг идэвхжих болно",
-    "brokerAccountWithMcsd": "Таны брокерийн данс МҮЦДС дансны хамт үүсгэгдэх болно"
+    "brokerAccountWithMcsd": "Таны брокерийн данс МҮЦДС дансны хамт үүсгэгдэх болно",
+    "backToProfile": "Профайл руу буцах",
+    "completed": "Дууссан",
+    "back": "Буцах"
   },
   "menu": {
     "about": "БИДНИЙ ТУХАЙ",
