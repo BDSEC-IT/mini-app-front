@@ -1281,7 +1281,12 @@ export const createOrRenewInvoice = async (token: string) => {
 // Check invoice status
 export const checkInvoiceStatus = async (token: string) => {
   try {
-    const response = await fetch(`${BASE_URL}/user/check-invoice-status`, {
+    console.log('=== CHECK INVOICE STATUS DEBUG ===');
+    console.log('Token:', token ? `${token.substring(0, 20)}...` : 'No token');
+    console.log('URL:', `${BASE_URL}/user/check-invoice-status`);
+    console.log('=== END DEBUG ===');
+
+    const response = await fetchWithTimeout(`${BASE_URL}/user/check-invoice-status`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -1289,7 +1294,26 @@ export const checkInvoiceStatus = async (token: string) => {
       }
     });
 
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+    // Check if response is JSON before trying to parse it
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      // Response is not JSON (likely HTML error page)
+      const textResponse = await response.text();
+      console.error('Non-JSON response received:', textResponse.substring(0, 200));
+      
+      return {
+        success: false,
+        message: `Server returned ${response.status} error. Please check your authentication.`,
+        errorCode: response.status === 404 ? 'ENDPOINT_NOT_FOUND' : 'SERVER_ERROR',
+        statusCode: response.status
+      };
+    }
+
     const result = await response.json();
+    console.log('Response data:', result);
     
     if (response.ok) {
       return {
@@ -1299,15 +1323,16 @@ export const checkInvoiceStatus = async (token: string) => {
     } else {
       return {
         success: false,
-        message: result.message || 'Failed to check invoice status',
-        errorCode: result.errorCode || 'UNKNOWN_ERROR'
+        message: result.message || `Failed to check invoice status (${response.status})`,
+        errorCode: result.errorCode || 'UNKNOWN_ERROR',
+        statusCode: response.status
       };
     }
   } catch (error) {
     console.error('Error checking invoice status:', error);
     return {
       success: false,
-      message: 'Network error',
+      message: error instanceof Error ? error.message : 'Network error',
       errorCode: 'NETWORK_ERROR'
     };
   }

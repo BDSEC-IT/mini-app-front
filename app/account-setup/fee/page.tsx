@@ -97,11 +97,22 @@ export default function FeePaymentPage() {
       // If all validations pass, proceed with invoice creation
       const result = await createOrRenewInvoice(token)
       if (result.success) {
-        // The parent application should now handle the Digipay flow.
-        // We will just inform the user that the invoice was created.
-        alert('Нэхэмжлэл амжилттай үүслээ. Та банкны апп-аасаа төлбөрөө гүйцэтгэнэ үү.')
-        // Optionally, redirect the user or update the UI
-        router.push('/profile')
+        console.log('Invoice created successfully:', result.data);
+        
+        // Extract the orderId from the response
+        const orderId = result.data?.orderId;
+        
+        if (orderId) {
+          // Show success message and redirect to Digipay
+          alert('Нэхэмжлэл амжилттай үүслээ. Digipay төлбөрийн хуудас руу шилжиж байна...');
+          
+          // Redirect to the Digipay order URL
+          window.location.href = orderId;
+        } else {
+          // Fallback if orderId is missing
+          alert('Нэхэмжлэл амжилттай үүслээ. Та банкны апп-аасаа төлбөрөө гүйцэтгэнэ үү.');
+          router.push('/profile');
+        }
       } else {
         setError(result.message || "Failed to create payment invoice.")
       }
