@@ -30,6 +30,11 @@ export const adultInfoSchema = z.object({
     .nonempty("Occupation is required"),
   homeAddress: z.string()
     .nonempty("Home address is required"),
+  bankCode: z.string()
+    .nonempty("Bank selection is required"),
+  accountNumber: z.string()
+    .min(6, "Account number must be at least 6 digits")
+    .nonempty("Account number is required"),
 });
 
 // Schema for child user information
@@ -56,14 +61,8 @@ export const childInfoSchema = z.object({
     .nonempty("Birth date is required"),
   homeAddress: z.string()
     .nonempty("Home address is required"),
-});
-
-// Schema for bank information
-export const bankInfoSchema = z.object({
   bankCode: z.string()
     .nonempty("Bank selection is required"),
-  bankName: z.string()
-    .optional(),
   accountNumber: z.string()
     .min(6, "Account number must be at least 6 digits")
     .nonempty("Account number is required"),
@@ -83,17 +82,13 @@ export const mongolianBanks = [
 ];
 
 // Combined schema for adult user
-export const adultFullSchema = z.object({
+export const adultFullSchema = adultInfoSchema.extend({
   isAdult: z.literal(true),
-  ...adultInfoSchema.shape,
-  ...bankInfoSchema.shape,
 });
 
 // Combined schema for child user
-export const childFullSchema = z.object({
+export const childFullSchema = childInfoSchema.extend({
   isAdult: z.literal(false),
-  ...childInfoSchema.shape,
-  ...bankInfoSchema.shape,
 });
 
 // Union type for the complete form data
@@ -105,5 +100,4 @@ export const accountSetupSchema = z.discriminatedUnion("isAdult", [
 export type AdultCheckFormData = z.infer<typeof adultCheckSchema>;
 export type AdultInfoFormData = z.infer<typeof adultInfoSchema>;
 export type ChildInfoFormData = z.infer<typeof childInfoSchema>;
-export type BankInfoFormData = z.infer<typeof bankInfoSchema>;
 export type AccountSetupFormData = z.infer<typeof accountSetupSchema>; 

@@ -161,6 +161,20 @@ interface TradingHistoryData {
   dates: string;
 }
 
+interface NewsData {
+  id: number;
+  mnTitle: string;
+  mnBody: string;
+  cover: string;
+  seenCount: number;
+  publishedAt: string;
+}
+
+interface NewsResponse {
+  success: boolean;
+  data: NewsData[];
+}
+
 // Helper function to create a fetch request with timeout
 async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
   // Create an abort controller with a timeout
@@ -1126,6 +1140,60 @@ export const submitAccountSetup = async (data: any, token: string) => {
   }
 };
 
+// Send account status request with general and bank information
+export const sendAccountStatusRequest = async (data: any, token: string) => {
+  try {
+    const response = await fetch(`${BASE_URL}/user/send-account-status-request`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        // General information (ерөнхий мэдээлэл)
+        isAdult: data.isAdult,
+        registerNumber: data.isAdult ? data.registerNumber : data.childRegisterNumber,
+        parentRegisterNumber: data.isAdult ? undefined : data.parentRegisterNumber,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        gender: data.gender,
+        birthDate: data.birthDate,
+        phoneNumber: data.phoneNumber,
+        homePhone: data.homePhone,
+        occupation: data.isAdult ? data.occupation : undefined,
+        homeAddress: data.homeAddress,
+        
+        // Bank information
+        bankCode: data.bankCode,
+        bankName: data.bankName,
+        bankAccountNumber: data.accountNumber
+      })
+    });
+
+    const result = await response.json();
+    
+    if (response.ok) {
+      return {
+        success: true,
+        data: result
+      };
+    } else {
+      return {
+        success: false,
+        message: result.message || 'Failed to send account status request',
+        errorCode: result.errorCode || 'UNKNOWN_ERROR'
+      };
+    }
+  } catch (error) {
+    console.error('Error sending account status request:', error);
+    return {
+      success: false,
+      message: 'Network error',
+      errorCode: 'NETWORK_ERROR'
+    };
+  }
+};
+
 // Get account status request
 export const getAccountStatusRequest = async (token: string) => {
   try {
@@ -1231,6 +1299,38 @@ export const checkInvoiceStatus = async (token: string) => {
   }
 };
 
+// Fetch news from BDS
+export const fetchNews = async (page: number = 1, limit: number = 100): Promise<NewsResponse> => {
+  try {
+    const response = await fetchWithTimeout(`${BASE_URL}/securities/news-of-bds?page=${page}&limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    logDev(`fetchNews response: ${JSON.stringify(data)}`);
+    
+    return {
+      success: data.success || true,
+      data: data.data || []
+    };
+  } catch (error) {
+    console.error('Error fetching news:', error);
+    return {
+      success: false,
+      data: []
+    };
+  }
+};
+
 export type { 
   StockData, 
   ApiResponse, 
@@ -1247,5 +1347,7 @@ export type {
   UserProfileResponse,
   RegistrationResponse,
   UserAccountResponse,
-  AccountSetupResponse
+  AccountSetupResponse,
+  NewsData,
+  NewsResponse
 }; 

@@ -2,11 +2,12 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Home, BarChart3, FileText, PieChart, Building } from 'lucide-react'
+import { Home, Wallet, TrendingUp, Building, Lock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
-import { AiOutlineStock } from "react-icons/ai";
+import { getUserAccountInformation, type UserAccountResponse } from '@/lib/api'
+import Cookies from 'js-cookie'
 
 const BottomNavigation = () => {
   const pathname = usePathname()
@@ -14,6 +15,66 @@ const BottomNavigation = () => {
   const { theme } = useTheme()
   const iconSize = 20
   const isActive = (p: string) => pathname === p
+  
+  // Account status state
+  const [accountInfo, setAccountInfo] = useState<UserAccountResponse['data'] | null>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [showTooltip, setShowTooltip] = useState<'balance' | 'returns' | 'ipo' | 'exchange' | null>(null)
+  
+  // Check account status
+  useEffect(() => {
+    const checkAccountStatus = async () => {
+      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token')
+      if (token) {
+        setIsLoggedIn(true)
+        try {
+          const response = await getUserAccountInformation(token)
+          if (response.success && response.data) {
+            setAccountInfo(response.data)
+          }
+        } catch (error) {
+          console.error('Error fetching account info:', error)
+        }
+      }
+    }
+    
+    checkAccountStatus()
+  }, [])
+  
+  // Check if user has MCSD account
+  const hasMcsdAccount = accountInfo?.MCSDAccount !== null
+  
+  // Debug logging can be removed once everything is working
+  // console.log('BottomNavigation DEBUG:', { isLoggedIn, hasMcsdAccount });
+  
+  // Handle menu item click
+  const handleMenuClick = (e: React.MouseEvent, type: 'balance' | 'returns' | 'ipo' | 'exchange') => {
+    if (!isLoggedIn) {
+      e.preventDefault()
+      setShowTooltip(type)
+      setTimeout(() => setShowTooltip(null), 3000)
+      return
+    }
+    
+    if (!hasMcsdAccount) {
+      // User doesn't have MCSD account - show tooltip
+      e.preventDefault()
+      setShowTooltip(type)
+      setTimeout(() => setShowTooltip(null), 3000)
+    } else {
+      // User has MCSD account - navigate to coming soon pages
+      if (type === 'exchange') {
+        // For exchange, redirect to exchange coming soon page
+        window.location.href = '/exchange'
+      } else if (type === 'balance') {
+        window.location.href = '/balance'
+      } else if (type === 'returns') {
+        window.location.href = '/returns'
+      } else if (type === 'ipo') {
+        window.location.href = '/ipo'
+      }
+    }
+  }
 
   // — Your Figma dims —
   const BAR_H = 70
@@ -111,49 +172,66 @@ const BottomNavigation = () => {
 
         {/* ─── overlay: FAB + nav items ───────────────────── */}
         <div className="absolute inset-0 pointer-events-none">
-          {/* FAB */}
+          {/* FAB - Secondary Market Exchange */}
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
-            <Link
-              href="/stocks"
-              className="relative w-16 h-16 rounded-full bg-bdsec dark:bg-indigo-500 text-white 
-                         flex items-center justify-center hover:scale-105 transition"
-            >
-              <div
-                className="absolute inset-0 bg-bdsec dark:bg-indigo-500 rounded-full 
-                           blur-[14px] opacity-60 dark:opacity-80 -z-10"
-              />
-              {/* exchange icon */}
-              <svg width="26" height="26" viewBox="0 0 30 30" fill="none">
-                <path
-                  d="M25.625 18.7373L19.3625 25.0123"
-                  stroke="white"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+            <div className="relative">
+              <button
+                onClick={(e) => handleMenuClick(e, 'exchange')}
+                className={`relative w-16 h-16 rounded-full bg-bdsec dark:bg-indigo-500 text-white flex items-center justify-center transition ${
+                  (!isLoggedIn || !hasMcsdAccount) 
+                    ? 'cursor-not-allowed opacity-80' 
+                    : 'hover:scale-105'
+                }`}
+              >
+                <div
+                  className="absolute inset-0 bg-bdsec dark:bg-indigo-500 rounded-full 
+                             blur-[14px] opacity-60 dark:opacity-80 -z-10"
                 />
-                <path
-                  d="M4.375 18.7373H25.625"
-                  stroke="white"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M4.375 11.2623L10.6375 4.9873"
-                  stroke="white"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M25.625 11.2627H4.375"
-                  stroke="white"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
+                
+                {(!isLoggedIn || !hasMcsdAccount) && (
+                  <Lock size={16} className="absolute -top-2 -right-2 bg-white text-gray-600 rounded-full p-1" />
+                )}
+                
+                {/* secondary market exchange icon */}
+                <svg width="26" height="26" viewBox="0 0 30 30" fill="none">
+                  <path
+                    d="M25.625 18.7373L19.3625 25.0123"
+                    stroke="white"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4.375 18.7373H25.625"
+                    stroke="white"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4.375 11.2623L10.6375 4.9873"
+                    stroke="white"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M25.625 11.2627H4.375"
+                    stroke="white"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              
+              {showTooltip === 'exchange' && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
+                  {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* nav items */}
@@ -165,40 +243,70 @@ const BottomNavigation = () => {
               }`}
             >
               <Home size={iconSize} />
-              <span className="text-[10px] mt-1">{t('bottomNav.dashboard')}</span>
+              <span className="text-[10px] mt-1">нүүр</span>
             </Link>
 
-            <Link
-              href="/stocks"
-              className={`flex flex-col items-center ${
-                isActive('/stocks') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'
-              }`}
-            >
-              <BarChart3 size={iconSize} />
-              <span className="text-[10px] mt-1">{t('bottomNav.stocks')}</span>
-            </Link>
+            <div className="relative">
+              <button
+                onClick={(e) => handleMenuClick(e, 'balance')}
+                className={`flex flex-col items-center ${
+                  (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
+                }`}
+              >
+                {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
+                <Wallet size={iconSize} />
+                <span className="text-[10px] mt-1">үлдэгдэл</span>
+              </button>
+              
+              {showTooltip === 'balance' && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
+                  {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                </div>
+              )}
+            </div>
 
             <div className="w-16" />
 
-            <Link
-              href="/bonds"
-              className={`flex flex-col items-center ${
-                isActive('/bonds') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'
-              }`}
-            >
-              <FileText size={iconSize} />
-              <span className="text-[10px] mt-1">{t('bottomNav.bonds')}</span>
-            </Link>
+            <div className="relative">
+              <button
+                onClick={(e) => handleMenuClick(e, 'returns')}
+                className={`flex flex-col items-center ${
+                  (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
+                }`}
+              >
+                {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
+                <TrendingUp size={iconSize} />
+                <span className="text-[10px] mt-1">өгөөж</span>
+              </button>
+              
+              {showTooltip === 'returns' && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
+                  {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                </div>
+              )}
+            </div>
 
-            <Link
-              href="/ipo"
-              className={`flex flex-col items-center ${
-                isActive('/ipo') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'
-              }`}
-            >
-              <Building size={iconSize} />
-              <span className="text-[10px] mt-1">{t('nav.ipo')}</span>
-            </Link>
+            <div className="relative">
+              <button
+                onClick={(e) => handleMenuClick(e, 'ipo')}
+                className={`flex flex-col items-center ${
+                  (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
+                }`}
+              >
+                {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
+                <Building size={iconSize} />
+                <span className="text-[10px] mt-1">IPO</span>
+              </button>
+              
+              {showTooltip === 'ipo' && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
+                  {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

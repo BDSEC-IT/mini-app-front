@@ -76,7 +76,7 @@
     "mcsdRequestApproved": "Your request has been approved",
     "mcsdRequestRejected": "Your request has been rejected",
     "registrationFee": "Registration Fee",
-    "registrationFeePaid": "Paid: {{amount}} MNT",
+    "registrationFeePaid": "Paid: {8000} MNT",
     "registrationFeeNotPaid": "Not paid",
     "accountSetup": "Account Setup",
     "generalInfo": "General Information",
@@ -112,7 +112,9 @@
     "serverError": "Server error. Please try again later.",
     "requestTimeout": "Request timed out. Please check your connection and try again.",
     "networkError": "Network error. Please check your internet connection and try again.",
-    "registrationFeeInfo": "A registration fee is required to create an MCSD account. Please create an invoice and complete the payment before submitting your information.",
+    "registrationFeeInfo": "A registration fee is required to create an MCSD account. Please create an invoice and complete the payment.",
+    "bankInfoExplanation": "Bank information will be used for future deposits and withdrawals from your MCSD account. This information is not related to the registration fee.",
+    "bankInfoSubmitted": "Bank information has been successfully submitted. Please proceed to pay the registration fee.",
     "accountSetupGeneral": "Account Setup - General Information",
     "basicInfo": "Basic Information",
     "personalInfo": "Personal Information",
@@ -166,7 +168,8 @@
     "accountsActivatedTogether": "Both accounts are activated together after approval",
     "brokerAccountWithMcsd": "Your broker account will be created with your MCSD account",
     "backToProfile": "Back to Profile",
-    "completed": "Completed"
+    "completed": "Completed",
+    "payAccountOpeningFee": "Pay account opening fee (8000₮)"
   },
   "menu": {
     "about": "ABOUT US",

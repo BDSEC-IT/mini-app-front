@@ -20,7 +20,7 @@ const Header = () => {
   
   // Check if user is logged in
   useEffect(() => {
-    const token = Cookies.get('auth_token')
+    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token')
     setIsLoggedIn(!!token)
   }, [])
 

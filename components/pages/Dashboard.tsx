@@ -50,6 +50,7 @@ const DashboardContent = () => {
   const [hoveredChange, setHoveredChange] = useState<number | null>(null)
   const [hoveredChangePercent, setHoveredChangePercent] = useState<number | null>(null)
   const [selectedStockData, setSelectedStockData] = useState<StockData | null>(null)
+  const [chartRefreshKey, setChartRefreshKey] = useState<number>(0)
   
   // Autoplay plugin configuration
   const autoplayPlugin = useRef(
@@ -235,9 +236,28 @@ const DashboardContent = () => {
   const handleStockSelect = (symbol: string) => {
     // Extract the base symbol without any suffix
     const baseSymbol = symbol.split('-')[0];
-    setSelectedSymbol(baseSymbol);
+    
+    // Force refresh even if selecting the same symbol by clearing state first
+    if (baseSymbol === selectedSymbol) {
+      setSelectedSymbol('');
+      setSelectedStockData(null);
+      setTimeout(() => {
+        setSelectedSymbol(baseSymbol);
+      }, 10);
+    } else {
+      setSelectedSymbol(baseSymbol);
+    }
+    
     setSearchTerm('');
     setIsSearchOpen(false);
+    
+    // Reset chart-related state to ensure fresh data
+    setHoveredPrice(null);
+    setHoveredChange(null);
+    setHoveredChangePercent(null);
+    
+    // Force chart refresh by incrementing the key
+    setChartRefreshKey(prev => prev + 1);
     
     // Immediately fetch order book data for the selected symbol
     setLoading(true);
@@ -390,9 +410,9 @@ const DashboardContent = () => {
           </div>
         </div>
         
-        {/* Chart section with full width on mobile */}
-        <div className="relative -mx-2 sm:mx-0">
-          <div className="h-[350px] sm:h-[380px] md:h-[400px] lg:h-[420px] mt-4 mb-8 sm:mb-12 rounded-none sm:rounded-lg overflow-visible bg-transparent">
+        {/* Chart section with proper containment */}
+        <div className="relative w-full max-w-full overflow-hidden">
+          <div className="h-[350px] sm:h-[380px] md:h-[400px] lg:h-[420px] mt-4 mb-8 sm:mb-12 rounded-lg bg-transparent mx-2 sm:mx-0">
             <div className="flex justify-between items-center mb-2 px-2 sm:px-4">
               <div className="text-sm text-gray-500">
                 {hoveredPrice ? (
@@ -409,8 +429,9 @@ const DashboardContent = () => {
                 {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </div>
             </div>
-            <div className="relative z-10">
+            <div className="relative w-full h-full overflow-hidden">
               <TradingViewChart 
+                key={`${selectedSymbol}-${chartRefreshKey}`}
                 symbol={`${selectedSymbol}-O-0000`}
                 theme={theme}
                 period={activeTab}

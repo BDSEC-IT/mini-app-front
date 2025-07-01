@@ -76,7 +76,7 @@
     "mcsdRequestApproved": "Таны хүсэлт батлагдсан",
     "mcsdRequestRejected": "Таны хүсэлт цуцлагдсан",
     "registrationFee": "Бүртгэлийн хураамж",
-    "registrationFeePaid": "Төлсөн: {{amount}} ₮",
+    "registrationFeePaid": "Төлсөн: 8000 ₮",
     "registrationFeeNotPaid": "Төлөөгүй",
     "accountSetup": "Данс нээх",
     "generalInfo": "Ерөнхий мэдээлэл",
@@ -97,7 +97,7 @@
     "mcsdRequestApproved": "Таны хүсэлт батлагдсан",
     "mcsdRequestRejected": "Таны хүсэлт цуцлагдсан",
     "registrationFee": "Бүртгэлийн хураамж",
-    "registrationFeePaid": "Төлсөн: {{amount}} ₮",
+    "registrationFeePaid": "Төлсөн: (8000 ₮)",
     "registrationFeeNotPaid": "Төлөөгүй",
     "accountSetup": "Данс нээх",
     "generalInfo": "Ерөнхий мэдээлэл",
@@ -133,7 +133,9 @@
     "serverError": "Сервер алдаа гарлаа. Дараа дахин оролдоно уу.",
     "requestTimeout": "Хүсэлтийн хугацаа дууслаа. Дараа дахин оролдоно уу.",
     "networkError": "Сүлжээний алдаа. Интернет холболтоо шалгаад дахин оролдоно уу.",
-    "registrationFeeInfo": "МҮЦДС данс нээхийн тулд бүртгэлийн хураамж төлөх шаардлагатай. Мэдээллээ илгээхийн өмнө нэхэмжлэх үүсгэж төлбөрөө хийнэ үү.",
+    "registrationFeeInfo": "МҮЦДС данс нээхийн тулд бүртгэлийн хураамж төлөх шаардлагатай. Нэхэмжлэх үүсгэж төлбөрөө хийнэ үү.",
+    "bankInfoExplanation": "Банкны мэдээлэл нь ирээдүйд МҮЦДС дансаасаа мөнгө татах, оруулахад ашиглагдана. Энэ мэдээлэл бүртгэлийн хураамжтай ямар ч холбооргүй.",
+    "bankInfoSubmitted": "Банкны мэдээлэл амжилттай бүртгэгдлээ. Одоо бүртгэлийн хураамж төлнө үү.",
     "accountSetupGeneral": "Данс нээх - Ерөнхий мэдээлэл",
     "basicInfo": "Үндсэн мэдээлэл",
     "personalInfo": "Хувийн мэдээлэл",
@@ -186,7 +188,8 @@
     "brokerAccountWithMcsd": "Таны брокерийн данс МҮЦДС дансны хамт үүсгэгдэх болно",
     "backToProfile": "Профайл руу буцах",
     "completed": "Дууссан",
-    "back": "Буцах"
+    "back": "Буцах",
+    "payAccountOpeningFee": "Данс нээх үйлчилгээний хураамж төлөх (8000₮)"
   },
   "menu": {
     "about": "БИДНИЙ ТУХАЙ",
