@@ -451,40 +451,39 @@ export default function GeneralInfoPage() {
                     
                     hasSubmittedData = hasValidStatus || hasId || hasPascalCaseData || hasCamelCaseData || hasFallbackData;
                     
-                    // Check for validation errors in the response (if available)
-                    const validation = (statusResponse as any).validation;
-                    const hasValidationErrors = validation && !validation.isValid;
+                    // Trust the backend's validation if it exists
+                    const backendValidation = (statusResponse.data as any)?.validation;
                     
-                    // Check for missing required fields
-                    const missingFields = validation?.missingFields || [];
-                    const fieldErrors = validation?.fieldErrors || {};
-                    
-                    // Required fields that must be present
-                    const requiredFields = [
-                        'FirstName', 'LastName', 'RegistryNumber', 'MobilePhone', 
-                        'Gender', 'BirthDate', 'Occupation', 'HomeAddress', 
-                        'BankCode', 'BankAccountNumber', 'CustomerType', 'Country'
-                    ];
-                    
-                    const missingRequiredFields = requiredFields.filter(field => {
-                        const value = data[field];
-                        // Check if the field is null, undefined, or empty string
-                        return value === null || value === undefined || value === '';
-                    });
-                    
-                    isDataComplete = !hasValidationErrors && missingRequiredFields.length === 0 && Object.keys(fieldErrors).length === 0;
+                    if (backendValidation) {
+                        // Backend provides validation, trust it
+                        isDataComplete = backendValidation.isValid === true;
+                        console.log('General page - Using backend validation:', backendValidation);
+                    } else {
+                        // Fallback validation if backend doesn't provide validation
+                        const requiredFields = [
+                            'FirstName', 'LastName', 'RegistryNumber', 'MobilePhone', 
+                            'Gender', 'BirthDate', 'Occupation', 'HomeAddress', 
+                            'BankCode', 'BankAccountNumber', 'CustomerType', 'Country'
+                        ];
+                        
+                        const missingRequiredFields = requiredFields.filter(field => {
+                            const value = data[field];
+                            // Check if the field is null, undefined, or empty string
+                            return value === null || value === undefined || value === '';
+                        });
+                        
+                        isDataComplete = missingRequiredFields.length === 0;
+                        
+                        console.log('General page - Fallback validation:', {
+                            missingRequiredFields,
+                            isDataComplete
+                        });
+                    }
                     
                     console.log('General page - Data completeness check:', {
-                        hasValidationErrors,
-                        missingRequiredFields,
-                        fieldErrors: Object.keys(fieldErrors),
                         isDataComplete,
-                        validation,
-                        // Debug: show actual values for missing fields
-                        missingFieldValues: missingRequiredFields.reduce((acc, field) => {
-                            acc[field] = data[field];
-                            return acc;
-                        }, {} as any)
+                        backendValidation,
+                        hasSubmittedData
                     });
                 } else {
                     // 404 or other error - user hasn't submitted data yet
@@ -707,23 +706,53 @@ export default function GeneralInfoPage() {
 
     const accountData = statusResponse.data;
     
-    // Check for required fields - if any are null, account status creation failed
-    const requiredFields = [
-        'FirstName', 'LastName', 'RegistryNumber', 'MobilePhone', 'Gender', 
-        'BirthDate', 'HomeAddress', 'BankCode', 'BankAccountNumber'
-    ];
+    // Debug: Log the actual account data structure
+    console.log('=== ACCOUNT STATUS DEBUG ===');
+    console.log('Account data:', accountData);
+    console.log('Account data keys:', Object.keys(accountData || {}));
+    console.log('Backend validation:', (statusResponse.data as any)?.validation);
+    console.log('=== END DEBUG ===');
     
-    const missingFields = requiredFields.filter(field => {
-        const value = accountData[field];
-        return value === null || value === undefined || value === '';
-    });
-
-    if (missingFields.length > 0) {
-        console.error('Account status validation failed. Missing fields:', missingFields);
-        console.error('Account data:', accountData);
-        setError("Account setup is incomplete. Some required fields are missing. Please complete your account setup first.");
-        alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+    // Trust the backend's validation if it exists
+    const backendValidation = (statusResponse.data as any)?.validation;
+    if (backendValidation && backendValidation.isValid === false) {
+        console.error('Backend validation failed:', backendValidation);
+        setError("Account setup is incomplete. Please complete your account setup first.");
+        alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
         return;
+    }
+    
+    // Fallback validation only if backend doesn't provide validation
+    if (!backendValidation) {
+        // Check for required fields - if any are null, account status creation failed
+        // Check both PascalCase and camelCase field names since backend might return either
+        const requiredFields = [
+            { pascalCase: 'FirstName', camelCase: 'firstName' },
+            { pascalCase: 'LastName', camelCase: 'lastName' },
+            { pascalCase: 'RegistryNumber', camelCase: 'registryNumber' },
+            { pascalCase: 'MobilePhone', camelCase: 'mobilePhone' },
+            { pascalCase: 'Gender', camelCase: 'gender' },
+            { pascalCase: 'BirthDate', camelCase: 'birthDate' },
+            { pascalCase: 'HomeAddress', camelCase: 'homeAddress' },
+            { pascalCase: 'BankCode', camelCase: 'bankCode' },
+            { pascalCase: 'BankAccountNumber', camelCase: 'bankAccountNumber' },
+            { pascalCase: 'Country', camelCase: 'country' } // Backend returns 'Country' field
+        ];
+        
+        const missingFields = requiredFields.filter(field => {
+            const pascalValue = accountData[field.pascalCase];
+            const camelValue = accountData[field.camelCase];
+            const value = pascalValue !== undefined ? pascalValue : camelValue;
+            return value === null || value === undefined || value === '';
+        });
+
+        if (missingFields.length > 0) {
+            console.error('Account status validation failed. Missing fields:', missingFields);
+            console.error('Account data:', accountData);
+            setError("Account setup is incomplete. Some required fields are missing. Please complete your account setup first.");
+            alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+            return;
+        }
     }
 
     // If all validations pass, proceed with invoice creation

@@ -36,25 +36,63 @@ export default function FeePaymentPage() {
 
       const accountData = statusResponse.data;
       
-      // Check for required fields - if any are null, account status creation failed
-      const requiredFields = [
-        'FirstName', 'LastName', 'RegistryNumber', 'MobilePhone', 'Gender', 
-        'BirthDate', 'HomeAddress', 'BankCode', 'BankAccountNumber'
-      ];
+      // Debug: Log the actual account data structure
+      console.log('=== FEE PAGE ACCOUNT STATUS DEBUG ===');
+      console.log('Account data:', accountData);
+      console.log('Account data keys:', Object.keys(accountData || {}));
+      console.log('Backend validation:', (statusResponse.data as any)?.validation);
+      console.log('=== END DEBUG ===');
       
-      const missingFields = requiredFields.filter(field => {
-        const value = accountData[field];
-        return value === null || value === undefined || value === '';
-      });
-
-      if (missingFields.length > 0) {
-        console.error('Account status validation failed. Missing fields:', missingFields);
-        console.error('Account data:', accountData);
-        setError("Account setup is incomplete. Some required fields are missing. Please complete your account setup first.");
-        alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+      // Trust the backend's validation if it exists
+      const backendValidation = (statusResponse.data as any)?.validation;
+      if (backendValidation && backendValidation.isValid === false) {
+        console.error('Backend validation failed:', backendValidation);
+        setError("Account setup is incomplete. Please complete your account setup first.");
+        alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
         setIsProcessing(false);
         return;
       }
+      
+      // Fallback validation only if backend doesn't provide validation
+      if (!backendValidation) {
+        // Check for required fields - if any are null, account status creation failed
+        // Check both PascalCase and camelCase field names since backend might return either
+        const requiredFields = [
+          { pascalCase: 'FirstName', camelCase: 'firstName' },
+          { pascalCase: 'LastName', camelCase: 'lastName' },
+          { pascalCase: 'RegistryNumber', camelCase: 'registryNumber' },
+          { pascalCase: 'MobilePhone', camelCase: 'mobilePhone' },
+          { pascalCase: 'Gender', camelCase: 'gender' },
+          { pascalCase: 'BirthDate', camelCase: 'birthDate' },
+          { pascalCase: 'HomeAddress', camelCase: 'homeAddress' },
+          { pascalCase: 'BankCode', camelCase: 'bankCode' },
+          { pascalCase: 'BankAccountNumber', camelCase: 'bankAccountNumber' },
+          { pascalCase: 'Country', camelCase: 'country' } // Backend returns 'Country' field
+        ];
+        
+        const missingFields = requiredFields.filter(field => {
+          const pascalValue = accountData[field.pascalCase];
+          const camelValue = accountData[field.camelCase];
+          const value = pascalValue !== undefined ? pascalValue : camelValue;
+          return value === null || value === undefined || value === '';
+        });
+
+        if (missingFields.length > 0) {
+          console.error('Account status validation failed. Missing fields:', missingFields);
+          console.error('Account data:', accountData);
+          setError("Account setup is incomplete. Some required fields are missing. Please complete your account setup first.");
+          alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+          setIsProcessing(false);
+          return;
+        }
+      }
+
+      // Debug: Test token with a known working endpoint first
+      console.log('=== TOKEN TEST DEBUG ===');
+      console.log('Testing token with getAccountStatusRequest first...');
+      const testResponse = await getAccountStatusRequest(token);
+      console.log('Token test result:', testResponse.success ? 'SUCCESS' : 'FAILED');
+      console.log('=== END TOKEN TEST ===');
 
       // If all validations pass, proceed with invoice creation
       const result = await createOrRenewInvoice(token)
@@ -85,17 +123,39 @@ export default function FeePaymentPage() {
         return;
       }
       const accountData = statusResponse.data;
-      const requiredFields = [
-        'FirstName', 'LastName', 'RegistryNumber', 'MobilePhone', 'Gender',
-        'BirthDate', 'HomeAddress', 'BankCode', 'BankAccountNumber'
-      ];
-      const missingFields = requiredFields.filter(field => {
-        const value = accountData[field];
-        return value === null || value === undefined || value === '';
-      });
-      if (missingFields.length > 0) {
+      
+      // Trust the backend's validation if it exists
+      const backendValidation = (statusResponse.data as any)?.validation;
+      if (backendValidation && backendValidation.isValid === false) {
         alert('Та эхлээд ерөнхий мэдээллээ бүрэн бөглөнө үү.');
         router.replace('/account-setup/general');
+        return;
+      }
+      
+      // Fallback validation only if backend doesn't provide validation
+      if (!backendValidation) {
+        const requiredFields = [
+          { pascalCase: 'FirstName', camelCase: 'firstName' },
+          { pascalCase: 'LastName', camelCase: 'lastName' },
+          { pascalCase: 'RegistryNumber', camelCase: 'registryNumber' },
+          { pascalCase: 'MobilePhone', camelCase: 'mobilePhone' },
+          { pascalCase: 'Gender', camelCase: 'gender' },
+          { pascalCase: 'BirthDate', camelCase: 'birthDate' },
+          { pascalCase: 'HomeAddress', camelCase: 'homeAddress' },
+          { pascalCase: 'BankCode', camelCase: 'bankCode' },
+          { pascalCase: 'BankAccountNumber', camelCase: 'bankAccountNumber' },
+          { pascalCase: 'Country', camelCase: 'country' }
+        ];
+        const missingFields = requiredFields.filter(field => {
+          const pascalValue = accountData[field.pascalCase];
+          const camelValue = accountData[field.camelCase];
+          const value = pascalValue !== undefined ? pascalValue : camelValue;
+          return value === null || value === undefined || value === '';
+        });
+        if (missingFields.length > 0) {
+          alert('Та эхлээд ерөнхий мэдээллээ бүрэн бөглөнө үү.');
+          router.replace('/account-setup/general');
+        }
       }
     };
     checkAccountStatus();
