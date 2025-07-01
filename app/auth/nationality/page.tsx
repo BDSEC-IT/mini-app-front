@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { Search, ChevronRight } from 'lucide-react'
-import { digipayLogin } from '@/lib/api'
+import { digipayLogin, getRegistrationNumber } from '@/lib/api'
 import Cookies from 'js-cookie'
 
 // ISO 3166-1 country codes with names in English and Mongolian
@@ -112,6 +112,19 @@ export default function NationalityPage() {
     // Navigate to registration page
     router.push(`/auth/register?nationality=${countryCode}`)
   }
+  
+  useEffect(() => {
+    const checkRegister = async () => {
+      const token = Cookies.get('auth_token');
+      if (token) {
+        const regRes = await getRegistrationNumber(token);
+        if (regRes.registerNumber) {
+          router.replace('/account-setup/general');
+        }
+      }
+    };
+    checkRegister();
+  }, []);
   
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 p-4">

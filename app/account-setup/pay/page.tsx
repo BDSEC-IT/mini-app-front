@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import Cookies from 'js-cookie';
-import { createOrRenewInvoice } from '@/lib/api';
+import { createOrRenewInvoice, getAccountStatusRequest } from '@/lib/api';
 import { AlertCircle } from 'lucide-react';
 
 export default function PayPage() {
@@ -22,6 +22,36 @@ export default function PayPage() {
       }
 
       try {
+        // First, validate that account status request has all required fields
+        const statusResponse = await getAccountStatusRequest(token);
+        if (!statusResponse.success || !statusResponse.data) {
+          setError("Дансны мэдээлэл олдсонгүй. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+          setTimeout(() => router.push('/account-setup/general'), 3000);
+          return;
+        }
+
+        const accountData = statusResponse.data;
+        
+        // Check for required fields - if any are null, account status creation failed
+        const requiredFields = [
+          'FirstName', 'LastName', 'RegistryNumber', 'MobilePhone', 'Gender', 
+          'BirthDate', 'HomeAddress', 'BankCode', 'BankAccountNumber'
+        ];
+        
+        const missingFields = requiredFields.filter(field => {
+          const value = accountData[field];
+          return value === null || value === undefined || value === '';
+        });
+
+        if (missingFields.length > 0) {
+          console.error('Account status validation failed. Missing fields:', missingFields);
+          console.error('Account data:', accountData);
+          setError("Дансны мэдээлэл бүрэн бөгөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+          setTimeout(() => router.push('/account-setup/general'), 3000);
+          return;
+        }
+
+        // If all validations pass, proceed with invoice creation
         const invoiceResponse = await createOrRenewInvoice(token);
         if (invoiceResponse.success && invoiceResponse.data?.paymentUrl) {
           window.location.href = invoiceResponse.data.paymentUrl;

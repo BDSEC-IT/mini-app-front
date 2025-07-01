@@ -337,22 +337,6 @@ export default function GeneralInfoPage() {
   const [showRegisterInput, setShowRegisterInput] = useState(false);
   const [registerInput, setRegisterInput] = useState('');
   
-  // On mount, check registration number via GET
-  useEffect(() => {
-    const checkRegister = async () => {
-      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
-      if (!token) return;
-      const regRes = await getRegistrationNumber(token);
-      if (!regRes.registerNumber) {
-        setShowRegisterInput(true);
-      } else {
-        setShowRegisterInput(false);
-        setRegisterNumber(regRes.registerNumber);
-      }
-    };
-    checkRegister();
-  }, []);
-
   // Handler for register number submission (POST)
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -367,6 +351,9 @@ export default function GeneralInfoPage() {
       setRegisterNumber(registerInput.trim());
       setShowRegisterInput(false);
       setError(null);
+      // After successful registration, re-fetch status to update the view
+      // Trigger a re-render by updating searchParams or force a refresh
+      window.location.reload();
     } else {
       setError(res.message || t('profile.formError'));
     }
@@ -383,6 +370,22 @@ export default function GeneralInfoPage() {
         const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
         if (token) {
             try {
+                // First, check if user has a registration number
+                const regRes = await getRegistrationNumber(token);
+                console.log('General page - Registration number response:', regRes);
+                
+                if (!regRes.registerNumber) {
+                    // No registration number, show register input form
+                    setShowRegisterInput(true);
+                    setViewMode('loading');
+                    return;
+                } else {
+                    // User has registration number, set it and continue with status check
+                    setShowRegisterInput(false);
+                    setRegisterNumber(regRes.registerNumber);
+                }
+                
+                // Now check account status
                 const statusResponse = await getAccountStatusRequest(token);
                 console.log('General page - statusResponse:', statusResponse);
                 
@@ -587,12 +590,43 @@ export default function GeneralInfoPage() {
         setError("Authentication token missing. Please log in.");
         return;
     }
+
+    // First, validate that account status request has all required fields
+    const statusResponse = await getAccountStatusRequest(token);
+    if (!statusResponse.success || !statusResponse.data) {
+        setError("Failed to get account status. Please complete your account setup first.");
+        alert("Алдаа: Дансны мэдээлэл олдсонгүй. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+        return;
+    }
+
+    const accountData = statusResponse.data;
+    
+    // Check for required fields - if any are null, account status creation failed
+    const requiredFields = [
+        'FirstName', 'LastName', 'RegistryNumber', 'MobilePhone', 'Gender', 
+        'BirthDate', 'HomeAddress', 'BankCode', 'BankAccountNumber'
+    ];
+    
+    const missingFields = requiredFields.filter(field => {
+        const value = accountData[field];
+        return value === null || value === undefined || value === '';
+    });
+
+    if (missingFields.length > 0) {
+        console.error('Account status validation failed. Missing fields:', missingFields);
+        console.error('Account data:', accountData);
+        setError("Account setup is incomplete. Some required fields are missing. Please complete your account setup first.");
+        alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+        return;
+    }
+
+    // If all validations pass, proceed with invoice creation
     const result = await createOrRenewInvoice(token);
     if (result.success) {
         // Refresh summary data to show new invoice status
-        const statusResponse = await getAccountStatusRequest(token);
-        if (statusResponse.success) {
-            setSummaryData(statusResponse.data);
+        const updatedStatusResponse = await getAccountStatusRequest(token);
+        if (updatedStatusResponse.success) {
+            setSummaryData(updatedStatusResponse.data);
         }
         alert('Нэхэмжлэл амжилттай үүслээ. Та банкны апп-аасаа төлбөрөө гүйцэтгэнэ үү.');
     } else {

@@ -110,6 +110,14 @@ const BottomNavigation = () => {
   const overlap = 8   // px
   const sideW = Math.max(0, (winW - CURVE_W) / 2) + overlap
 
+  // Add a helper to determine allowed menus
+  const allowedMenus = [
+    { href: '/', icon: Home, label: 'нүүр' },
+    { href: '/stocks', icon: TrendingUp, label: 'Equity All' },
+    { href: '/bonds', icon: Building, label: 'Bonds' },
+    { href: '/news', icon: Building, label: 'News' },
+  ];
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
       {/* Bar container (70px tall) */}
@@ -236,77 +244,78 @@ const BottomNavigation = () => {
 
           {/* nav items */}
           <div className="absolute bottom-2 inset-x-0 flex justify-between items-center px-4 md:px-6 lg:px-8 mx-auto max-w-[1400px] pointer-events-auto z-30">
-            <Link
-              href="/"
-              className={`flex flex-col items-center ${
-                isActive('/') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'
-              }`}
-            >
-              <Home size={iconSize} />
-              <span className="text-[10px] mt-1">нүүр</span>
-            </Link>
-
-            <div className="relative">
-              <button
-                onClick={(e) => handleMenuClick(e, 'balance')}
-                className={`flex flex-col items-center ${
-                  (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
-                }`}
-              >
-                {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
-                <Wallet size={iconSize} />
-                <span className="text-[10px] mt-1">үлдэгдэл</span>
-              </button>
-              
-              {showTooltip === 'balance' && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
-                  {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+            {(!isLoggedIn || !hasMcsdAccount) ? (
+              allowedMenus.map((item) => (
+                <Link key={item.href} href={item.href} className={`flex flex-col items-center ${isActive(item.href) ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
+                  <item.icon size={iconSize} />
+                  <span className="text-[10px] mt-1">{item.label}</span>
+                </Link>
+              ))
+            ) : (
+              <>
+                <div className="relative">
+                  <button
+                    onClick={(e) => handleMenuClick(e, 'balance')}
+                    className={`flex flex-col items-center ${
+                      (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
+                    }`}
+                  >
+                    {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
+                    <Wallet size={iconSize} />
+                    <span className="text-[10px] mt-1">үлдэгдэл</span>
+                  </button>
+                  
+                  {showTooltip === 'balance' && (
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
+                      {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="w-16" />
+                <div className="w-16" />
 
-            <div className="relative">
-              <button
-                onClick={(e) => handleMenuClick(e, 'returns')}
-                className={`flex flex-col items-center ${
-                  (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
-                }`}
-              >
-                {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
-                <TrendingUp size={iconSize} />
-                <span className="text-[10px] mt-1">өгөөж</span>
-              </button>
-              
-              {showTooltip === 'returns' && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
-                  {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                <div className="relative">
+                  <button
+                    onClick={(e) => handleMenuClick(e, 'returns')}
+                    className={`flex flex-col items-center ${
+                      (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
+                    }`}
+                  >
+                    {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
+                    <TrendingUp size={iconSize} />
+                    <span className="text-[10px] mt-1">өгөөж</span>
+                  </button>
+                  
+                  {showTooltip === 'returns' && (
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
+                      {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="relative">
-              <button
-                onClick={(e) => handleMenuClick(e, 'ipo')}
-                className={`flex flex-col items-center ${
-                  (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
-                }`}
-              >
-                {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
-                <Building size={iconSize} />
-                <span className="text-[10px] mt-1">IPO</span>
-              </button>
-              
-              {showTooltip === 'ipo' && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
-                  {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                <div className="relative">
+                  <button
+                    onClick={(e) => handleMenuClick(e, 'ipo')}
+                    className={`flex flex-col items-center ${
+                      (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
+                    }`}
+                  >
+                    {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
+                    <Building size={iconSize} />
+                    <span className="text-[10px] mt-1">IPO</span>
+                  </button>
+                  
+                  {showTooltip === 'ipo' && (
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
+                      {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
       </div>

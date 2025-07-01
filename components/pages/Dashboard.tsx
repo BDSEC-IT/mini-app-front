@@ -357,7 +357,7 @@ const DashboardContent = () => {
                 </button>
               </div>
             ) : selectedStockData ? (
-              <div className="flex items-center border rounded-md px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 max-w-44 sm:max-w-52">
+              <div className="flex items-center border rounded-md px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 max-w-44 sm:max-w-52 cursor-pointer" onClick={handleSearchClick}>
                 <Search size={12} className="text-blue-500 mr-1" />
                 <div className="flex items-center text-xs min-w-0 overflow-hidden">
                   <span className="font-semibold text-blue-700 dark:text-blue-300 flex-shrink-0">{selectedSymbol}</span>
@@ -366,18 +366,13 @@ const DashboardContent = () => {
                     {(selectedStockData.mnName || selectedStockData.enName || '').substring(0, 8)}
                   </span>
                 </div>
-                <button onClick={handleSearchClick} className="ml-1 flex-shrink-0">
-                  <ChevronDown size={12} className="text-blue-500" />
-                </button>
+                <ChevronDown size={12} className="text-blue-500 ml-1 flex-shrink-0" />
               </div>
             ) : (
-              <button
-                onClick={handleSearchClick}
-                className="flex items-center border rounded-md px-2 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              >
+              <div className="flex items-center border rounded-md px-2 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer" onClick={handleSearchClick}>
                 <Search size={12} className="text-gray-500 mr-1" />
                 <span className="text-xs text-gray-500">{t('common.search')}</span>
-              </button>
+              </div>
             )}
             
             {/* Search Results Dropdown - more compact */}

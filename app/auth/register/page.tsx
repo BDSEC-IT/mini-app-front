@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, AlertCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react'
-import { sendRegistrationNumber, digipayLogin, type RegistrationResponse } from '@/lib/api'
+import { sendRegistrationNumber, digipayLogin, type RegistrationResponse, getRegistrationNumber } from '@/lib/api'
 import Cookies from 'js-cookie'
 
 export default function RegisterPage() {
@@ -204,6 +204,19 @@ export default function RegisterPage() {
       </div>
     )
   }
+  
+  useEffect(() => {
+    const checkRegister = async () => {
+      const token = Cookies.get('auth_token');
+      if (token) {
+        const regRes = await getRegistrationNumber(token);
+        if (regRes.registerNumber) {
+          router.replace('/account-setup/general');
+        }
+      }
+    };
+    checkRegister();
+  }, []);
   
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 p-4">

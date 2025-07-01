@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, CreditCard } from 'lucide-react'
 import Cookies from 'js-cookie'
-import { createOrRenewInvoice } from '@/lib/api'
+import { createOrRenewInvoice, getAccountStatusRequest } from '@/lib/api'
 
 export default function FeePaymentPage() {
   const { t } = useTranslation()
@@ -16,7 +16,7 @@ export default function FeePaymentPage() {
   const handlePayment = async () => {
     setIsProcessing(true)
     setError(null)
-    const token = Cookies.get('token')
+    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token')
 
     if (!token) {
       setError("Authentication token not found. Please log in again.")
@@ -25,6 +25,38 @@ export default function FeePaymentPage() {
     }
 
     try {
+      // First, validate that account status request has all required fields
+      const statusResponse = await getAccountStatusRequest(token);
+      if (!statusResponse.success || !statusResponse.data) {
+        setError("Failed to get account status. Please complete your account setup first.");
+        alert("Алдаа: Дансны мэдээлэл олдсонгүй. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+        setIsProcessing(false);
+        return;
+      }
+
+      const accountData = statusResponse.data;
+      
+      // Check for required fields - if any are null, account status creation failed
+      const requiredFields = [
+        'FirstName', 'LastName', 'RegistryNumber', 'MobilePhone', 'Gender', 
+        'BirthDate', 'HomeAddress', 'BankCode', 'BankAccountNumber'
+      ];
+      
+      const missingFields = requiredFields.filter(field => {
+        const value = accountData[field];
+        return value === null || value === undefined || value === '';
+      });
+
+      if (missingFields.length > 0) {
+        console.error('Account status validation failed. Missing fields:', missingFields);
+        console.error('Account data:', accountData);
+        setError("Account setup is incomplete. Some required fields are missing. Please complete your account setup first.");
+        alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // If all validations pass, proceed with invoice creation
       const result = await createOrRenewInvoice(token)
       if (result.success) {
         // The parent application should now handle the Digipay flow.
@@ -41,6 +73,33 @@ export default function FeePaymentPage() {
       setIsProcessing(false)
     }
   }
+
+  useEffect(() => {
+    const checkAccountStatus = async () => {
+      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+      if (!token) return;
+      const statusResponse = await getAccountStatusRequest(token);
+      if (!statusResponse.success || !statusResponse.data) {
+        alert('Та эхлээд ерөнхий мэдээллээ бүрэн бөглөнө үү.');
+        router.replace('/account-setup/general');
+        return;
+      }
+      const accountData = statusResponse.data;
+      const requiredFields = [
+        'FirstName', 'LastName', 'RegistryNumber', 'MobilePhone', 'Gender',
+        'BirthDate', 'HomeAddress', 'BankCode', 'BankAccountNumber'
+      ];
+      const missingFields = requiredFields.filter(field => {
+        const value = accountData[field];
+        return value === null || value === undefined || value === '';
+      });
+      if (missingFields.length > 0) {
+        alert('Та эхлээд ерөнхий мэдээллээ бүрэн бөглөнө үү.');
+        router.replace('/account-setup/general');
+      }
+    };
+    checkAccountStatus();
+  }, [router]);
 
   return (
     <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
