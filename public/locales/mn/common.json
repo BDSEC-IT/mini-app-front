@@ -117,7 +117,7 @@
     "female": "Эмэгтэй",
     "unknown": "Тодорхойгүй",
     "birthDate": "Төрсөн огноо",
-    "occupation": "Ажил",
+    "occupation": "Ажлын газрын нэр болон албан тушаал оруулах",
     "homeAddress": "Гэрийн хаяг",
     "parentRegisterNumber": "Эцэг/Эхийн регистрийн дугаар",
     "selectBank": "Банк сонгох",
@@ -144,6 +144,10 @@
     "enterFirstName": "Нэрээ оруулна уу",
     "enterOccupation": "Ажлаа оруулна уу",
     "enterHomeAddress": "Гэрийн хаягаа оруулна уу",
+    "customerType": "Хэрэглэгчийн төрөл",
+    "individual": "Хувь хүн",
+    "corporate": "Байгууллага",
+    "country": "Улс",
     "noGeneralInfo": "Ерөнхий мэдээлэл олдсонгүй. Эхний алхамыг гүйцэтгэнэ үү.",
     "accountSetupSuccess": "Данс нээх үйл явц амжилттай дууслаа",
     "accountSetupFailed": "Данс нээх үйл явц амжилтгүй болсон",
@@ -194,7 +198,7 @@
   "menu": {
     "about": "БИДНИЙ ТУХАЙ",
     "faq": "ТҮГЭЭМЭЛ АСУУЛТ ХАРИУЛТ",
-    "news": "МЭДЭЭ МЭДЭЭЛЛЭЛ",
+    "news": "МЭДЭЭ",
     "withdraw": "МӨНГӨ ХҮСЭХ"
   },
   "chart": {

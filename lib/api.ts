@@ -1,7 +1,7 @@
 import { AccountSetupFormData, mongolianBanks } from './schemas';
 
 // API base URL
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
+export const BASE_URL = 'https://miniapp.bdsec.mn/apitest';
 
 interface StockData {
   pkId: number;
@@ -1140,31 +1140,16 @@ export const submitAccountSetup = async (data: any, token: string) => {
 // Send account status request with general and bank information
 export const sendAccountStatusRequest = async (data: any, token: string) => {
   try {
+    // Debug: Log the request body
+    console.log('sendAccountStatusRequest - Request body:', data);
+
     const response = await fetch(`${BASE_URL}/user/send-account-status-request`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({
-        // General information (ерөнхий мэдээлэл)
-        isAdult: data.isAdult,
-        registerNumber: data.isAdult ? data.registerNumber : data.childRegisterNumber,
-        parentRegisterNumber: data.isAdult ? undefined : data.parentRegisterNumber,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        gender: data.gender,
-        birthDate: data.birthDate,
-        phoneNumber: data.phoneNumber,
-        homePhone: data.homePhone,
-        occupation: data.isAdult ? data.occupation : undefined,
-        homeAddress: data.homeAddress,
-        
-        // Bank information
-        bankCode: data.bankCode,
-        bankName: data.bankName,
-        bankAccountNumber: data.accountNumber
-      })
+      body: JSON.stringify(data) // Send the data as-is (camelCase)
     });
 
     const result = await response.json();
@@ -1175,6 +1160,7 @@ export const sendAccountStatusRequest = async (data: any, token: string) => {
         data: result
       };
     } else {
+      console.error('sendAccountStatusRequest - Error response:', result);
       return {
         success: false,
         message: result.message || 'Failed to send account status request',
@@ -1339,13 +1325,42 @@ export const getRegistrationNumber = async (token?: string) => {
       }
     });
     const data = await response.json();
+    
+    // Debug logging to see the actual response structure - reduced to improve performance
+    // console.log('getRegistrationNumber - Raw response data:', data);
+    // console.log('getRegistrationNumber - Response structure:', {
+    //   hasData: !!data?.data,
+    //   dataType: typeof data?.data,
+    //   hasRegisterNumber: !!data?.data?.registerNumber,
+    //   directData: typeof data === 'string' ? data : 'not string'
+    // });
+    
+    // Try multiple possible response structures
+    let registerNumber = null;
+    if (typeof data === 'string') {
+      // Backend returns just the string directly
+      registerNumber = data;
+    } else if (data?.data?.registerNumber) {
+      // Backend returns { data: { registerNumber: "..." } }
+      registerNumber = data.data.registerNumber;
+    } else if (data?.registerNumber) {
+      // Backend returns { registerNumber: "..." }
+      registerNumber = data.registerNumber;
+    } else if (data?.data && typeof data.data === 'string') {
+      // Backend returns { data: "..." }
+      registerNumber = data.data;
+    }
+    
+    // console.log('getRegistrationNumber - Extracted registerNumber:', registerNumber);
+    
     return {
       success: response.ok,
-      registerNumber: data?.data?.registerNumber || null,
+      registerNumber: registerNumber,
       data: data?.data || null,
       message: data?.message || null
     };
   } catch (error) {
+    console.error('getRegistrationNumber - Error:', error);
     return {
       success: false,
       registerNumber: null,
@@ -1374,4 +1389,4 @@ export type {
   AccountSetupResponse,
   NewsData,
   NewsResponse
-}; 
+};

@@ -35,17 +35,47 @@ const BottomNavigation = () => {
         } catch (error) {
           console.error('Error fetching account info:', error)
         }
+      } else {
+        setIsLoggedIn(false)
+        setAccountInfo(null)
       }
     }
     
     checkAccountStatus()
+    
+    // Listen for account setup data changes
+    const handleAccountSetupChange = () => {
+      console.log('BottomNavigation: Account setup data changed event triggered');
+      checkAccountStatus();
+    };
+    
+    window.addEventListener('accountSetupDataChanged', handleAccountSetupChange);
+    
+    // Listen for login/logout events
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'jwt' || e.key === 'auth_token' || e.key === 'token') {
+        checkAccountStatus();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('accountSetupDataChanged', handleAccountSetupChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [])
   
   // Check if user has MCSD account
-  const hasMcsdAccount = accountInfo?.MCSDAccount !== null
+  const hasMcsdAccount = accountInfo?.MCSDAccount !== null && accountInfo?.MCSDAccount !== undefined
   
-  // Debug logging can be removed once everything is working
-  // console.log('BottomNavigation DEBUG:', { isLoggedIn, hasMcsdAccount });
+  // Debug logging - commented out to prevent excessive re-rendering
+  // console.log('BottomNavigation DEBUG:', { 
+  //   isLoggedIn, 
+  //   hasMcsdAccount, 
+  //   accountInfo: accountInfo,
+  //   mcsdAccount: accountInfo?.MCSDAccount 
+  // });
   
   // Handle menu item click
   const handleMenuClick = (e: React.MouseEvent, type: 'balance' | 'returns' | 'ipo' | 'exchange') => {
@@ -112,10 +142,10 @@ const BottomNavigation = () => {
 
   // Add a helper to determine allowed menus
   const allowedMenus = [
-    { href: '/', icon: Home, label: 'нүүр' },
-    { href: '/stocks', icon: TrendingUp, label: 'Equity All' },
-    { href: '/bonds', icon: Building, label: 'Bonds' },
-    { href: '/news', icon: Building, label: 'News' },
+    { href: '/', icon: Home, label: t('nav.home') },
+    { href: '/stocks', icon: TrendingUp, label: t('common.stocks') },
+    { href: '/bonds', icon: Building, label: t('common.bonds') },
+    { href: '/news', icon: Building, label: t('menu.news') },
   ];
 
   return (
@@ -244,14 +274,30 @@ const BottomNavigation = () => {
 
           {/* nav items */}
           <div className="absolute bottom-2 inset-x-0 flex justify-between items-center px-4 md:px-6 lg:px-8 mx-auto max-w-[1400px] pointer-events-auto z-30">
+            {/* Always show home menu */}
+            <Link href="/" className={`flex flex-col items-center ${isActive('/') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
+              <Home size={iconSize} />
+              <span className="text-[10px] mt-1">{t('nav.home')}</span>
+            </Link>
+
             {(!isLoggedIn || !hasMcsdAccount) ? (
-              allowedMenus.map((item) => (
-                <Link key={item.href} href={item.href} className={`flex flex-col items-center ${isActive(item.href) ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
-                  <item.icon size={iconSize} />
-                  <span className="text-[10px] mt-1">{item.label}</span>
+              // Show basic menus for non-logged in users or users without MCSD account
+              <>
+                <Link href="/stocks" className={`flex flex-col items-center ${isActive('/stocks') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
+                  <TrendingUp size={iconSize} />
+                  <span className="text-[10px] mt-1">{t('common.stocks')}</span>
                 </Link>
-              ))
+                <Link href="/bonds" className={`flex flex-col items-center ${isActive('/bonds') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
+                  <Building size={iconSize} />
+                  <span className="text-[10px] mt-1">{t('common.bonds')}</span>
+                </Link>
+                <Link href="/news" className={`flex flex-col items-center ${isActive('/news') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
+                  <Building size={iconSize} />
+                  <span className="text-[10px] mt-1">{t('menu.news')}</span>
+                </Link>
+              </>
             ) : (
+              // Show advanced menus for logged in users with MCSD account
               <>
                 <div className="relative">
                   <button
@@ -262,7 +308,7 @@ const BottomNavigation = () => {
                   >
                     {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
                     <Wallet size={iconSize} />
-                    <span className="text-[10px] mt-1">үлдэгдэл</span>
+                    <span className="text-[10px] mt-1">{t('nav.balance')}</span>
                   </button>
                   
                   {showTooltip === 'balance' && (
@@ -273,8 +319,6 @@ const BottomNavigation = () => {
                   )}
                 </div>
 
-                <div className="w-16" />
-
                 <div className="relative">
                   <button
                     onClick={(e) => handleMenuClick(e, 'returns')}
@@ -284,7 +328,7 @@ const BottomNavigation = () => {
                   >
                     {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
                     <TrendingUp size={iconSize} />
-                    <span className="text-[10px] mt-1">өгөөж</span>
+                    <span className="text-[10px] mt-1">{t('nav.orders')}</span>
                   </button>
                   
                   {showTooltip === 'returns' && (
@@ -304,7 +348,7 @@ const BottomNavigation = () => {
                   >
                     {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
                     <Building size={iconSize} />
-                    <span className="text-[10px] mt-1">IPO</span>
+                    <span className="text-[10px] mt-1">{t('nav.ipo')}</span>
                   </button>
                   
                   {showTooltip === 'ipo' && (

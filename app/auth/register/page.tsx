@@ -11,7 +11,7 @@ export default function RegisterPage() {
   const { t } = useTranslation()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const nationality = searchParams.get('nationality') || 'MN'
+  const nationality = searchParams.get('nationality') || '496'
   
   const [registerNumber, setRegisterNumber] = useState('')
   const [isLoading, setIsLoading] = useState(false)

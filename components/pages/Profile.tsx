@@ -75,7 +75,7 @@ const Profile = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
-        <div className="animate-spin h-8 w-8 border-4 border-bdsec border-t-transparent rounded-full"></div>
+        <div className="animate-spin h-8 w-8 border-4 border-bdsec dark:border-indigo-500 border-t-transparent rounded-full"></div>
       </div>
     )
   }

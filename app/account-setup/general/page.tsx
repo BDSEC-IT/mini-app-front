@@ -18,314 +18,13 @@ import {
 import FormField from '@/components/ui/FormField'
 import { ArrowLeft, ArrowRight, Check, AlertCircle, CreditCard, Edit, CheckCircle } from 'lucide-react'
 import Cookies from 'js-cookie'
-import { getAccountStatusRequest, sendAccountStatusRequest, createOrRenewInvoice, getUserAccountInformation, getRegistrationNumber, sendRegistrationNumber } from '@/lib/api'
-
-// Step 1: Adult check only
-const Step1 = ({ onNext, existingData }: { onNext: (data: AdultCheckFormData) => void, existingData?: Partial<AdultCheckFormData> }) => {
-  const { t } = useTranslation()
-  const methods = useForm<AdultCheckFormData>({
-    resolver: zodResolver(adultCheckSchema),
-    defaultValues: { isAdult: existingData?.isAdult }
-  })
-  
-  // Reset form with existing data when it becomes available
-  useEffect(() => {
-    if (existingData?.isAdult !== undefined) {
-      methods.reset({
-        isAdult: existingData.isAdult
-      });
-    }
-  }, [existingData, methods])
-  
-  const onSubmit = (data: AdultCheckFormData) => {
-    onNext({ ...data, isAdult: data.isAdult === true })
-  }
-  
-  return (
-    <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.isAdult')}</label>
-          <div className="flex space-x-4">
-            <div className="flex items-center">
-              <input id="adult-yes" type="radio" value="true" onChange={() => methods.setValue('isAdult', true)} checked={methods.watch('isAdult') === true} className="h-4 w-4 text-bdsec focus:ring-bdsec" />
-              <label htmlFor="adult-yes" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.yes')}</label>
-            </div>
-            <div className="flex items-center">
-              <input id="adult-no" type="radio" value="false" onChange={() => methods.setValue('isAdult', false)} checked={methods.watch('isAdult') === false} className="h-4 w-4 text-bdsec focus:ring-bdsec" />
-              <label htmlFor="adult-no" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.no')}</label>
-            </div>
-          </div>
-          {methods.formState.errors.isAdult && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.isAdult.message}</p>}
-        </div>
-        <div className="flex justify-end">
-          <button type="submit" className="px-4 py-2 bg-bdsec text-white rounded-md hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors">
-            {t('profile.next')} <ArrowRight className="inline-block ml-1 h-4 w-4" />
-          </button>
-        </div>
-      </form>
-    </FormProvider>
-  )
-}
-
-// Step 2: Adult information
-const Step2Adult = ({ onNext, onBack, registerNumber, existingData }: { onNext: (data: AdultInfoFormData) => void, onBack: () => void, registerNumber?: string, existingData?: Partial<AdultInfoFormData> }) => {
-  const { t } = useTranslation()
-  const methods = useForm<AdultInfoFormData>({
-    resolver: zodResolver(adultInfoSchema),
-    defaultValues: { 
-      registerNumber: existingData?.registerNumber || registerNumber || '', 
-      lastName: existingData?.lastName || '', 
-      firstName: existingData?.firstName || '', 
-      phoneNumber: existingData?.phoneNumber || '', 
-      homePhone: existingData?.homePhone || '', 
-      gender: existingData?.gender || undefined, 
-      birthDate: existingData?.birthDate || '', 
-      occupation: existingData?.occupation || '', 
-      homeAddress: existingData?.homeAddress || '', 
-      bankCode: existingData?.bankCode || '', 
-      accountNumber: existingData?.accountNumber || '' 
-    }
-  })
-  
-  // Reset form with existing data when it becomes available
-  useEffect(() => {
-    if (existingData) {
-      methods.reset({
-        registerNumber: existingData.registerNumber || registerNumber || '',
-        lastName: existingData.lastName || '',
-        firstName: existingData.firstName || '',
-        phoneNumber: existingData.phoneNumber || '',
-        homePhone: existingData.homePhone || '',
-        gender: existingData.gender || undefined,
-        birthDate: existingData.birthDate || '',
-        occupation: existingData.occupation || '',
-        homeAddress: existingData.homeAddress || '',
-        bankCode: existingData.bankCode || '',
-        accountNumber: existingData.accountNumber || ''
-      });
-    }
-  }, [existingData, registerNumber, methods])
-  
-  return (
-    <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onNext)} className="space-y-6">
-        <FormField name="registerNumber" label={t('profile.registerNumber')} placeholder="AA00112233" required disabled={!!registerNumber} />
-        <FormField name="lastName" label={t('profile.lastName')} placeholder={t('profile.enterLastName')} required />
-        <FormField name="firstName" label={t('profile.firstName')} placeholder={t('profile.enterFirstName')} required />
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.gender')} <span className="text-red-500">*</span></label>
-          <div className="flex space-x-4">
-            <div className="flex items-center"><input id="gender-male" type="radio" value="Male" {...methods.register('gender')} className="h-4 w-4 text-bdsec focus:ring-bdsec" /><label htmlFor="gender-male" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.male')}</label></div>
-            <div className="flex items-center"><input id="gender-female" type="radio" value="Female" {...methods.register('gender')} className="h-4 w-4 text-bdsec focus:ring-bdsec" /><label htmlFor="gender-female" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.female')}</label></div>
-            <div className="flex items-center"><input id="gender-unknown" type="radio" value="Unknown" {...methods.register('gender')} className="h-4 w-4 text-bdsec focus:ring-bdsec" /><label htmlFor="gender-unknown" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.unknown')}</label></div>
-          </div>
-          {methods.formState.errors.gender && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.gender.message}</p>}
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.birthDate')} <span className="text-red-500">*</span></label>
-          <input type="date" {...methods.register('birthDate')} className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${methods.formState.errors.birthDate ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`} />
-          {methods.formState.errors.birthDate && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.birthDate.message}</p>}
-        </div>
-        <FormField name="phoneNumber" label={t('profile.phoneNumber')} placeholder="88889999" required />
-        <FormField name="homePhone" label={t('profile.homePhone')} placeholder="75753636" />
-        <FormField name="occupation" label={t('profile.occupation')} placeholder={t('profile.enterOccupation')} required />
-        <FormField name="homeAddress" label={t('profile.homeAddress')} placeholder={t('profile.enterHomeAddress')} required />
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">{t('profile.bankInfo')}</h3>
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-6 text-xs text-blue-700 dark:text-blue-300">Банкны мэдээлэл нь ирээдүйд МҮЦДС дансаасаа мөнгө татах, оруулахад ашиглагдана.</div>
-          <div className="mb-4">
-            <label htmlFor="bankCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.selectBank')} <span className="text-red-500">*</span></label>
-            <select id="bankCode" {...methods.register('bankCode')} className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${methods.formState.errors.bankCode ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}>
-              <option value="">{t('profile.selectBank')}</option>
-              {mongolianBanks.map(bank => <option key={bank.code} value={bank.code}>{bank.name}</option>)}
-            </select>
-            {methods.formState.errors.bankCode && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.bankCode.message}</p>}
-          </div>
-          <FormField name="accountNumber" label={t('profile.accountNumber')} placeholder="1234567890" required />
-        </div>
-        <div className="flex justify-between pt-4">
-          <button type="button" onClick={onBack} className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors"><ArrowLeft className="inline-block mr-1 h-4 w-4" /> {t('profile.back')}</button>
-          <button type="submit" className="px-4 py-2 bg-bdsec text-white rounded-md hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors">{t('profile.submit')} <Check className="inline-block ml-1 h-4 w-4" /></button>
-        </div>
-      </form>
-    </FormProvider>
-  )
-}
-
-// Step 2: Child information
-const Step2Child = ({ onNext, onBack, registerNumber, existingData }: { onNext: (data: ChildInfoFormData) => void, onBack: () => void, registerNumber?: string, existingData?: Partial<ChildInfoFormData> }) => {
-  const { t } = useTranslation()
-  const methods = useForm<ChildInfoFormData>({
-    resolver: zodResolver(childInfoSchema),
-    defaultValues: { 
-      childRegisterNumber: existingData?.childRegisterNumber || registerNumber || '', 
-      parentRegisterNumber: existingData?.parentRegisterNumber || '', 
-      lastName: existingData?.lastName || '', 
-      firstName: existingData?.firstName || '', 
-      phoneNumber: existingData?.phoneNumber || '', 
-      homePhone: existingData?.homePhone || '', 
-      gender: existingData?.gender || undefined, 
-      birthDate: existingData?.birthDate || '', 
-      homeAddress: existingData?.homeAddress || '', 
-      bankCode: existingData?.bankCode || '', 
-      accountNumber: existingData?.accountNumber || '' 
-    }
-  })
-  
-  // Reset form with existing data when it becomes available
-  useEffect(() => {
-    if (existingData) {
-      methods.reset({
-        childRegisterNumber: existingData.childRegisterNumber || registerNumber || '',
-        parentRegisterNumber: existingData.parentRegisterNumber || '',
-        lastName: existingData.lastName || '',
-        firstName: existingData.firstName || '',
-        phoneNumber: existingData.phoneNumber || '',
-        homePhone: existingData.homePhone || '',
-        gender: existingData.gender || undefined,
-        birthDate: existingData.birthDate || '',
-        homeAddress: existingData.homeAddress || '',
-        bankCode: existingData.bankCode || '',
-        accountNumber: existingData.accountNumber || ''
-      });
-    }
-  }, [existingData, registerNumber, methods])
-  
-  return (
-    <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onNext)} className="space-y-6">
-        <FormField name="childRegisterNumber" label={t('profile.childRegisterNumber')} placeholder="AA00112233" required disabled={!!registerNumber} />
-        <FormField name="parentRegisterNumber" label={t('profile.parentRegisterNumber')} placeholder="AA00112233" required />
-        <FormField name="lastName" label={t('profile.lastName')} placeholder={t('profile.enterLastName')} required />
-        <FormField name="firstName" label={t('profile.firstName')} placeholder={t('profile.enterFirstName')} required />
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.gender')} <span className="text-red-500">*</span></label>
-          <div className="flex space-x-4">
-             <div className="flex items-center"><input id="child-gender-male" type="radio" value="Male" {...methods.register('gender')} className="h-4 w-4 text-bdsec focus:ring-bdsec" /><label htmlFor="child-gender-male" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.male')}</label></div>
-             <div className="flex items-center"><input id="child-gender-female" type="radio" value="Female" {...methods.register('gender')} className="h-4 w-4 text-bdsec focus:ring-bdsec" /><label htmlFor="child-gender-female" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.female')}</label></div>
-             <div className="flex items-center"><input id="child-gender-unknown" type="radio" value="Unknown" {...methods.register('gender')} className="h-4 w-4 text-bdsec focus:ring-bdsec" /><label htmlFor="child-gender-unknown" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.unknown')}</label></div>
-          </div>
-          {methods.formState.errors.gender && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.gender.message}</p>}
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.birthDate')} <span className="text-red-500">*</span></label>
-          <input type="date" {...methods.register('birthDate')} className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${methods.formState.errors.birthDate ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`} />
-          {methods.formState.errors.birthDate && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.birthDate.message}</p>}
-        </div>
-        <FormField name="phoneNumber" label={t('profile.phoneNumber')} placeholder="88889999" required />
-        <FormField name="homePhone" label={t('profile.homePhone')} placeholder="75753636" />
-        <FormField name="homeAddress" label={t('profile.homeAddress')} placeholder={t('profile.enterHomeAddress')} required />
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">{t('profile.bankInfo')}</h3>
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-6 text-xs text-blue-700 dark:text-blue-300">Банкны мэдээлэл нь ирээдүйд МҮЦДС дансаасаа мөнгө татах, оруулахад ашиглагдана.</div>
-          <div className="mb-4">
-            <label htmlFor="bankCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.selectBank')} <span className="text-red-500">*</span></label>
-            <select id="bankCode" {...methods.register('bankCode')} className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${methods.formState.errors.bankCode ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}>
-              <option value="">{t('profile.selectBank')}</option>
-              {mongolianBanks.map(bank => <option key={bank.code} value={bank.code}>{bank.name}</option>)}
-            </select>
-            {methods.formState.errors.bankCode && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.bankCode.message}</p>}
-          </div>
-          <FormField name="accountNumber" label={t('profile.accountNumber')} placeholder="1234567890" required />
-        </div>
-        <div className="flex justify-between pt-4">
-          <button type="button" onClick={onBack} className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors"><ArrowLeft className="inline-block mr-1 h-4 w-4" /> {t('profile.back')}</button>
-          <button type="submit" className="px-4 py-2 bg-bdsec text-white rounded-md hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors">{t('profile.submit')} <Check className="inline-block ml-1 h-4 w-4" /></button>
-        </div>
-      </form>
-    </FormProvider>
-  )
-}
-
-const SummaryView = ({ summaryData, onEdit, onPay }: { summaryData: any, onEdit: () => void, onPay: () => Promise<void> }) => {
-    const { t } = useTranslation()
-    const [isProcessing, setIsProcessing] = useState(false);
-
-    // Debug logging
-    console.log('SummaryView received summaryData:', summaryData);
-    console.log('SummaryView data type:', typeof summaryData);
-    console.log('SummaryView data keys:', summaryData ? Object.keys(summaryData) : 'null');
-
-    const handlePayment = async () => {
-        setIsProcessing(true);
-        await onPay();
-        setIsProcessing(false);
-        // Trigger sidebar refresh
-        window.dispatchEvent(new Event('accountSetupDataChanged'));
-    }
-    
-    const bankCode = summaryData?.BankCode || summaryData?.bankCode;
-    const bankName = mongolianBanks.find(b => b.code === bankCode)?.name || (summaryData?.BankName || summaryData?.bankName || bankCode);
-
-    const isPaid = summaryData?.invoiceStatus === 'PAID';
-
-    return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Таны мэдээлэл</h2>
-                <button onClick={onEdit} className="text-sm text-bdsec hover:underline flex items-center gap-1">
-                    <Edit size={14}/> Засварлах
-                </button>
-            </div>
-
-            <div className="space-y-4 text-sm">
-                <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                    <h3 className="font-semibold text-gray-700 dark:text-gray-300 border-b pb-2 mb-2">Ерөнхий мэдээлэл</h3>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                        <p><span className="font-medium text-gray-500">Овог:</span> {summaryData?.LastName || summaryData?.lastName}</p>
-                        <p><span className="font-medium text-gray-500">Нэр:</span> {summaryData?.FirstName || summaryData?.firstName}</p>
-                        <p><span className="font-medium text-gray-500">Регистр:</span> {summaryData?.RegistryNumber || summaryData?.registerNumber || summaryData?.childRegisterNumber}</p>
-                        {summaryData?.parentRegisterNumber && <p><span className="font-medium text-gray-500">Эцэг/эх регистр:</span> {summaryData.parentRegisterNumber}</p>}
-                        <p><span className="font-medium text-gray-500">Төрсөн огноо:</span> {summaryData?.BirthDate || summaryData?.birthDate}</p>
-                        <p><span className="font-medium text-gray-500">Хүйс:</span> {summaryData?.Gender || summaryData?.gender}</p>
-                        <p><span className="font-medium text-gray-500">Утас:</span> {summaryData?.MobilePhone || summaryData?.phoneNumber}</p>
-                        <p><span className="font-medium text-gray-500">Гар утас:</span> {summaryData?.HomePhone || summaryData?.homePhone}</p>
-                        <p className="col-span-2"><span className="font-medium text-gray-500">Гэрийн хаяг:</span> {summaryData?.HomeAddress || summaryData?.homeAddress}</p>
-                        <p className="col-span-2"><span className="font-medium text-gray-500">Ажил:</span> {summaryData?.Occupation || summaryData?.occupation}</p>
-                    </div>
-                </div>
-
-                <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                    <h3 className="font-semibold text-gray-700 dark:text-gray-300 border-b pb-2 mb-2">Банкны мэдээлэл</h3>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                        <p><span className="font-medium text-gray-500">Банк:</span> {bankName}</p>
-                        <p><span className="font-medium text-gray-500">Дансны дугаар:</span> {summaryData?.BankAccountNumber || summaryData?.accountNumber || summaryData?.bankAccountNumber}</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                {isPaid ? (
-                     <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20">
-                         <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                        <h3 className="text-lg font-semibold text-green-700 dark:text-green-300">
-                            Төлбөр төлөгдсөн
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            Таны данс нээх хүсэлтийг хянаж байна.
-                        </p>
-                    </div>
-                ) : (
-                    <button
-                        onClick={handlePayment}
-                        disabled={isProcessing}
-                        className="w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                        <CreditCard className="h-5 w-5" /> 
-                        {isProcessing ? t('profile.processing') : t('profile.payAccountOpeningFee', { amount: 8000 })}
-                    </button>
-                )}
-            </div>
-        </div>
-    )
-}
-
+import { getAccountStatusRequest, sendAccountStatusRequest, createOrRenewInvoice, getUserAccountInformation, getRegistrationNumber, sendRegistrationNumber, BASE_URL } from '@/lib/api'
 
 export default function GeneralInfoPage() {
   const { t } = useTranslation()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const nationality = searchParams.get('nationality') || '496'
   
   const [step, setStep] = useState(1)
   const [viewMode, setViewMode] = useState<'loading' | 'form' | 'summary'>('loading');
@@ -336,43 +35,389 @@ export default function GeneralInfoPage() {
   const [registerNumber, setRegisterNumber] = useState<string | null>(null)
   const [showRegisterInput, setShowRegisterInput] = useState(false);
   const [registerInput, setRegisterInput] = useState('');
-  
-  // Handler for register number submission (POST)
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!registerInput.trim()) {
-      setError(t('profile.enterRegisterNumber'));
-      return;
-    }
-    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
-    const nationality = 'MN'; // Or get from context/query if needed
-    const res = await sendRegistrationNumber(registerInput.trim(), nationality, token);
-    if (res.success) {
-      setRegisterNumber(registerInput.trim());
-      setShowRegisterInput(false);
-      setError(null);
-      // After successful registration, re-fetch status to update the view
-      // Trigger a re-render by updating searchParams or force a refresh
-      window.location.reload();
-    } else {
-      setError(res.message || t('profile.formError'));
-    }
-  };
+  const [countries, setCountries] = useState<{ countryCode: string, countryName: string }[]>([]);
+  const [banks, setBanks] = useState<{ BankCode: string, BankName: string }[]>([]);
 
-  // Debug logging for state changes
   useEffect(() => {
-    console.log('GeneralInfoPage - summaryData state changed:', summaryData);
-    console.log('GeneralInfoPage - viewMode state:', viewMode);
-  }, [summaryData, viewMode]);
+    // Fetch countries
+    fetch(`${BASE_URL}/helper/countries`)
+      .then(res => res.json())
+      .then(data => {
+        setCountries(data.data || []);
+        // If the form does not have a countryCode, set default to Mongolia ('496') if available, else first country
+        if (!(formData as any).countryCode) {
+          const mn = (data.data || []).find((c: any) => c.countryNameEn === 'Mongolia' || c.countryName === 'Монгол');
+          setFormData(prev => ({
+            ...prev,
+            countryCode: mn ? mn.countryCode : (data.data?.[0]?.countryCode || '')
+          }));
+        }
+      });
+    // Fetch banks
+    fetch(`${BASE_URL}/helper/banks`)
+      .then(res => res.json())
+      .then(data => setBanks(data.data || []));
+  }, []);
+
+  // Step 1: Adult check only
+  const Step1 = ({ onNext, existingData }: { onNext: (data: AdultCheckFormData) => void, existingData?: Partial<AdultCheckFormData> }) => {
+    const { t } = useTranslation()
+    const methods = useForm<AdultCheckFormData>({
+      resolver: zodResolver(adultCheckSchema),
+      defaultValues: { isAdult: existingData?.isAdult }
+    })
+    
+    // Reset form with existing data when it becomes available
+    useEffect(() => {
+      if (existingData?.isAdult !== undefined) {
+        methods.reset({
+          isAdult: existingData.isAdult
+        });
+      }
+    }, [existingData, methods])
+    
+    const onSubmit = (data: AdultCheckFormData) => {
+      onNext({ ...data, isAdult: data.isAdult === true })
+    }
+    
+    return (
+      <FormProvider {...methods}>
+        <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.isAdult')}</label>
+            <div className="flex space-x-4">
+              <div className="flex items-center">
+                <input id="adult-yes" type="radio" value="true" onChange={() => methods.setValue('isAdult', true)} checked={methods.watch('isAdult') === true} className="h-4 w-4 text-bdsec dark:text-indigo-500 focus:ring-bdsec dark:focus:ring-indigo-500" />
+                <label htmlFor="adult-yes" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.yes')}</label>
+              </div>
+              <div className="flex items-center">
+                <input id="adult-no" type="radio" value="false" onChange={() => methods.setValue('isAdult', false)} checked={methods.watch('isAdult') === false} className="h-4 w-4 text-bdsec dark:text-indigo-500 focus:ring-bdsec dark:focus:ring-indigo-500" />
+                <label htmlFor="adult-no" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.no')}</label>
+              </div>
+            </div>
+            {methods.formState.errors.isAdult && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.isAdult.message}</p>}
+          </div>
+          <div className="flex justify-end">
+            <button type="submit" className="px-4 py-2 bg-bdsec dark:bg-indigo-500 text-white rounded-md hover:bg-bdsec/90 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500 focus:ring-offset-2 transition-colors">
+              {t('profile.next')} <ArrowRight className="inline-block ml-1 h-4 w-4" />
+            </button>
+          </div>
+        </form>
+      </FormProvider>
+    )
+  }
+
+  // Step 2: Adult information
+  const Step2Adult = ({ onNext, onBack, registerNumber, existingData }: { onNext: (data: AdultInfoFormData) => void, onBack: () => void, registerNumber?: string, existingData?: Partial<AdultInfoFormData> }) => {
+    const { t } = useTranslation()
+    const searchParams = useSearchParams()
+    const nationality = searchParams.get('nationality') || '496'
+    
+    const methods = useForm<AdultInfoFormData>({
+      resolver: zodResolver(adultInfoSchema),
+      defaultValues: { 
+        registerNumber: existingData?.registerNumber || registerNumber || '', 
+        lastName: existingData?.lastName || '', 
+        firstName: existingData?.firstName || '', 
+        phoneNumber: existingData?.phoneNumber || '', 
+        homePhone: existingData?.homePhone || '', 
+        gender: existingData?.gender || undefined, 
+        birthDate: existingData?.birthDate || '', 
+        occupation: existingData?.occupation || '', 
+        homeAddress: existingData?.homeAddress || '', 
+        bankCode: existingData?.bankCode || '', 
+        accountNumber: existingData?.accountNumber || '',
+        countryCode: existingData?.countryCode || nationality
+      }
+    })
+    
+    // Reset form with existing data when it becomes available
+    useEffect(() => {
+      if (existingData) {
+        methods.reset({
+          registerNumber: existingData.registerNumber || registerNumber || '',
+          lastName: existingData.lastName || '',
+          firstName: existingData.firstName || '',
+          phoneNumber: existingData.phoneNumber || '',
+          homePhone: existingData.homePhone || '',
+          gender: existingData.gender || undefined,
+          birthDate: existingData.birthDate || '',
+          occupation: existingData.occupation || '',
+          homeAddress: existingData.homeAddress || '',
+          bankCode: existingData.bankCode || '',
+          accountNumber: existingData.accountNumber || '',
+          countryCode: existingData.countryCode || nationality
+        });
+      }
+    }, [existingData, registerNumber, methods])
+    
+    const onSubmit = (data: AdultInfoFormData) => {
+      onNext({ ...data, customerType: '0' });
+    }
+    
+    return (
+      <FormProvider {...methods}>
+        <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField name="registerNumber" label={t('profile.registerNumber')} placeholder="AA00112233" required disabled={!!registerNumber} />
+          <FormField name="lastName" label={t('profile.lastName')} placeholder={t('profile.enterLastName')} required />
+          <FormField name="firstName" label={t('profile.firstName')} placeholder={t('profile.enterFirstName')} required />
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.gender')} <span className="text-red-500">*</span></label>
+            <div className="flex space-x-4">
+              <div className="flex items-center"><input id="gender-male" type="radio" value="Male" {...methods.register('gender')} className="h-4 w-4 text-bdsec dark:text-indigo-500 focus:ring-bdsec dark:focus:ring-indigo-500" /><label htmlFor="gender-male" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.male')}</label></div>
+              <div className="flex items-center"><input id="gender-female" type="radio" value="Female" {...methods.register('gender')} className="h-4 w-4 text-bdsec dark:text-indigo-500 focus:ring-bdsec dark:focus:ring-indigo-500" /><label htmlFor="gender-female" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.female')}</label></div>
+            </div>
+            {methods.formState.errors.gender && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.gender.message}</p>}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.birthDate')} <span className="text-red-500">*</span></label>
+            <div className="relative">
+              <input 
+                type="date" 
+                {...methods.register('birthDate')} 
+                max={new Date().toISOString().split('T')[0]}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${methods.formState.errors.birthDate ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec dark:focus:ring-indigo-500'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
+                style={{ 
+                  fontSize: '16px', // Prevents zoom on iOS
+                  paddingTop: '12px',
+                  paddingBottom: '12px'
+                }}
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+            </div>
+            {methods.formState.errors.birthDate && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.birthDate.message}</p>}
+          </div>
+          <FormField name="phoneNumber" label={t('profile.phoneNumber')} placeholder="88889999" required />
+          <FormField name="homePhone" label={t('profile.homePhone')} placeholder="75753636" />
+          <FormField name="occupation" label={t('profile.occupation')} placeholder={t('profile.enterOccupation')} required />
+          <FormField name="homeAddress" label={t('profile.homeAddress')} placeholder={t('profile.enterHomeAddress')} required />
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">{t('profile.bankInfo')}</h3>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-6 text-xs text-blue-700 dark:text-blue-300">Банкны мэдээлэл нь ирээдүйд МҮЦДС дансаасаа мөнгө татах, оруулахад ашиглагдана.</div>
+            <div className="mb-4">
+              <label htmlFor="bankCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.selectBank')} <span className="text-red-500">*</span></label>
+              <select id="bankCode" {...methods.register('bankCode')} className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${methods.formState.errors.bankCode ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}>
+                <option value="">{t('profile.selectBank')}</option>
+                {banks.map(b => (
+                  <option key={b.BankCode} value={b.BankCode}>
+                    {b.BankName}
+                  </option>
+                ))}
+              </select>
+              {methods.formState.errors.bankCode && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.bankCode.message}</p>}
+            </div>
+            <FormField name="accountNumber" label={t('profile.accountNumber')} placeholder="1234567890" required />
+          </div>
+          <div className="flex justify-between pt-4">
+            <button type="button" onClick={onBack} className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors"><ArrowLeft className="inline-block mr-1 h-4 w-4" /> {t('profile.back')}</button>
+            <button type="submit" className="px-4 py-2 bg-bdsec text-white rounded-md hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors">{t('profile.submit')} <Check className="inline-block ml-1 h-4 w-4" /></button>
+          </div>
+        </form>
+      </FormProvider>
+    )
+  }
+
+  // Step 2: Child information
+  const Step2Child = ({ onNext, onBack, registerNumber, existingData }: { onNext: (data: ChildInfoFormData) => void, onBack: () => void, registerNumber?: string, existingData?: Partial<ChildInfoFormData> }) => {
+    const { t } = useTranslation()
+    const methods = useForm<ChildInfoFormData>({
+      resolver: zodResolver(childInfoSchema),
+      defaultValues: { 
+        childRegisterNumber: existingData?.childRegisterNumber || registerNumber || '', 
+        parentRegisterNumber: existingData?.parentRegisterNumber || '', 
+        lastName: existingData?.lastName || '', 
+        firstName: existingData?.firstName || '', 
+        phoneNumber: existingData?.phoneNumber || '', 
+        homePhone: existingData?.homePhone || '', 
+        gender: existingData?.gender || undefined, 
+        birthDate: existingData?.birthDate || '', 
+        homeAddress: existingData?.homeAddress || '', 
+        bankCode: existingData?.bankCode || '', 
+        accountNumber: existingData?.accountNumber || '' 
+      }
+    })
+    
+    // Reset form with existing data when it becomes available
+    useEffect(() => {
+      if (existingData) {
+        methods.reset({
+          childRegisterNumber: existingData.childRegisterNumber || registerNumber || '',
+          parentRegisterNumber: existingData.parentRegisterNumber || '',
+          lastName: existingData.lastName || '',
+          firstName: existingData.firstName || '',
+          phoneNumber: existingData.phoneNumber || '',
+          homePhone: existingData.homePhone || '',
+          gender: existingData.gender || undefined,
+          birthDate: existingData.birthDate || '',
+          homeAddress: existingData.homeAddress || '',
+          bankCode: existingData.bankCode || '',
+          accountNumber: existingData.accountNumber || ''
+        });
+      }
+    }, [existingData, registerNumber, methods])
+    
+    return (
+      <FormProvider {...methods}>
+        <form onSubmit={methods.handleSubmit(onNext)} className="space-y-6">
+          <FormField name="childRegisterNumber" label={t('profile.childRegisterNumber')} placeholder="AA00112233" required disabled={!!registerNumber} />
+          <FormField name="parentRegisterNumber" label={t('profile.parentRegisterNumber')} placeholder="AA00112233" required />
+          <FormField name="lastName" label={t('profile.lastName')} placeholder={t('profile.enterLastName')} required />
+          <FormField name="firstName" label={t('profile.firstName')} placeholder={t('profile.enterFirstName')} required />
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.gender')} <span className="text-red-500">*</span></label>
+            <div className="flex space-x-4">
+               <div className="flex items-center"><input id="child-gender-male" type="radio" value="Male" {...methods.register('gender')} className="h-4 w-4 text-bdsec dark:text-indigo-500 focus:ring-bdsec dark:focus:ring-indigo-500" /><label htmlFor="child-gender-male" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.male')}</label></div>
+               <div className="flex items-center"><input id="child-gender-female" type="radio" value="Female" {...methods.register('gender')} className="h-4 w-4 text-bdsec dark:text-indigo-500 focus:ring-bdsec dark:focus:ring-indigo-500" /><label htmlFor="child-gender-female" className="ml-2 text-sm text-gray-700 dark:text-gray-300">{t('profile.female')}</label></div>
+            </div>
+            {methods.formState.errors.gender && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.gender.message}</p>}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.birthDate')} <span className="text-red-500">*</span></label>
+            <div className="relative">
+              <input 
+                type="date" 
+                {...methods.register('birthDate')} 
+                max={new Date().toISOString().split('T')[0]}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${methods.formState.errors.birthDate ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec dark:focus:ring-indigo-500'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}
+                style={{ 
+                  fontSize: '16px', // Prevents zoom on iOS
+                  paddingTop: '12px',
+                  paddingBottom: '12px'
+                }}
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+            </div>
+            {methods.formState.errors.birthDate && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.birthDate.message}</p>}
+          </div>
+          <FormField name="phoneNumber" label={t('profile.phoneNumber')} placeholder="88889999" required />
+          <FormField name="homePhone" label={t('profile.homePhone')} placeholder="75753636" />
+          <FormField name="homeAddress" label={t('profile.homeAddress')} placeholder={t('profile.enterHomeAddress')} required />
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">{t('profile.bankInfo')}</h3>
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-6 text-xs text-blue-700 dark:text-blue-300">Банкны мэдээлэл нь ирээдүйд МҮЦДС дансаасаа мөнгө татах, оруулахад ашиглагдана.</div>
+            <div className="mb-4">
+              <label htmlFor="bankCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.selectBank')} <span className="text-red-500">*</span></label>
+              <select id="bankCode" {...methods.register('bankCode')} className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${methods.formState.errors.bankCode ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}>
+                <option value="">{t('profile.selectBank')}</option>
+                {banks.map(b => (
+                  <option key={b.BankCode} value={b.BankCode}>
+                    {b.BankName}
+                  </option>
+                ))}
+              </select>
+              {methods.formState.errors.bankCode && <p className="mt-1 text-sm text-red-500">{methods.formState.errors.bankCode.message}</p>}
+            </div>
+            <FormField name="accountNumber" label={t('profile.accountNumber')} placeholder="1234567890" required />
+          </div>
+          <div className="flex justify-between pt-4">
+            <button type="button" onClick={onBack} className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors"><ArrowLeft className="inline-block mr-1 h-4 w-4" /> {t('profile.back')}</button>
+            <button type="submit" className="px-4 py-2 bg-bdsec text-white rounded-md hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors">{t('profile.submit')} <Check className="inline-block ml-1 h-4 w-4" /></button>
+          </div>
+        </form>
+      </FormProvider>
+    )
+  }
+
+  const SummaryView = ({ summaryData, onEdit, onPay }: { summaryData: any, onEdit: () => void, onPay: () => Promise<void> }) => {
+      // Reduced debug logging to improve performance
+      // console.log('SummaryView received summaryData:', summaryData);
+      // console.log('SummaryView data type:', typeof summaryData);
+      // console.log('SummaryView data keys:', summaryData ? Object.keys(summaryData) : 'null');
+
+      const { t } = useTranslation()
+      const [isProcessing, setIsProcessing] = useState(false);
+
+      const handlePayment = async () => {
+          setIsProcessing(true);
+          await onPay();
+          setIsProcessing(false);
+          // Trigger sidebar refresh
+          window.dispatchEvent(new Event('accountSetupDataChanged'));
+      }
+      
+      const bankCode = summaryData?.BankCode || summaryData?.bankCode;
+      const bankName = banks.find(b => b.BankCode === bankCode)?.BankName || (summaryData?.BankName || summaryData?.bankName || bankCode);
+
+      const isPaid = summaryData?.invoiceStatus === 'PAID';
+
+      return (
+          <div>
+              <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Таны мэдээлэл</h2>
+                  <button onClick={onEdit} className="text-sm text-bdsec dark:text-indigo-400 hover:underline flex items-center gap-1">
+                      <Edit size={14}/> Засварлах
+                  </button>
+              </div>
+
+              <div className="space-y-4 text-sm">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                      <h3 className="font-semibold text-gray-700 dark:text-gray-300 border-b pb-2 mb-2">Ерөнхий мэдээлэл</h3>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                          <p><span className="font-medium text-gray-500">Овог:</span> {summaryData?.LastName || summaryData?.lastName}</p>
+                          <p><span className="font-medium text-gray-500">Нэр:</span> {summaryData?.FirstName || summaryData?.firstName}</p>
+                          <p><span className="font-medium text-gray-500">Регистр:</span> {summaryData?.RegistryNumber || summaryData?.registerNumber || summaryData?.childRegisterNumber}</p>
+                          {summaryData?.parentRegisterNumber && <p><span className="font-medium text-gray-500">Эцэг/эх регистр:</span> {summaryData.parentRegisterNumber}</p>}
+                          <p><span className="font-medium text-gray-500">Төрсөн огноо:</span> {summaryData?.BirthDate || summaryData?.birthDate}</p>
+                          <p><span className="font-medium text-gray-500">Хүйс:</span> {summaryData?.Gender || summaryData?.gender}</p>
+                          <p><span className="font-medium text-gray-500">Утас:</span> {summaryData?.MobilePhone || summaryData?.phoneNumber}</p>
+                          <p><span className="font-medium text-gray-500">Гар утас:</span> {summaryData?.HomePhone || summaryData?.homePhone}</p>
+                          <p className="col-span-2"><span className="font-medium text-gray-500">Гэрийн хаяг:</span> {summaryData?.HomeAddress || summaryData?.homeAddress}</p>
+                          <p className="col-span-2"><span className="font-medium text-gray-500">Ажил:</span> {summaryData?.Occupation || summaryData?.occupation}</p>
+                      </div>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                      <h3 className="font-semibold text-gray-700 dark:text-gray-300 border-b pb-2 mb-2">Банкны мэдээлэл</h3>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                          <p><span className="font-medium text-gray-500">Банк:</span> {bankName}</p>
+                          <p><span className="font-medium text-gray-500">Дансны дугаар:</span> {summaryData?.BankAccountNumber || summaryData?.accountNumber || summaryData?.bankAccountNumber}</p>
+                      </div>
+                  </div>
+              </div>
+              
+              <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  {isPaid ? (
+                       <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20">
+                           <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                          <h3 className="text-lg font-semibold text-green-700 dark:text-green-300">
+                              Төлбөр төлөгдсөн
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              Таны данс нээх хүсэлтийг хянаж байна.
+                          </p>
+                      </div>
+                  ) : (
+                      <button
+                          onClick={handlePayment}
+                          disabled={isProcessing}
+                          className="w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                          <CreditCard className="h-5 w-5" /> 
+                          {isProcessing ? t('profile.processing') : t('profile.payAccountOpeningFee', { amount: 8000 })}
+                      </button>
+                  )}
+              </div>
+          </div>
+      )
+  }
 
   useEffect(() => {
     const fetchStatusAndSetMode = async () => {
         const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+        
         if (token) {
             try {
                 // First, check if user has a registration number
                 const regRes = await getRegistrationNumber(token);
-                console.log('General page - Registration number response:', regRes);
+                // console.log('General page - Registration number response:', regRes);
                 
                 if (!regRes.registerNumber) {
                     // No registration number, show register input form
@@ -387,56 +432,74 @@ export default function GeneralInfoPage() {
                 
                 // Now check account status
                 const statusResponse = await getAccountStatusRequest(token);
-                console.log('General page - statusResponse:', statusResponse);
                 
-                const status = statusResponse?.data?.status;
+                // Reduced debug logging to improve performance
+                // console.log('General page - statusResponse:', statusResponse);
                 
-                // Enhanced data detection logic
                 let hasSubmittedData = false;
+                let isDataComplete = false;
                 
                 if (statusResponse.success && statusResponse.data) {
                     const data = statusResponse.data;
                     
-                    // Method 1: Check status field
-                    const hasValidStatus = status && ['SUBMITTED', 'PAID', 'APPROVED', 'COMPLETED'].includes(status);
-                    
-                    // Method 2: Check for ID (indicates record exists)
-                    const hasId = !!data.id;
-                    
-                    // Method 3: Check for essential personal data (PascalCase - API format)
-                    const hasPascalCaseData = data.FirstName && data.LastName && 
-                                             (data.RegistryNumber || data.childRegisterNumber);
-                    
-                    // Method 4: Check for essential personal data (camelCase - local format)
-                    const hasCamelCaseData = data.firstName && data.lastName && 
-                                            (data.registerNumber || data.childRegisterNumber);
-                    
-                    // Method 5: Fallback - check if response has any meaningful data structure
-                    const hasFallbackData = data && typeof data === 'object' && Object.keys(data).length > 2;
+                    // Check if we have valid status data
+                    const hasValidStatus = statusResponse.success;
+                    const hasId = data && data.id;
+                    const hasPascalCaseData = data && (data.FirstName || data.LastName || data.RegistryNumber);
+                    const hasCamelCaseData = data && (data.firstName || data.lastName || data.registerNumber);
+                    const hasFallbackData = data && Object.keys(data).length > 0;
                     
                     hasSubmittedData = hasValidStatus || hasId || hasPascalCaseData || hasCamelCaseData || hasFallbackData;
                     
-                    console.log('General page - Enhanced detection:', {
-                        hasValidStatus,
-                        hasId,
-                        hasPascalCaseData,
-                        hasCamelCaseData,
-                        hasFallbackData,
-                        finalResult: hasSubmittedData,
-                        dataKeys: Object.keys(data),
-                        firstName: data.FirstName || data.firstName,
-                        lastName: data.LastName || data.lastName,
-                        registryNumber: data.RegistryNumber || data.registerNumber,
-                        rawData: data
+                    // Check for validation errors in the response (if available)
+                    const validation = (statusResponse as any).validation;
+                    const hasValidationErrors = validation && !validation.isValid;
+                    
+                    // Check for missing required fields
+                    const missingFields = validation?.missingFields || [];
+                    const fieldErrors = validation?.fieldErrors || {};
+                    
+                    // Required fields that must be present
+                    const requiredFields = [
+                        'FirstName', 'LastName', 'RegistryNumber', 'MobilePhone', 
+                        'Gender', 'BirthDate', 'Occupation', 'HomeAddress', 
+                        'BankCode', 'BankAccountNumber', 'CustomerType', 'Country'
+                    ];
+                    
+                    const missingRequiredFields = requiredFields.filter(field => {
+                        const value = data[field];
+                        // Check if the field is null, undefined, or empty string
+                        return value === null || value === undefined || value === '';
                     });
+                    
+                    isDataComplete = !hasValidationErrors && missingRequiredFields.length === 0 && Object.keys(fieldErrors).length === 0;
+                    
+                    console.log('General page - Data completeness check:', {
+                        hasValidationErrors,
+                        missingRequiredFields,
+                        fieldErrors: Object.keys(fieldErrors),
+                        isDataComplete,
+                        validation,
+                        // Debug: show actual values for missing fields
+                        missingFieldValues: missingRequiredFields.reduce((acc, field) => {
+                            acc[field] = data[field];
+                            return acc;
+                        }, {} as any)
+                    });
+                } else {
+                    // 404 or other error - user hasn't submitted data yet
+                    // console.log('General page - No account status found (404 expected for new users)');
+                    hasSubmittedData = false;
+                    isDataComplete = false;
                 }
                 
-                if (hasSubmittedData) {
-                    // User has submitted info before, show summary
-                    console.log('About to set summaryData with:', statusResponse.data);
-                    console.log('Type of statusResponse:', typeof statusResponse);
-                    console.log('Keys of statusResponse:', Object.keys(statusResponse));
-                    console.log('Type of statusResponse.data:', typeof statusResponse.data);
+                if (hasSubmittedData && isDataComplete) {
+                    // User has submitted complete info, show summary
+                    // console.log('General page - User has submitted complete data, showing summary');
+                    // console.log('About to set summaryData with:', statusResponse.data);
+                    // console.log('Type of statusResponse:', typeof statusResponse);
+                    // console.log('Keys of statusResponse:', Object.keys(statusResponse));
+                    // console.log('Type of statusResponse.data:', typeof statusResponse.data);
                     
                     // Fix: Set only the data portion, not the entire response
                     setSummaryData(statusResponse.data);
@@ -448,19 +511,21 @@ export default function GeneralInfoPage() {
                         isAdult: existingData.isAdult || (existingData.CustomerType === 1) || 
                                 // Fallback: if no explicit customer type, assume adult if we have occupation
                                 (existingData.Occupation || existingData.occupation ? true : undefined),
-                        registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber,
-                        childRegisterNumber: existingData.childRegisterNumber,
-                        parentRegisterNumber: existingData.parentRegisterNumber,
-                        firstName: existingData.FirstName || existingData.firstName,
-                        lastName: existingData.LastName || existingData.lastName,
-                        phoneNumber: existingData.MobilePhone || existingData.phoneNumber,
-                        homePhone: existingData.HomePhone || existingData.homePhone,
-                        gender: existingData.Gender || existingData.gender,
-                        birthDate: existingData.BirthDate || existingData.birthDate,
-                        occupation: existingData.Occupation || existingData.occupation,
-                        homeAddress: existingData.HomeAddress || existingData.homeAddress,
-                        bankCode: existingData.BankCode || existingData.bankCode,
-                        accountNumber: existingData.BankAccountNumber || existingData.bankAccountNumber || existingData.accountNumber
+                        registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber || '',
+                        childRegisterNumber: existingData.childRegisterNumber || '',
+                        parentRegisterNumber: existingData.parentRegisterNumber || '',
+                        firstName: existingData.FirstName || existingData.firstName || '',
+                        lastName: existingData.LastName || existingData.lastName || '',
+                        phoneNumber: existingData.MobilePhone || existingData.phoneNumber || '',
+                        homePhone: existingData.HomePhone || existingData.homePhone || '',
+                        gender: existingData.Gender || existingData.gender || '',
+                        birthDate: existingData.BirthDate || existingData.birthDate || '',
+                        occupation: existingData.Occupation || existingData.occupation || '',
+                        homeAddress: existingData.HomeAddress || existingData.homeAddress || '',
+                        bankCode: existingData.BankCode || existingData.bankCode || '',
+                        accountNumber: existingData.BankAccountNumber || existingData.bankAccountNumber || existingData.accountNumber || '',
+                        customerType: existingData.CustomerType || existingData.customerType || '0',
+                        countryCode: existingData.Country || existingData.countryCode || nationality
                     };
                     
                     setFormData(mappedData);
@@ -469,15 +534,48 @@ export default function GeneralInfoPage() {
                     setStep(2);
                     
                     console.log('General page - Set summary mode with data:', mappedData);
-                    console.log('General page - Summary data should be:', statusResponse.data);
+                    // console.log('General page - Summary data should be:', statusResponse.data);
+                } else if (hasSubmittedData && !isDataComplete) {
+                    // User has submitted incomplete data, show form in edit mode
+                    // console.log('General page - User has submitted incomplete data, showing form in edit mode');
+                    
+                    // Pre-populate form data with existing data
+                    const existingData = statusResponse.data;
+                    const mappedData = {
+                        isAdult: existingData.isAdult || (existingData.CustomerType === 1) || 
+                                // Fallback: if no explicit customer type, assume adult if we have occupation
+                                (existingData.Occupation || existingData.occupation ? true : undefined),
+                        registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber || '',
+                        childRegisterNumber: existingData.childRegisterNumber || '',
+                        parentRegisterNumber: existingData.parentRegisterNumber || '',
+                        firstName: existingData.FirstName || existingData.firstName || '',
+                        lastName: existingData.LastName || existingData.lastName || '',
+                        phoneNumber: existingData.MobilePhone || existingData.phoneNumber || '',
+                        homePhone: existingData.HomePhone || existingData.homePhone || '',
+                        gender: existingData.Gender || existingData.gender || '',
+                        birthDate: existingData.BirthDate || existingData.birthDate || '',
+                        occupation: existingData.Occupation || existingData.occupation || '',
+                        homeAddress: existingData.HomeAddress || existingData.homeAddress || '',
+                        bankCode: existingData.BankCode || existingData.bankCode || '',
+                        accountNumber: existingData.BankAccountNumber || existingData.bankAccountNumber || existingData.accountNumber || '',
+                        customerType: existingData.CustomerType || existingData.customerType || '0',
+                        countryCode: existingData.Country || existingData.countryCode || nationality
+                    };
+                    
+                    setFormData(mappedData);
+                    setViewMode('form');
+                    setStep(2); // Skip step 1 since we know it's an adult
+                    
+                    console.log('General page - Set form mode with existing data:', mappedData);
                 } else {
-                    // New user or incomplete data, show form
+                    // New user, show form
+                    // console.log('General page - User has NOT submitted data, showing form');
                     const authRegNumber = searchParams.get('registerNumber');
                     if (authRegNumber) {
                         setRegisterNumber(authRegNumber);
                     }
                     setViewMode('form');
-                    console.log('General page - Set form mode');
+                    // console.log('General page - Set form mode');
                 }
             } catch (error) {
                 console.error('Error fetching status:', error);
@@ -485,7 +583,7 @@ export default function GeneralInfoPage() {
             }
         } else {
             // No token, treat as a new user for now
-            console.log('General page - No token, showing form');
+            // console.log('General page - No token, showing form');
             setViewMode('form');
         }
     };
@@ -508,11 +606,45 @@ export default function GeneralInfoPage() {
     setIsSubmitting(true);
     setError(null);
     
-    const combinedData: any = { ...formData, ...data };
-    // Add bank name from the bank code
-    const bank = mongolianBanks.find(b => b.code === data.bankCode);
-    combinedData.bankName = bank?.name || '';
+    console.log('=== SUBMIT ALL DATA DEBUG ===');
+    console.log('Raw data received:', data);
+    console.log('Data type:', typeof data);
+    console.log('Data keys:', Object.keys(data));
+    console.log('Form data:', formData);
+    console.log('Nationality:', nationality);
     
+    const combinedData: any = { ...formData, ...data };
+    
+    // Map form field names to backend field names - use camelCase to match backend
+    const mappedData = {
+      isAdult: formData.isAdult,
+      registerNumber: (data as any).registerNumber || (data as any).childRegisterNumber,
+      childRegisterNumber: (data as any).childRegisterNumber,
+      parentRegisterNumber: (data as any).parentRegisterNumber,
+      mobilePhone: data.phoneNumber,
+      registryNumber: (data as any).registerNumber || (data as any).childRegisterNumber,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      homePhone: data.homePhone,
+      gender: data.gender,
+      birthDate: data.birthDate,
+      occupation: (data as any).occupation,
+      homeAddress: data.homeAddress,
+      bankCode: data.bankCode,
+      bankName: '', // Will be set below
+      bankAccountNumber: data.accountNumber,
+      customerType: String((data as any).customerType ?? '0'), // Always send as string
+      countryCode: nationality
+    };
+    
+    // Add bank name from the bank code
+    const bank = banks.find(b => b.BankCode === data.bankCode);
+    mappedData.bankName = bank?.BankName || '';
+    
+    // Debug: Log the request body
+    console.log('Mapped data before API call (camelCase):', mappedData);
+    console.log('=== END SUBMIT DEBUG ===');
+
     const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
 
     if (!token) {
@@ -522,51 +654,25 @@ export default function GeneralInfoPage() {
     }
 
     try {
-        console.log('Submitting account setup data:', combinedData);
-        const result = await sendAccountStatusRequest(combinedData, token);
+        console.log('=== FORM SUBMISSION DEBUG ===');
+        console.log('Form data:', formData);
+        console.log('Step data:', data);
+        console.log('Combined data:', combinedData);
+        console.log('Nationality:', nationality);
+        console.log('Mapped data being sent:', mappedData);
+        console.log('=== END DEBUG ===');
+        const result = await sendAccountStatusRequest(mappedData, token);
         
         if (result.success) {
             console.log('Account setup submission successful:', result);
             
-            // Fetch fresh data to show summary view
-            const statusResponse = await getAccountStatusRequest(token);
-            console.log('Fresh status response after submission:', statusResponse);
+            // Use the submitted data directly for the summary view
+            setSummaryData(mappedData);
+            setViewMode('summary');
             
-            if (statusResponse.success && statusResponse.data) {
-                setSummaryData(statusResponse.data);
-                setViewMode('summary');
-                
-                // Update form data with fresh server data
-                const freshData = statusResponse.data;
-                const mappedData = {
-                    isAdult: freshData.isAdult || (freshData.CustomerType === 1),
-                    registerNumber: freshData.RegistryNumber || freshData.registerNumber || freshData.childRegisterNumber,
-                    childRegisterNumber: freshData.childRegisterNumber,
-                    parentRegisterNumber: freshData.parentRegisterNumber,
-                    firstName: freshData.FirstName || freshData.firstName,
-                    lastName: freshData.LastName || freshData.lastName,
-                    phoneNumber: freshData.MobilePhone || freshData.phoneNumber,
-                    homePhone: freshData.HomePhone || freshData.homePhone,
-                    gender: freshData.Gender || freshData.gender,
-                    birthDate: freshData.BirthDate || freshData.birthDate,
-                    occupation: freshData.Occupation || freshData.occupation,
-                    homeAddress: freshData.HomeAddress || freshData.homeAddress,
-                    bankCode: freshData.BankCode || freshData.bankCode,
-                    accountNumber: freshData.BankAccountNumber || freshData.bankAccountNumber || freshData.accountNumber
-                };
-                
-                setFormData(mappedData);
-                console.log('Updated form data with fresh server data:', mappedData);
-                
-                // Trigger sidebar refresh
-                window.dispatchEvent(new Event('accountSetupDataChanged'));
-                console.log('Triggered accountSetupDataChanged event');
-            } else {
-                // Fallback: use submitted data for summary if fresh fetch fails
-                setSummaryData(combinedData);
-                setViewMode('summary');
-                console.log('Used submitted data for summary (fallback)');
-            }
+            // Trigger sidebar refresh
+            window.dispatchEvent(new Event('accountSetupDataChanged'));
+            console.log('Triggered accountSetupDataChanged event');
         } else {
             console.error('Account setup submission failed:', result);
             setError(result.message || "An unexpected error occurred.");
@@ -636,10 +742,11 @@ export default function GeneralInfoPage() {
   }
   
   const renderContent = () => {
-    console.log('renderContent called with viewMode:', viewMode);
-    console.log('renderContent summaryData:', summaryData);
-    console.log('renderContent summaryData type:', typeof summaryData);
-    console.log('renderContent summaryData keys:', summaryData ? Object.keys(summaryData) : 'null');
+    // Reduced debug logging to improve performance
+    // console.log('renderContent called with viewMode:', viewMode);
+    // console.log('renderContent summaryData:', summaryData);
+    // console.log('renderContent summaryData type:', typeof summaryData);
+    // console.log('renderContent summaryData keys:', summaryData ? Object.keys(summaryData) : 'null');
     
     // Defensive: always pass the correct user data object to SummaryView
     const summary = summaryData && summaryData.data ? summaryData.data : summaryData;
@@ -666,6 +773,27 @@ export default function GeneralInfoPage() {
     }
   }
 
+  // Handler for register number submission (POST)
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!registerInput.trim()) {
+      setError(t('profile.enterRegisterNumber'));
+      return;
+    }
+    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+    const res = await sendRegistrationNumber(registerInput.trim(), nationality, token);
+    if (res.success) {
+      setRegisterNumber(registerInput.trim());
+      setShowRegisterInput(false);
+      setError(null);
+      // After successful registration, re-fetch status to update the view
+      // Trigger a re-render by updating searchParams or force a refresh
+      window.location.reload();
+    } else {
+      setError(res.message || t('profile.formError'));
+    }
+  };
+
   // At the top of the return, conditionally render the register input form
   if (showRegisterInput) {
     return (
@@ -687,7 +815,7 @@ export default function GeneralInfoPage() {
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 border-gray-300 dark:border-gray-700 focus:ring-bdsec dark:focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             />
             {error && <p className="text-red-500 text-sm">{error}</p>}
-            <button type="submit" className="w-full px-4 py-2 bg-bdsec text-white rounded-md hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors">
+            <button type="submit" className="w-full px-4 py-2 bg-bdsec dark:bg-indigo-500 text-white rounded-md hover:bg-bdsec/90 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500 focus:ring-offset-2 transition-colors">
               {t('profile.next')}
             </button>
           </form>
@@ -715,10 +843,10 @@ export default function GeneralInfoPage() {
         {viewMode === 'form' && (
             <div className="mb-8">
                 <div className="flex items-center">
-                    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 1 ? 'bg-bdsec text-white' : 'bg-gray-200 text-gray-500'}`}>
+                    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 1 ? 'bg-bdsec dark:bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
                     {step > 1 ? <Check className="h-5 w-5" /> : 1}
                     </div>
-                    <div className={`flex-1 h-1 mx-2 ${step >= 2 ? 'bg-bdsec' : 'bg-gray-200'}`}></div>
+                    <div className={`flex-1 h-1 mx-2 ${step >= 2 ? 'bg-bdsec dark:bg-indigo-500' : 'bg-gray-200'}`}></div>
                     <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 2 ? 'bg-bdsec text-white' : 'bg-gray-200 text-gray-500'}`}>
                     2
                     </div>

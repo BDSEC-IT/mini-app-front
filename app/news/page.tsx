@@ -107,7 +107,7 @@ export default function NewsPage() {
               onClick={() => setActiveFilter('new')}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 activeFilter === 'new'
-                  ? 'bg-bdsec text-white'
+                  ? 'bg-bdsec dark:bg-indigo-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
@@ -117,7 +117,7 @@ export default function NewsPage() {
               onClick={() => setActiveFilter('old')}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 activeFilter === 'old'
-                  ? 'bg-bdsec text-white'
+                  ? 'bg-bdsec dark:bg-indigo-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
@@ -129,7 +129,7 @@ export default function NewsPage() {
                 placeholder="Хайх..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 border-0 rounded-full focus:outline-none focus:ring-2 focus:ring-bdsec focus:bg-white dark:focus:bg-gray-600 transition-colors text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full pl-8 pr-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 border-0 rounded-full focus:outline-none focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500 focus:bg-white dark:focus:bg-gray-600 transition-colors text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
               <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             </div>
@@ -182,7 +182,7 @@ export default function NewsPage() {
         {/* Loading state */}
         {loading && filteredNews.length === 0 && (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bdsec"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bdsec dark:border-indigo-500"></div>
           </div>
         )}
 
@@ -192,7 +192,7 @@ export default function NewsPage() {
             <button
               onClick={loadMore}
               disabled={loading}
-              className="bg-bdsec hover:bg-bdsec/90 disabled:opacity-50 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              className="bg-bdsec dark:bg-indigo-500 hover:bg-bdsec/90 dark:hover:bg-indigo-600 disabled:opacity-50 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
             >
               {loading ? (
                 <>

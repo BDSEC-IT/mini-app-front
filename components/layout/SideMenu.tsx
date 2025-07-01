@@ -24,7 +24,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from '@/contexts/ThemeContext'
 import LanguageToggle from '../ui/LanguageToggle'
-import { getUserAccountInformation, getAccountStatusRequest, checkInvoiceStatus, type UserAccountResponse } from '@/lib/api'
+import { getUserAccountInformation, checkInvoiceStatus, type UserAccountResponse } from '@/lib/api'
 
 interface SideMenuProps {
   isOpen: boolean
@@ -40,6 +40,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   
   const [isGeneralInfoComplete, setIsGeneralInfoComplete] = useState<boolean | null>(null);
   const [feeInfoCompleted, setFeeInfoCompleted] = useState<boolean | null>(null);
+  const [hasExistingMcsdAccount, setHasExistingMcsdAccount] = useState(false);
   
 
 
@@ -55,30 +56,21 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
     setIsLoggedIn(true);
 
     try {
-      const [infoRes, statusRes, invoiceRes] = await Promise.all([
+      const [infoRes, invoiceRes] = await Promise.all([
         getUserAccountInformation(token),
-        getAccountStatusRequest(token),
         checkInvoiceStatus(token)
       ]);
 
       if (infoRes.success) setAccountInfo(infoRes.data);
       
+      // Check if user already has an existing MCSD account
+      const hasExistingMcsd = !!(infoRes.success && infoRes.data?.MCSDAccount);
+      setHasExistingMcsdAccount(hasExistingMcsd);
+      
       // Enhanced general info completion detection
       let isGeneralComplete = false;
       
-      // Method 1: Check status from direct account status request
-      const status = statusRes?.data?.status;
-      const hasValidStatus = !!(statusRes.success && status && ['SUBMITTED', 'PAID', 'APPROVED', 'COMPLETED'].includes(status));
-      
-      // Method 2: Check if we have account status data from the direct endpoint
-      const hasDirectAccountData = !!(statusRes.success && statusRes.data && (
-        statusRes.data.id || // Has record ID
-        (statusRes.data.FirstName && statusRes.data.LastName) || // API uses PascalCase
-        (statusRes.data.firstName && statusRes.data.lastName) || // Fallback to camelCase
-        statusRes.data.RegistryNumber || statusRes.data.registerNumber // Has registration number
-      ));
-      
-      // Method 3: Check if we have account status data from the nested endpoint (user account info)
+      // Check if we have account status data from the nested endpoint (user account info)
       const mcsdRequest = infoRes.data?.khanUser?.MCSDStateRequest as any;
       const hasNestedAccountData = !!(infoRes.success && mcsdRequest && typeof mcsdRequest === 'object' && (
         (mcsdRequest.FirstName && mcsdRequest.LastName) ||
@@ -86,20 +78,8 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
         mcsdRequest.id
       ));
       
-      isGeneralComplete = hasValidStatus || hasDirectAccountData || hasNestedAccountData;
+      isGeneralComplete = hasNestedAccountData;
       
-      console.log('SideMenu Enhanced Detection:', {
-        statusResSuccess: statusRes.success,
-        hasValidStatus,
-        hasDirectAccountData,
-        hasNestedAccountData,
-        finalResult: isGeneralComplete,
-        statusData: statusRes.data,
-        infoData: infoRes.data,
-        mcsdRequest
-      });
-      
-      console.log('SideMenu: Setting isGeneralInfoComplete to:', isGeneralComplete);
       setIsGeneralInfoComplete(isGeneralComplete);
 
       // Fee completion detection
@@ -115,14 +95,18 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   }
 
   useEffect(() => {
+    // Only fetch status when component mounts or when explicitly triggered
     fetchStatus();
+    
     const handleAccountSetupChange = () => {
       console.log('SideMenu: Account setup data changed event triggered');
-      fetchStatus();
+      // Add a small delay to avoid excessive calls
+      setTimeout(() => fetchStatus(), 100);
     };
+    
     window.addEventListener('accountSetupDataChanged', handleAccountSetupChange);
     return () => window.removeEventListener('accountSetupDataChanged', handleAccountSetupChange);
-  }, []);
+  }, []); // Empty dependency array - only run on mount
 
   const menuItems = [
     { href: '/', icon: Home, label: 'bottomNav.dashboard' },
@@ -196,7 +180,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
               </li>
             )}
             
-            {isLoggedIn && (
+            {isLoggedIn && !hasExistingMcsdAccount && (
               <li className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="mb-2 px-3">
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('profile.accountSetup')}</h3>

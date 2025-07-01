@@ -82,7 +82,7 @@ export default function PayPage() {
         </div>
       ) : (
         <div className="flex flex-col items-center">
-          <div className="animate-spin h-10 w-10 border-4 border-bdsec border-t-transparent rounded-full mb-6"></div>
+          <div className="animate-spin h-10 w-10 border-4 border-bdsec dark:border-indigo-500 border-t-transparent rounded-full mb-6"></div>
           <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Төлбөрийн систем рүү шилжиж байна...</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">Түр хүлээнэ үү.</p>
         </div>

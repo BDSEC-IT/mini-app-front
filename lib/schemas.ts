@@ -30,11 +30,15 @@ export const adultInfoSchema = z.object({
     .nonempty("Occupation is required"),
   homeAddress: z.string()
     .nonempty("Home address is required"),
-  bankCode: z.string()
-    .nonempty("Bank selection is required"),
+  bankCode: z.string().min(1, 'Bank code is required'),
   accountNumber: z.string()
     .min(6, "Account number must be at least 6 digits")
     .nonempty("Account number is required"),
+  customerType: z.enum(["0", "1"], {
+    required_error: "Customer type is required",
+    invalid_type_error: "Customer type must be Иргэн (0) or ААН (1)",
+  }).optional(),
+  countryCode: z.string().min(1, 'Country code is required'),
 });
 
 // Schema for child user information
@@ -61,8 +65,7 @@ export const childInfoSchema = z.object({
     .nonempty("Birth date is required"),
   homeAddress: z.string()
     .nonempty("Home address is required"),
-  bankCode: z.string()
-    .nonempty("Bank selection is required"),
+  bankCode: z.string().min(1, 'Bank code is required'),
   accountNumber: z.string()
     .min(6, "Account number must be at least 6 digits")
     .nonempty("Account number is required"),
