@@ -97,10 +97,30 @@ export default function FeePaymentPage() {
       // If all validations pass, proceed with invoice creation
       const result = await createOrRenewInvoice(token)
       if (result.success) {
-        console.log('Invoice created successfully:', result.data);
+        console.log('=== INVOICE CREATION SUCCESS DEBUG ===');
+        console.log('Full result:', result);
+        console.log('Result data:', result.data);
+        console.log('Result data type:', typeof result.data);
+        console.log('Result data keys:', Object.keys(result.data || {}));
+        console.log('=== END DEBUG ===');
         
-        // Extract the orderId from the response
-        const orderId = result.data?.orderId;
+        // Extract the orderId from the response - try different possible structures
+        let orderId = null;
+        
+        // Try direct access first
+        if (result.data?.orderId) {
+          orderId = result.data.orderId;
+        }
+        // Try nested data structure
+        else if (result.data?.data?.orderId) {
+          orderId = result.data.data.orderId;
+        }
+        // Try if data is the orderId directly
+        else if (typeof result.data === 'string' && result.data.startsWith('http')) {
+          orderId = result.data;
+        }
+        
+        console.log('Extracted orderId:', orderId);
         
         if (orderId) {
           // Show success message and redirect to Digipay
