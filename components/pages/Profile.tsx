@@ -15,8 +15,6 @@ const Profile = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isCheckingInvoice, setIsCheckingInvoice] = useState(false)
-  // Check if general info is completed from sessionStorage
-  const [generalInfoCompleted, setGeneralInfoCompleted] = useState<boolean>(false)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -55,46 +53,7 @@ const Profile = () => {
     fetchProfile()
   }, [t])
   
-  useEffect(() => {
-    // Check session storage for completed general info
-    if (typeof window !== 'undefined') {
-      const accountSetupData = sessionStorage.getItem('accountSetupData');
-      if (accountSetupData) {
-        try {
-          const parsedData = JSON.parse(accountSetupData);
-          const hasGeneralInfo = parsedData.firstName && parsedData.lastName && 
-                                (parsedData.registerNumber || parsedData.childRegisterNumber);
-          setGeneralInfoCompleted(hasGeneralInfo);
-        } catch (e) {
-          setGeneralInfoCompleted(false);
-        }
-      }
-    }
-  }, []);
-  
-  // Listen for account setup data changes
-  useEffect(() => {
-    const handleAccountSetupChange = () => {
-      if (typeof window !== 'undefined') {
-        const accountSetupData = sessionStorage.getItem('accountSetupData');
-        if (accountSetupData) {
-          try {
-            const parsedData = JSON.parse(accountSetupData);
-            const hasGeneralInfo = parsedData.firstName && parsedData.lastName && 
-                                  (parsedData.registerNumber || parsedData.childRegisterNumber);
-            setGeneralInfoCompleted(hasGeneralInfo);
-          } catch (e) {
-            setGeneralInfoCompleted(false);
-          }
-        }
-      }
-    };
-    
-    window.addEventListener('accountSetupDataChanged', handleAccountSetupChange);
-    return () => {
-      window.removeEventListener('accountSetupDataChanged', handleAccountSetupChange);
-    };
-  }, []);
+
   
   // Function to check invoice status
   const handleCheckInvoice = async () => {
@@ -143,12 +102,11 @@ const Profile = () => {
   const { khanUser, MCSDAccount } = accountInfo;
   const hasMcsdAccount = MCSDAccount !== null;
 
-  // Simplified completion checks - check both sessionStorage and API status
+  // Simplified completion checks - only use backend API data
   const isGeneralInfoComplete = () => {
-    // Complete if we have data in sessionStorage OR actual account status data with proper status
+    // Complete if we have actual account status data with proper status
     const apiComplete = accountStatusData && accountStatusData.status && 
            ['SUBMITTED', 'PAID', 'APPROVED', 'COMPLETED'].includes(accountStatusData.status);
-    const sessionComplete = generalInfoCompleted;
     
     // Check if we have account status data based on actual API response structure
     const hasDirectAccountData = accountStatusData && (
@@ -172,13 +130,12 @@ const Profile = () => {
       mcsdRequest,
       hasDirectAccountData,
       hasNestedAccountData,
-      sessionComplete,
       apiComplete,
-      finalResult: sessionComplete || apiComplete || hasDirectAccountData || hasNestedAccountData
+      finalResult: apiComplete || hasDirectAccountData || hasNestedAccountData
     });
 
     
-    return sessionComplete || apiComplete || hasDirectAccountData || hasNestedAccountData;
+    return apiComplete || hasDirectAccountData || hasNestedAccountData;
   }
 
   const isPaymentComplete = () => {

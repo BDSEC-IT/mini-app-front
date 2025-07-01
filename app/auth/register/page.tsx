@@ -81,9 +81,6 @@ export default function RegisterPage() {
       const response = await sendRegistrationNumber(registerNumber, nationality, token || undefined)
       
       if (response.success) {
-        // Store registration number in session storage
-        sessionStorage.setItem('registerNumber', registerNumber)
-        
         // Handle different success cases
         let message = t('auth.registrationSuccess')
         let details = null

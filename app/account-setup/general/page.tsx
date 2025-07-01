@@ -18,7 +18,7 @@ import {
 import FormField from '@/components/ui/FormField'
 import { ArrowLeft, ArrowRight, Check, AlertCircle, CreditCard, Edit, CheckCircle } from 'lucide-react'
 import Cookies from 'js-cookie'
-import { getAccountStatusRequest, sendAccountStatusRequest, createOrRenewInvoice } from '@/lib/api'
+import { getAccountStatusRequest, sendAccountStatusRequest, createOrRenewInvoice, getUserAccountInformation, getRegistrationNumber, sendRegistrationNumber } from '@/lib/api'
 
 // Step 1: Adult check only
 const Step1 = ({ onNext, existingData }: { onNext: (data: AdultCheckFormData) => void, existingData?: Partial<AdultCheckFormData> }) => {
@@ -334,7 +334,44 @@ export default function GeneralInfoPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [registerNumber, setRegisterNumber] = useState<string | null>(null)
+  const [showRegisterInput, setShowRegisterInput] = useState(false);
+  const [registerInput, setRegisterInput] = useState('');
   
+  // On mount, check registration number via GET
+  useEffect(() => {
+    const checkRegister = async () => {
+      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+      if (!token) return;
+      const regRes = await getRegistrationNumber(token);
+      if (!regRes.registerNumber) {
+        setShowRegisterInput(true);
+      } else {
+        setShowRegisterInput(false);
+        setRegisterNumber(regRes.registerNumber);
+      }
+    };
+    checkRegister();
+  }, []);
+
+  // Handler for register number submission (POST)
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!registerInput.trim()) {
+      setError(t('profile.enterRegisterNumber'));
+      return;
+    }
+    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+    const nationality = 'MN'; // Or get from context/query if needed
+    const res = await sendRegistrationNumber(registerInput.trim(), nationality, token);
+    if (res.success) {
+      setRegisterNumber(registerInput.trim());
+      setShowRegisterInput(false);
+      setError(null);
+    } else {
+      setError(res.message || t('profile.formError'));
+    }
+  };
+
   // Debug logging for state changes
   useEffect(() => {
     console.log('GeneralInfoPage - summaryData state changed:', summaryData);
@@ -371,32 +408,16 @@ export default function GeneralInfoPage() {
                     const hasCamelCaseData = data.firstName && data.lastName && 
                                             (data.registerNumber || data.childRegisterNumber);
                     
-                    // Method 5: Check sessionStorage for immediate feedback
-                    let hasSessionData = false;
-                    if (typeof window !== 'undefined') {
-                        const sessionData = sessionStorage.getItem('accountSetupData');
-                        if (sessionData) {
-                            try {
-                                const parsed = JSON.parse(sessionData);
-                                hasSessionData = parsed.firstName && parsed.lastName && 
-                                               (parsed.registerNumber || parsed.childRegisterNumber);
-                            } catch (e) {
-                                console.log('Error parsing session data:', e);
-                            }
-                        }
-                    }
-                    
-                    // Method 6: Fallback - check if response has any meaningful data structure
+                    // Method 5: Fallback - check if response has any meaningful data structure
                     const hasFallbackData = data && typeof data === 'object' && Object.keys(data).length > 2;
                     
-                    hasSubmittedData = hasValidStatus || hasId || hasPascalCaseData || hasCamelCaseData || hasSessionData || hasFallbackData;
+                    hasSubmittedData = hasValidStatus || hasId || hasPascalCaseData || hasCamelCaseData || hasFallbackData;
                     
                     console.log('General page - Enhanced detection:', {
                         hasValidStatus,
                         hasId,
                         hasPascalCaseData,
                         hasCamelCaseData,
-                        hasSessionData,
                         hasFallbackData,
                         finalResult: hasSubmittedData,
                         dataKeys: Object.keys(data),
@@ -448,7 +469,7 @@ export default function GeneralInfoPage() {
                     console.log('General page - Summary data should be:', statusResponse.data);
                 } else {
                     // New user or incomplete data, show form
-                    const authRegNumber = sessionStorage.getItem('registerNumber') || searchParams.get('registerNumber');
+                    const authRegNumber = searchParams.get('registerNumber');
                     if (authRegNumber) {
                         setRegisterNumber(authRegNumber);
                     }
@@ -504,12 +525,6 @@ export default function GeneralInfoPage() {
         if (result.success) {
             console.log('Account setup submission successful:', result);
             
-            // Save to sessionStorage for immediate UI updates
-            if (typeof window !== 'undefined') {
-                sessionStorage.setItem('accountSetupData', JSON.stringify(combinedData));
-                console.log('Saved account setup data to sessionStorage:', combinedData);
-            }
-            
             // Fetch fresh data to show summary view
             const statusResponse = await getAccountStatusRequest(token);
             console.log('Fresh status response after submission:', statusResponse);
@@ -547,7 +562,6 @@ export default function GeneralInfoPage() {
                 // Fallback: use submitted data for summary if fresh fetch fails
                 setSummaryData(combinedData);
                 setViewMode('summary');
-                window.dispatchEvent(new Event('accountSetupDataChanged'));
                 console.log('Used submitted data for summary (fallback)');
             }
         } else {
@@ -616,6 +630,36 @@ export default function GeneralInfoPage() {
             // Fallback to step 1 if state is inconsistent
             return <Step1 onNext={handleStep1Submit} existingData={formData} />
     }
+  }
+
+  // At the top of the return, conditionally render the register input form
+  if (showRegisterInput) {
+    return (
+      <div className="max-w-md mx-auto p-4 sm:p-6 lg:p-8 pb-24">
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mt-12">
+          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">{t('profile.enterRegisterNumberTitle', 'Регистрийн дугаар оруулах')}</h1>
+          <form onSubmit={handleRegisterSubmit} className="space-y-6">
+            <label htmlFor="registerNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {t('profile.registerNumber')}
+              <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="registerNumber"
+              type="text"
+              placeholder="AA00112233"
+              required
+              value={registerInput}
+              onChange={e => setRegisterInput(e.target.value)}
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 border-gray-300 dark:border-gray-700 focus:ring-bdsec dark:focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            />
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <button type="submit" className="w-full px-4 py-2 bg-bdsec text-white rounded-md hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors">
+              {t('profile.next')}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
   }
 
   return (

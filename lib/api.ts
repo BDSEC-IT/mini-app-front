@@ -1001,15 +1001,12 @@ export const getUserProfile = async (token?: string): Promise<UserProfileRespons
     // For development purposes, return mock profile data
     console.log('Using mock profile data for development');
     
-    // Generate a mock profile based on stored registration number
-    const storedRegNumber = typeof window !== 'undefined' ? sessionStorage.getItem('registerNumber') : null;
-    
     return {
       success: true,
       message: 'Using mock profile data',
       data: {
         id: 1,
-        registerNumber: storedRegNumber || 'AA12345678',
+        registerNumber: 'AA12345678',
         firstName: 'Test',
         lastName: 'User',
         email: 'test@example.com',
@@ -1327,6 +1324,33 @@ export const fetchNews = async (page: number = 1, limit: number = 100): Promise<
     return {
       success: false,
       data: []
+    };
+  }
+};
+
+export const getRegistrationNumber = async (token?: string) => {
+  const url = `${BASE_URL}/user/get-registration-number`;
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      }
+    });
+    const data = await response.json();
+    return {
+      success: response.ok,
+      registerNumber: data?.data?.registerNumber || null,
+      data: data?.data || null,
+      message: data?.message || null
+    };
+  } catch (error) {
+    return {
+      success: false,
+      registerNumber: null,
+      data: null,
+      message: error instanceof Error ? error.message : 'Failed to fetch registration number'
     };
   }
 };

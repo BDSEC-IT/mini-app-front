@@ -86,29 +86,13 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
         mcsdRequest.id
       ));
       
-      // Method 4: Check sessionStorage for immediate UI feedback
-      let hasSessionData = false;
-      if (typeof window !== 'undefined') {
-        const accountSetupData = sessionStorage.getItem('accountSetupData');
-        if (accountSetupData) {
-          try {
-            const parsedData = JSON.parse(accountSetupData);
-            hasSessionData = !!(parsedData.firstName && parsedData.lastName && 
-                           (parsedData.registerNumber || parsedData.childRegisterNumber));
-          } catch (e) {
-            console.log('SideMenu: Error parsing sessionStorage data');
-          }
-        }
-      }
-      
-      isGeneralComplete = hasValidStatus || hasDirectAccountData || hasNestedAccountData || hasSessionData;
+      isGeneralComplete = hasValidStatus || hasDirectAccountData || hasNestedAccountData;
       
       console.log('SideMenu Enhanced Detection:', {
         statusResSuccess: statusRes.success,
         hasValidStatus,
         hasDirectAccountData,
         hasNestedAccountData,
-        hasSessionData,
         finalResult: isGeneralComplete,
         statusData: statusRes.data,
         infoData: infoRes.data,
