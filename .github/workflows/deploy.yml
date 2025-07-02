@@ -3,7 +3,7 @@ name: Deploy Mini App to Server
 on:
   push:
     branches: [main, test]
-  workflow_dispatch:  # Optional manual trigger
+  workflow_dispatch:  # Optional: enables manual trigger from GitHub UI
 
 jobs:
   deploy:
@@ -21,37 +21,25 @@ jobs:
       - name: Deploy via SSH
         run: |
           ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} << 'EOF'
-            set -euo pipefail
-
             BRANCH="${{ github.ref_name }}"
-            cd /home/damdinsuren/projects/mini-app
+            cd /home/damdinsuren/projects/mini-app || exit 1
 
-            # Sync code
-            git fetch origin "$BRANCH"
-            git checkout "$BRANCH"
-            git reset --hard origin/"$BRANCH"
+            git fetch origin $BRANCH
+            git checkout $BRANCH
+            git reset --hard origin/$BRANCH
 
-            # Choose container name & port
-            if [[ "$BRANCH" == "test" ]]; then
+            if [ "$BRANCH" = "test" ]; then
               CONTAINER_NAME="mini-app-test"
-              PORT_MAPPING="3111:3110"
+              PORT_MAPPING="444:3110"
             else
               CONTAINER_NAME="mini-app"
               PORT_MAPPING="3110:3110"
             fi
+            
+            # Stop and remove the old container, ignoring errors if it doesn't exist
+            docker stop $CONTAINER_NAME >/dev/null 2>&1 || true
+            docker rm $CONTAINER_NAME >/dev/null 2>&1 || true
 
-            # If a container with that name exists, kill & remove it
-            if docker ps -a --format '{{.Names}}' | grep -xq "$CONTAINER_NAME"; then
-              docker rm -f "$CONTAINER_NAME"
-            fi
-
-            # Build new image (tagged :latest)
-            docker build -t "$CONTAINER_NAME:latest" .
-
-            # Run detached, auto-restart on reboot, map ports
-            docker run -d \
-              --name "$CONTAINER_NAME" \
-              -p "$PORT_MAPPING" \
-              --restart unless-stopped \
-              "$CONTAINER_NAME:latest"
+            docker build -t $CONTAINER_NAME .
+            docker run -d -p $PORT_MAPPING --name $CONTAINER_NAME $CONTAINER_NAME
           EOF
