@@ -20,17 +20,15 @@ jobs:
 
       - name: Deploy via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} << 'EOF'
+          BRANCH="${{ github.ref_name }}"
+          ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} << EOF
             set -eu
 
-            BRANCH="${{ github.ref_name }}"
             cd /home/damdinsuren/projects/mini-app
-
             git fetch origin "$BRANCH"
             git checkout "$BRANCH"
             git reset --hard origin/"$BRANCH"
 
-            # Determine container and port
             if [ "$BRANCH" = "test" ]; then
               CONTAINER_NAME="mini-app-test"
               APP_PORT="3111"
