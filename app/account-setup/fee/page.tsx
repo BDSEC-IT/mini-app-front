@@ -117,8 +117,14 @@ export default function FeePaymentPage() {
           // Show success message and redirect to Digipay
           alert('Нэхэмжлэл амжилттай үүслээ. Digipay төлбөрийн хуудас руу шилжиж байна...');
           
+          // Ensure the URL uses HTTPS instead of HTTP
+          let secureUrl = orderId;
+          if (secureUrl.startsWith('http:')) {
+            secureUrl = secureUrl.replace('http:', 'https:');
+          }
+          
           // Redirect to the Digipay order URL using assign() for better history management
-          window.location.assign(orderId);
+          window.location.assign(secureUrl);
         } else {
           // Fallback if orderId is missing
           console.error("Failed to extract orderId from invoice response:", result);
