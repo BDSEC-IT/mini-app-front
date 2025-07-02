@@ -38,7 +38,7 @@ export default function RegisterPage() {
             setToken(response.data.token)
           } else {
             // Set a fallback demo token for testing purposes
-            const demoToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDgyNzR9.V-2Jooje11gNYW0BtQZ65Td-Zu7JgEF9bn7fPVAQhq8"
+            const demoToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDg4MjN9.CP4XJIAlErOi8fwrQ-vmBA4XT_wzdvIXw2lZ1wFbBII"
             Cookies.set('auth_token', demoToken, { expires: 7 })
             setToken(demoToken)
             console.log('Using fallback demo token for testing')
@@ -46,7 +46,7 @@ export default function RegisterPage() {
         } catch (error) {
           console.error('Error getting token:', error)
           // Set a fallback demo token for testing purposes
-          const demoToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDgyNzR9.V-2Jooje11gNYW0BtQZ65Td-Zu7JgEF9bn7fPVAQhq8"
+          const demoToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDg4MjN9.CP4XJIAlErOi8fwrQ-vmBA4XT_wzdvIXw2lZ1wFbBII"
           Cookies.set('auth_token', demoToken, { expires: 7 })
           setToken(demoToken)
           console.log('Using fallback demo token for testing')
