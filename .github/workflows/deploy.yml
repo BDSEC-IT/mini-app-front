@@ -19,38 +19,40 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Deploy via SSH
+        shell: bash
         run: |
           BRANCH="${{ github.ref_name }}"
-          ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSSH'
-            set -eu
 
-            echo "🔄 Deploying branch: $BRANCH"
-            cd /home/damdinsuren/projects/mini-app
+          ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} 'bash -s' <<'EOF'
+          set -eu
 
-            git fetch origin "$BRANCH"
-            git checkout "$BRANCH"
-            git reset --hard origin/"$BRANCH"
+          echo "🔄 Deploying branch: $BRANCH"
+          cd /home/damdinsuren/projects/mini-app
 
-            if [ "$BRANCH" = "test" ]; then
-              CONTAINER_NAME="mini-app-test"
-              APP_PORT="3111"
-            else
-              CONTAINER_NAME="mini-app"
-              APP_PORT="3110"
-            fi
+          git fetch origin "$BRANCH"
+          git checkout "$BRANCH"
+          git reset --hard origin/"$BRANCH"
 
-            echo "🧹 Removing existing container..."
-            docker rm -f "$CONTAINER_NAME" || true
+          if [ "$BRANCH" = "test" ]; then
+            CONTAINER_NAME="mini-app-test"
+            APP_PORT="3111"
+          else
+            CONTAINER_NAME="mini-app"
+            APP_PORT="3110"
+          fi
 
-            echo "🐳 Building Docker image..."
-            docker build -t "$CONTAINER_NAME" .
+          echo "🧹 Removing existing container..."
+          docker rm -f "$CONTAINER_NAME" || true
 
-            echo "🚀 Running container on port $APP_PORT"
-            docker run -d \
-              --name "$CONTAINER_NAME" \
-              -p 127.0.0.1:$APP_PORT:3110 \
-              --restart unless-stopped \
-              "$CONTAINER_NAME"
+          echo "🐳 Building Docker image..."
+          docker build -t "$CONTAINER_NAME" .
 
-            echo "✅ Deployment complete for branch: $BRANCH"
-ENDSSH
+          echo "🚀 Running container on port $APP_PORT"
+          docker run -d \
+            --name "$CONTAINER_NAME" \
+            -p 127.0.0.1:$APP_PORT:3110 \
+            --restart unless-stopped \
+            "$CONTAINER_NAME"
+
+          echo "✅ Deployment complete for branch: $BRANCH"
+EOF
