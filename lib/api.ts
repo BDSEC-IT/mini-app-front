@@ -792,7 +792,7 @@ export const digipayLogin = async (userIdKhan: string) => {
         success: true,
         message: 'Using mock token for development',
         data: {
-          token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTEyNTMyODB9.1wffOlt_HaHYFXPj2w_LlLYsKC2hcewAXgCoW0ZD-0g",
+          token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDYyOTR9.y4IGXd76fqQcHQlve00vADg_sfuOvL3PKrH0W-05Y4E",
           user: {
             userId: 3
           }
@@ -815,7 +815,7 @@ export const digipayLogin = async (userIdKhan: string) => {
       success: true,
       message: 'Using mock token for development',
       data: {
-        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTEyNTMyODB9.1wffOlt_HaHYFXPj2w_LlLYsKC2hcewAXgCoW0ZD-0g",
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDYyOTR9.y4IGXd76fqQcHQlve00vADg_sfuOvL3PKrH0W-05Y4E",
         user: {
           userId: 3
         }
