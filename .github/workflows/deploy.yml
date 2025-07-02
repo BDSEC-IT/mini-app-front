@@ -24,14 +24,14 @@ jobs:
           ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} "bash -s" <<EOF
             set -eu
 
-            echo "🔄 Deploying branch: $BRANCH"
+            echo "🔄 Deploying branch: \$BRANCH"
             cd /home/damdinsuren/projects/mini-app
 
-            git fetch origin "$BRANCH"
-            git checkout "$BRANCH"
-            git reset --hard origin/"$BRANCH"
+            git fetch origin "\$BRANCH"
+            git checkout "\$BRANCH"
+            git reset --hard origin/"\$BRANCH"
 
-            if [ "$BRANCH" = "test" ]; then
+            if [ "\$BRANCH" = "test" ]; then
               CONTAINER_NAME="mini-app-test"
               APP_PORT="3111"
             else
