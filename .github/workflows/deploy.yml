@@ -37,7 +37,7 @@ jobs:
         echo "🚀 Running new container on host port $HOST_PORT"
         docker run -d \
           --name "$CONTAINER_NAME" \
-          -p "127.0.0.1:$HOST_PORT:3110" \
+          -p "127.0.0.1:$HOST_PORT:3000" \
           --restart unless-stopped \
           "$CONTAINER_NAME"
 
