@@ -3,7 +3,7 @@ name: Deploy Mini App to Server
 on:
   push:
     branches: [main, test]
-  workflow_dispatch:  # Optional: enables manual trigger from GitHub UI
+  workflow_dispatch:  # Optional manual trigger
 
 jobs:
   deploy:
@@ -20,16 +20,19 @@ jobs:
 
       - name: Deploy via SSH
         run: |
-          ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} << EOF
-            set -e
+          ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} << 'EOF'
+            set -euo pipefail
+
             BRANCH="${{ github.ref_name }}"
-            cd /home/damdinsuren/projects/mini-app || exit 1
+            cd /home/damdinsuren/projects/mini-app
 
-            git fetch origin \$BRANCH
-            git checkout \$BRANCH
-            git reset --hard origin/\$BRANCH
+            # Sync code
+            git fetch origin "$BRANCH"
+            git checkout "$BRANCH"
+            git reset --hard origin/"$BRANCH"
 
-            if [ "\$BRANCH" = "test" ]; then
+            # Choose container name & port
+            if [[ "$BRANCH" == "test" ]]; then
               CONTAINER_NAME="mini-app-test"
               PORT_MAPPING="3111:3110"
             else
@@ -37,8 +40,18 @@ jobs:
               PORT_MAPPING="3110:3110"
             fi
 
-            docker stop \$CONTAINER_NAME || true
-            docker rm \$CONTAINER_NAME || true
-            docker build -t \$CONTAINER_NAME .
-            docker run -d -p \$PORT_MAPPING --name \$CONTAINER_NAME \$CONTAINER_NAME
+            # If a container with that name exists, kill & remove it
+            if docker ps -a --format '{{.Names}}' | grep -xq "$CONTAINER_NAME"; then
+              docker rm -f "$CONTAINER_NAME"
+            fi
+
+            # Build new image (tagged :latest)
+            docker build -t "$CONTAINER_NAME:latest" .
+
+            # Run detached, auto-restart on reboot, map ports
+            docker run -d \
+              --name "$CONTAINER_NAME" \
+              -p "$PORT_MAPPING" \
+              --restart unless-stopped \
+              "$CONTAINER_NAME:latest"
           EOF
