@@ -40,6 +40,10 @@ jobs:
             docker stop $CONTAINER_NAME >/dev/null 2>&1 || true
             docker rm $CONTAINER_NAME >/dev/null 2>&1 || true
 
+            # Forcefully free up the target port before running the new container
+            HOST_PORT=$(echo $PORT_MAPPING | cut -d: -f1)
+            sudo kill $(sudo lsof -t -i:$HOST_PORT) || true
+
             docker build -t $CONTAINER_NAME .
             docker run -d -p $PORT_MAPPING --name $CONTAINER_NAME $CONTAINER_NAME
           EOF
