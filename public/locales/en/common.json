@@ -28,7 +28,16 @@
     "general": "General Information",
     "id": "ID Card",
     "contract": "Contract Signature",
-    "risk": "Risk Assessment"
+    "risk": "Risk Assessment",
+    "fee": "Account Opening Fee",
+    "accountFee": "Account Opening Fee",
+    "feeDescription": "Account opening service fee 5,000₮",
+    "serviceFee": "Service Fee",
+    "totalAmount": "Total Amount",
+    "paymentRequired": "Create Invoice",
+    "paymentFeeDescription": "Create an invoice for the account opening fee of 5,000₮ and make your payment.",
+    "processing": "Processing...",
+    "createInvoice": "Create Invoice (5,000₮)"
   },
   "menu": {
     "about": "ABOUT US",
@@ -129,5 +138,17 @@
     "account": "Account",
     "trading": "Trading",
     "fees": "Fees"
+  },
+  "payment": {
+    "status": "Payment Status",
+    "processing": "Processing Payment",
+    "pleaseWait": "Please wait while we verify your payment...",
+    "success": "Payment Successful",
+    "successMessage": "Your payment has been successfully processed.",
+    "redirecting": "Redirecting to dashboard...",
+    "failure": "Payment Failed",
+    "failureMessage": "There was a problem processing your payment.",
+    "tryAgain": "Try Again",
+    "backToDashboard": "Back to Dashboard"
   }
 } 

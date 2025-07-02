@@ -27,7 +27,33 @@ const nextConfig = {
       }
     ]
   },
-  transpilePackages: ['geist']
+  transpilePackages: ['geist'],
+  // Add security headers to allow Digipay connections
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://*.bdsec.mn https://*.digipay.mn https://*.qpay.mn; img-src 'self' data: https://*; style-src 'self' 'unsafe-inline';"
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          }
+        ]
+      }
+    ]
+  }
 }
 
 export default nextConfig

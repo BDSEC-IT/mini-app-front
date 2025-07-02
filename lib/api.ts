@@ -71,6 +71,18 @@ interface AllStocksResponse {
   data: StockData[];
 }
 
+interface AccountStatusResponse {
+  success: boolean;
+  message?: string;
+  data: any;
+}
+
+interface InvoiceResponse {
+  success: boolean;
+  message?: string;
+  data: any;
+}
+
 const BASE_URL = 'https://miniapp.bdsec.mn/apitest';
 
 export const fetchStockData = async (symbol?: string): Promise<ApiResponse> => {
@@ -105,4 +117,55 @@ export const fetchAllStocks = async (): Promise<AllStocksResponse> => {
   return response.json();
 };
 
-export type { StockData, ApiResponse, OrderBookEntry, OrderBookResponse, AllStocksResponse }; 
+export const getAccountStatusRequest = async (token: string): Promise<AccountStatusResponse> => {
+  try {
+    const url = `${BASE_URL}/user/get-account-information`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to get account status');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error getting account status:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error', data: null };
+  }
+};
+
+export const createOrRenewInvoice = async (token: string): Promise<InvoiceResponse> => {
+  try {
+    const url = `${BASE_URL}/payment/create-invoice`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        amount: 5000,
+        description: 'Account opening fee',
+        callbackUrl: 'https://miniapp.bdsec.mn/account-setup/payment-status'
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to create invoice');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating invoice:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error', data: null };
+  }
+};
+
+export type { StockData, ApiResponse, OrderBookEntry, OrderBookResponse, AllStocksResponse, AccountStatusResponse, InvoiceResponse }; 
