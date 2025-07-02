@@ -53,16 +53,6 @@ const nextConfig = {
         ]
       }
     ]
-  },
-
-  // Add proxy for FAQ API to handle CORS
-  async rewrites() {
-    return [
-      {
-        source: '/api/faq/:path*',
-        destination: 'https://new.bdsec.mn/api/v1/faq/:path*',
-      },
-    ]
   }
 }
 
