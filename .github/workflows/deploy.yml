@@ -3,7 +3,7 @@ name: Deploy Mini App to Server
 on:
   push:
     branches: [main, test]
-  workflow_dispatch:  # Optional: enables manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -21,29 +21,39 @@ jobs:
       - name: Deploy via SSH
         run: |
           ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} << 'EOF'
+            set -eu
+
             BRANCH="${{ github.ref_name }}"
-            cd /home/damdinsuren/projects/mini-app || exit 1
+            cd /home/damdinsuren/projects/mini-app
 
-            git fetch origin $BRANCH
-            git checkout $BRANCH
-            git reset --hard origin/$BRANCH
+            git fetch origin "$BRANCH"
+            git checkout "$BRANCH"
+            git reset --hard origin/"$BRANCH"
 
+            # Determine container and port
             if [ "$BRANCH" = "test" ]; then
               CONTAINER_NAME="mini-app-test"
-              PORT_MAPPING="3111:3110"
+              APP_PORT="3111"
             else
               CONTAINER_NAME="mini-app"
-              PORT_MAPPING="3110:3110"
+              APP_PORT="3110"
             fi
-            
-            # Stop and remove the old container, ignoring errors if it doesn't exist
-            docker stop $CONTAINER_NAME >/dev/null 2>&1 || true
-            docker rm $CONTAINER_NAME >/dev/null 2>&1 || true
 
-            # Forcefully free up the target port before running the new container
-            HOST_PORT=$(echo $PORT_MAPPING | cut -d: -f1)
-            sudo kill $(sudo lsof -t -i:$HOST_PORT) || true
+            echo "🔍 Checking if container '\$CONTAINER_NAME' exists..."
+            if docker ps -a --format '{{.Names}}' | grep -q "^\\\$CONTAINER_NAME\$"; then
+              echo "🧹 Removing old container: \$CONTAINER_NAME"
+              docker rm -f "\$CONTAINER_NAME"
+            fi
 
-            docker build -t $CONTAINER_NAME .
-            docker run -d -p $PORT_MAPPING --name $CONTAINER_NAME $CONTAINER_NAME
+            echo "🐳 Building Docker image..."
+            docker build -t "\$CONTAINER_NAME" .
+
+            echo "🚀 Starting new container on port \$APP_PORT"
+            docker run -d \
+              --name "\$CONTAINER_NAME" \
+              -p 127.0.0.1:\$APP_PORT:3110 \
+              --restart unless-stopped \
+              "\$CONTAINER_NAME"
+
+            echo "✅ Deployment complete for branch: \$BRANCH"
           EOF
