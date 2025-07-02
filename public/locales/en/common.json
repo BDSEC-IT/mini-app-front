@@ -285,6 +285,52 @@
     "categoryIII": "Category III",
     "timeFilter": "Time Period"
   },
+  "bonds": {
+    "title": "Bonds",
+    "searchPlaceholder": "Search bonds...",
+    "noResults": "No bonds found",
+    "symbol": "Symbol",
+    "name": "Name",
+    "issuer": "Issuer",
+    "interest": "Interest",
+    "nominalValue": "Nominal Value",
+    "tradedDate": "Traded Date",
+    "refundDate": "Refund Date",
+    "details": "Details",
+    "viewMore": "View"
+  },
+  "highLow": {
+    "title": "52-Week High/Low",
+    "searchPlaceholder": "Search stocks...",
+    "allStocks": "All Stocks",
+    "highestPrices": "52-Week Highs",
+    "lowestPrices": "52-Week Lows",
+    "noResults": "No results found",
+    "symbol": "Symbol",
+    "name": "Name",
+    "high": "52W High",
+    "low": "52W Low",
+    "lastPrice": "Last Price",
+    "lastDate": "Last Date",
+    "tradeCount": "Trades"
+  },
+  "news": {
+    "title": "News",
+    "newest": "Newest",
+    "oldest": "Oldest",
+    "searchPlaceholder": "Search news...",
+    "noResults": "No news found",
+    "loadMore": "Load More",
+    "loading": "Loading...",
+    "publishedAt": "Published at",
+    "views": "Views",
+    "noContent": "No content available for this news article.",
+    "errorLoading": "Error loading news",
+    "hoursAgo": "{{count}} hours ago",
+    "daysAgo": "{{count}} days ago",
+    "dayAgo": "1 day ago",
+    "noTitle": "Untitled news"
+  },
   "theme": {
     "light": "Light",
     "dark": "Dark"

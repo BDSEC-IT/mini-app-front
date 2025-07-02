@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next'
 import { Phone, Globe, TrendingUp, TrendingDown } from 'lucide-react'
-import { Facebook, Youtube } from 'lucide-react'
+import { Facebook, Youtube, Instagram, Twitter, Linkedin } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useState, useEffect } from 'react'
 import { fetchAllStocks, type StockData } from '@/lib/api'
@@ -32,9 +32,9 @@ const AboutUs = () => {
           const sortedByGain = [...validStocks].sort((a, b) => b.Changep - a.Changep)
           const sortedByLoss = [...validStocks].sort((a, b) => a.Changep - b.Changep)
           
-          // Get top 4 gainers and losers
-          setTopGainers(sortedByGain.slice(0, 4))
-          setTopLosers(sortedByLoss.slice(0, 4))
+          // Get top 8 gainers and losers
+          setTopGainers(sortedByGain.slice(0, 8))
+          setTopLosers(sortedByLoss.slice(0, 8))
         }
       } catch (err) {
         console.error('Error fetching stock data:', err)
@@ -54,62 +54,62 @@ const AboutUs = () => {
   
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
-      <div className="px-4 md:px-1 py-6">
-        <h1 className="text-xl font-bold mb-4">{t('about.title')}</h1>
+      <div className="px-4 md:px-6 py-6">
+        <h1 className="text-xl font-bold mb-6">{t('about.title')}</h1>
         
-        {/* Top section with company image and market movers side by side */}
-        <div className="flex gap-2 mb-8 flex-wrap">
+        {/* Main content with side-by-side layout */}
+        <div className="flex flex-row gap-2 md:gap-4 mb-8">
           {/* Left column with Company Image and Services */}
-          <div className="w-[63%]">
-            {/* Company Image - smaller height */}
-            <div className="bg-gray-200 dark:bg-gray-800 rounded-lg h-48 lg:h-80 w-full flex items-center justify-center mb-6">
-              <div className="text-gray-500 dark:text-gray-400">
-                <img src="/images/bdsec.png" className="rounded-md" alt="BDSec" />
-              </div>
+          <div className="w-2/3 pr-1 md:pr-0">
+            {/* Company Image */}
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg w-full flex items-center justify-center mb-6 overflow-hidden">
+              <img 
+                src="/images/bdsec.png" 
+                className="w-full h-auto" 
+                alt="BDSec" 
+              />
             </div>
             
             {/* Services Section */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold mb-3 text-bdsec dark:text-indigo-400">{t('about.services')}</h2>
-              <ul className="space-y-2 text-sm">
+              <h2 className="text-base font-medium mb-4 text-bdsec dark:text-indigo-400">{t('about.services')}</h2>
+              <ul className="space-y-3 text-sm">
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-bdsec dark:bg-indigo-400 rounded-full mr-2"></div>
+                  <div className="w-1 h-1 bg-bdsec dark:bg-indigo-400 rounded-full mr-2"></div>
                   {t('about.broker')}
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-bdsec dark:bg-indigo-400 rounded-full mr-2"></div>
+                  <div className="w-1 h-1 bg-bdsec dark:bg-indigo-400 rounded-full mr-2"></div>
                   {t('about.dealer')}
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-bdsec dark:bg-indigo-400 rounded-full mr-2"></div>
+                  <div className="w-1 h-1 bg-bdsec dark:bg-indigo-400 rounded-full mr-2"></div>
                   {t('about.underwriter')}
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-bdsec dark:bg-indigo-400 rounded-full mr-2"></div>
+                  <div className="w-1 h-1 bg-bdsec dark:bg-indigo-400 rounded-full mr-2"></div>
                   {t('about.investment')}
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-bdsec dark:bg-indigo-400 rounded-full mr-2"></div>
+                  <div className="w-1 h-1 bg-bdsec dark:bg-indigo-400 rounded-full mr-2"></div>
                   {t('about.consulting')}
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-bdsec dark:bg-indigo-400 rounded-full mr-2"></div>
+                  <div className="w-1 h-1 bg-bdsec dark:bg-indigo-400 rounded-full mr-2"></div>
                   {t('about.exchange')}
                 </li>
               </ul>
             </div>
           </div>
           
-          {/* Market Movers (1/4 width on desktop, 1/3 on mobile) */}
-          <div className="w-[35%]">
-            <div>
-              {/* <h2 className="text-lg font-semibold mb-4">{t('about.marketMovers', 'Market Movers Today')}</h2> */}
-              
+          {/* Right column with Market Movers - always shown to the right */}
+          <div className="w-1/3">
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-full">
               {/* Top Gainers */}
-              <div className="border-l-1 p-3 border-soft border-opacity-50 mb-4">
+              <div className="border-l-2 border-green-500 dark:border-green-600 p-2.5 mb-1">
                 <div className="flex items-center mb-2">
-                  <TrendingUp className="text-green-500 dark:text-green-400 mr-2" size={16} />
-                  <h3 className="font-semibold text-bdsec dark:text-indigo-400 text-sm">{t('about.topGainers', 'Top Gainers')}</h3>
+                  <TrendingUp className="text-green-500 dark:text-green-400 mr-1.5" size={14} />
+                  <h3 className="font-medium text-xs md:text-sm">{t('about.topGainers', 'Top Gainers')}</h3>
                 </div>
                 
                 {isLoading ? (
@@ -117,16 +117,16 @@ const AboutUs = () => {
                     <div className="animate-spin h-4 w-4 border-2 border-bdsec dark:border-indigo-400 border-t-transparent rounded-full"></div>
                   </div>
                 ) : (
-                  <div className="divide-y divide-soft divide-opacity-30">
-                    {topGainers.slice(0, 4).map((stock) => (
-                      <div key={stock.Symbol} className="py-[6px] flex justify-between items-center">
+                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {topGainers.map((stock, index) => (
+                      <div key={`gainer-${stock.Symbol}-${index}`} className="py-1 flex justify-between items-center">
                         <div className="">
-                          <div className="font-medium text-xs">{stock.Symbol.split('-')[0]}</div>
-                          <div className="text-2xs text-gray-600 dark:text-gray-300 truncate max-w-[80px] sm:max-w-[150px]">{stock.mnName || stock.enName}</div>
+                          <div className="font-medium text-[10px] md:text-xs">{stock.Symbol.split('-')[0]}</div>
+                          <div className="text-[9px] md:text-xs text-gray-600 dark:text-gray-400 truncate max-w-[100px]">{stock.mnName || stock.enName}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-green-500 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-[2px] py-1 rounded-md font-medium text-xs">+{stock.Changep.toFixed(2)}%</div>
-                          <div className="text-xs">{formatPrice(stock.LastTradedPrice)} ₮</div>
+                          <div className="text-green-500 dark:text-green-400 text-[10px] md:text-xs font-medium">+{stock.Changep.toFixed(2)}%</div>
+                          <div className="text-[9px] md:text-xs">{formatPrice(stock.LastTradedPrice)} ₮</div>
                         </div>
                       </div>
                     ))}
@@ -135,10 +135,10 @@ const AboutUs = () => {
               </div>
               
               {/* Top Losers */}
-              <div className="border-l-1 p-3 border-soft border-opacity-50">
+              <div className="border-l-2 border-red-500 dark:border-red-600 p-2.5">
                 <div className="flex items-center mb-2">
-                  <TrendingDown className="text-red-500 dark:text-red-400 mr-2" size={16} />
-                  <h3 className="font-semibold text-bdsec dark:text-indigo-400 text-sm">{t('about.topLosers', 'Top Losers')}</h3>
+                  <TrendingDown className="text-red-500 dark:text-red-400 mr-1.5" size={14} />
+                  <h3 className="font-medium text-xs md:text-sm">{t('about.topLosers', 'Top Losers')}</h3>
                 </div>
                 
                 {isLoading ? (
@@ -146,16 +146,16 @@ const AboutUs = () => {
                     <div className="animate-spin h-4 w-4 border-2 border-bdsec dark:border-indigo-400 border-t-transparent rounded-full"></div>
                   </div>
                 ) : (
-                  <div className="divide-y divide-soft divide-opacity-30">
-                    {topLosers.slice(0, 4).map((stock) => (
-                      <div key={stock.Symbol} className="py-[6px] flex justify-between items-center">
+                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {topLosers.map((stock, index) => (
+                      <div key={`loser-${stock.Symbol}-${index}`} className="py-1 flex justify-between items-center">
                         <div>
-                          <div className="font-medium text-xs">{stock.Symbol.split('-')[0]}</div>
-                          <div className="text-2xs text-gray-600 dark:text-gray-300 truncate max-w-[80px] sm:max-w-[150px]">{stock.mnName || stock.enName}</div>
+                          <div className="font-medium text-[10px] md:text-xs">{stock.Symbol.split('-')[0]}</div>
+                          <div className="text-[9px] md:text-xs text-gray-600 dark:text-gray-400 truncate max-w-[100px]">{stock.mnName || stock.enName}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-[2px] py-1 rounded-md font-medium text-xs">{stock.Changep.toFixed(2)}%</div>
-                          <div className="text-xs">{formatPrice(stock.LastTradedPrice)} ₮</div>
+                          <div className="text-red-500 dark:text-red-400 text-[10px] md:text-xs font-medium">{stock.Changep.toFixed(2)}%</div>
+                          <div className="text-[9px] md:text-xs">{formatPrice(stock.LastTradedPrice)} ₮</div>
                         </div>
                       </div>
                     ))}
@@ -169,18 +169,18 @@ const AboutUs = () => {
         {/* Bottom section */}
         <div className="lg:pr-4">
           {/* Company Stats */}
-          <div className="grid grid-cols-3 gap-2 mb-8">
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg text-center border-soft border-opacity-50 border-1">
-              <h3 className="text-[40px] text-left font-bold text-bdsec dark:text-indigo-400">34<span className="text-xs text-left font-normal">{t('about.years', 'жил')}</span></h3>
-              <p className="text-xs text-right text-gray-500 dark:text-gray-400 mt-1">{t('about.yearsExperience')}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div className="border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
+              <h3 className="text-3xl md:text-4xl font-bold text-bdsec dark:text-indigo-400">34 <span className="text-sm md:text-base font-normal">{t('about.years', 'жил')}</span></h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('about.yearsExperience')}</p>
             </div>
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg text-center border-soft border-opacity-50 border-1">
-              <h3 className="text-[40px] text-left font-bold text-bdsec dark:text-indigo-400">2.0<span className="text-xs text-left font-normal">{t('about.billion', 'их наяд')}</span></h3>
-              <p className="text-xs text-right text-gray-500 dark:text-gray-400 mt-1">{t('about.billionAssets')}</p>
+            <div className="border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
+              <h3 className="text-3xl md:text-4xl font-bold text-bdsec dark:text-indigo-400">2.0 <span className="text-sm md:text-base font-normal">{t('about.billion', 'их наяд')}</span></h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('about.billionAssets')}</p>
             </div>
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border-soft border-opacity-50 border-1">
-              <h3 className="text-[40px] text-left font-bold text-bdsec dark:text-indigo-400">06<span className="text-xs text-left font-normal">{t('about.deals', 'онд')}</span></h3>
-              <p className="text-xs text-right text-gray-500 dark:text-gray-400 mt-1">{t('about.ipoDeals')}</p>
+            <div className="border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
+              <h3 className="text-3xl md:text-4xl font-bold text-bdsec dark:text-indigo-400">06 <span className="text-sm md:text-base font-normal">{t('about.deals', 'онд')}</span></h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('about.ipoDeals')}</p>
             </div>
           </div>
           
@@ -188,8 +188,8 @@ const AboutUs = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Address Section */}
             <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-3 text-bdsec dark:text-indigo-400">{t('about.address')}</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+              <h2 className="text-base font-medium mb-3 text-bdsec dark:text-indigo-400">{t('about.address')}</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 {t('about.addressLine1')}<br />
                 {t('about.addressLine2')}
               </p>
@@ -197,25 +197,34 @@ const AboutUs = () => {
             
             {/* Contact Section */}
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-bdsec dark:text-indigo-400">{t('about.contact')}</h2>
-              <div className="flex justify-between items-center">
-                <div className="space-y-4">
-                  <a href="tel:97675551919" className="flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-bdsec dark:hover:text-indigo-400 transition-colors">
-                    <Phone size={24} className="mr-3 text-bdsec dark:text-indigo-400" />
+              <h2 className="text-base font-medium mb-3 text-bdsec dark:text-indigo-400">{t('about.contact')}</h2>
+              <div className="flex flex-col md:flex-row justify-between">
+                <div className="space-y-4 mb-4 md:mb-0">
+                  <a href="tel:97675551919" className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-bdsec dark:hover:text-indigo-400 transition-colors">
+                    <Phone size={18} className="mr-3 text-bdsec dark:text-indigo-400" />
                     <span>976-7555-1919</span>
                   </a>
-                  <a href="https://www.bdsec.mn" target="_blank" rel="noopener noreferrer" className="flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-bdsec dark:hover:text-indigo-400 transition-colors">
-                    <Globe size={24} className="mr-3 text-bdsec dark:text-indigo-400" />
+                  <a href="https://www.bdsec.mn" target="_blank" rel="noopener noreferrer" className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-bdsec dark:hover:text-indigo-400 transition-colors">
+                    <Globe size={18} className="mr-3 text-bdsec dark:text-indigo-400" />
                     <span>www.bdsec.mn</span>
                   </a>
                 </div>
                 
-                <div className="min-w-[200px] space-x-4 justify-end">
-                  <a href="https://www.facebook.com/BDSecJSC" target="_blank" rel="noopener noreferrer" className="inline-block dark:bg-indigo-500/20 p-3 rounded-full hover:bg-bdsec/10 dark:hover:bg-indigo-500/30 transition-colors">
-                    <Facebook size={24} className="text-bdsec dark:text-indigo-400" />
+                <div className="flex space-x-2">
+                  <a href="https://www.facebook.com/BDSecJSC" target="_blank" rel="noopener noreferrer" className="inline-block border border-gray-200 dark:border-gray-700 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <Facebook size={16} className="text-bdsec dark:text-indigo-400" />
                   </a>
-                  <a href="https://www.youtube.com/@bdsecjsc9617" target="_blank" rel="noopener noreferrer" className="inline-block dark:bg-indigo-500/20 p-3 rounded-full hover:bg-bdsec/10 dark:hover:bg-indigo-500/30 transition-colors">
-                    <Youtube size={24} className="text-bdsec dark:text-indigo-400" />
+                  <a href="https://www.youtube.com/@bdsecjsc9617" target="_blank" rel="noopener noreferrer" className="inline-block border border-gray-200 dark:border-gray-700 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <Youtube size={16} className="text-bdsec dark:text-indigo-400" />
+                  </a>
+                  <a href="https://www.instagram.com/bdsec_jsc/" target="_blank" rel="noopener noreferrer" className="inline-block border border-gray-200 dark:border-gray-700 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <Instagram size={16} className="text-bdsec dark:text-indigo-400" />
+                  </a>
+                  <a href="https://twitter.com/BDSecJSC" target="_blank" rel="noopener noreferrer" className="inline-block border border-gray-200 dark:border-gray-700 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <Twitter size={16} className="text-bdsec dark:text-indigo-400" />
+                  </a>
+                  <a href="https://www.linkedin.com/company/bdsec-jsc/" target="_blank" rel="noopener noreferrer" className="inline-block border border-gray-200 dark:border-gray-700 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <Linkedin size={16} className="text-bdsec dark:text-indigo-400" />
                   </a>
                 </div>
               </div>

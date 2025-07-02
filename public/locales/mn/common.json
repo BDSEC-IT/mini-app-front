@@ -305,6 +305,52 @@
     "categoryIII": "III ангилал",
     "timeFilter": "Хугацааны шүүлтүүр"
   },
+  "bonds": {
+    "title": "Бондууд",
+    "searchPlaceholder": "Бонд хайх...",
+    "noResults": "Бонд олдсонгүй",
+    "symbol": "Симбол",
+    "name": "Нэр",
+    "issuer": "Гаргагч",
+    "interest": "Хүү",
+    "nominalValue": "Нэрлэсэн үнэ",
+    "tradedDate": "Арилжаалагдсан огноо",
+    "refundDate": "Буцаан төлөх огноо",
+    "details": "Дэлгэрэнгүй",
+    "viewMore": "Харах"
+  },
+  "highLow": {
+    "title": "52 Долоо хоногийн Өндөр/Бага",
+    "searchPlaceholder": "Хувьцаа хайх...",
+    "allStocks": "Бүх хувьцаа",
+    "highestPrices": "52 Долоо хоногийн Өндөр",
+    "lowestPrices": "52 Долоо хоногийн Бага",
+    "noResults": "Илэрц олдсонгүй",
+    "symbol": "Симбол",
+    "name": "Нэр",
+    "high": "52Д Өндөр",
+    "low": "52Д Бага",
+    "lastPrice": "Сүүлийн үнэ",
+    "lastDate": "Сүүлийн огноо",
+    "tradeCount": "Арилжаа"
+  },
+  "news": {
+    "title": "Мэдээ",
+    "newest": "Шинэ",
+    "oldest": "Хуучин",
+    "searchPlaceholder": "Хайх...",
+    "noResults": "Мэдээ олдсонгүй",
+    "loadMore": "Цааш үзэх",
+    "loading": "Ачааллаж байна...",
+    "publishedAt": "Нийтэлсэн огноо",
+    "views": "Үзсэн",
+    "noContent": "Энэ мэдээний дэлгэрэнгүй мэдээлэл байхгүй байна.",
+    "errorLoading": "Мэдээ ачааллахад алдаа гарлаа",
+    "hoursAgo": "{{count}} цагийн өмнө",
+    "daysAgo": "{{count}} хоногийн өмнө",
+    "dayAgo": "1 хоногийн өмнө",
+    "noTitle": "Гарчиггүй мэдээ"
+  },
   "theme": {
     "light": "Цагаан",
     "dark": "Хар"

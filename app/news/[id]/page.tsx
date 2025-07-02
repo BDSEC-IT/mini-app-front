@@ -27,13 +27,13 @@ export default function NewsDetailPage() {
           if (foundArticle) {
             setArticle(foundArticle)
           } else {
-            setError('Мэдээ олдсонгүй')
+            setError(t('news.noResults', 'No news found'))
           }
         } else {
-          setError('Мэдээ ачааллахад алдаа гарлаа')
+          setError(t('news.errorLoading', 'Error loading news'))
         }
       } catch (err) {
-        setError('Мэдээ ачааллахад алдаа гарлаа')
+        setError(t('news.errorLoading', 'Error loading news'))
         console.error('Error loading article:', err)
       } finally {
         setLoading(false)
@@ -43,7 +43,7 @@ export default function NewsDetailPage() {
     if (params.id) {
       loadArticle()
     }
-  }, [params.id])
+  }, [params.id, t])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -90,14 +90,14 @@ export default function NewsDetailPage() {
         <div className="max-w-4xl mx-auto px-4 py-6">
           {/* Article Title */}
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
-            {article.mnTitle || 'Гарчиггүй мэдээ'}
+            {article.mnTitle || t('news.noTitle', 'Untitled news')}
           </h1>
 
           {/* Article Meta */}
           <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-6">
             <div className="flex items-center gap-2">
               <Calendar size={16} />
-              <span>Published at: {formatDate(article.publishedAt)}</span>
+              <span>{t('news.publishedAt', 'Published at')}: {formatDate(article.publishedAt)}</span>
             </div>
             <div className="flex items-center gap-2">
               <Eye size={16} />
@@ -125,7 +125,7 @@ export default function NewsDetailPage() {
             <div className="mb-6">
               <img
                 src={article.cover}
-                alt={article.mnTitle || 'News image'}
+                alt={article.mnTitle || t('news.title', 'News')}
                 className="w-full max-w-2xl mx-auto rounded-lg shadow-lg"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement
@@ -148,7 +148,7 @@ export default function NewsDetailPage() {
           {/* If no Mongolian content, show as plain text */}
           {!article.mnBody && (
             <div className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              <p>Энэ мэдээний дэлгэрэнгүй мэдээлэл байхгүй байна.</p>
+              <p>{t('news.noContent', 'No content available for this news article.')}</p>
             </div>
           )}
         </div>

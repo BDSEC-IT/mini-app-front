@@ -31,10 +31,10 @@ export default function NewsPage() {
         }
         setHasMore(response.data.length === 50)
       } else {
-        setError('Failed to load news')
+        setError(t('news.errorLoading', 'Failed to load news'))
       }
     } catch (err) {
-      setError('Failed to load news')
+      setError(t('news.errorLoading', 'Failed to load news'))
       console.error('Error loading news:', err)
     } finally {
       setLoading(false)
@@ -80,11 +80,11 @@ export default function NewsPage() {
     const diffInDays = Math.floor(diffInHours / 24)
     
     if (diffInHours < 24) {
-      return `${diffInHours} цагийн өмнө`
+      return t('news.hoursAgo', { count: diffInHours })
     } else if (diffInDays === 1) {
-      return '1 хоногийн өмнө'
+      return t('news.dayAgo', '1 day ago')
     } else if (diffInDays < 7) {
-      return `${diffInDays} хоногийн өмнө`
+      return t('news.daysAgo', { count: diffInDays })
     } else {
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
@@ -111,7 +111,7 @@ export default function NewsPage() {
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
-              Шинэ
+              {t('news.newest', 'Newest')}
             </button>
             <button
               onClick={() => setActiveFilter('old')}
@@ -121,12 +121,12 @@ export default function NewsPage() {
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
-              Хуучин
+              {t('news.oldest', 'Oldest')}
             </button>
             <div className="relative flex-1 max-w-xs">
               <input
                 type="text"
-                placeholder="Хайх..."
+                placeholder={t('news.searchPlaceholder', 'Search...')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-8 pr-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 border-0 rounded-full focus:outline-none focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500 focus:bg-white dark:focus:bg-gray-600 transition-colors text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
@@ -156,7 +156,7 @@ export default function NewsPage() {
                 <div className="w-16 h-16 flex-shrink-0">
                   <img
                     src={article.cover}
-                    alt={article.mnTitle || 'News image'}
+                    alt={article.mnTitle || t('news.title', 'News')}
                     className="w-full h-full object-cover rounded-lg"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement
@@ -169,7 +169,7 @@ export default function NewsPage() {
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 mb-1">
-                  {article.mnTitle || 'Гарчиггүй мэдээ'}
+                  {article.mnTitle || t('news.noTitle', 'Untitled news')}
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {formatDate(article.publishedAt)}
@@ -197,10 +197,10 @@ export default function NewsPage() {
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Ачааллаж байна...
+                  {t('news.loading', 'Loading...')}
                 </>
               ) : (
-                'Цааш үзэх'
+                t('news.loadMore', 'Load More')
               )}
             </button>
           </div>
@@ -210,7 +210,7 @@ export default function NewsPage() {
         {!loading && filteredNews.length === 0 && !error && (
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400">
-              {searchTerm ? 'Хайлтын үр дүн олдсонгүй' : 'Мэдээ олдсонгүй'}
+              {searchTerm ? t('news.noResults', 'No news found') : t('news.noResults', 'No news found')}
             </p>
           </div>
         )}
