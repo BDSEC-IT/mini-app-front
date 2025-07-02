@@ -148,8 +148,8 @@ const Profile = () => {
 
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">{t('profile.title', 'My Profile')}</h1>
+      <div className="max-w-4xl mx-auto py-8">
+        <h1 className="text-2xl font-bold mb-6 px-4">{t('profile.title', 'My Profile')}</h1>
         
         {/* Profile Card */}
         <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">

@@ -54,11 +54,11 @@ const AboutUs = () => {
   
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
-      <div className="px-4 md:px-6 py-6">
-        <h1 className="text-xl font-bold mb-6">{t('about.title')}</h1>
+      <div className="py-6">
+        <h1 className="text-xl font-bold mb-6 px-4 md:px-6">{t('about.title')}</h1>
         
         {/* Main content with side-by-side layout */}
-        <div className="flex flex-row gap-2 md:gap-4 mb-8">
+        <div className="flex flex-row gap-2 md:gap-4 mb-8 px-4 md:px-6">
           {/* Left column with Company Image and Services */}
           <div className="w-2/3 pr-1 md:pr-0">
             {/* Company Image */}
@@ -167,7 +167,7 @@ const AboutUs = () => {
         </div>
         
         {/* Bottom section */}
-        <div className="lg:pr-4">
+        <div className="lg:pr-4 px-4 md:px-6">
           {/* Company Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             <div className="border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
