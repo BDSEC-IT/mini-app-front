@@ -97,40 +97,8 @@ export default function FeePaymentPage() {
       // If all validations pass, proceed with invoice creation
       const result = await createOrRenewInvoice(token)
       if (result.success) {
-        // Extract the orderId from the response - try different possible structures
-        let orderId = null;
-        
-        // Try direct access first
-        if (result.data?.orderId) {
-          orderId = result.data.orderId;
-        }
-        // Try nested data structure
-        else if (result.data?.data?.orderId) {
-          orderId = result.data.data.orderId;
-        }
-        // Try if data is the orderId directly
-        else if (typeof result.data === 'string' && result.data.startsWith('http')) {
-          orderId = result.data;
-        }
-        
-        if (orderId) {
-          // Show success message and redirect to Digipay
-          alert('Нэхэмжлэл амжилттай үүслээ. Digipay төлбөрийн хуудас руу шилжиж байна...');
-          
-          // Ensure the URL uses HTTPS instead of HTTP
-          let secureUrl = orderId;
-          if (secureUrl.startsWith('http:')) {
-            secureUrl = secureUrl.replace('http:', 'https:');
-          }
-          
-          // Redirect to the Digipay order URL using assign() for better history management
-          window.location.assign(secureUrl);
-        } else {
-          // Fallback if orderId is missing
-          console.error("Failed to extract orderId from invoice response:", result);
-          alert('Нэхэмжлэл амжилттай үүслээ, гэхдээ төлбөрийн хуудас олдсонгүй. Та банкны апп-аасаа төлбөрөө гүйцэтгэнэ үү.');
-          router.push('/profile');
-        }
+        // Redirect to payment status page for polling
+        router.push('/account-setup/payment-status');
       } else {
         setError(result.message || "Failed to create payment invoice.")
       }
