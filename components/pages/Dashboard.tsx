@@ -52,14 +52,9 @@ const DashboardContent = () => {
   const [selectedStockData, setSelectedStockData] = useState<StockData | null>(null)
   const [chartRefreshKey, setChartRefreshKey] = useState<number>(0)
   
-  // Autoplay plugin configuration
   const autoplayPlugin = useRef(
-    Autoplay({
-      delay: 3000,
-      stopOnInteraction: false,
-      stopOnMouseEnter: true,
-    })
-  )
+    Autoplay({ delay: 5000, stopOnInteraction: true, stopOnMouseEnter: true })
+  );
   
   // Fetch all stocks data
   const fetchStocksData = useCallback(async () => {
@@ -499,61 +494,46 @@ const DashboardContent = () => {
               <CarouselContent className="-ml-2 md:-ml-4">
                 {filteredStocks.length > 0 ? (
                   filteredStocks.map((stock, index) => {
-                    // Generate random chart points for each stock
-                    const isPositive = stock.Changep >= 0;
-                    const chartPoints = generateChartData(isPositive);
-                    const pointsString = chartPoints.join(',');
+                    const isPositive = (stock.Changep || 0) >= 0;
                     
                     return (
-                      <CarouselItem key={`${stock.Symbol}-${index}`} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
-                        <div 
-                          className="bg-bdsec dark:bg-indigo-600 text-white p-4 rounded-lg cursor-pointer relative overflow-hidden
-                                     shadow-[0_4px_14px_rgba(33,33,79,0.3)] dark:shadow-[0_4px_14px_rgba(99,102,241,0.3)]
-                                     transition-all duration-300"
+                      <CarouselItem key={`stock-${stock.Symbol}-${index}`} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
+                        <div
+                          className="relative w-full p-4 overflow-hidden transition-transform duration-300 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:-translate-y-1"
                           onClick={() => handleStockSelect(stock.Symbol)}
                         >
-                          {/* Always visible glow overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-bdsec/40 to-transparent dark:from-indigo-500/40 dark:to-transparent opacity-70"></div>
-                          
-                          <div className="flex justify-between items-start mb-3 relative z-10">
-                            <div>
-                              <h3 className="font-bold text-lg">{stock.Symbol.split('-')[0]}</h3>
-                              <p className="text-xs text-gray-300 truncate max-w-[100px]">{stock.mnName || stock.enName}</p>
+                          <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-transparent opacity-50 dark:hidden"></div>
+                          <svg
+                            className={`absolute text-indigo-500 -top-1/4 -left-1/4 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-0 dark:opacity-60`}
+                            width="200%"
+                            height="200%"
+                            viewBox="0 0 200 200"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              fill="currentColor"
+                              d="M50,-60C60,-40,70,-30,80,-10C90,10,80,30,60,50C40,70,20,90,-10,100C-40,110,-70,110,-90,90C-110,70,-110,40,-100,10C-90,-20,-60,-50,-40,-70C-20,-90,10,-110,30,-100C50,-90,50,-80,50,-60Z"
+                              transform="translate(100 100)"
+                            />
+                          </svg>
+                          <div className="relative z-10">
+                            <div className="flex items-start justify-between mb-4">
+                              <h3 className="flex items-center justify-center font-semibold text-white rounded-full bg-bdsec dark:bg-indigo-500 h-9 w-9">
+                                {stock.Symbol.split('-')[0]}
+                              </h3>
+                              <div className={`text-sm font-semibold px-2 py-1 rounded-md ${isPositive ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'}`}>
+                                {isPositive ? '+' : ''}{(stock.Changep || 0).toFixed(2)}%
+                              </div>
                             </div>
-                            <div className={`text-xs px-2 py-1 rounded-full ${isPositive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                              {isPositive ? '+' : ''}{stock.Changep?.toFixed(2)}%
+                            <div className="mt-2">
+                              <p className="font-medium text-gray-800 truncate dark:text-gray-200" title={stock.mnName || stock.enName}>{stock.mnName || stock.enName}</p>
                             </div>
-                          </div>
-                          
-                          <div className="relative h-16 mb-2 z-10">
-                            <svg width="100%" height="100%" viewBox="0 0 100 30" preserveAspectRatio="none">
-                              {/* Area fill */}
-                              <defs>
-                                <linearGradient id={`gradient-${index}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                                  <stop offset="0%" stopColor={isPositive ? "#4ade80" : "#f87171"} stopOpacity="0.4" />
-                                  <stop offset="100%" stopColor={isPositive ? "#4ade80" : "#f87171"} stopOpacity="0.05" />
-                                </linearGradient>
-                              </defs>
-                              
-                              {/* Chart line */}
-                              <polyline
-                                points={chartPoints.map((point, i) => `${i * (100 / (chartPoints.length - 1))},${30 - (point / 100) * 30}`).join(' ')}
-                                fill="none"
-                                stroke={isPositive ? "#4ade80" : "#f87171"}
-                                strokeWidth="1.5"
-                              />
-                              
-                              {/* Area fill */}
-                              <path
-                                d={`M0,${30 - (chartPoints[0] / 100) * 30} ${chartPoints.map((point, i) => `L${i * (100 / (chartPoints.length - 1))},${30 - (point / 100) * 30}`).join(' ')} L100,30 L0,30 Z`}
-                                fill={`url(#gradient-${index})`}
-                              />
-                            </svg>
-                          </div>
-                          
-                          <div className="flex justify-between items-center relative z-10">
-                            <div className="text-lg font-bold">{formatPrice(stock.PreviousClose)} ₮</div>
-                            {/* <div className="text-xs text-gray-300">Vol: {(stock.Volume || 0).toLocaleString()}</div> */}
+                            <div className="mt-4">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</p>
+                              <p className="text-lg font-bold text-gray-900 dark:text-white">
+                                {formatPrice(stock.LastTradedPrice)} ₮
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </CarouselItem>

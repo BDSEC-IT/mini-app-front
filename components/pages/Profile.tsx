@@ -231,7 +231,7 @@ const Profile = () => {
                     </div>
                     <div className="flex-1">
                       <p className={`font-medium ${isGeneralInfoComplete() ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                        Ерөнхий мэдээлэл
+                        {t('profile.generalInfo')}
                       </p>
                     </div>
                     {!isGeneralInfoComplete() && (
@@ -239,7 +239,7 @@ const Profile = () => {
                         href="/account-setup/general" 
                         className="text-xs px-3 py-1.5 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition-colors"
                       >
-                        Эхлэх
+                        {t('profile.completeGeneralInfo', 'Complete')}
                       </Link>
                     )}
                   </div>
@@ -253,7 +253,7 @@ const Profile = () => {
                     </div>
                     <div className="flex-1">
                       <p className={`font-medium ${isPaymentComplete() ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                        Данс нээх хураамж
+                        {t('profile.accountFee')}
                       </p>
                     </div>
                     {!isPaymentComplete() && (
@@ -261,7 +261,7 @@ const Profile = () => {
                         href="/account-setup/fee" 
                         className="text-xs px-3 py-1.5 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition-colors"
                       >
-                        Эхлэх
+                        {t('profile.payFee', 'Pay')}
                       </Link>
                     )}
                   </div>

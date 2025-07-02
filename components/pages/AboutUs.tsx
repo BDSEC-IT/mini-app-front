@@ -107,7 +107,7 @@ const AboutUs = () => {
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-full">
               {/* Top Gainers */}
               <div className="border-l-2 border-green-500 dark:border-green-600 p-2.5 mb-1">
-                <div className="flex items-center mb-2">
+                <div className="flex items-center mb-3">
                   <TrendingUp className="text-green-500 dark:text-green-400 mr-1.5" size={14} />
                   <h3 className="font-medium text-xs md:text-sm">{t('about.topGainers', 'Top Gainers')}</h3>
                 </div>
