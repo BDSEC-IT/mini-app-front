@@ -21,17 +21,17 @@ jobs:
       - name: Deploy via SSH
         run: |
           BRANCH="${{ github.ref_name }}"
-          ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} "bash -s" <<EOF
+          ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} 'bash -s' << 'ENDSSH'
             set -eu
 
-            echo "🔄 Deploying branch: \$BRANCH"
+            echo "🔄 Deploying branch: $BRANCH"
             cd /home/damdinsuren/projects/mini-app
 
-            git fetch origin "\$BRANCH"
-            git checkout "\$BRANCH"
-            git reset --hard origin/"\$BRANCH"
+            git fetch origin "$BRANCH"
+            git checkout "$BRANCH"
+            git reset --hard origin/"$BRANCH"
 
-            if [ "\$BRANCH" = "test" ]; then
+            if [ "$BRANCH" = "test" ]; then
               CONTAINER_NAME="mini-app-test"
               APP_PORT="3111"
             else
@@ -39,18 +39,18 @@ jobs:
               APP_PORT="3110"
             fi
 
-            echo "🧹 Cleaning up old container if exists..."
-            docker rm -f "\$CONTAINER_NAME" || true
+            echo "🧹 Removing existing container..."
+            docker rm -f "$CONTAINER_NAME" || true
 
             echo "🐳 Building Docker image..."
-            docker build -t "\$CONTAINER_NAME" .
+            docker build -t "$CONTAINER_NAME" .
 
-            echo "🚀 Running container on port \$APP_PORT"
+            echo "🚀 Running container on port $APP_PORT"
             docker run -d \
-              --name "\$CONTAINER_NAME" \
-              -p 127.0.0.1:\$APP_PORT:3110 \
+              --name "$CONTAINER_NAME" \
+              -p 127.0.0.1:$APP_PORT:3110 \
               --restart unless-stopped \
-              "\$CONTAINER_NAME"
+              "$CONTAINER_NAME"
 
-            echo "✅ Deployed branch: \$BRANCH to container: \$CONTAINER_NAME"
-EOF
+            echo "✅ Deployment complete for branch: $BRANCH"
+ENDSSH
