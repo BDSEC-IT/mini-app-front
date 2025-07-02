@@ -506,10 +506,23 @@ const DashboardContent = () => {
                       return (
                         <CarouselItem key={`stock-${stock.Symbol}-${index}`} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
                           <div
-                            className="relative w-full p-4 overflow-hidden transition-transform duration-300 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/50"
+                            className="relative w-full p-4 overflow-hidden transition-transform duration-300 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500"
                             onClick={() => handleStockSelect(stock.Symbol)}
                           >
                             <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-transparent opacity-50 dark:hidden"></div>
+                            <svg
+                              className={`absolute text-indigo-500 -top-1/4 -left-1/4 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-0 dark:opacity-60`}
+                              width="200%"
+                              height="200%"
+                              viewBox="0 0 200 200"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                fill="currentColor"
+                                d="M50,-60C60,-40,70,-30,80,-10C90,10,80,30,60,50C40,70,20,90,-10,100C-40,110,-70,110,-90,90C-110,70,-110,40,-100,10C-90,-20,-60,-50,-40,-70C-20,-90,10,-110,30,-100C50,-90,50,-80,50,-60Z"
+                                transform="translate(100 100)"
+                              />
+                            </svg>
                             <div className="relative z-10">
                               <div className="flex items-start justify-between mb-4">
                                 <h3 className="flex items-center justify-center font-semibold text-white rounded-full bg-bdsec dark:bg-indigo-500 h-9 w-9">
