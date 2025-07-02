@@ -6,6 +6,9 @@ import { getUserAccountInformation, getAccountStatusRequest, checkInvoiceStatus,
 import { User, X, Mail, Phone, Flag, Calendar, AlertTriangle, CheckCircle, XCircle, CreditCard, Clock, RefreshCw } from 'lucide-react'
 import Cookies from 'js-cookie'
 import Link from 'next/link'
+import { BackgroundGradient } from "@/components/ui/background-gradient";
+import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
+import { SpotlightCard } from "@/components/ui/spotlight-card";
 
 const Profile = () => {
   const { t } = useTranslation()
@@ -145,200 +148,92 @@ const Profile = () => {
 
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
-      <div className="px-4 md:px-6 py-6">
-        <h1 className="text-xl font-bold mb-6">{t('profile.title', 'My Profile')}</h1>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6">{t('profile.title', 'My Profile')}</h1>
         
         {/* Profile Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-bdsec to-bdsec/80 dark:from-indigo-600 dark:to-indigo-800 p-6">
-            <div className="flex flex-col items-center">
-              <div className="h-24 w-24 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center mb-4">
-                <User className="h-12 w-12 text-bdsec dark:text-indigo-400" />
+          <div className="bg-gray-50 dark:bg-gray-800/50 p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center">
+              <div className="h-16 w-16 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600 mr-4">
+                <User className="h-8 w-8 text-bdsec dark:text-indigo-400" />
               </div>
-              <h2 className="text-white text-xl font-bold">
-                {khanUser.firstName} {khanUser.lastName}
-              </h2>
-              <p className="text-white/80 mt-1">{khanUser.register}</p>
+              <div>
+                <h2 className="text-lg font-semibold">
+                  {khanUser.firstName} {khanUser.lastName}
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{khanUser.register}</p>
+              </div>
             </div>
           </div>
           
-          {/* Simplified Account Status - Only for users without MCSD account */}
-          {!hasMcsdAccount && (
-            <div className="p-6 border-b dark:border-gray-700">
-              <h3 className="font-medium text-lg mb-4">Данын төлөв</h3>
-              
-              {/* State 1: Not registered - Create MCSD account */}
-              <div className="flex items-center p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 mb-4">
-                <div className="h-10 w-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mr-3 flex-shrink-0">
-                  <AlertTriangle className="h-5 w-5" />
+          {/* Account Status */}
+          <div className="p-6">
+            <h3 className="font-semibold text-base mb-4">{t('profile.accountStatus')}</h3>
+            {!hasMcsdAccount ? (
+              <div className="space-y-4">
+                <div className="flex items-center p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800/50">
+                  <AlertTriangle className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <p className="font-medium text-sm">{t('profile.mcsdAccountNeededDetail')}</p>
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium">Та манай дээр бүртгэлгүй байна - Та ҮЦТХТ-ийн данс үүсгэнэ үү?</p>
+                <div className="flex items-center">
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-4 ${isGeneralInfoComplete() ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                    {isGeneralInfoComplete() ? <CheckCircle className="h-5 w-5" /> : '1'}
+                  </div>
+                  <p className={`font-medium ${isGeneralInfoComplete() ? 'text-green-600 dark:text-green-400' : ''}`}>{t('profile.generalInfo')}</p>
+                  {!isGeneralInfoComplete() && (
+                    <Link href="/account-setup/general" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">{t('profile.completeGeneralInfo')}</Link>
+                  )}
+                </div>
+                <div className="flex items-center">
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-4 ${isPaymentComplete() ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                    {isPaymentComplete() ? <CheckCircle className="h-5 w-5" /> : '2'}
+                  </div>
+                  <p className={`font-medium ${isPaymentComplete() ? 'text-green-600 dark:text-green-400' : ''}`}>{t('profile.accountFee')}</p>
+                  {!isPaymentComplete() && (
+                    <Link href="/account-setup/fee" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">{t('profile.payFee')}</Link>
+                  )}
                 </div>
               </div>
-
-              {/* State 2: Account opening fee not paid */}
-              {!isPaymentComplete() && (
-                <div className="flex items-center p-4 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 mb-4">
-                  <div className="h-10 w-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mr-3 flex-shrink-0">
-                    <CreditCard className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center">
-                      <p className="font-medium">Данс нээх хураамж төлөөгүй</p>
-                      <button
-                        onClick={handleCheckInvoice}
-                        disabled={isCheckingInvoice}
-                        className="p-1 rounded-full hover:bg-white/20 dark:hover:bg-black/20 transition-colors"
-                      >
-                        <RefreshCw className={`h-4 w-4 ${isCheckingInvoice ? 'animate-spin' : ''}`} />
-                      </button>
-                    </div>
-                    {invoiceData && invoiceData.paymentUrl && (
-                      <a 
-                        href={invoiceData.paymentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block mt-2 text-xs font-medium px-3 py-1.5 bg-orange-100 dark:bg-orange-800/50 rounded hover:bg-orange-200 dark:hover:bg-orange-800 transition-colors"
-                      >
-                        Төлбөр төлөх
-                      </a>
-                    )}
-                    {!invoiceData && (
-                      <Link 
-                        href="/account-setup/fee"
-                        className="inline-block mt-2 text-xs font-medium px-3 py-1.5 bg-orange-100 dark:bg-orange-800/50 rounded hover:bg-orange-200 dark:hover:bg-orange-800 transition-colors"
-                      >
-                        Хураамж төлөх
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Account Opening Process Section */}
-              <div className="mt-6 pt-6 border-t dark:border-gray-700">
-                <h4 className="font-medium mb-4">Данс нээх явц</h4>
-                <div className="space-y-4">
-                  
-                  {/* Step 1: General Information */}
-                  <div className="flex items-center">
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-4 ${
-                      isGeneralInfoComplete() ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                    }`}>
-                      {isGeneralInfoComplete() ? <CheckCircle className="h-5 w-5" /> : '1'}
-                    </div>
-                    <div className="flex-1">
-                      <p className={`font-medium ${isGeneralInfoComplete() ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                        {t('profile.generalInfo')}
-                      </p>
-                    </div>
-                    {!isGeneralInfoComplete() && (
-                      <Link 
-                        href="/account-setup/general" 
-                        className="text-xs px-3 py-1.5 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition-colors"
-                      >
-                        {t('profile.completeGeneralInfo', 'Complete')}
-                      </Link>
-                    )}
-                  </div>
-
-                  {/* Step 2: Account Opening Fee */}
-                  <div className="flex items-center">
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-4 ${
-                      isPaymentComplete() ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                    }`}>
-                      {isPaymentComplete() ? <CheckCircle className="h-5 w-5" /> : '2'}
-                    </div>
-                    <div className="flex-1">
-                      <p className={`font-medium ${isPaymentComplete() ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                        {t('profile.accountFee')}
-                      </p>
-                    </div>
-                    {!isPaymentComplete() && (
-                      <Link 
-                        href="/account-setup/fee" 
-                        className="text-xs px-3 py-1.5 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/40 transition-colors"
-                      >
-                        {t('profile.payFee', 'Pay')}
-                      </Link>
-                    )}
-                  </div>
-
-                  {/* Step 3: Account Activation */}
-                  <div className="flex items-center">
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-4 ${
-                      hasMcsdAccount ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                    }`}>
-                      {hasMcsdAccount ? <CheckCircle className="h-5 w-5" /> : '3'}
-                    </div>
-                    <div className="flex-1">
-                      <p className={`font-medium ${hasMcsdAccount ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-gray-100'}`}>
-                        ҮЦТХТ-ийн данс, брокерийн данс идэвхижүүлэх
-                      </p>
-                    </div>
-                    <div className={`text-xs px-3 py-1.5 rounded transition-colors ${
-                      isGeneralInfoComplete() && isPaymentComplete() 
-                        ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300' 
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 opacity-60'
-                    }`}>
-                      {isGeneralInfoComplete() && isPaymentComplete() ? 'Боловсруулж байна' : 'Түгжээтэй'}
-                    </div>
-                  </div>
-                </div>
+            ) : (
+              <div className="flex items-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+                <CheckCircle className="h-5 w-5 mr-3 flex-shrink-0" />
+                <p className="font-medium text-sm">{t('profile.mcsdAccountActiveDetail')}</p>
               </div>
-            </div>
-          )}
-
-          {/* Show success message for users with MCSD account */}
-          {hasMcsdAccount && (
-            <div className="p-6 border-b dark:border-gray-700">
-              <div className="flex items-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400">
-                <div className="h-10 w-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center mr-3 flex-shrink-0">
-                  <CheckCircle className="h-5 w-5" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">Таны ҮЦТХТ болон брокерийн данс идэвхитэй байна</p>
-                  <p className="text-sm opacity-80">Та цаасны арилжаа хийх боломжтой</p>
-                </div>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
           
           {/* Contact Information */}
-          <div className="p-6">
-            <h3 className="font-medium text-lg mb-4">Холбоо барих мэдээлэл</h3>
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <Mail className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-3" />
+          <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="font-semibold text-base mb-4">{t('profile.contactInfo')}</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+              <div className="flex items-start">
+                <Mail className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-3 mt-1" />
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">И-мэйл</p>
-                  <p>{khanUser.email || 'Өгөөгүй'}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('profile.email')}</p>
+                  <p className="font-medium">{khanUser.email || t('profile.notProvided')}</p>
                 </div>
               </div>
-              
-              <div className="flex items-center">
-                <Phone className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-3" />
+              <div className="flex items-start">
+                <Phone className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-3 mt-1" />
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Утас</p>
-                  <p>{khanUser.phone || 'Өгөөгүй'}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('profile.phone')}</p>
+                  <p className="font-medium">{khanUser.phone || t('profile.notProvided')}</p>
                 </div>
               </div>
-              
-              <div className="flex items-center">
-                <Flag className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-3" />
+              <div className="flex items-start">
+                <Flag className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-3 mt-1" />
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Иргэншил</p>
-                  <p>Монгол</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('profile.nationality')}</p>
+                  <p className="font-medium">{t('profile.mongolian')}</p>
                 </div>
               </div>
-              
-              <div className="flex items-center">
-                <Calendar className="h-5 w-5 text-gray-500 dark:text-gray-400 mr-3" />
+              <div className="flex items-start">
+                <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-3 mt-1" />
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Элссэн огноо</p>
-                  <p>{new Date(accountInfo.createdAt).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{t('profile.memberSince')}</p>
+                  <p className="font-medium">{new Date(accountInfo.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>

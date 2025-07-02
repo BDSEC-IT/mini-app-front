@@ -2,7 +2,17 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Wallet, TrendingUp, Building, Lock } from 'lucide-react'
+import { 
+  Home, 
+  Wallet, 
+  TrendingUp, 
+  Landmark, 
+  Lock,
+  Newspaper,
+  Rocket,
+  ClipboardList,
+  Repeat
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -144,8 +154,8 @@ const BottomNavigation = () => {
   const allowedMenus = [
     { href: '/', icon: Home, label: t('nav.home') },
     { href: '/stocks', icon: TrendingUp, label: t('common.stocks') },
-    { href: '/bonds', icon: Building, label: t('common.bonds') },
-    { href: '/news', icon: Building, label: t('menu.news') },
+    { href: '/bonds', icon: Landmark, label: t('common.bonds') },
+    { href: '/news', icon: Newspaper, label: t('menu.news') },
   ];
 
   return (
@@ -231,36 +241,7 @@ const BottomNavigation = () => {
                 )}
                 
                 {/* secondary market exchange icon */}
-                <svg width="26" height="26" viewBox="0 0 30 30" fill="none">
-                  <path
-                    d="M25.625 18.7373L19.3625 25.0123"
-                    stroke="white"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M4.375 18.7373H25.625"
-                    stroke="white"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M4.375 11.2623L10.6375 4.9873"
-                    stroke="white"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M25.625 11.2627H4.375"
-                    stroke="white"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <Repeat size={26} />
               </button>
               
               {showTooltip === 'exchange' && (
@@ -288,11 +269,11 @@ const BottomNavigation = () => {
                   <span className="text-[10px] mt-1">{t('common.stocks')}</span>
                 </Link>
                 <Link href="/bonds" className={`flex flex-col items-center ${isActive('/bonds') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
-                  <Building size={iconSize} />
+                  <Landmark size={iconSize} />
                   <span className="text-[10px] mt-1">{t('common.bonds')}</span>
                 </Link>
                 <Link href="/news" className={`flex flex-col items-center ${isActive('/news') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
-                  <Building size={iconSize} />
+                  <Newspaper size={iconSize} />
                   <span className="text-[10px] mt-1">{t('menu.news')}</span>
                 </Link>
               </>
@@ -327,7 +308,7 @@ const BottomNavigation = () => {
                     }`}
                   >
                     {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
-                    <TrendingUp size={iconSize} />
+                    <ClipboardList size={iconSize} />
                     <span className="text-[10px] mt-1">{t('nav.orders')}</span>
                   </button>
                   
@@ -347,7 +328,7 @@ const BottomNavigation = () => {
                     }`}
                   >
                     {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
-                    <Building size={iconSize} />
+                    <Rocket size={iconSize} />
                     <span className="text-[10px] mt-1">{t('nav.ipo')}</span>
                   </button>
                   

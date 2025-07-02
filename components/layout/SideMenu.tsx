@@ -3,15 +3,15 @@
 import { useEffect, useState } from 'react'
 import {
   X,
-  Home,
-  BarChart3,
+  LayoutDashboard,
+  TrendingUp,
   HelpCircle,
-  FileText,
-  Building,
+  Newspaper,
+  Info,
   LogIn,
   Sun,
   Moon,
-  PieChart,
+  Landmark,
   User,
   CircleCheck,
   CircleAlert,
@@ -109,11 +109,11 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   }, []); // Empty dependency array - only run on mount
 
   const menuItems = [
-    { href: '/', icon: Home, label: 'bottomNav.dashboard' },
-    { href: '/stocks', icon: BarChart3, label: 'bottomNav.stocks' },
-    { href: '/bonds', icon: FileText, label: 'bottomNav.bonds' },
-    { href: '/news', icon: FileText, label: 'menu.news' },
-    { href: '/about', icon: Building, label: 'bottomNav.about' },
+    { href: '/', icon: LayoutDashboard, label: 'bottomNav.dashboard' },
+    { href: '/stocks', icon: TrendingUp, label: 'bottomNav.stocks' },
+    { href: '/bonds', icon: Landmark, label: 'bottomNav.bonds' },
+    { href: '/news', icon: Newspaper, label: 'menu.news' },
+    { href: '/about', icon: Info, label: 'bottomNav.about' },
     { href: '/faq', icon: HelpCircle, label: 'bottomNav.faq' },
   ]
   

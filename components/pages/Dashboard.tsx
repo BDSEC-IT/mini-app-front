@@ -17,6 +17,9 @@ import {
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import Autoplay from 'embla-carousel-autoplay'
 import Link from 'next/link'
+import { TextGenerateEffect } from "../ui/text-generate-effect";
+import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
+import { BackgroundBeams } from "@/components/ui/background-beams";
 
 // Client-only wrapper component
 function ClientOnly({ children }: { children: React.ReactNode }) {
@@ -312,396 +315,402 @@ const DashboardContent = () => {
   
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
-      {/* Stock Index Section */}
-      <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 relative">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg sm:text-xl font-bold">{selectedSymbol}</h2>
-              {selectedStockData && (
-                <span className="text-xs bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-full">
-                  {selectedStockData.mnName || selectedStockData.enName || t('dashboard.stock')}
-                </span>
-              )}
-            </div>
-            
-            <div className="mt-2">
-              <div className="">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">
-                  {selectedStockData ? formatPrice(selectedStockData.PreviousClose) : '-'} ₮
-                </h1>
-              </div>
-            </div>
-          </div>
-          
-          {/* Search bar - optimized for mobile */}
-          <div className="relative">
-            {isSearchOpen ? (
-              <div className="flex items-center border rounded-md px-2 py-1 bg-gray-100 dark:bg-gray-800 w-44 sm:w-52">
-                <Search size={12} className="text-gray-500 mr-1.5" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchTerm}
-                  onChange={handleSearchChange}
-                  className="bg-transparent outline-none flex-1 text-xs sm:text-sm"
-                  placeholder={t('common.search')}
-                />
-                <button onClick={handleSearchClose} className="ml-1">
-                  <X size={12} className="text-gray-500" />
-                </button>
-              </div>
-            ) : selectedStockData ? (
-              <div className="flex items-center border rounded-md px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 max-w-44 sm:max-w-52 cursor-pointer" onClick={handleSearchClick}>
-                <Search size={12} className="text-blue-500 mr-1" />
-                <div className="flex items-center text-xs min-w-0 overflow-hidden">
-                  <span className="font-semibold text-blue-700 dark:text-blue-300 flex-shrink-0">{selectedSymbol}</span>
-                  <span className="mx-1 text-blue-400 text-xs flex-shrink-0">•</span>
-                  <span className="text-blue-600 dark:text-blue-400 truncate text-xs">
-                    {(selectedStockData.mnName || selectedStockData.enName || '').substring(0, 8)}
+      <BackgroundBeams />
+      <BentoGrid className="max-w-4xl mx-auto md:auto-rows-[20rem]">
+        {/* Stock Index Section */}
+        <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 relative">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-bold">{selectedSymbol}</h2>
+                {selectedStockData && (
+                  <span className="text-xs bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-full">
+                    {selectedStockData.mnName || selectedStockData.enName || t('dashboard.stock')}
                   </span>
-                </div>
-                <ChevronDown size={12} className="text-blue-500 ml-1 flex-shrink-0" />
-              </div>
-            ) : (
-              <div className="flex items-center border rounded-md px-2 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer" onClick={handleSearchClick}>
-                <Search size={12} className="text-gray-500 mr-1" />
-                <span className="text-xs text-gray-500">{t('common.search')}</span>
-              </div>
-            )}
-            
-            {/* Search Results Dropdown - more compact */}
-            {isSearchOpen && searchTerm && (
-              <div className="absolute top-full right-0 mt-1 w-64 sm:w-72 max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border rounded-md shadow-lg z-50">
-                {searchResults.length > 0 ? (
-                  searchResults.map((stock, index) => {
-                    // Get clean symbol without suffix
-                    const cleanSymbol = stock.Symbol.split('-')[0];
-                    const companyName = stock.mnName || stock.enName || '';
-                    return (
-                      <button
-                        key={`search-${cleanSymbol}-${index}`}
-                        className="w-full text-left px-2.5 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm transition-colors"
-                        onClick={() => handleStockSelect(stock.Symbol)}
-                      >
-                        <div className="flex items-center">
-                          <span className="font-semibold text-gray-900 dark:text-white">{cleanSymbol}</span>
-                          <span className="mx-1.5 text-gray-400 text-xs">•</span>
-                          <span className="text-gray-600 dark:text-gray-300 truncate text-xs">{companyName}</span>
-                        </div>
-                      </button>
-                    );
-                  })
-                ) : (
-                  <div className="px-2.5 py-2 text-xs text-gray-500">{t('common.noResults')}</div>
                 )}
               </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Chart section with proper containment */}
-        <div className="relative w-full max-w-full overflow-hidden">
-          <div className="h-[350px] sm:h-[380px] md:h-[400px] lg:h-[420px] mt-4 mb-8 sm:mb-12 rounded-lg bg-transparent mx-2 sm:mx-0">
-            <div className="flex justify-between items-center mb-2 px-2 sm:px-4">
-              <div className="text-sm text-gray-500">
-                {hoveredPrice ? (
-                  <span className="font-medium text-bdsec dark:text-indigo-400">
-                    {hoveredPrice.toLocaleString()} ₮
-                  </span>
-                ) : selectedStockData?.PreviousClose ? (
-                  <span className="font-medium text-bdsec dark:text-indigo-400">
-                    {selectedStockData.PreviousClose.toLocaleString()} ₮
-                  </span>
-                ) : null}
-              </div>
-              <div className="text-xs text-gray-500">
-                {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              
+              <div className="mt-2">
+                <div className="">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">
+                    {selectedStockData ? formatPrice(selectedStockData.PreviousClose) : '-'} ₮
+                  </h1>
+                </div>
               </div>
             </div>
-            <div className="relative w-full h-full overflow-hidden">
-              <TradingViewChart 
-                key={`${selectedSymbol}-${chartRefreshKey}`}
-                symbol={`${selectedSymbol}-O-0000`}
-                theme={theme}
-                period={activeTab}
-                onPriceHover={handlePriceHover}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Stock List and Order Book Sections with reduced margins */}
-      <div className="px-2 sm:px-4 flex flex-col gap-4 sm:gap-6 mt-10 sm:mt-12">
-        {/* Stock Info Card */}
-        <div className="w-full">
-          <StockInfo 
-            symbol={selectedSymbol}
-            onSymbolSelect={handleStockSelect}
-          />
-        </div>
-        
-        {/* Stock List Section */}
-        <div className="w-full">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-medium">{t('dashboard.popularStocks')}</h2>
-            <Link 
-              href="/stocks" 
-              className="flex items-center px-3 py-1.5 bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 rounded-md hover:bg-bdsec/20 dark:hover:bg-indigo-500/30 transition-colors"
-            >
-              {t('dashboard.viewAll')} <ChevronRight size={16} className="ml-1" />
-            </Link>
-          </div>
-          
-          {/* Filter Tabs */}
-          <div className="flex gap-2 mt-2 flex-wrap pb-2">
-            {[
-              { id: 'trending', label: t('dashboard.trending'), icon: TrendingUp },
-              { id: 'mostActive', label: t('dashboard.mostActive'), icon: Activity },
-              { id: 'gainers', label: t('dashboard.gainers'), icon: ArrowUp },
-              { id: 'losers', label: t('dashboard.losers'), icon: ArrowDown }
-            ].map((filter) => (
-              <button
-                key={filter.id}
-                className={`px-4 py-2 text-sm rounded-full whitespace-nowrap flex items-center ${
-                  activeFilter === filter.id
-                    ? 'bg-bdsec dark:bg-bdsec-dark  text-white'
-                    : 'border text-gray-500'
-                }`}
-                onClick={() => setActiveFilter(filter.id)}
-              >
-                <filter.icon size={14} className="mr-1" />
-                {filter.label}
-              </button>
-            ))}
             
-           
-          </div>
-          
-          {/* Stock Cards Carousel */}
-          <div className="mt-4" ref={animationParent}>
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-                skipSnaps: false,
-                containScroll: "trimSnaps",
-              }}
-              plugins={[autoplayPlugin.current]}
-              className="w-full"
-            >
-              <CarouselContent className="-ml-2 md:-ml-4">
-                {filteredStocks.length > 0 ? (
-                  filteredStocks.map((stock, index) => {
-                    const isPositive = (stock.Changep || 0) >= 0;
-                    
-                    return (
-                      <CarouselItem key={`stock-${stock.Symbol}-${index}`} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
-                        <div
-                          className="relative w-full p-4 overflow-hidden transition-transform duration-300 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:-translate-y-1"
+            {/* Search bar - optimized for mobile */}
+            <div className="relative">
+              {isSearchOpen ? (
+                <div className="flex items-center border rounded-md px-2 py-1 bg-gray-100 dark:bg-gray-800 w-44 sm:w-52">
+                  <Search size={12} className="text-gray-500 mr-1.5" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    className="bg-transparent outline-none flex-1 text-xs sm:text-sm"
+                    placeholder={t('common.search')}
+                  />
+                  <button onClick={handleSearchClose} className="ml-1">
+                    <X size={12} className="text-gray-500" />
+                  </button>
+                </div>
+              ) : selectedStockData ? (
+                <div className="flex items-center border rounded-md px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 max-w-44 sm:max-w-52 cursor-pointer" onClick={handleSearchClick}>
+                  <Search size={12} className="text-blue-500 mr-1" />
+                  <div className="flex items-center text-xs min-w-0 overflow-hidden">
+                    <span className="font-semibold text-blue-700 dark:text-blue-300 flex-shrink-0">{selectedSymbol}</span>
+                    <span className="mx-1 text-blue-400 text-xs flex-shrink-0">•</span>
+                    <span className="text-blue-600 dark:text-blue-400 truncate text-xs">
+                      {(selectedStockData.mnName || selectedStockData.enName || '').substring(0, 8)}
+                    </span>
+                  </div>
+                  <ChevronDown size={12} className="text-blue-500 ml-1 flex-shrink-0" />
+                </div>
+              ) : (
+                <div className="flex items-center border rounded-md px-2 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer" onClick={handleSearchClick}>
+                  <Search size={12} className="text-gray-500 mr-1" />
+                  <span className="text-xs text-gray-500">{t('common.search')}</span>
+                </div>
+              )}
+              
+              {/* Search Results Dropdown - more compact */}
+              {isSearchOpen && searchTerm && (
+                <div className="absolute top-full right-0 mt-1 w-64 sm:w-72 max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border rounded-md shadow-lg z-50">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((stock, index) => {
+                      // Get clean symbol without suffix
+                      const cleanSymbol = stock.Symbol.split('-')[0];
+                      const companyName = stock.mnName || stock.enName || '';
+                      return (
+                        <button
+                          key={`search-${cleanSymbol}-${index}`}
+                          className="w-full text-left px-2.5 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm transition-colors"
                           onClick={() => handleStockSelect(stock.Symbol)}
                         >
-                          <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-transparent opacity-50 dark:hidden"></div>
-                          <svg
-                            className={`absolute text-indigo-500 -top-1/4 -left-1/4 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-0 dark:opacity-60`}
-                            width="200%"
-                            height="200%"
-                            viewBox="0 0 200 200"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              fill="currentColor"
-                              d="M50,-60C60,-40,70,-30,80,-10C90,10,80,30,60,50C40,70,20,90,-10,100C-40,110,-70,110,-90,90C-110,70,-110,40,-100,10C-90,-20,-60,-50,-40,-70C-20,-90,10,-110,30,-100C50,-90,50,-80,50,-60Z"
-                              transform="translate(100 100)"
-                            />
-                          </svg>
-                          <div className="relative z-10">
-                            <div className="flex items-start justify-between mb-4">
-                              <h3 className="flex items-center justify-center font-semibold text-white rounded-full bg-bdsec dark:bg-indigo-500 h-9 w-9">
-                                {stock.Symbol.split('-')[0]}
-                              </h3>
-                              <div className={`text-sm font-semibold px-2 py-1 rounded-md ${isPositive ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'}`}>
-                                {isPositive ? '+' : ''}{(stock.Changep || 0).toFixed(2)}%
-                              </div>
-                            </div>
-                            <div className="mt-2">
-                              <p className="font-medium text-gray-800 truncate dark:text-gray-200" title={stock.mnName || stock.enName}>{stock.mnName || stock.enName}</p>
-                            </div>
-                            <div className="mt-4">
-                              <p className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</p>
-                              <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                {formatPrice(stock.LastTradedPrice)} ₮
-                              </p>
-                            </div>
+                          <div className="flex items-center">
+                            <span className="font-semibold text-gray-900 dark:text-white">{cleanSymbol}</span>
+                            <span className="mx-1.5 text-gray-400 text-xs">•</span>
+                            <span className="text-gray-600 dark:text-gray-300 truncate text-xs">{companyName}</span>
                           </div>
-                        </div>
-                      </CarouselItem>
-                    );
-                  })
-                ) : (
-                  <CarouselItem className="pl-2 md:pl-4 basis-full">
-                    <div className="h-24 flex items-center justify-center">
-                      <p className="text-gray-500">{loading ? t('dashboard.loadingStocks') : t('common.noResults')}</p>
-                    </div>
-                  </CarouselItem>
-                )}
-              </CarouselContent>
-              <CarouselPrevious className="left-0 bg-bdsec dark:bg-indigo-500 text-white border-none shadow-lg hover:bg-bdsec/90 dark:hover:bg-indigo-600 transition-colors" />
-              <CarouselNext className="right-0 bg-bdsec dark:bg-indigo-500 text-white border-none shadow-lg hover:bg-bdsec/90 dark:hover:bg-indigo-600 transition-colors" />
-            </Carousel>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <div className="px-2.5 py-2 text-xs text-gray-500">{t('common.noResults')}</div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Chart section with proper containment */}
+          <div className="relative w-full max-w-full overflow-hidden">
+            <div className="h-[350px] sm:h-[380px] md:h-[400px] lg:h-[420px] mt-4 mb-8 sm:mb-12 rounded-lg bg-transparent mx-2 sm:mx-0">
+              <div className="flex justify-between items-center mb-2 px-2 sm:px-4">
+                <div className="text-sm text-gray-500">
+                  {hoveredPrice ? (
+                    <span className="font-medium text-bdsec dark:text-indigo-400">
+                      {hoveredPrice.toLocaleString()} ₮
+                    </span>
+                  ) : selectedStockData?.PreviousClose ? (
+                    <span className="font-medium text-bdsec dark:text-indigo-400">
+                      {selectedStockData.PreviousClose.toLocaleString()} ₮
+                    </span>
+                  ) : null}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </div>
+              </div>
+              <div className="relative w-full h-full overflow-hidden">
+                <TradingViewChart 
+                  key={`${selectedSymbol}-${chartRefreshKey}`}
+                  symbol={`${selectedSymbol}-O-0000`}
+                  theme={theme}
+                  period={activeTab}
+                  onPriceHover={handlePriceHover}
+                />
+              </div>
+            </div>
           </div>
         </div>
         
-        {/* Order Book Section */}
-        <div className="w-full">
-          <div className="mt-8 p-4 ">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-base sm:text-lg font-medium flex items-center">
-                <Activity size={16} className="mr-2 text-bdsec dark:text-indigo-400" />
-                {t('dashboard.orderBook')} - {selectedSymbol}
+        {/* Stock List and Order Book Sections with reduced margins */}
+        <div className="px-2 sm:px-4 flex flex-col gap-4 sm:gap-6 mt-10 sm:mt-12">
+          {/* Stock Info Card */}
+          <div className="w-full">
+            <StockInfo 
+              symbol={selectedSymbol}
+              onSymbolSelect={handleStockSelect}
+            />
+          </div>
+          
+          {/* Stock List Section */}
+          <div className="w-full">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-lg font-medium flex items-center">
+                <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
+                {t('dashboard.popularStocks')}
               </h2>
-              <div className="text-xs text-right text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
-                <div className="hidden sm:block">{t('dashboard.lastUpdated')}</div>
-                <div className="text-xs">{lastUpdated}</div>
-              </div>
+              <Link 
+                href="/stocks" 
+                className="flex items-center px-3 py-1.5 bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 rounded-md hover:bg-bdsec/20 dark:hover:bg-indigo-500/30 transition-colors"
+              >
+                {t('dashboard.viewAll')} <ChevronRight size={16} className="ml-1" />
+              </Link>
             </div>
             
-            <div className="grid grid-cols-2 gap-3 sm:gap-6 mt-3 min-h-[200px]">
-              {/* Sell Orders */}
-              <div className="overflow-hidden">
-                <div className="px-2 sm:px-4 py-2 bg-red-50 dark:bg-red-900/10">
-                  <h3 className="text-xs sm:text-sm text-red-500 font-medium flex items-center justify-between">
-                    <span className="flex items-center">
-                      <ArrowDown size={12} className="mr-1" /> {t('dashboard.sell')}
-                    </span>
-                    <span className="text-xs text-gray-500">{t('dashboard.quantity')}</span>
-                  </h3>
-                </div>
-                <div className="p-2 sm:p-3">
-                  {loading ? (
-                    // Loading placeholders for sell orders
-                    Array(5).fill(0).map((_, index) => (
-                      <div key={`sell-loading-${index}`} className="flex justify-between text-xs sm:text-sm py-2 animate-pulse">
-                        <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                        <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                      </div>
-                    ))
-                  ) : processedOrderBook.sell.length > 0 ? (
-                    processedOrderBook.sell.map((order, index) => {
-                   
-                      return (
-                        <div 
-                          key={`sell-${order.id}-${index}`} 
-                          className="flex justify-between text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
-                        >
-                          <span className="text-red-500 font-medium" >
-                            {order.MDEntryPx.toLocaleString()} ₮
-                          </span>
-                          <span className="bg-red-50 dark:bg-red-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs">
-                            {order.MDEntrySize.toLocaleString()}
-                          </span>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center text-gray-400 text-sm py-6">{t('dashboard.noSellOrders')}</div>
-                  )}
-                </div>
-              </div>
+            {/* Filter Tabs */}
+            <div className="flex gap-2 mt-2 flex-wrap pb-2">
+              {[
+                { id: 'trending', label: t('dashboard.trending'), icon: TrendingUp },
+                { id: 'mostActive', label: t('dashboard.mostActive'), icon: Activity },
+                { id: 'gainers', label: t('dashboard.gainers'), icon: ArrowUp },
+                { id: 'losers', label: t('dashboard.losers'), icon: ArrowDown }
+              ].map((filter) => (
+                <button
+                  key={filter.id}
+                  className={`px-4 py-2 text-sm rounded-full whitespace-nowrap flex items-center ${
+                    activeFilter === filter.id
+                      ? 'bg-bdsec dark:bg-bdsec-dark  text-white'
+                      : 'border text-gray-500'
+                  }`}
+                  onClick={() => setActiveFilter(filter.id)}
+                >
+                  <filter.icon size={14} className="mr-1" />
+                  {filter.label}
+                </button>
+              ))}
               
-              {/* Buy Orders */}
-              <div className="overflow-hidden">
-                <div className="px-2 sm:px-4 py-2 bg-green-50 dark:bg-green-900/10">
-                  <h3 className="text-xs sm:text-sm text-green-500 font-medium flex items-center justify-between">
-                    <span className="flex items-center">
-                      <ArrowUp size={12} className="mr-1" /> {t('dashboard.buy')}
-                    </span>
-                    <span className="text-xs text-gray-500">{t('dashboard.quantity')}</span>
-                  </h3>
-                </div>
-                <div className="p-2 sm:p-3">
-                  {loading ? (
-                    // Loading placeholders for buy orders
-                    Array(5).fill(0).map((_, index) => (
-                      <div key={`buy-loading-${index}`} className="flex justify-between text-xs sm:text-sm py-2 animate-pulse">
-                        <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                        <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                      </div>
-                    ))
-                  ) : processedOrderBook.buy.length > 0 ? (
-                    processedOrderBook.buy.map((order, index) => {
-                      // Calculate opacity based on position (higher index = lower opacity)
-                   
+             
+            </div>
+            
+            {/* Stock Cards Carousel */}
+            <div className="mt-4" ref={animationParent}>
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                  skipSnaps: false,
+                  containScroll: "trimSnaps",
+                }}
+                plugins={[autoplayPlugin.current]}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-2 md:-ml-4">
+                  {filteredStocks.length > 0 ? (
+                    filteredStocks.map((stock, index) => {
+                      const isPositive = (stock.Changep || 0) >= 0;
+                      
                       return (
-                        <div 
-                          key={`buy-${order.id}-${index}`} 
-                          className="flex justify-between text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
-                        >
-                          <span className="text-green-500 font-medium" >
-                            {order.MDEntryPx.toLocaleString()} ₮
-                          </span>
-                          <span className="bg-green-50 dark:bg-green-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs">
-                            {order.MDEntrySize.toLocaleString()}
-                          </span>
-                        </div>
+                        <CarouselItem key={`stock-${stock.Symbol}-${index}`} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
+                          <div
+                            className="relative w-full p-4 overflow-hidden transition-transform duration-300 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:-translate-y-1"
+                            onClick={() => handleStockSelect(stock.Symbol)}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-transparent opacity-50 dark:hidden"></div>
+                            <svg
+                              className={`absolute text-indigo-500 -top-1/4 -left-1/4 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-0 dark:opacity-60`}
+                              width="200%"
+                              height="200%"
+                              viewBox="0 0 200 200"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                fill="currentColor"
+                                d="M50,-60C60,-40,70,-30,80,-10C90,10,80,30,60,50C40,70,20,90,-10,100C-40,110,-70,110,-90,90C-110,70,-110,40,-100,10C-90,-20,-60,-50,-40,-70C-20,-90,10,-110,30,-100C50,-90,50,-80,50,-60Z"
+                                transform="translate(100 100)"
+                              />
+                            </svg>
+                            <div className="relative z-10">
+                              <div className="flex items-start justify-between mb-4">
+                                <h3 className="flex items-center justify-center font-semibold text-white rounded-full bg-bdsec dark:bg-indigo-500 h-9 w-9">
+                                  {stock.Symbol.split('-')[0]}
+                                </h3>
+                                <div className={`text-sm font-semibold px-2 py-1 rounded-md ${isPositive ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'}`}>
+                                  {isPositive ? '+' : ''}{(stock.Changep || 0).toFixed(2)}%
+                                </div>
+                              </div>
+                              <div className="mt-2">
+                                <p className="font-medium text-gray-800 truncate dark:text-gray-200" title={stock.mnName || stock.enName}>{stock.mnName || stock.enName}</p>
+                              </div>
+                              <div className="mt-4">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</p>
+                                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                                  {formatPrice(stock.LastTradedPrice)} ₮
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </CarouselItem>
                       );
                     })
                   ) : (
-                    <div className="text-center text-gray-400 text-sm py-6">{t('dashboard.noBuyOrders')}</div>
+                    <CarouselItem className="pl-2 md:pl-4 basis-full">
+                      <div className="h-24 flex items-center justify-center">
+                        <p className="text-gray-500">{loading ? t('dashboard.loadingStocks') : t('common.noResults')}</p>
+                      </div>
+                    </CarouselItem>
                   )}
-                </div>
-              </div>
+                </CarouselContent>
+                <CarouselPrevious className="left-0 bg-bdsec dark:bg-indigo-500 text-white border-none shadow-lg hover:bg-bdsec/90 dark:hover:bg-indigo-600 transition-colors" />
+                <CarouselNext className="right-0 bg-bdsec dark:bg-indigo-500 text-white border-none shadow-lg hover:bg-bdsec/90 dark:hover:bg-indigo-600 transition-colors" />
+              </Carousel>
             </div>
           </div>
           
-          {/* Stock Details Section */}
-          <div className="mt-6 p-4  ">
-            <h2 className="text-lg font-medium mb-4 flex items-center">
-              <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
-              {t('dashboard.stockDetails')} - {selectedSymbol}
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className=" overflow-hidden">
-            
-                <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
-                  <div className="flex justify-between items-center p-3">
-                    <span className="text-sm text-gray-500">ISIN:</span>
-                    <span className="text-sm font-medium">{getStockDetails.isin}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3">
-                    <span className="text-sm text-gray-500">{t('dashboard.companyCode')}:</span>
-                    <span className="text-sm font-medium">{getStockDetails.companyCode}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3">
-                    <span className="text-sm text-gray-500">{t('dashboard.email')}:</span>
-                    <span className="text-sm font-medium text-bdsec dark:text-indigo-400">{getStockDetails.email}</span>
-                  </div>
+          {/* Order Book Section */}
+          <div className="w-full">
+            <div className="mt-8 p-4 ">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-base sm:text-lg font-medium flex items-center">
+                  <Activity size={16} className="mr-2 text-bdsec dark:text-indigo-400" />
+                  {t('dashboard.orderBook')} - {selectedSymbol}
+                </h2>
+                <div className="text-xs text-right text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
+                  <div className="hidden sm:block">{t('dashboard.lastUpdated')}</div>
+                  <div className="text-xs">{lastUpdated}</div>
                 </div>
               </div>
               
-              <div className=" overflow-hidden">
-          
-                <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
-                  <div className="flex justify-between items-center p-3">
-                    <span className="text-sm text-gray-500">{t('dashboard.totalShares')}:</span>
-                    <span className="text-sm font-medium">{getStockDetails.totalShares}</span>
+              <div className="grid grid-cols-2 gap-3 sm:gap-6 mt-3 min-h-[200px]">
+                {/* Sell Orders */}
+                <div className="overflow-hidden">
+                  <div className="px-2 sm:px-4 py-2 bg-red-50 dark:bg-red-900/10">
+                    <h3 className="text-xs sm:text-sm text-red-500 font-medium flex items-center justify-between">
+                      <span className="flex items-center">
+                        <ArrowDown size={12} className="mr-1" /> {t('dashboard.sell')}
+                      </span>
+                      <span className="text-xs text-gray-500">{t('dashboard.quantity')}</span>
+                    </h3>
                   </div>
-                  <div className="flex justify-between items-center p-3">
-                    <span className="text-sm text-gray-500">{t('dashboard.listedShares')}:</span>
-                    <span className="text-sm font-medium">{getStockDetails.listedShares}</span>
+                  <div className="p-2 sm:p-3">
+                    {loading ? (
+                      // Loading placeholders for sell orders
+                      Array(5).fill(0).map((_, index) => (
+                        <div key={`sell-loading-${index}`} className="flex justify-between text-xs sm:text-sm py-2 animate-pulse">
+                          <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                          <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        </div>
+                      ))
+                    ) : processedOrderBook.sell.length > 0 ? (
+                      processedOrderBook.sell.map((order, index) => {
+                     
+                        return (
+                          <div 
+                            key={`sell-${order.id}-${index}`} 
+                            className="flex justify-between text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+                          >
+                            <span className="text-red-500 font-medium" >
+                              {order.MDEntryPx.toLocaleString()} ₮
+                            </span>
+                            <span className="bg-red-50 dark:bg-red-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs">
+                              {order.MDEntrySize.toLocaleString()}
+                            </span>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center text-gray-400 text-sm py-6">{t('dashboard.noSellOrders')}</div>
+                    )}
                   </div>
-                  <div className="flex justify-between items-center p-3">
-                    <span className="text-sm text-gray-500">{t('dashboard.listingDate')}:</span>
-                    <span className="text-sm font-medium">{getStockDetails.listingDate}</span>
+                </div>
+                
+                {/* Buy Orders */}
+                <div className="overflow-hidden">
+                  <div className="px-2 sm:px-4 py-2 bg-green-50 dark:bg-green-900/10">
+                    <h3 className="text-xs sm:text-sm text-green-500 font-medium flex items-center justify-between">
+                      <span className="flex items-center">
+                        <ArrowUp size={12} className="mr-1" /> {t('dashboard.buy')}
+                      </span>
+                      <span className="text-xs text-gray-500">{t('dashboard.quantity')}</span>
+                    </h3>
+                  </div>
+                  <div className="p-2 sm:p-3">
+                    {loading ? (
+                      // Loading placeholders for buy orders
+                      Array(5).fill(0).map((_, index) => (
+                        <div key={`buy-loading-${index}`} className="flex justify-between text-xs sm:text-sm py-2 animate-pulse">
+                          <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                          <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        </div>
+                      ))
+                    ) : processedOrderBook.buy.length > 0 ? (
+                      processedOrderBook.buy.map((order, index) => {
+                        // Calculate opacity based on position (higher index = lower opacity)
+                     
+                        return (
+                          <div 
+                            key={`buy-${order.id}-${index}`} 
+                            className="flex justify-between text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+                          >
+                            <span className="text-green-500 font-medium" >
+                              {order.MDEntryPx.toLocaleString()} ₮
+                            </span>
+                            <span className="bg-green-50 dark:bg-green-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs">
+                              {order.MDEntrySize.toLocaleString()}
+                            </span>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center text-gray-400 text-sm py-6">{t('dashboard.noBuyOrders')}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Stock Details Section */}
+            <div className="mt-6 p-4  ">
+              <h2 className="text-lg font-medium mb-4 flex items-center">
+                <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
+                {t('dashboard.stockDetails')} - {selectedSymbol}
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className=" overflow-hidden">
+              
+                  <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
+                    <div className="flex justify-between items-center p-3">
+                      <span className="text-sm text-gray-500">ISIN:</span>
+                      <span className="text-sm font-medium">{getStockDetails.isin}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3">
+                      <span className="text-sm text-gray-500">{t('dashboard.companyCode')}:</span>
+                      <span className="text-sm font-medium">{getStockDetails.companyCode}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3">
+                      <span className="text-sm text-gray-500">{t('dashboard.email')}:</span>
+                      <span className="text-sm font-medium text-bdsec dark:text-indigo-400">{getStockDetails.email}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className=" overflow-hidden">
+            
+                  <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
+                    <div className="flex justify-between items-center p-3">
+                      <span className="text-sm text-gray-500">{t('dashboard.totalShares')}:</span>
+                      <span className="text-sm font-medium">{getStockDetails.totalShares}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3">
+                      <span className="text-sm text-gray-500">{t('dashboard.listedShares')}:</span>
+                      <span className="text-sm font-medium">{getStockDetails.listedShares}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3">
+                      <span className="text-sm text-gray-500">{t('dashboard.listingDate')}:</span>
+                      <span className="text-sm font-medium">{getStockDetails.listingDate}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </BentoGrid>
     </div>
   )
 }
