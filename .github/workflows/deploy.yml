@@ -30,7 +30,7 @@ jobs:
 
             if [ "$BRANCH" = "test" ]; then
               CONTAINER_NAME="mini-app-test"
-              PORT_MAPPING="444:3110"
+              PORT_MAPPING="3110:444"
             else
               CONTAINER_NAME="mini-app"
               PORT_MAPPING="3110:3110"
