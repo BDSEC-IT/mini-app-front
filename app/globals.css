@@ -144,6 +144,62 @@ body {
   .border-primary {
     border-color: rgb(var(--primary));
   }
+  
+  /* Line clamp utilities */
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+  
+  /* Prose styles for article content */
+  .prose {
+    color: #374151;
+    max-width: none;
+  }
+  
+  .prose p {
+    margin-bottom: 1rem;
+    line-height: 1.75;
+  }
+  
+  .prose a {
+    color: rgb(var(--primary));
+    text-decoration: underline;
+  }
+  
+  .prose a:hover {
+    color: rgb(var(--primary-dark));
+  }
+  
+  .prose ul, .prose ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+  
+  .prose li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .prose-invert {
+    color: #d1d5db;
+  }
+  
+  .prose-invert a {
+    color: #60a5fa;
+  }
+  
+  .prose-invert a:hover {
+    color: #93c5fd;
+  }
 }
 
 /* Custom component styles */

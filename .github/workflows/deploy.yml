@@ -3,42 +3,54 @@ name: Deploy Mini App to Server
 on:
   push:
     branches: [main, test]
-  workflow_dispatch:  # Optional: enables manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      DEPLOY_SCRIPT: |
+        set -eu
+        BRANCH_NAME="${{ github.ref_name }}"
+        echo "🔄 Deploying branch: $BRANCH_NAME"
+        cd /home/damdinsuren/projects/mini-app
+
+        git fetch origin "$BRANCH_NAME"
+        git checkout "$BRANCH_NAME"
+        git reset --hard "origin/$BRANCH_NAME"
+
+        if [ "$BRANCH_NAME" = "test" ]; then
+          CONTAINER_NAME="mini-app-test"
+          HOST_PORT="3111"
+        else
+          CONTAINER_NAME="mini-app"
+          HOST_PORT="3110"
+        fi
+
+        echo "🧹 Stopping and removing existing container..."
+        docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+
+        echo "🐳 Building Docker image..."
+        docker build --pull -t "$CONTAINER_NAME" .
+
+        echo "🚀 Running new container on host port $HOST_PORT"
+        docker run -d \
+          --name "$CONTAINER_NAME" \
+          -p "127.0.0.1:$HOST_PORT:3000" \
+          --restart unless-stopped \
+          "$CONTAINER_NAME"
+
+        echo "✅ Deployment complete for branch: $BRANCH_NAME"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup SSH key
-        uses: webfactory/ssh-agent@v0.8.0
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Deploy via SSH
-        run: |
-          ssh -o StrictHostKeyChecking=no damdinsuren@${{ secrets.SERVER_IP }} << EOF
-            set -e
-            BRANCH="${{ github.ref_name }}"
-            cd /home/damdinsuren/projects/mini-app || exit 1
-
-            git fetch origin \$BRANCH
-            git checkout \$BRANCH
-            git reset --hard origin/\$BRANCH
-
-            if [ "\$BRANCH" = "test" ]; then
-              CONTAINER_NAME="mini-app-test"
-              PORT_MAPPING="3111:3110"
-            else
-              CONTAINER_NAME="mini-app"
-              PORT_MAPPING="3110:3110"
-            fi
-
-            docker stop \$CONTAINER_NAME || true
-            docker rm \$CONTAINER_NAME || true
-            docker build -t \$CONTAINER_NAME .
-            docker run -d -p \$PORT_MAPPING --name \$CONTAINER_NAME \$CONTAINER_NAME
-          EOF
+          host: ${{ secrets.SERVER_IP }}
+          username: damdinsuren
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: ${{ env.DEPLOY_SCRIPT }}

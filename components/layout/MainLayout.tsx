@@ -1,21 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import React from 'react'
 import Header from './header'
 import BottomNavigation from './BottomNavigation'
+import { useTheme } from '@/contexts/ThemeContext'
+import { BackgroundBeams } from '../ui/background-beams'
 
 interface MainLayoutProps {
   children: React.ReactNode
 }
 
 const MainLayout = ({ children }: MainLayoutProps) => {
+  const { theme } = useTheme();
+
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-      <Header />
-      <main className="pb-24 mx-auto max-w-[1400px]">
-        {children}
-      </main>
-      <BottomNavigation />
+    <div className="relative min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+      {theme === 'dark' && <BackgroundBeams />}
+      
+      {/* Wrap content in a relative container to ensure it's on top of the beams */}
+      <div className="relative z-10">
+        <Header />
+        <main className="pb-26 sm:pb-30 mx-auto max-w-[1400px] px-0">
+          {children}
+        </main>
+        <BottomNavigation />
+      </div>
     </div>
   )
 }

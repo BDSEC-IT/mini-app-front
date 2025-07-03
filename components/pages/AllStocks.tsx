@@ -299,7 +299,7 @@ const AllStocks = () => {
                   key={category.id}
                   className={`px-3 py-1 text-sm rounded-full ${
                     selectedCategory === category.id
-                      ? 'bg-bdsec text-white'
+                      ? 'bg-bdsec dark:bg-indigo-500 text-white'
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                   }`}
                   onClick={() => setSelectedCategory(category.id)}
@@ -337,7 +337,7 @@ const AllStocks = () => {
               key={tab.id}
               className={`px-4 py-2 text-sm whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'bg-bdsec text-white rounded-t-md'
+                  ? 'bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
                   : 'text-gray-500'
               }`}
               onClick={() => setActiveTab(tab.id)}
@@ -350,7 +350,7 @@ const AllStocks = () => {
         {/* Stocks Table with Category Groups */}
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-bdsec mb-2"></div>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-bdsec dark:border-indigo-500 mb-2"></div>
             <p className="text-gray-500 text-sm ml-3">{t('common.loading')}</p>
           </div>
         ) : sortedStocks().length > 0 ? (

@@ -1,61 +1,148 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { fetchTradingHistory, type TradingHistoryData, type TradingHistoryResponse } from '@/lib/api'
 
 // Define the TradingHistoryData interface to match the API response
-interface TradingHistoryData {
-  id: number
-  Symbol: string
-  MDSubOrderBookType: string
-  OpeningPrice: number
-  ClosingPrice: number
-  HighPrice: number
-  LowPrice: number
-  VWAP: number
-  Volume: number
-  HighestBidPrice: number
-  LowestOfferPrice: number
-  PreviousClose: number
-  BuyOrderQty: number
-  SellOrderQty: number
-  Turnover: number
-  Trades: number
-  MDEntryTime: string
-  companycode: number
-  MarketSegmentID: string
-  securityType: string
-  dates: string
-}
+// interface TradingHistoryData {
+//   id: number
+//   Symbol: string
+//   MDSubOrderBookType: string
+//   OpeningPrice: number
+//   ClosingPrice: number
+//   HighPrice: number
+//   LowPrice: number
+//   VWAP: number
+//   Volume: number
+//   HighestBidPrice: number
+//   LowestOfferPrice: number
+//   PreviousClose: number
+//   BuyOrderQty: number
+//   SellOrderQty: number
+//   Turnover: number
+//   Trades: number
+//   MDEntryTime: string
+//   companycode: number
+//   MarketSegmentID: string
+//   securityType: string
+//   dates: string
+// }
 
 // Define the response interface for the API
-interface TradingHistoryResponse {
-  success: boolean
-  data: TradingHistoryData[]
-  pagination: {
-    total: number
-    totalPages: number
-    currentPage: number
-    limit: number
-  }
-}
+// interface TradingHistoryResponse {
+//   success: boolean
+//   data: TradingHistoryData[]
+//   pagination: {
+//     total: number
+//     totalPages: number
+//     currentPage: number
+//     limit: number
+//   }
+// }
 
 // Function to fetch trading history data
-async function fetchTradingHistory(symbol: string, page: number = 1, limit: number = 100): Promise<TradingHistoryResponse> {
-  const BASE_URL = 'https://miniapp.bdsec.mn/apitest'
-  const url = `${BASE_URL}/securities/trading-history?page=${page}&limit=${limit}&sortField&sortOrder=desc&symbol=${symbol}`
-  
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error('Failed to fetch trading history data')
-  }
-  return response.json()
-}
+// async function fetchTradingHistory(symbol: string, page: number = 1, limit: number = 100): Promise<TradingHistoryResponse> {
+//   const BASE_URL = 'https://miniapp.bdsec.mn/apitest'
+//   const url = `${BASE_URL}/securities/trading-history?page=${page}&limit=${limit}&sortField&sortOrder=desc&symbol=${symbol}`
+//   
+//   try {
+//     // Create an abort controller with a timeout
+//     const controller = new AbortController()
+//     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+//     
+//     const response = await fetch(url, { 
+//       method: 'GET',
+//       headers: {
+//         'Accept': 'application/json',
+//         'Content-Type': 'application/json',
+//       },
+//       signal: controller.signal
+//     })
+//     
+//     // Clear the timeout since we got a response
+//     clearTimeout(timeoutId)
+//     
+//     if (!response.ok) {
+//       console.error(`API error: ${response.status} ${response.statusText}`)
+//       throw new Error(`Failed to fetch trading history data: ${response.status}`)
+//     }
+//     
+//     return response.json()
+//   } catch (error) {
+//     console.error('Fetch error:', error)
+//     
+//     // Return mock data as fallback when API is unavailable
+//     console.log('Using fallback mock data for symbol:', symbol)
+//     return generateMockHistoryResponse(symbol, page, limit)
+//   }
+// }
+
+// Function to generate mock history data as fallback
+// function generateMockHistoryResponse(symbol: string, page: number, limit: number): TradingHistoryResponse {
+//   // Generate mock data for the requested symbol
+//   const mockData: TradingHistoryData[] = []
+//   const today = new Date()
+//   const basePrice = 10000 + Math.random() * 5000 // Random base price between 10,000 and 15,000
+//   
+//   // Generate data points for the last 100 days
+//   for (let i = 100; i >= 0; i--) {
+//     const date = new Date(today)
+//     date.setDate(date.getDate() - i)
+//     
+//     // Generate realistic price movements
+//     const dailyVolatility = 0.02 // 2% daily volatility
+//     const priceChange = basePrice * dailyVolatility * (Math.random() * 2 - 1)
+//     const dayPrice = basePrice + (priceChange * (100 - i) / 10) // Slight trend over time
+//     
+//     // Create mock data point
+//     mockData.push({
+//       id: i,
+//       Symbol: symbol,
+//       MDSubOrderBookType: "0",
+//       OpeningPrice: dayPrice * (0.98 + Math.random() * 0.04),
+//       ClosingPrice: dayPrice,
+//       HighPrice: dayPrice * (1 + Math.random() * 0.03),
+//       LowPrice: dayPrice * (0.97 + Math.random() * 0.03),
+//       VWAP: dayPrice * (0.99 + Math.random() * 0.02),
+//       Volume: Math.floor(Math.random() * 10000) + 1000,
+//       HighestBidPrice: dayPrice * 0.99,
+//       LowestOfferPrice: dayPrice * 1.01,
+//       PreviousClose: dayPrice * (0.99 + Math.random() * 0.02),
+//       BuyOrderQty: Math.floor(Math.random() * 5000) + 500,
+//       SellOrderQty: Math.floor(Math.random() * 5000) + 500,
+//       Turnover: Math.floor(Math.random() * 100000000) + 10000000,
+//       Trades: Math.floor(Math.random() * 100) + 10,
+//       MDEntryTime: "14:00:00",
+//       companycode: 123,
+//       MarketSegmentID: "MAIN",
+//       securityType: "STOCK",
+//       dates: date.toISOString().split('T')[0]
+//     })
+//   }
+//   
+//   // Calculate pagination
+//   const startIndex = (page - 1) * limit
+//   const endIndex = startIndex + limit
+//   const paginatedData = mockData.slice(startIndex, endIndex)
+//   
+//   return {
+//     success: true,
+//     data: paginatedData,
+//     pagination: {
+//       total: mockData.length,
+//       totalPages: Math.ceil(mockData.length / limit),
+//       currentPage: page,
+//       limit: limit
+//     }
+//   }
+// }
 
 interface TradingViewChartProps {
   symbol?: string
   theme?: string
   period?: string
+  onPriceHover?: (price: number | null, change?: number, changePercent?: number) => void
 }
 
 interface Point {
@@ -63,32 +150,60 @@ interface Point {
   y: number
   date: Date
   value: number
+  change: number
+  changePercent: number
 }
 
-export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', period = 'ALL' }: TradingViewChartProps) {
+export function TradingViewChart({ 
+  symbol = 'BDS-O-0000', 
+  theme = 'light', 
+  period = 'ALL',
+  onPriceHover 
+}: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [mounted, setMounted] = useState(false)
   const [chartData, setChartData] = useState<TradingHistoryData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [tooltip, setTooltip] = useState<{visible: boolean, x: number, y: number, date: Date, value: number}>({
+  const [isFallbackData, setIsFallbackData] = useState(false);
+  const [tooltip, setTooltip] = useState<{
+    visible: boolean, 
+    x: number, 
+    y: number, 
+    date: Date, 
+    value: number, 
+    change: number, 
+    changePercent: number
+  }>({
     visible: false,
     x: 0,
     y: 0,
     date: new Date(),
-    value: 0
+    value: 0,
+    change: 0,
+    changePercent: 0,
   })
   // Track if we've ever shown a tooltip
   const [hasInteracted, setHasInteracted] = useState(false)
   // Store the last valid tooltip
-  const lastValidTooltipRef = useRef<{x: number, y: number, date: Date, value: number} | null>(null)
+  const lastValidTooltipRef = useRef<{x: number, y: number, date: Date, value: number, change: number, changePercent: number} | null>(null)
   
   const pointsRef = useRef<Point[]>([])
   const { t } = useTranslation()
   const [isMobile, setIsMobile] = useState(false)
   const [activePeriod, setActivePeriod] = useState(period)
+  
+  // Cache for filtered data by period
+  const dataCache = useRef<{[key: string]: TradingHistoryData[]}>({})
+  // Reference to store all fetched data
+  const allDataRef = useRef<TradingHistoryData[]>([])
+  // Track if data has been fetched
+  const dataFetchedRef = useRef(false)
 
+  // Store the latest price in a ref to maintain it across renders
+  const latestPriceRef = useRef<number | null>(null)
+  
   // Check if we're on a mobile device
   useEffect(() => {
     const checkMobile = () => {
@@ -105,412 +220,384 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
     setActivePeriod(period)
   }, [period])
 
+  // Update latest price when chart data changes
+  useEffect(() => {
+    if (chartData.length > 0) {
+      const sortedData = [...chartData].sort((a, b) => new Date(b.dates).getTime() - new Date(a.dates).getTime())
+      const latestData = sortedData[0];
+      
+      latestPriceRef.current = latestData.ClosingPrice
+      
+      if (onPriceHover && !tooltip.visible) {
+        onPriceHover(latestData.ClosingPrice, undefined, undefined)
+      }
+    }
+  }, [chartData, onPriceHover, tooltip.visible])
+
   // Filter data based on the selected time period
-  const filterDataByPeriod = (data: TradingHistoryData[], period: string): TradingHistoryData[] => {
-    if (!data.length) return []
+  const filterDataByPeriod = useCallback((data: TradingHistoryData[], period: string): TradingHistoryData[] => {
+    if (!data.length) {
+      setIsFallbackData(false);
+      return [];
+    }
     
-    console.log(`filterDataByPeriod called with period: ${period}, data length: ${data.length}`)
-    
-    // For 'ALL' period, return all data
     if (period === 'ALL') {
-      console.log(`Returning all data (${data.length} points) for ALL period`)
+      setIsFallbackData(false);
+      dataCache.current[period] = data
       return data
     }
     
-    const now = new Date()
-    let cutoffDate = new Date()
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    let startDate: Date;
     
+    // Calculate start date based on period
     switch (period) {
-      case '1D':
-        // Get data from the last 24 hours
-        cutoffDate = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-        break
       case '1W':
-        // Get data from the last 7 days
-        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
         break
       case '1M':
-        // Get data from the last 30 days
-        cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        startDate = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
         break
       case '3M':
-        // Get data from the last 90 days
-        cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+        startDate = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
         break
       case '1Y':
-        // Get data from the last 365 days
-        cutoffDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
+        startDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
         break
       default:
-        console.log(`Unknown period: ${period}, returning all data`)
-        return data
+        startDate = new Date(0) // Beginning of time for 'ALL'
     }
     
-    console.log(`Filtering data for period ${period}, cutoff date: ${cutoffDate.toISOString()}`)
+    const filteredData = data.filter(point => {
+      const pointDate = new Date(point.dates);
+      const normalizedPointDate = new Date(pointDate.getFullYear(), pointDate.getMonth(), pointDate.getDate());
+      return normalizedPointDate >= startDate;
+    });
     
-    const filteredData = data.filter(item => {
-      const itemDate = new Date(item.dates)
-      const result = itemDate >= cutoffDate
-      return result
-    })
-    
-    console.log(`Filtered ${data.length} items to ${filteredData.length} items`)
-    
-    // If no data after filtering, return at least some data
+    // If filtering results in no data, fall back to the 30 most recent data points
     if (filteredData.length === 0 && data.length > 0) {
-      console.log(`No data after filtering for ${period}, returning most recent data`)
-      // Return at least the most recent data points
-      return data.slice(-Math.min(30, data.length))
+      setIsFallbackData(true);
+      return data.slice(0, 30);
     }
+    
+    setIsFallbackData(false);
+    dataCache.current[period] = filteredData
     
     return filteredData
+  }, [])
+
+  // Fetch all data at once
+  const fetchAllData = async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      // If we've already fetched data, use it
+      if (dataFetchedRef.current && allDataRef.current.length > 0) {
+        // Filter the already fetched data based on the selected period
+        const filteredData = filterDataByPeriod(allDataRef.current, activePeriod)
+        setChartData(filteredData)
+        setIsLoading(false)
+        return
+      }
+      
+      // Fetch data from API
+      const response = await fetchTradingHistory(symbol, 1, 500)
+      
+      if (response.success && response.data) {
+        // Store all data in ref
+        allDataRef.current = response.data
+        dataFetchedRef.current = true
+        
+        // Filter based on selected period
+        const filteredData = filterDataByPeriod(response.data, activePeriod)
+        setChartData(filteredData)
+        
+        // Check if we're using fallback data
+        setIsFallbackData(response.data.length > 0 && !response.data[0].dates.includes('-'))
+      } else {
+        console.error('Failed to fetch trading history data')
+        setError('Failed to load chart data')
+        setIsFallbackData(true)
+      }
+    } catch (err) {
+      console.error('Error fetching chart data:', err)
+      setError('Failed to load chart data')
+      setIsFallbackData(true)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
+  // Fetch data when component mounts or symbol/period changes
   useEffect(() => {
-    setMounted(true)
+    if (mounted) {
+      console.log(`Symbol or period changed: ${symbol}, ${activePeriod}`)
+      
+      // If symbol changes, clear the cache and fetch new data
+      if (symbol !== allDataRef.current[0]?.Symbol) {
+        console.log('Symbol changed, clearing cache')
+        dataFetchedRef.current = false
+        dataCache.current = {}
+        allDataRef.current = []
+      }
+      
+      fetchAllData()
+    }
+  }, [symbol, activePeriod, mounted])
+
+  // Set up the chart when data changes
+  useEffect(() => {
+    if (!mounted || !canvasRef.current || chartData.length === 0) return
     
-    // Fetch all pages of trading history data
-    const fetchAllData = async () => {
-      try {
-        setIsLoading(true)
-        setError(null)
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    
+    const rect = canvas.getBoundingClientRect()
+    canvas.width = rect.width * window.devicePixelRatio
+    canvas.height = rect.height * window.devicePixelRatio
+    
+    // Scale context to match device pixel ratio
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+    
+    // Clear canvas and set transparent background
+    ctx.clearRect(0, 0, rect.width, rect.height)
+    
+    // Sort data by date
+    const sortedData = [...chartData].sort((a, b) => {
+      return new Date(a.dates).getTime() - new Date(b.dates).getTime()
+    })
+    
+    if (sortedData.length === 0) return
+    
+    // Find min and max values for scaling
+    const prices = sortedData.map(d => d.ClosingPrice)
+    const minPrice = Math.min(...prices) * 0.99 // Add some padding
+    const maxPrice = Math.max(...prices) * 1.01 // Add some padding
+    const priceRange = maxPrice - minPrice
+    
+    // Create points for the chart
+    const points: Point[] = sortedData.map((d, i) => {
+      const date = new Date(d.dates)
+      const x = sortedData.length > 1 ? (i / (sortedData.length - 1)) * rect.width : rect.width / 2
+      const y = rect.height - ((d.ClosingPrice - minPrice) / priceRange) * (rect.height * 0.8) - (rect.height * 0.1)
+      
+      const change = i > 0 ? d.ClosingPrice - sortedData[i - 1].ClosingPrice : 0;
+      const changePercent = i > 0 && sortedData[i - 1].ClosingPrice !== 0
+        ? (change / sortedData[i - 1].ClosingPrice) * 100
+        : 0;
         
-        console.log(`TradingViewChart: Fetching data for symbol ${symbol}, period ${activePeriod}`)
+      return { x, y, date, value: d.ClosingPrice, change, changePercent }
+    })
+    
+    // Store points for interaction
+    pointsRef.current = points
+    
+    // Draw grid lines
+    ctx.strokeStyle = theme === 'dark' ? 'rgba(100, 116, 139, 0.2)' : 'rgba(148, 163, 184, 0.2)'
+    ctx.lineWidth = 1
+    
+    // Horizontal grid lines - responsive to screen size
+    const numHLines = rect.width < 400 ? 3 : 4
+    for (let i = 0; i <= numHLines; i++) {
+      const y = rect.height * 0.1 + (rect.height * 0.8 * i) / numHLines
+      ctx.beginPath()
+      ctx.moveTo(0, y)
+      ctx.lineTo(rect.width, y)
+      ctx.stroke()
+      
+      // Price labels
+      const price = maxPrice - (priceRange * i) / numHLines
+      ctx.fillStyle = theme === 'dark' ? 'rgba(203, 213, 225, 0.8)' : 'rgba(71, 85, 105, 0.8)'
+      ctx.font = rect.width < 400 ? '9px sans-serif' : '10px sans-serif'
+      ctx.textAlign = 'left'
+      
+      // Format price based on screen size
+      const priceText = rect.width < 400 
+        ? price.toLocaleString(undefined, { maximumFractionDigits: 0 })
+        : price.toLocaleString()
+      
+      ctx.fillText(priceText, 5, y - 3)
+    }
+    
+    // Vertical grid lines - responsive to screen size
+    if (sortedData.length > 5) {
+      // Determine number of vertical lines based on screen width
+      const maxVLines = rect.width < 400 ? 3 : rect.width < 600 ? 4 : 6
+      const numVLines = Math.min(sortedData.length, maxVLines)
+      
+      for (let i = 0; i <= numVLines; i++) {
+        const x = (rect.width * i) / numVLines
+        ctx.beginPath()
+        ctx.moveTo(x, 0)
+        ctx.lineTo(x, rect.height)
+        ctx.stroke()
         
-        let allData: TradingHistoryData[] = []
-        let currentPage = 1
-        let hasMorePages = true
-        
-        // Fetch all pages
-        while (hasMorePages) {
-          console.log(`Fetching page ${currentPage} for ${symbol}`)
-          const response = await fetchTradingHistory(symbol, currentPage, 100)
+        // Date labels - only show on selected lines to prevent stacking
+        if (i < numVLines && i % (rect.width < 400 ? 1 : 1) === 0) {
+          const dataIndex = Math.floor((sortedData.length - 1) * i / numVLines)
+          const date = new Date(sortedData[dataIndex].dates)
+          ctx.fillStyle = theme === 'dark' ? 'rgba(203, 213, 225, 0.8)' : 'rgba(71, 85, 105, 0.8)'
+          ctx.font = rect.width < 400 ? '9px sans-serif' : '10px sans-serif'
+          ctx.textAlign = 'center'
           
-          if (response.success && response.data.length > 0) {
-            allData = [...allData, ...response.data]
-            
-            // Check if there are more pages
-            if (currentPage < response.pagination.totalPages) {
-              currentPage++
-            } else {
-              hasMorePages = false
-            }
-          } else {
-            hasMorePages = false
-            if (allData.length === 0) {
-              console.log("No data returned from API for symbol:", symbol)
-              setError('No data available')
-            }
-          }
+          // Format date based on screen size
+          const dateText = rect.width < 400 
+            ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            : date.toLocaleDateString()
+          
+          ctx.fillText(dateText, x, rect.height - 5)
         }
-        
-        if (allData.length > 0) {
-          console.log(`Total data points fetched: ${allData.length}`)
-          
-          // Sort data by date (oldest to newest)
-          const sortedData = [...allData].sort((a, b) => 
-            new Date(a.dates).getTime() - new Date(b.dates).getTime()
-          )
-          
-          console.log(`Total data points after sorting: ${sortedData.length}`)
-          console.log(`First date: ${new Date(sortedData[0].dates).toISOString()}, Last date: ${new Date(sortedData[sortedData.length-1].dates).toISOString()}`)
-          console.log(`Applying filter for period: ${activePeriod}`)
-          
-          // Apply period filter
-          const filteredData = filterDataByPeriod(sortedData, activePeriod)
-          
-          console.log(`Data points after filtering for ${activePeriod}: ${filteredData.length}`)
-          if (filteredData.length > 0) {
-            console.log(`Filtered data first date: ${new Date(filteredData[0].dates).toISOString()}, last date: ${new Date(filteredData[filteredData.length-1].dates).toISOString()}`)
-            setChartData(filteredData)
-            setError(null)
-          } else {
-            console.error(`No data available after filtering for period ${activePeriod}`)
-            setError('No data available for selected period')
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching chart data:', error)
-        setError('Failed to load chart data')
-      } finally {
-        setIsLoading(false)
       }
     }
     
-    fetchAllData()
-  }, [symbol, activePeriod])
-
-  useEffect(() => {
-    if (!mounted || !canvasRef.current || !containerRef.current || chartData.length === 0) return
-
-    const drawChart = () => {
-      const canvas = canvasRef.current!
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-
-      const container = containerRef.current!
-      const rect = container.getBoundingClientRect()
-      
-      // Set canvas dimensions with higher resolution for better rendering
-      const dpr = window.devicePixelRatio || 1
-      canvas.width = rect.width * dpr
-      canvas.height = rect.height * dpr
-      ctx.scale(dpr, dpr)
-      
-      // Clear canvas
-      ctx.clearRect(0, 0, rect.width, rect.height)
-      
-      // Set background color based on theme (transparent background)
-      ctx.fillStyle = 'transparent'
-      ctx.fillRect(0, 0, rect.width, rect.height)
-      
-      if (chartData.length === 0) return
-      
-      // Extract closing prices for the line chart
-      const allPrices = chartData.map(d => ({
-        close: d.ClosingPrice,
-        date: new Date(d.dates)
-      }))
-      
-      // Sample data points to make the chart smoother
-      // Limit to fewer points on mobile for better performance
-      const maxPoints = isMobile ? 50 : 100
-      const sampleInterval = Math.max(1, Math.floor(allPrices.length / maxPoints))
-      const prices = allPrices.filter((_, i) => i % sampleInterval === 0 || i === allPrices.length - 1)
-      
-      // Find min and max values for scaling
-      const minPrice = Math.min(...prices.map(p => p.close))
-      const maxPrice = Math.max(...prices.map(p => p.close))
-      
-      // Calculate price range with 10% padding (reduced from 15% for sharper look)
-      const priceRange = (maxPrice - minPrice) * 1.1
-      const scaledMinPrice = minPrice - priceRange * 0.05
-      const scaledMaxPrice = maxPrice + priceRange * 0.05
-      
-      // Scale functions - use full canvas width with NO padding
-      const xScale = (date: Date) => {
-        const minDate = prices[0].date
-        const maxDate = prices[prices.length - 1].date
-        const dateRange = maxDate.getTime() - minDate.getTime()
-        return (date.getTime() - minDate.getTime()) / dateRange * rect.width
-      }
-      
-      const yScale = (price: number) => {
-        return (scaledMaxPrice - price) / (scaledMaxPrice - scaledMinPrice) * rect.height
-      }
-      
-      // Create gradient fill under the line
-      const gradient = ctx.createLinearGradient(0, 0, 0, rect.height)
-      if (theme === 'dark') {
-        gradient.addColorStop(0, 'rgba(139, 92, 246, 0.4)')  // Purple with opacity
-        gradient.addColorStop(1, 'rgba(139, 92, 246, 0)')    // Transparent
-      } else {
-        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.2)')  // Indigo with opacity
-        gradient.addColorStop(1, 'rgba(99, 102, 241, 0)')    // Transparent
-      }
-      
-      // Draw smooth line chart
-      ctx.beginPath()
-      
-      // Move to first point
-      const firstX = xScale(prices[0].date)
-      const firstY = yScale(prices[0].close)
-      ctx.moveTo(firstX, firstY)
-      
-      // Create points for the curve
-      const points = prices.map(p => ({
-        x: xScale(p.date),
-        y: yScale(p.close),
-        date: p.date,
-        value: p.close
-      }))
-      
-      // Store points for tooltip interaction
-      pointsRef.current = points
-      
-      // Draw a smoother curve using cardinal spline interpolation
-      for (let i = 0; i < points.length - 1; i++) {
-        const p0 = i > 0 ? points[i - 1] : points[i]
-        const p1 = points[i]
-        const p2 = points[i + 1]
-        const p3 = i < points.length - 2 ? points[i + 2] : p2
-        
-        // Catmull-Rom to Bezier conversion
-        // Use less tension for sharper curves
-        const tension = 0.2
-        
-        const cp1x = p1.x + (p2.x - p0.x) * tension
-        const cp1y = p1.y + (p2.y - p0.y) * tension
-        const cp2x = p2.x - (p3.x - p1.x) * tension
-        const cp2y = p2.y - (p3.y - p1.y) * tension
-        
-        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y)
-      }
-      
-      // Draw the gradient fill under the curve
-      ctx.lineTo(points[points.length - 1].x, rect.height)
-      ctx.lineTo(points[0].x, rect.height)
-      ctx.closePath()
-      ctx.fillStyle = gradient
-      ctx.fill()
-      
-      // Redraw the line on top of the fill for better visibility
+    // Draw price line with purple/indigo color
+    if (points.length > 1) {
+      ctx.strokeStyle = theme === 'dark' ? '#818cf8' : '#4f46e5'
+      ctx.lineWidth = 2
       ctx.beginPath()
       ctx.moveTo(points[0].x, points[0].y)
       
-      for (let i = 0; i < points.length - 1; i++) {
-        const p0 = i > 0 ? points[i - 1] : points[i]
-        const p1 = points[i]
-        const p2 = points[i + 1]
-        const p3 = i < points.length - 2 ? points[i + 2] : p2
-        
-        // Catmull-Rom to Bezier conversion
-        const tension = 0.2
-        
-        const cp1x = p1.x + (p2.x - p0.x) * tension
-        const cp1y = p1.y + (p2.y - p0.y) * tension
-        const cp2x = p2.x - (p3.x - p1.x) * tension
-        const cp2y = p2.y - (p3.y - p1.y) * tension
-        
-        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y)
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y)
       }
       
-      // Set line style - use border instead of shadow
-      ctx.strokeStyle = theme === 'dark' ? '#a78bfa' : '#818cf8' // Purple/indigo color
-      ctx.lineWidth = 2 // Thinner line for sharper look
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-      // Remove shadow
-      ctx.shadowColor = 'transparent'
-      ctx.shadowBlur = 0
       ctx.stroke()
       
-      // No tooltip point drawing - removed
+      // Fill area under the line
+      const gradient = ctx.createLinearGradient(0, 0, 0, rect.height)
+      if (theme === 'dark') {
+        gradient.addColorStop(0, 'rgba(129, 140, 248, 0.4)')
+        gradient.addColorStop(1, 'rgba(129, 140, 248, 0)')
+      } else {
+        gradient.addColorStop(0, 'rgba(79, 70, 229, 0.3)')
+        gradient.addColorStop(1, 'rgba(79, 70, 229, 0)')
+      }
+      ctx.fillStyle = gradient
+      ctx.beginPath()
+      ctx.moveTo(points[0].x, points[0].y)
+      
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y)
+      }
+      
+      ctx.lineTo(points[points.length - 1].x, rect.height)
+      ctx.lineTo(points[0].x, rect.height)
+      ctx.closePath()
+      ctx.fill()
+    } else if (points.length === 1) {
+        // Draw a single dot for a single data point
+        ctx.beginPath()
+        ctx.arc(points[0].x, points[0].y, 4, 0, Math.PI * 2)
+        ctx.fillStyle = theme === 'dark' ? '#818cf8' : '#4f46e5'
+        ctx.fill()
     }
+    
+  }, [chartData, theme, mounted])
 
-    drawChart()
-
-    // Handle resize
+  // Set up mouse interaction
+  useEffect(() => {
+    if (!mounted || !containerRef.current) return
+    
+    const container = containerRef.current
+    
     const handleResize = () => {
-      drawChart()
+      if (canvasRef.current) {
+        const canvas = canvasRef.current
+        const rect = canvas.getBoundingClientRect()
+        canvas.width = rect.width * window.devicePixelRatio
+        canvas.height = rect.height * window.devicePixelRatio
+        
+        // Redraw chart
+        const event = new Event('resize')
+        window.dispatchEvent(event)
+      }
     }
     
-    // Handle mouse move for tooltip
     const handleMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current || pointsRef.current.length === 0) return
+      if (pointsRef.current.length === 0) return
       
-      const rect = containerRef.current.getBoundingClientRect()
+      const rect = container.getBoundingClientRect()
       const x = e.clientX - rect.left
-      const y = e.clientY - rect.top
       
-      // Find the closest point to the mouse
-      let closestPoint: Point | null = null
-      let minDistance = Infinity
+      // Find closest point
+      let closestPoint = pointsRef.current[0]
+      let minDistance = Math.abs(closestPoint.x - x)
       
-      pointsRef.current.forEach(point => {
-        const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2))
+      for (let i = 1; i < pointsRef.current.length; i++) {
+        const distance = Math.abs(pointsRef.current[i].x - x)
         if (distance < minDistance) {
           minDistance = distance
-          closestPoint = point
+          closestPoint = pointsRef.current[i]
         }
+      }
+      
+      // Update tooltip with full data
+      setTooltip({
+        visible: true,
+        x: closestPoint.x,
+        y: closestPoint.y,
+        date: closestPoint.date,
+        value: closestPoint.value,
+        change: closestPoint.change,
+        changePercent: closestPoint.changePercent
       })
       
-      // Update tooltip when mouse is near a point
-      const threshold = isMobile ? 40 : 30
-      if (closestPoint && minDistance < threshold) {
-        const point = closestPoint as Point
-        setTooltip({
-          visible: true,
-          x: point.x,
-          y: point.y,
-          date: point.date,
-          value: point.value
-        })
-        
-        // Store this as the last valid tooltip
-        lastValidTooltipRef.current = {
-          x: point.x,
-          y: point.y,
-          date: point.date,
-          value: point.value
-        }
-        
-        // Mark that we've interacted with the chart
-        setHasInteracted(true)
-        
-        // Redraw the chart
-        requestAnimationFrame(() => drawChart())
+      // Store last valid tooltip
+      lastValidTooltipRef.current = {
+        x: closestPoint.x,
+        y: closestPoint.y,
+        date: closestPoint.date,
+        value: closestPoint.value,
+        change: closestPoint.change,
+        changePercent: closestPoint.changePercent
+      }
+      
+      // Mark that we've interacted with the chart
+      setHasInteracted(true)
+      
+      // Notify parent component of price hover
+      if (onPriceHover) {
+        onPriceHover(closestPoint.value, closestPoint.change, closestPoint.changePercent)
       }
     }
     
-    // Handle mouse leave - keep the last tooltip visible
     const handleMouseLeave = () => {
-      // Do nothing, keep the last tooltip visible
-    }
-    
-    // Handle click to set tooltip
-    const handleClick = (e: MouseEvent) => {
-      if (!containerRef.current || pointsRef.current.length === 0) return
+      setTooltip(prev => ({ ...prev, visible: false }))
       
-      const rect = containerRef.current.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const y = e.clientY - rect.top
-      
-      // Find the closest point to the click
-      let closestPoint: Point | null = null
-      let minDistance = Infinity
-      
-      pointsRef.current.forEach(point => {
-        const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2))
-        if (distance < minDistance) {
-          minDistance = distance
-          closestPoint = point
-        }
-      })
-      
-      // Set tooltip if click is close enough to a point
-      const threshold = isMobile ? 40 : 30
-      if (closestPoint && minDistance < threshold) {
-        const point = closestPoint as Point
-        
-        setTooltip({
-          visible: true,
-          x: point.x,
-          y: point.y,
-          date: point.date,
-          value: point.value
-        })
-        
-        // Store this as the last valid tooltip
-        lastValidTooltipRef.current = {
-          x: point.x,
-          y: point.y,
-          date: point.date,
-          value: point.value
-        }
-        
-        // Mark that we've interacted with the chart
-        setHasInteracted(true)
+      // Reset to latest price when not hovering
+      if (onPriceHover && latestPriceRef.current !== null) {
+        onPriceHover(null)
       }
-      
-      // Always redraw after click
-      requestAnimationFrame(() => drawChart())
     }
     
-    window.addEventListener('resize', handleResize)
-    containerRef.current.addEventListener('mousemove', handleMouseMove)
-    containerRef.current.addEventListener('mouseleave', handleMouseLeave)
-    containerRef.current.addEventListener('click', handleClick)
+    const handleClick = (e: MouseEvent) => {
+      // Implement click handling if needed
+    }
     
+    // Add event listeners
+    window.addEventListener('resize', handleResize)
+    container.addEventListener('mousemove', handleMouseMove)
+    container.addEventListener('mouseleave', handleMouseLeave)
+    container.addEventListener('click', handleClick)
+    
+    // Clean up
     return () => {
       window.removeEventListener('resize', handleResize)
-      if (containerRef.current) {
-        containerRef.current.removeEventListener('mousemove', handleMouseMove)
-        containerRef.current.removeEventListener('mouseleave', handleMouseLeave)
-        containerRef.current.removeEventListener('click', handleClick)
-      }
+      container.removeEventListener('mousemove', handleMouseMove)
+      container.removeEventListener('mouseleave', handleMouseLeave)
+      container.removeEventListener('click', handleClick)
     }
-  }, [mounted, chartData, theme, activePeriod, tooltip.visible, isMobile])
+  }, [mounted, onPriceHover])
+
+  // Set mounted state when component mounts
+  useEffect(() => {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [])
 
   // Handle period change
   const handlePeriodChange = (newPeriod: string) => {
@@ -552,7 +639,13 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
       <div ref={containerRef} className="w-full h-[calc(100%-50px)] relative">
         <canvas ref={canvasRef} className="w-full h-full"></canvas>
         
-        {/* Show tooltip if visible or if we have interacted with the chart before */}
+        {isFallbackData && (
+          <div className="absolute top-2 left-2 bg-yellow-100 text-yellow-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300 z-20">
+            No data for this period. Showing most recent data.
+          </div>
+        )}
+        
+        {/* Updated Tooltip */}
         {(tooltip.visible || (hasInteracted && lastValidTooltipRef.current)) && (
           <div 
             className="absolute pointer-events-none bg-white dark:bg-gray-800 border border-soft border-opacity-50 rounded-md px-3 py-2 z-10 transform -translate-x-1/2 -translate-y-full text-xs"
@@ -562,20 +655,25 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
               transform: 'translate(-50%, -100%)'
             }}
           >
-            <div className="font-medium text-indigo-600 dark:text-indigo-300">
-              {tooltip.visible 
-                ? tooltip.value.toLocaleString() 
-                : (lastValidTooltipRef.current?.value || 0).toLocaleString()
-              } ₮
+            <div className="font-bold text-base text-gray-900 dark:text-white">
+              {((tooltip.visible ? tooltip.value : lastValidTooltipRef.current?.value) ?? 0).toLocaleString()} ₮
             </div>
-            <div className="text-gray-500 dark:text-gray-400 text-xs">
-              {tooltip.visible 
-                ? tooltip.date.toLocaleDateString() 
-                : (lastValidTooltipRef.current?.date || new Date()).toLocaleDateString()
-              } {isMobile ? '' : (tooltip.visible 
-                ? tooltip.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-                : (lastValidTooltipRef.current?.date || new Date()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-              )}
+            <div className={`flex items-center text-sm ${
+              ((tooltip.visible ? tooltip.change : lastValidTooltipRef.current?.change) ?? 0) >= 0 
+                ? 'text-green-500' 
+                : 'text-red-500'
+            }`}>
+              <span className="mr-1">
+                {((tooltip.visible ? tooltip.change : lastValidTooltipRef.current?.change) ?? 0) >= 0 ? '▲' : '▼'}
+              </span>
+              <span>
+                {((tooltip.visible ? tooltip.change : lastValidTooltipRef.current?.change) ?? 0).toFixed(2)}
+                &nbsp;
+                ({((tooltip.visible ? tooltip.changePercent : lastValidTooltipRef.current?.changePercent) ?? 0).toFixed(2)}%)
+              </span>
+            </div>
+            <div className="text-gray-500 dark:text-gray-400 text-xs mt-1">
+              {(tooltip.visible ? tooltip.date : (lastValidTooltipRef.current?.date || new Date())).toLocaleDateString()}
             </div>
           </div>
         )}
@@ -583,10 +681,8 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
       
       {/* Time filter buttons at bottom - with fixed height and prominent styling */}
       <div className="h-[50px] flex justify-center items-center border-t border-soft border-opacity-50 pt-2 pb-2 bg-white dark:bg-gray-900 rounded-b-lg">
-        <div className="flex flex-wrap justify-center items-center gap-1">
+        <div className="flex justify-center items-center gap-1 sm:gap-2">
           {[
-            { id: '1D', label: '1D' },
-            { id: '1W', label: '1W' },
             { id: '1M', label: '1M' },
             { id: '3M', label: '3M' },
             { id: '1Y', label: '1Y' },
@@ -594,7 +690,7 @@ export function TradingViewChart({ symbol = 'BDS-O-0000', theme = 'light', perio
           ].map((periodOption) => (
             <button
               key={periodOption.id}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md mx-1 transition-colors ${
+              className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-colors ${
                 activePeriod === periodOption.id 
                   ? 'bg-indigo-900 text-white border border-soft border-opacity-50' 
                   : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 border border-soft border-opacity-30'

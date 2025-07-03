@@ -162,7 +162,7 @@ const HighLow = () => {
             </div>
             <input
               type="text"
-              className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-bdsec focus:border-bdsec block w-full pl-10 p-2.5"
+              className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-bdsec dark:focus:ring-indigo-500 focus:border-bdsec dark:focus:border-indigo-500 block w-full pl-10 p-2.5"
               placeholder={t('highLow.searchPlaceholder', 'Search stocks...')}
               value={searchTerm}
               onChange={handleSearch}
@@ -218,7 +218,7 @@ const HighLow = () => {
         <div className="overflow-x-auto">
           {loading ? (
             <div className="flex justify-center items-center py-20">
-              <div className="animate-spin h-8 w-8 border-4 border-bdsec border-t-transparent rounded-full"></div>
+              <div className="animate-spin h-8 w-8 border-4 border-bdsec dark:border-indigo-500 border-t-transparent rounded-full"></div>
             </div>
           ) : filteredData.length === 0 ? (
             <div className="text-center py-10">
