@@ -97,7 +97,7 @@ export default function FeePaymentPage() {
       // If all validations pass, proceed with invoice creation
       const result = await createOrRenewInvoice(token)
       if (result.success) {
-        const digipayUrl = result.data?.order?.digipayUrl;
+        const digipayUrl = result.data?.data?.order?.digipayUrl;
         
         if (digipayUrl) {
           // Ensure the URL uses HTTPS and redirect
@@ -107,7 +107,7 @@ export default function FeePaymentPage() {
           // Fallback if digipayUrl is missing
           console.error("Failed to extract digipayUrl from invoice response:", result);
           alert('Нэхэмжлэл амжилттай үүслээ, гэхдээ төлбөрийн хуудас олдсонгүй. Та банкны апп-аасаа төлбөрөө гүйцэтгэнэ үү.');
-          router.push('/profile');
+          // router.push('/profile');
         }
       } else {
         setError(result.message || "Failed to create payment invoice.")
