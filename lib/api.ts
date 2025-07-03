@@ -940,8 +940,19 @@ interface KhanUser {
   register: string;
   cif: string | null;
   userId: number;
-  registrationFee: number | null;
+  registrationFee: RegistrationFee | null;
   MCSDStateRequest: string | null;
+}
+interface RegistrationFee{
+  id: number,
+  digiId: string,
+  khanUserId: 2,
+  createdAt: Date,
+  updatedAt: Date,
+  status: "PENDING" |"COMPLETED",
+  mcsdError: string | null,
+  register: string,
+  expiresAt: Date
 }
 
 interface UserAccountResponse {
