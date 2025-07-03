@@ -41,19 +41,20 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   const [isGeneralInfoComplete, setIsGeneralInfoComplete] = useState<boolean | null>(null);
   const [feeInfoCompleted, setFeeInfoCompleted] = useState<boolean | null>(null);
   const [hasExistingMcsdAccount, setHasExistingMcsdAccount] = useState(false);
+  const [hasPaidFee, setHasPaidFeed] = useState<boolean>(false);
   
 
 
   const fetchStatus = async () => {
     const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
     if (!token) {
-      setIsLoggedIn(false);
-      setIsGeneralInfoComplete(false);
-      setFeeInfoCompleted(false);
+      setIsLoggedIn(prev => false);
+      setIsGeneralInfoComplete(prev => false);
+      setFeeInfoCompleted(prev => false);
       return;
     }
 
-    setIsLoggedIn(true);
+    setIsLoggedIn(prev => true);
 
     try {
       const [infoRes, invoiceRes] = await Promise.all([
@@ -61,11 +62,15 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
         checkInvoiceStatus(token)
       ]);
 
-      if (infoRes.success) setAccountInfo(infoRes.data);
+      if (infoRes.success) setAccountInfo(prev => infoRes.data);
       
       // Check if user already has an existing MCSD account
+      if(infoRes.data?.khanUser?.registrationFee?.status==="COMPLETED"){
+        setHasPaidFeed(prev => true);
+      }
       const hasExistingMcsd = !!(infoRes.success && infoRes.data?.MCSDAccount);
-      setHasExistingMcsdAccount(hasExistingMcsd);
+      setHasExistingMcsdAccount(prev => hasExistingMcsd);
+      
       
       // Enhanced general info completion detection
       let isGeneralComplete = false;
@@ -80,17 +85,17 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
       
       isGeneralComplete = hasNestedAccountData;
       
-      setIsGeneralInfoComplete(isGeneralComplete);
+      setIsGeneralInfoComplete(prev => isGeneralComplete);
 
       // Fee completion detection
       const invoiceStatus = invoiceRes?.data?.status;
       const feeCompleted = invoiceRes.success && invoiceStatus === 'PAID';
-      setFeeInfoCompleted(feeCompleted);
+      setFeeInfoCompleted(prev => feeCompleted);
 
     } catch (error) {
       console.error('SideMenu: Error fetching user data:', error);
-      setIsGeneralInfoComplete(false);
-      setFeeInfoCompleted(false);
+      setIsGeneralInfoComplete(prev => false);
+      setFeeInfoCompleted(prev => false);
     }
   }
 
@@ -99,7 +104,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
     fetchStatus();
     
     const handleAccountSetupChange = () => {
-      console.log('SideMenu: Account setup data changed event triggered');
+      // console.log('SideMenu: Account setup data changed event triggered');
       // Add a small delay to avoid excessive calls
       setTimeout(() => fetchStatus(), 100);
     };
@@ -190,9 +195,15 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
                   <span className="text-sm sm:text-base">{t('profile.generalInfo')}</span>
                 </Link>
                 <Link href="/account-setup/fee" onClick={onClose} className={`flex items-center p-3 rounded-lg transition-colors ${pathname === '/account-setup/fee' ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}> 
-                  <div className="mr-3">{renderStatusIcon(feeInfoCompleted)}</div>
+                  <div className="mr-3">{renderStatusIcon(hasPaidFee)}</div>
                   <span className="text-sm sm:text-base">{t('profile.accountFee')}</span>
                 </Link>
+                {hasPaidFee && (
+                  <Link href="/account-setup/opening-process" onClick={onClose} className={`flex items-center p-3 rounded-lg transition-colors ${pathname === '/account-setup/opening-process' ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}> 
+                    <div className="mr-3"><CircleDashed size={20} /></div>
+                    <span className="text-sm sm:text-base">{t('profile.accountProcess')}</span>
+                  </Link>
+                )}
               </li>
             )}
             

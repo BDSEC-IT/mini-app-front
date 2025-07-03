@@ -123,7 +123,9 @@ export default function FeePaymentPage() {
     const checkAccountStatus = async () => {
       const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
       if (!token) return;
+
       const statusResponse = await getAccountStatusRequest(token);
+      console.log("statusResponse",statusResponse)
       if (!statusResponse.success || !statusResponse.data) {
         alert('Та эхлээд ерөнхий мэдээллээ бүрэн бөглөнө үү.');
         router.replace('/account-setup/general');

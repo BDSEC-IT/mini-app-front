@@ -43,6 +43,7 @@
   },
 
   "profile": {
+    "accountProcess" :"Account Process",
     "name": "Bold Erdene",
     "kyc": "KYC Verification",
     "general": "General Information",

@@ -2,7 +2,7 @@ import { AccountSetupFormData, mongolianBanks } from './schemas';
 
 // API base URL
 export const BASE_URL = 'https://miniapp.bdsec.mn/apitest';
-
+export const BDSEC_MAIN = 'https://new.bdsec.mn/api/v1'
 interface StockData {
   pkId: number;
   id: number;
@@ -537,6 +537,58 @@ export const fetchAllStocks = async (): Promise<AllStocksResponse> => {
   }
 };
 
+
+export const fetchFAQ = async (): Promise<any> => {
+  const url = `${BDSEC_MAIN}/faq`;
+  type FAQType = {
+  id: number;
+  mnName: string;
+  enName: string;
+};
+
+type FAQ = {
+  id: number;
+  type_id: number;
+  mnQuestion: string;
+  enQuestion: string;
+  mnAnswer: string;
+  enAnswer: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+  FAQType: FAQType;
+};
+
+
+  try {
+  const response = await fetchWithTimeout(url)
+    const responseData = await response.json();
+  return (responseData as any).data as FAQ
+  } catch (error) {
+    
+  }
+};
+export const fetchFAQType = async (): Promise<any> => {
+  const url = `${BDSEC_MAIN}/faq/types`;
+  type FAQType = {
+  id: number;
+  mnName: string;
+  enName: string;
+  createdAt: string |null;
+  updatedAt: string | null;
+};
+
+
+
+  try {
+  const response = await fetchWithTimeout(url)
+    const responseData = await response.json();
+  return (responseData as any).data as FAQType
+  } catch (error) {
+    
+  }
+};
+
+
 export const fetchTradingHistory = async (symbol: string, page: number = 1, limit: number = 100): Promise<TradingHistoryResponse> => {
   const url = `${BASE_URL}/securities/trading-history?page=${page}&limit=${limit}&sortField&sortOrder=desc&symbol=${symbol}`;
   
@@ -792,7 +844,7 @@ export const digipayLogin = async (userIdKhan: string) => {
         success: true,
         message: 'Using mock token for development',
         data: {
-          token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDYyOTR9.y4IGXd76fqQcHQlve00vADg_sfuOvL3PKrH0W-05Y4E",
+          token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDg4MjN9.CP4XJIAlErOi8fwrQ-vmBA4XT_wzdvIXw2lZ1wFbBII",
           user: {
             userId: 3
           }
@@ -815,7 +867,7 @@ export const digipayLogin = async (userIdKhan: string) => {
       success: true,
       message: 'Using mock token for development',
       data: {
-        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDYyOTR9.y4IGXd76fqQcHQlve00vADg_sfuOvL3PKrH0W-05Y4E",
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDg4MjN9.CP4XJIAlErOi8fwrQ-vmBA4XT_wzdvIXw2lZ1wFbBII",
         user: {
           userId: 3
         }
@@ -940,8 +992,19 @@ interface KhanUser {
   register: string;
   cif: string | null;
   userId: number;
-  registrationFee: number | null;
+  registrationFee: RegistrationFee | null;
   MCSDStateRequest: string | null;
+}
+interface RegistrationFee{
+  id: number,
+  digiId: string,
+  khanUserId: 2,
+  createdAt: Date,
+  updatedAt: Date,
+  status: "PENDING" |"COMPLETED",
+  mcsdError: string | null,
+  register: string,
+  expiresAt: Date
 }
 
 interface UserAccountResponse {
