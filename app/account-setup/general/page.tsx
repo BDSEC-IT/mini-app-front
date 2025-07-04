@@ -18,7 +18,7 @@ import {
 import FormField from '@/components/ui/FormField'
 import { ArrowLeft, ArrowRight, Check, AlertCircle, CreditCard, Edit, CheckCircle } from 'lucide-react'
 import Cookies from 'js-cookie'
-import { getAccountStatusRequest, sendAccountStatusRequest, createOrRenewInvoice, getUserAccountInformation, getRegistrationNumber, sendRegistrationNumber, BASE_URL } from '@/lib/api'
+import { getAccountStatusRequest, sendAccountStatusRequest, createOrRenewInvoice, getUserAccountInformation, getRegistrationNumber, sendRegistrationNumber, BASE_URL, checkInvoiceStatus } from '@/lib/api'
 
 export default function GeneralInfoPage() {
   const { t } = useTranslation()
@@ -345,14 +345,14 @@ export default function GeneralInfoPage() {
       
       const bankCode = summaryData?.BankCode || summaryData?.bankCode;
       const bankName = banks.find(b => b.BankCode === bankCode)?.BankName || (summaryData?.BankName || summaryData?.bankName || bankCode);
-
+      console.log("summaryData",summaryData)
       const isPaid = summaryData?.invoiceStatus === 'PAID';
 
       return (
           <div>
               <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Таны мэдээлэл</h2>
-                  <button onClick={onEdit} className="text-sm text-bdsec dark:text-indigo-400 hover:underline flex items-center gap-1">
+                  <button onClick={onEdit} disabled={isPaid} className="disabled:opacity-50 text-sm text-bdsec dark:text-indigo-400 hover:underline flex items-center gap-1">
                       <Edit size={14}/> Засварлах
                   </button>
               </div>
@@ -393,10 +393,12 @@ export default function GeneralInfoPage() {
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                               Таны данс нээх хүсэлтийг хянаж байна.
                           </p>
-                      </div>
+                      </div>  
                   ) : (
                       <button
-                          onClick={handlePayment}
+                          onClick={()=>{
+                            router.push('/account-setup/fee');
+                          }}
                           disabled={isProcessing}
                           className="w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                       >
@@ -501,7 +503,16 @@ export default function GeneralInfoPage() {
                     // console.log('Type of statusResponse.data:', typeof statusResponse.data);
                     
                     // Fix: Set only the data portion, not the entire response
-                    setSummaryData(statusResponse.data);
+                    const invoiceStatus = await checkInvoiceStatus(existingToken);
+                    if(invoiceStatus.success && invoiceStatus.data?.data?.registrationFee?.status === 'COMPLETED'){
+                      statusResponse.data.data.invoiceStatus = 'PAID';
+                      setSummaryData(statusResponse.data);
+                      setViewMode('summary');
+                      return
+                    }
+                    else{
+                      setSummaryData(statusResponse.data);
+                    }
                     setViewMode('summary');
                     
                     // Pre-populate form data for edit mode
