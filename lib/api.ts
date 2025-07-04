@@ -949,8 +949,9 @@ interface RegistrationFee{
   khanUserId: 2,
   createdAt: Date,
   updatedAt: Date,
-  status: "PENDING" |"COMPLETED",
+  status: "PENDING" | "COMPLETED" | "ERROR",
   mcsdError: string | null,
+  message?: string,
   register: string,
   expiresAt: Date
 }

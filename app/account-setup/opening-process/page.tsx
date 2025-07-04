@@ -1,208 +1,189 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, CreditCard } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Clock, ArrowRight } from 'lucide-react'
 import Cookies from 'js-cookie'
-import { createOrRenewInvoice, getAccountStatusRequest } from '@/lib/api'
+import { getUserAccountInformation } from '@/lib/api'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
-export default function FeePaymentPage() {
-  const { t } = useTranslation()
+export default function AccountOpeningProcess() {
   const router = useRouter()
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const handlePayment = async () => {
-    setIsProcessing(true)
-    setError(null)
-    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token')
-
-    if (!token) {
-      setError("Authentication token not found. Please log in again.")
-      setIsProcessing(false)
-      return
-    }
-
-    try {
-      // First, validate that account status request has all required fields
-      const statusResponse = await getAccountStatusRequest(token);
-      if (!statusResponse.success || !statusResponse.data) {
-        setError("Failed to get account status. Please complete your account setup first.");
-        alert("Алдаа: Дансны мэдээлэл олдсонгүй. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
-        setIsProcessing(false);
-        return;
-      }
-
-      const accountData = statusResponse.data;
-      
-      // Debug: Log the actual account data structure
-      console.log('=== FEE PAGE ACCOUNT STATUS DEBUG ===');
-      console.log('Account data:', accountData);
-      console.log('Account data keys:', Object.keys(accountData || {}));
-      console.log('Backend validation:', (statusResponse.data as any)?.validation);
-      console.log('=== END DEBUG ===');
-      
-      // Trust the backend's validation if it exists
-      const backendValidation = (statusResponse.data as any)?.validation;
-      if (backendValidation && backendValidation.isValid === false) {
-        console.error('Backend validation failed:', backendValidation);
-        setError("Account setup is incomplete. Please complete your account setup first.");
-        alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
-        setIsProcessing(false);
-        return;
-      }
-      
-      // Fallback validation only if backend doesn't provide validation
-      if (!backendValidation) {
-        // Check for required fields - if any are null, account status creation failed
-        // Check both PascalCase and camelCase field names since backend might return either
-        const requiredFields = [
-          { pascalCase: 'FirstName', camelCase: 'firstName' },
-          { pascalCase: 'LastName', camelCase: 'lastName' },
-          { pascalCase: 'RegistryNumber', camelCase: 'registryNumber' },
-          { pascalCase: 'MobilePhone', camelCase: 'mobilePhone' },
-          { pascalCase: 'Gender', camelCase: 'gender' },
-          { pascalCase: 'BirthDate', camelCase: 'birthDate' },
-          { pascalCase: 'HomeAddress', camelCase: 'homeAddress' },
-          { pascalCase: 'BankCode', camelCase: 'bankCode' },
-          { pascalCase: 'BankAccountNumber', camelCase: 'bankAccountNumber' },
-          { pascalCase: 'Country', camelCase: 'country' } // Backend returns 'Country' field
-        ];
-        
-        const missingFields = requiredFields.filter(field => {
-          const pascalValue = accountData[field.pascalCase];
-          const camelValue = accountData[field.camelCase];
-          const value = pascalValue !== undefined ? pascalValue : camelValue;
-          return value === null || value === undefined || value === '';
-        });
-
-        if (missingFields.length > 0) {
-          console.error('Account status validation failed. Missing fields:', missingFields);
-          console.error('Account data:', accountData);
-          setError("Account setup is incomplete. Some required fields are missing. Please complete your account setup first.");
-          alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
-          setIsProcessing(false);
-          return;
-        }
-      }
-
-      // Debug: Test token with a known working endpoint first
-      console.log('=== TOKEN TEST DEBUG ===');
-      console.log('Testing token with getAccountStatusRequest first...');
-      const testResponse = await getAccountStatusRequest(token);
-      console.log('Token test result:', testResponse.success ? 'SUCCESS' : 'FAILED');
-      console.log('=== END TOKEN TEST ===');
-
-      // If all validations pass, proceed with invoice creation
-      const result = await createOrRenewInvoice(token)
-      if (result.success) {
-        const digipayUrl = result.data?.data?.order?.digipayUrl;
-        
-        if (digipayUrl) {
-          // Ensure the URL uses HTTPS and redirect
-          let secureUrl = digipayUrl.startsWith('http:') ? digipayUrl.replace('http:', 'https:') : digipayUrl;
-          window.location.assign(secureUrl);
-        } else {
-          // Fallback if digipayUrl is missing
-          console.error("Failed to extract digipayUrl from invoice response:", result);
-          alert('Нэхэмжлэл амжилттай үүслээ, гэхдээ төлбөрийн хуудас олдсонгүй. Та банкны апп-аасаа төлбөрөө гүйцэтгэнэ үү.');
-          // router.push('/profile');
-        }
-      } else {
-        setError(result.message || "Failed to create payment invoice.")
-      }
-    } catch (e: any) {
-      setError(e.message || "An unexpected error occurred.")
-    } finally {
-      setIsProcessing(false)
-    }
-  }
+  const { t } = useTranslation()
+  const [status, setStatus] = useState<'loading' | 'waiting_submission' | 'waiting_approval' | 'error' | 'success'>('loading')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token')
 
   useEffect(() => {
-    const checkAccountStatus = async () => {
-      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
-      if (!token) return;
+    const fetchData = async () => {
+      try {
+        const data = await getUserAccountInformation(token)
+        console.log("Account opening process data:", data)
 
-      const statusResponse = await getAccountStatusRequest(token);
-      console.log("statusResponse",statusResponse)
-      if (!statusResponse.success || !statusResponse.data) {
-        alert('Та эхлээд ерөнхий мэдээллээ бүрэн бөглөнө үү.');
-        router.replace('/account-setup/general');
-        return;
-      }
-      const accountData = statusResponse.data;
-      
-      // Trust the backend's validation if it exists
-      const backendValidation = (statusResponse.data as any)?.validation;
-      if (backendValidation && backendValidation.isValid === false) {
-        alert('Та эхлээд ерөнхий мэдээллээ бүрэн бөглөнө үү.');
-        router.replace('/account-setup/general');
-        return;
-      }
-      
-      // Fallback validation only if backend doesn't provide validation
-      if (!backendValidation) {
-        const requiredFields = [
-          { pascalCase: 'FirstName', camelCase: 'firstName' },
-          { pascalCase: 'LastName', camelCase: 'lastName' },
-          { pascalCase: 'RegistryNumber', camelCase: 'registryNumber' },
-          { pascalCase: 'MobilePhone', camelCase: 'mobilePhone' },
-          { pascalCase: 'Gender', camelCase: 'gender' },
-          { pascalCase: 'BirthDate', camelCase: 'birthDate' },
-          { pascalCase: 'HomeAddress', camelCase: 'homeAddress' },
-          { pascalCase: 'BankCode', camelCase: 'bankCode' },
-          { pascalCase: 'BankAccountNumber', camelCase: 'bankAccountNumber' },
-          { pascalCase: 'Country', camelCase: 'country' }
-        ];
-        const missingFields = requiredFields.filter(field => {
-          const pascalValue = accountData[field.pascalCase];
-          const camelValue = accountData[field.camelCase];
-          const value = pascalValue !== undefined ? pascalValue : camelValue;
-          return value === null || value === undefined || value === '';
-        });
-        if (missingFields.length > 0) {
-          alert('Та эхлээд ерөнхий мэдээллээ бүрэн бөглөнө үү.');
-          router.replace('/account-setup/general');
+        if (!data.data?.khanUser?.registrationFee) {
+          router.replace('/account-setup/general')
+          return
         }
+
+        // Error case: MCSD returned with error message
+        if (data.data?.khanUser?.registrationFee?.status ) {
+          setStatus('error')
+          setErrorMessage(data.data.khanUser.registrationFee.mcsdError || t('common.error.generic'))
+          return
+        }
+
+        // Success case: Account is approved
+        if (data.data?.MCSDAccount?.approved === "COMPLETED") {
+          setStatus('success')
+          return
+        }
+
+        // Step 1: Fee paid but not sent to MCSD
+        if (data.data?.khanUser?.registrationFee?.status === 'COMPLETED' && !data.data?.MCSDAccount) {
+          setStatus('waiting_submission')
+          return
+        }
+
+        // Step 2: Sent to MCSD but waiting approval
+        if (data.data?.MCSDAccount && data.data?.MCSDAccount?.approved !== "COMPLETED") {
+          setStatus('waiting_approval')
+          return
+        }
+
+        router.replace('/account-setup/general')
+      } catch (error) {
+        console.error('Error fetching account status:', error)
+        setStatus('error')
+        setErrorMessage(t('common.error.generic', 'Something went wrong. Please try again later.'))
       }
-    };
-    checkAccountStatus();
-  }, [router]);
+    }
+    fetchData()
+  }, [router, t, token])
+
+  const renderContent = () => {
+    switch (status) {
+      case 'loading':
+        return (
+          <div className="text-center p-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-bdsec mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">{t('common.loading')}</p>
+          </div>
+        )
+
+      case 'waiting_submission':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 mt-1">
+                <Clock className="h-6 w-6 text-yellow-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  {t('profile.waitingSubmission')}
+                </h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  {t('profile.waitingSubmissionDesc')}
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+                <span>{t('profile.processingTime')}</span>
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'waiting_approval':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 mt-1">
+                <Clock className="h-6 w-6 text-blue-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  {t('profile.waitingApproval')}
+                </h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  {t('profile.waitingApprovalDesc')}
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <div className="w-3 h-3 bg-blue-500 rounded-full" />
+                <span>{t('profile.underReview')}</span>
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'error':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 mt-1">
+                <AlertCircle className="h-6 w-6 text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  {t('profile.accountOpeningError')}
+                </h3>
+                <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                  {errorMessage || t('common.error.generic')}
+                </p>
+                <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>Та регистрийн дугаараа зөв оруулсан эсэхээ шалгаарай. Хэрэв буруу оруулсан бол регистрийн дугаараа зөв оруулна уу. Регистрийн дугаар зөв бол та аль хэдийн БиДиСЕКд үнэт цаасны данстай байна.</p>
+                <button
+                  onClick={() => router.push('/account-setup/general')}
+                  className="disabled mt-4 inline-flex items-center text-sm font-medium text-red-500 hover:text-red-500/80"
+                >
+                  {t('profile.updateInformation')}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'success':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 mt-1">
+                <CheckCircle2 className="h-6 w-6 text-green-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  {t('profile.accountOpeningSuccess')}
+                </h3>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  {t('profile.accountOpeningSuccessDesc')}
+                </p>
+                <button
+                  onClick={() => router.push('/')}
+                  className="mt-4 inline-flex items-center text-sm font-medium text-bdsec hover:text-bdsec/80"
+                >
+                  {t('profile.goToDashboard')}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+    }
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
       <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-        <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
-          {t('profile.accountFee', 'Данс нээх хураамж')}
+        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
+          {t('profile.accountOpeningProcess')}
         </h1>
         
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-            <div className="flex">
-              <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-            </div>
-          </div>
-        )}
-
-        <div className="text-center p-6 border-t border-gray-200 dark:border-gray-700 mt-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-            {t('profile.paymentRequired', 'Нэхэмжлэл үүсгэх')}
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            {t('profile.paymentFeeDescription', 'Данс нээлтийн хураамж 5,000₮-ийн нэхэмжлэлийг үүсгэж, төлбөрөө төлнө үү.')}
-          </p>
-          <button
-            onClick={handlePayment}
-            disabled={isProcessing}
-            className="w-full px-6 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <CreditCard className="h-5 w-5" />
-            {isProcessing 
-              ? t('profile.processing', 'Боловсруулж байна...') 
-              : t('profile.createInvoice', 'Нэхэмжлэл үүсгэх (5,000₮)')}
-          </button>
+        <div className="space-y-8">
+          {renderContent()}
         </div>
       </div>
     </div>

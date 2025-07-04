@@ -174,7 +174,19 @@
     "brokerAccountWithMcsd": "Your broker account will be created with your MCSD account",
     "backToProfile": "Back to Profile",
     "completed": "Completed",
-    "payAccountOpeningFee": "Pay account opening fee (8000₮)"
+    "payAccountOpeningFee": "Pay account opening fee (8000₮)",
+    "accountOpeningProcess": "Account Opening Process",
+    "waitingSubmission": "Waiting for MCSD Submission",
+    "waitingSubmissionDesc": "Your registration fee has been paid. Your information will be submitted to MCSD within 72 hours. Please check back later.",
+    "waitingApproval": "Waiting for MCSD Approval",
+    "waitingApprovalDesc": "Your information has been submitted to MCSD and is currently under review. Please check back later for updates.",
+    "accountOpeningError": "Account Opening Error",
+    "accountOpeningSuccess": "Account Opening Successful",
+    "accountOpeningSuccessDesc": "Your trading account has been successfully opened. You can now start trading!",
+    "processingTime": "Processing time: Up to 72 hours",
+    "underReview": "Under review by MCSD",
+    "updateInformation": "Update Information",
+    "goToDashboard": "Go to Dashboard"
   },
   "menu": {
     "about": "ABOUT US",

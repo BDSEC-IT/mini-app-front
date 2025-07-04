@@ -61,7 +61,8 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
         getUserAccountInformation(token),
         checkInvoiceStatus(token)
       ]);
-
+      console.log("infoRes",infoRes)
+      console.log("invoiceRes",invoiceRes)
       if (infoRes.success) setAccountInfo(prev => infoRes.data);
       
       // Check if user already has an existing MCSD account
