@@ -3,8 +3,127 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react'
-import { fetchFAQ, fetchFAQType } from '@/lib/api'
 
+// Define the FAQ API base URL - using Next.js proxy to avoid CORS issues
+const FAQ_API_BASE_URL = '/api/faq'
+
+// Sample data as fallback
+const SAMPLE_FAQ_TYPES = [
+  {
+    "id": 1,
+    "mnName": "Хувьцаа",
+    "enName": "Stock",
+    "createdAt": null,
+    "updatedAt": null
+  },
+  {
+    "id": 2,
+    "mnName": "Бонд ",
+    "enName": "Bond",
+    "createdAt": null,
+    "updatedAt": null
+  },
+  {
+    "id": 3,
+    "mnName": "Арилжаанд оролцох",
+    "enName": "Trading",
+    "createdAt": null,
+    "updatedAt": null
+  },
+  {
+    "id": 4,
+    "mnName": "Данс нээх",
+    "enName": "Opening account",
+    "createdAt": null,
+    "updatedAt": null
+  },
+  {
+    "id": 5,
+    "mnName": "1072 хувьцаа",
+    "enName": "1072 stock",
+    "createdAt": null,
+    "updatedAt": null
+  }
+];
+
+// Sample FAQ items as fallback (first 5 items from the provided data)
+const SAMPLE_FAQ_ITEMS = [
+  {
+    "id": 1,
+    "type_id": 1,
+    "mnQuestion": "Хувьцаа гэж юу вэ?",
+    "enQuestion": null,
+    "mnAnswer": "Хувьцаа гэдэг нь хувь хүн, хуулийн этгээд тодорхой нэг компанид хөрөнгө оруулалт хийснийг баталгаажуулсан үнэт цаас юм. Хувьцаа эзэмшигч нь тухайн компанийн ашиг орлогоос ногдол ашиг авах, мөн хөрөнгийн зах зээл дээр хувьцаагаа арилжих замаар ханшийн зөрүүнээс ашиг олох боломжтой. Түүнчлэн компани татан буугдсан тохиолдолд хуульд заасан журмын дагуу үлдсэн эд хөрөнгийг борлуулсан орлогоос тодорхой хувийг хүртэх эрхтэй байдаг.",
+    "enAnswer": null,
+    "createdAt": null,
+    "updatedAt": null,
+    "FAQType": {
+      "id": 1,
+      "mnName": "Хувьцаа",
+      "enName": "Stock"
+    }
+  },
+  {
+    "id": 2,
+    "type_id": 1,
+    "mnQuestion": "Хувьцааны ханшийг хэрхэн харах вэ ?",
+    "enQuestion": null,
+    "mnAnswer": "Та BDSec апп-ын нүүр хуудас болон Монголын хөрөнгийн биржийн mse.mn вэб сайтаас компанийн хувьцаа бүрийн ханшийн мэдээллийг хугацааны үечлэлээр харах боломжтой.",
+    "enAnswer": null,
+    "createdAt": null,
+    "updatedAt": null,
+    "FAQType": {
+      "id": 1,
+      "mnName": "Хувьцаа",
+      "enName": "Stock"
+    }
+  },
+  {
+    "id": 7,
+    "type_id": 2,
+    "mnQuestion": "Бонд гэж юу вэ?",
+    "enQuestion": null,
+    "mnAnswer": "Бонд гэдэг нь тогтмол орлоготой, эрсдэл багатай үнэт цаас юм. Компанийн болон засгийн газрын бондод хөрөнгө оруулж байгаа нь тухайн компани болон засгийн газарт мөнгө зээлж байна гэсэн ба тодорхой хугацааны дараа үндсэн мөнгө болон хүүг эргэн төлөлтийн хуваарийн дагуу буцаан авдаг.",
+    "enAnswer": null,
+    "createdAt": null,
+    "updatedAt": null,
+    "FAQType": {
+      "id": 2,
+      "mnName": "Бонд ",
+      "enName": "Bond"
+    }
+  },
+  {
+    "id": 9,
+    "type_id": 3,
+    "mnQuestion": "Хэрхэн арилжаанд орж захиалга өгөх вэ?",
+    "enQuestion": null,
+    "mnAnswer": "Та үнэт цаасны арилжаанд оролцохын тулд заавал үнэт цаасны данстай байх шаардлагатай бөгөөд хэрэв та данстай бол \"Арилжаа\" цэс рүү хандаж, тухайн хувьцааг авах эсвэл зарах захиалга өгөх боломжтой",
+    "enAnswer": null,
+    "createdAt": null,
+    "updatedAt": null,
+    "FAQType": {
+      "id": 3,
+      "mnName": "Арилжаанд оролцох",
+      "enName": "Trading"
+    }
+  },
+  {
+    "id": 14,
+    "type_id": 4,
+    "mnQuestion": "Хэрхэн онлайн данс нээх вэ ?",
+    "enQuestion": null,
+    "mnAnswer": "Онлайнаар данс нээх : Хэрэв та үнэт цаасны дансгүй бол BDSec апп руу нэвтрэх үед танд Нүүр цэсний дээд талд \"Данс нээх\" харагдах бөгөөд та шаардлагатай мэдээллийг бүрэн бөглөж, дансны хураамж төлснөөр данс нээгдэнэ.",
+    "enAnswer": null,
+    "createdAt": null,
+    "updatedAt": null,
+    "FAQType": {
+      "id": 4,
+      "mnName": "Данс нээх",
+      "enName": "Opening account"
+    }
+  }
+];
 
 interface FAQType {
   id: number;
@@ -12,7 +131,7 @@ interface FAQType {
   enName: string;
 }
 
-
+// Custom type for our categories including the "all" option
 interface CategoryType {
   id: number | 'all';
   mnName: string;
@@ -28,6 +147,7 @@ interface FAQItem {
   enAnswer: string | null;
   FAQType: FAQType;
 }
+
 const FAQ = () => {
   const { t, i18n } = useTranslation()
   const [searchTerm, setSearchTerm] = useState('')
@@ -37,20 +157,65 @@ const FAQ = () => {
   const [faqItems, setFaqItems] = useState<FAQItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
   const currentLanguage = i18n.language || 'mn'
+  
   useEffect(() => {
     const fetchFAQData = async () => {
       setLoading(true)
       setError(null)
-      const data= await fetchFAQ();
-      const dataType = await fetchFAQType();
-      setFaqItems(data)
-      setFaqTypes(dataType)
-      console.log("data arrived,",data);
-      setLoading(false);
+      
+      try {
+        // Fetch FAQ types using the proxy
+        const typesResponse = await fetch(`${FAQ_API_BASE_URL}/types`)
+        
+        if (!typesResponse.ok) {
+          console.error('FAQ Types API error:', typesResponse.status, typesResponse.statusText)
+          throw new Error(`Failed to fetch FAQ categories: ${typesResponse.status} ${typesResponse.statusText}`)
+        }
+        
+        const typesData = await typesResponse.json()
+        console.log('FAQ Types API response:', typesData)
+        
+        // Fetch FAQ items using the proxy
+        const itemsResponse = await fetch(`${FAQ_API_BASE_URL}`)
+        
+        if (!itemsResponse.ok) {
+          console.error('FAQ Items API error:', itemsResponse.status, itemsResponse.statusText)
+          throw new Error(`Failed to fetch FAQ items: ${itemsResponse.status} ${itemsResponse.statusText}`)
+        }
+        
+        const itemsData = await itemsResponse.json()
+        console.log('FAQ Items API response:', itemsData)
+        
+        // Check if we have valid data
+        if (!typesData.data || !Array.isArray(typesData.data)) {
+          console.error('Invalid FAQ types data format:', typesData)
+          throw new Error('Invalid FAQ types data format')
+        }
+        
+        if (!itemsData.data || !Array.isArray(itemsData.data)) {
+          console.error('Invalid FAQ items data format:', itemsData)
+          throw new Error('Invalid FAQ items data format')
+        }
+        
+        setFaqTypes(typesData.data)
+        setFaqItems(itemsData.data)
+      } catch (err) {
+        console.error('Error fetching FAQ data:', err)
+        console.log('Using sample data as fallback')
+        // Use sample data as fallback
+        setFaqTypes(SAMPLE_FAQ_TYPES)
+        setFaqItems(SAMPLE_FAQ_ITEMS)
+        setError(null) // Clear error since we're using fallback data
+      } finally {
+        setLoading(false)
+      }
     }
+    
     fetchFAQData()
   }, [])
+  
   const toggleItem = (index: number) => {
     if (openItems.includes(index)) {
       setOpenItems(openItems.filter(item => item !== index))
@@ -58,6 +223,7 @@ const FAQ = () => {
       setOpenItems([...openItems, index])
     }
   }
+  
   const filteredItems = faqItems.filter(item => {
     const matchesSearch = searchTerm === '' || 
       (currentLanguage === 'mn' ? 
@@ -70,6 +236,7 @@ const FAQ = () => {
     
     return matchesSearch && matchesCategory
   })
+
   const getCategories = () => {
     const allCategory = { id: 'all' as const, mnName: t('faq.all'), enName: t('faq.all') }
     return [allCategory, ...faqTypes] as CategoryType[]

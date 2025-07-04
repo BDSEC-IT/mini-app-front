@@ -60,7 +60,7 @@ const AboutUs = () => {
         {/* Main content with side-by-side layout */}
         <div className="flex flex-row gap-2 md:gap-4 mb-8 px-4 md:px-6">
           {/* Left column with Company Image and Services */}
-          <div className="w-2/3 pr-1 md:pr-0">
+          <div className="w-3/4 pr-1 md:pr-0">
             {/* Company Image */}
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg w-full flex items-center justify-center mb-6 overflow-hidden">
               <img 
@@ -103,7 +103,7 @@ const AboutUs = () => {
           </div>
           
           {/* Right column with Market Movers - always shown to the right */}
-          <div className="w-1/3">
+          <div className="w-2/4 sm:w-1/3  px-2 sm:px-0">
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-full">
               {/* Top Gainers */}
               <div className="border-l-2 border-green-500 dark:border-green-600 p-2.5 mb-1">
