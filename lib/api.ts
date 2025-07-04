@@ -2,7 +2,7 @@ import { AccountSetupFormData, mongolianBanks } from './schemas';
 
 // API base URL
 export const BASE_URL = 'https://miniapp.bdsec.mn/apitest';
-
+export const BDSEC_MAIN = 'https://new.bdsec.mn/api/v1'
 interface StockData {
   pkId: number;
   id: number;
@@ -536,6 +536,58 @@ export const fetchAllStocks = async (): Promise<AllStocksResponse> => {
     }
   }
 };
+
+
+export const fetchFAQ = async (): Promise<any> => {
+  const url = `${BDSEC_MAIN}/faq`;
+  type FAQType = {
+  id: number;
+  mnName: string;
+  enName: string;
+};
+
+type FAQ = {
+  id: number;
+  type_id: number;
+  mnQuestion: string;
+  enQuestion: string;
+  mnAnswer: string;
+  enAnswer: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+  FAQType: FAQType;
+};
+
+
+  try {
+  const response = await fetchWithTimeout(url)
+    const responseData = await response.json();
+  return (responseData as any).data as FAQ
+  } catch (error) {
+    
+  }
+};
+export const fetchFAQType = async (): Promise<any> => {
+  const url = `${BDSEC_MAIN}/faq/types`;
+  type FAQType = {
+  id: number;
+  mnName: string;
+  enName: string;
+  createdAt: string |null;
+  updatedAt: string | null;
+};
+
+
+
+  try {
+  const response = await fetchWithTimeout(url)
+    const responseData = await response.json();
+  return (responseData as any).data as FAQType
+  } catch (error) {
+    
+  }
+};
+
 
 export const fetchTradingHistory = async (symbol: string, page: number = 1, limit: number = 100): Promise<TradingHistoryResponse> => {
   const url = `${BASE_URL}/securities/trading-history?page=${page}&limit=${limit}&sortField&sortOrder=desc&symbol=${symbol}`;
