@@ -462,29 +462,28 @@ const DashboardContent = () => {
             </div>
             
             {/* Filter Tabs */}
-            <div className="flex gap-2 mt-2 flex-wrap pb-2">
+       <div className="flex gap-2 mt-2 pb-4 overflow-x-auto flex-nowrap sm:flex-wrap no-scrollbar">
               {[
-                { id: 'trending', label: t('dashboard.trending'), icon: TrendingUp },
-                { id: 'mostActive', label: t('dashboard.mostActive'), icon: Activity },
-                { id: 'gainers', label: t('dashboard.gainers'), icon: ArrowUp },
-                { id: 'losers', label: t('dashboard.losers'), icon: ArrowDown }
-              ].map((filter) => (
-                <button
+                 { id: 'trending', label: t('dashboard.trending'), icon: TrendingUp },
+                 { id: 'mostActive', label: t('dashboard.mostActive'), icon: Activity },
+                  { id: 'gainers', label: t('dashboard.gainers'), icon: ArrowUp },
+               { id: 'losers', label: t('dashboard.losers'), icon: ArrowDown }
+                   ].map((filter) => (
+    <button
                   key={filter.id}
-                  className={`px-4 py-2 text-sm rounded-full whitespace-nowrap flex items-center ${
-                    activeFilter === filter.id
-                      ? 'bg-bdsec dark:bg-bdsec-dark  text-white'
-                      : 'border text-gray-500'
-                  }`}
-                  onClick={() => setActiveFilter(filter.id)}
-                >
-                  <filter.icon size={14} className="mr-1" />
-                  {filter.label}
-                </button>
-              ))}
-              
-             
-            </div>
+                  className={`px-3 py-1 text-xs sm:text-sm rounded-full whitespace-nowrap flex items-center ${
+                     activeFilter === filter.id
+                        ? 'bg-bdsec dark:bg-bdsec-dark text-white'
+                       : 'border text-gray-500'
+      }`}
+      onClick={() => setActiveFilter(filter.id)}
+    >
+      <filter.icon size={12} className="mr-1" />
+      {filter.label}
+    </button>
+  ))}
+</div>
+
             
             {/* Stock Cards Carousel */}
             <div className="mt-4" ref={animationParent}>
@@ -533,7 +532,7 @@ const DashboardContent = () => {
                                 </div>
                               </div>
                               <div className="mt-2">
-                                <p className="font-medium text-gray-800 truncate dark:text-gray-200" title={stock.mnName || stock.enName}>{stock.mnName || stock.enName}</p>
+                                <p className="font-medium text-gray-800 truncate text-s dark:text-gray-200" title={stock.mnName || stock.enName}>{stock.mnName || stock.enName}</p>
                               </div>
                               <div className="mt-4">
                                 <p className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</p>
