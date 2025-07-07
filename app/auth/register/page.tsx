@@ -78,7 +78,7 @@ export default function RegisterPage() {
     setResponseStatus({ type: null, message: null })
     
     try {
-      const response = await sendRegistrationNumber(registerNumber, nationality, token || undefined)
+      const response = await sendRegistrationNumber(registerNumber, nationality, token! )
       
       if (response.success) {
         // Handle different success cases
