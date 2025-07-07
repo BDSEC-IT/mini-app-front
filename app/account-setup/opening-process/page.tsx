@@ -3,9 +3,10 @@
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, CheckCircle2, Clock, ArrowRight } from 'lucide-react'
 import Cookies from 'js-cookie'
-import { BASE_URL, getUserAccountInformation } from '@/lib/api'
+import { BASE_URL, getUpdateMCSDStatus, getUserAccountInformation } from '@/lib/api'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import AccountFixFormMCSD from './AccountFixFormMCSD'
 
 export default function AccountOpeningProcess() {
   const router = useRouter()
@@ -16,6 +17,7 @@ export default function AccountOpeningProcess() {
   const [newRegNumber, setNewRegNumber] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
   const token = Cookies.get('token') 
 
   const handleUpdateRegistryNumber = async (e: React.FormEvent) => {
@@ -131,7 +133,28 @@ export default function AccountOpeningProcess() {
 
         // Step 2: Sent to MCSD but waiting approval
         if (data.data?.MCSDAccount && data.data?.MCSDAccount?.DGStatus === "PENDING") {
-          setStatus('waiting_approval')
+          const mcsdStatus=await getUpdateMCSDStatus(token!)
+          console.log("mcsdStatus",mcsdStatus)
+          if(mcsdStatus.success){
+            if(mcsdStatus.accountOpened){
+            setStatus('success')
+              alert("Таны данс амжилттай нээгдлээ")
+              router.push('/')
+              return
+            }
+            else{
+              // alert(mcsdStatus.message)
+              setStatus('waiting_approval')
+              return
+            }
+          }
+          else{
+
+            alert(mcsdStatus.message)
+            router.push('/account-setup/general')
+            return
+            // setStatus('error')
+          }
           return
         }
      
@@ -217,6 +240,24 @@ export default function AccountOpeningProcess() {
                 <div className="w-3 h-3 bg-blue-500 rounded-full" />
                 <span>{t('profile.underReview', 'Шалгаж байна')}</span>
               </div>
+            </div>
+            <div className="mt-6">
+              {!isEditMode ? (
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Та мэдээллээ шинэчлэхийг хүсэж байна уу? Энэ үйлдлийг буцаах боломжгүй.')) {
+                        setIsEditMode(true);
+                      }
+                    }}
+                    className="px-4 py-2 bg-bdsec text-white rounded-md hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors"
+                  >
+                    Мэдээллээ шинэчлэх
+                  </button>
+                </div>
+              ) : (
+                <AccountFixFormMCSD token={token!}/>
+              )}
             </div>
           </div>
         )

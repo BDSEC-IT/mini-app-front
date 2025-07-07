@@ -1144,6 +1144,41 @@ export const getUserAccountInformation = async (token?: string): Promise<UserAcc
     }
   }
 }
+export const getUpdateMCSDStatus=async(token:string)=>{
+  const url = `${BASE_URL}/user/get-update-mcsd-status`;
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+        return{ ...data.data,success:true }as {
+          success: boolean,
+          accountOpened: boolean,
+          message: string,
+        };
+    } else {
+      return {
+        success: false,
+        message: data.message || 'Failed to fetch MCSD request status',
+        accountOpened: false,
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching MCSD request status:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch MCSD request status',
+      errorCode: 'UNKNOWN_ERROR'
+    };
+  }
+}
 
 interface AccountSetupResponse {
   success: boolean;
@@ -1241,7 +1276,19 @@ export const sendAccountStatusRequest = async (data: any, token: string) => {
     };
   }
 };
-
+//get acc from mcsd
+export const getAccountRequest=async(token:string)=>{
+  const url = `${BASE_URL}/user/get-account-request`;
+  const response = await fetchWithTimeout(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  return data;
+}
 // Get account status request
 export const getAccountStatusRequest = async (token: string) => {
   try {
