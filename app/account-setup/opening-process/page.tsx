@@ -61,6 +61,28 @@ export default function AccountOpeningProcess() {
       setIsSubmitting(false)
     }
   }
+  const handleOpenAccountError = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/user/resend-form-to-mcsd`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      const data = await response.json();
+      console.log("data opening",data)
+      if (response.ok) {
+        alert(t('profile.resendSuccess', 'Амжилттай илгээгдлээ. Та түр хүлээнэ үү.'));
+        window.location.reload();
+      } else {
+        alert(t('profile.resendError', 'Алдаа гарлаа. Дахин оролдоно уу.'));
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert(t('profile.resendError', 'Алдаа гарлаа. Дахин оролдоно уу.'));
+    }
+  };
 
   const handleRegNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewRegNumber(e.target.value.toUpperCase())
@@ -204,7 +226,7 @@ export default function AccountOpeningProcess() {
       case 'error':
        {const ResponseMessage=accountData?.khanUser?.registrationFee?.mcsdError
         const match = ResponseMessage.match(/"([A-Za-z]+)"/);
-        const isRegistryError=match[1]==="RegistryNumber"
+        const isRegistryError=(match&&match[1]==="RegistryNumber")
         let regId = null
         if(isRegistryError){
           const matches = ResponseMessage.match(/"([\u0400-\u04FF0-9A-Za-z-]+)"/g);
@@ -225,7 +247,7 @@ export default function AccountOpeningProcess() {
                 <p className="mt-2 text-sm text-red-600 dark:text-red-400">
                   {errorMessage || t('common.error.generic')}
                 </p>
-                <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>{isRegistryError&&regId ? `${regId} дугаартай регистер өмнө нь илгээгдсэн байна. Та регистрийн дугаараа зөв оруулсан эсэхээ шалгаарай. Хэрэв буруу оруулсан бол регистрийн дугаараа зөв оруулна уу. Регистрийн дугаар зөв бол та аль хэдийн БиДиСЕК үнэт цаасны компанитай холбогдоно уу.` : t('profile.accountOpeningErrorDesc')}</p>
+                <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>{isRegistryError&&regId ? `${regId} дугаартай регистер өмнө нь илгээгдсэн байна. Та регистрийн дугаараа зөв оруулсан эсэхээ шалгаарай. Хэрэв буруу оруулсан бол регистрийн дугаараа зөв оруулна уу. Регистрийн дугаар зөв бол та аль хэдийн БиДиСЕК үнэт цаасны компанитай холбогдоно уу.` : `Дахин оролдоно уу.`}</p>
                {regId&& isRegistryError&& <div>
                  <button
                     onClick={() => setShowForm(!showForm)}
@@ -285,6 +307,19 @@ export default function AccountOpeningProcess() {
                         </div>
                       </form>
                     </div>
+                  </div>
+                )}
+                {!isRegistryError && (
+                  <div className="mt-6 flex justify-start">
+                    <button
+                      onClick={handleOpenAccountError}
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-bdsec hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bdsec transition-colors duration-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      {t('profile.resendForm', 'Дахин илгээх')}
+                    </button>
                   </div>
                 )}
               </div>

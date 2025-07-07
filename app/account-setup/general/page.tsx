@@ -677,6 +677,12 @@ export default function GeneralInfoPage() {
         console.log('Nationality:', nationality);
         console.log('Mapped data being sent:', mappedData);
         console.log('=== END DEBUG ===');
+        //this must be number within 10 digits
+        mappedData.bankAccountNumber= mappedData.bankAccountNumber.replace(/[^0-9]/g, '');
+        if(mappedData.bankAccountNumber.length !== 10){
+          setError("Bank account number must be 10 digits");
+          return;
+        }
         const result = await sendAccountStatusRequest(mappedData, token);
         
         if (result.success) {
