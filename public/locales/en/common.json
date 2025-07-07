@@ -185,8 +185,9 @@
     "accountOpeningSuccessDesc": "Your trading account has been successfully opened. You can now start trading!",
     "processingTime": "Processing time: Up to 72 hours",
     "underReview": "Under review by MCSD",
-    "updateInformation": "Update Information",
-    "goToDashboard": "Go to Dashboard"
+    "updateInformation": "Update Registration Number",
+    "goToDashboard": "Go to Dashboard",
+    "mongolian": "Mongolian"
   },
   "menu": {
     "about": "ABOUT US",

@@ -186,7 +186,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
               </li>
             )}
             
-            {isLoggedIn && !hasExistingMcsdAccount && (
+            {isLoggedIn &&  accountInfo?.MCSDAccount?.DGOrder !== "COMPLETED" && (
               <li className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="mb-2 px-3">
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('profile.accountSetup')}</h3>

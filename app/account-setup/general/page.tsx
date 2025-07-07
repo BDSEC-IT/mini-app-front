@@ -504,7 +504,13 @@ export default function GeneralInfoPage() {
                     
                     // Fix: Set only the data portion, not the entire response
                     const invoiceStatus = await checkInvoiceStatus(existingToken);
-                    if(invoiceStatus.success && invoiceStatus.data?.data?.registrationFee?.status === 'COMPLETED'){
+                    if(invoiceStatus.message==="MCSD Account found"){
+                      statusResponse.data.data.invoiceStatus = 'PAID';
+                      setSummaryData(statusResponse.data);
+                      setViewMode('summary');
+                      return
+                    }
+                    else if(invoiceStatus.success && invoiceStatus.data?.data?.registrationFee?.status === 'COMPLETED'){
                       statusResponse.data.data.invoiceStatus = 'PAID';
                       setSummaryData(statusResponse.data);
                       setViewMode('summary');

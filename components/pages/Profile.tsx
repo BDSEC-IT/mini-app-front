@@ -104,6 +104,7 @@ const Profile = () => {
 
   const { khanUser, MCSDAccount } = accountInfo;
   const hasMcsdAccount = MCSDAccount !== null;
+  const hasActiveMcsdAccount = MCSDAccount?.DGOrder === 'COMPLETED';
 
   // Simplified completion checks - only use backend API data
   const isGeneralInfoComplete = () => {
@@ -199,10 +200,28 @@ const Profile = () => {
                 </div>
               </div>
             ) : (
+              hasActiveMcsdAccount ? (
               <div className="flex items-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
                 <CheckCircle className="h-5 w-5 mr-3 flex-shrink-0" />
                 <p className="font-medium text-sm">{t('profile.mcsdAccountActiveDetail')}</p>
               </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                <div className="flex items-center p-4 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800">
+                  <AlertTriangle className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <p className="font-medium text-sm">Таны мэдээлэл ҮЦТХТ-д шалгагдаж байна</p>
+                </div>
+                <div className="flex justify-end">
+                  <Link
+                  href="/account-setup/opening-process"
+                    className="text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded"
+                  >
+                    Данс нээх үйл явцийг харах
+                  </Link>
+                </div>
+              </div>
+              
+              )
             )}
           </div>
           

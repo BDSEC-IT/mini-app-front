@@ -111,11 +111,18 @@ export default function FeePaymentPage() {
           // router.push('/profile');
         }
       } else {
-        const errorMessage = result?.message === "Invoice is already completed"
+        let errorMessage = result?.message === "Invoice is already completed"
         if(errorMessage){
           alert("Төлбөр амжилттай төлөгдсөн байна.")
-
           router.push('/account-setup/opening-process');
+          return;
+        }
+        errorMessage = result?.message === "MCSD Account already exists"
+        if(errorMessage){
+          alert("Таны дансны мэдээлэл амжилттай ҮЦТХТ рүү илгээгдсэн байна")
+          window.location.reload();
+
+          router.push('/')
           return;
         }
         setError(result.message || "Failed to create payment invoice.")
@@ -173,9 +180,15 @@ export default function FeePaymentPage() {
         }
       }
       const userData=await checkInvoiceStatus(token)
-
+      console.log("userData",userData)
+      if(userData.message==="MCSD Account found"){
+        alert("Таны дансны мэдээлэл амжилттай ҮЦТХТ рүү илгээгдсэн байна")
+        router.push('/account-setup/opening-process');
+        return;
+      }
       if(userData&& userData.data?.data?.registrationFee?.status){
         console.log("ISPAID red",userData.data.data.registrationFee?.status === 'COMPLETED')
+      console.log("userData",userData)
         setIsPaid(userData.data.data.registrationFee?.status === 'COMPLETED')
       }
       console.log("INVuserData",userData)
