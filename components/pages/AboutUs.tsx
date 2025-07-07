@@ -69,9 +69,39 @@ const AboutUs = () => {
                 alt="BDSec" 
               />
             </div>
-            
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div className="relative inline-block text-center border border-gray-200 dark:border-gray-700  rounded-lg">
+                   {/* Shadow/outline layer */}
+                <span className="absolute inset-0 text-red-500 text-4xl md:text-5xl font-extrabold blur-[1.5px]">34</span>
+                <h3 className="relative text-white dark:text-indigo-400 text-4xl md:text-5xl font-extrabold">34</h3>
+                <span className="text-sm md:text-base font-normal">{t('about.years', 'жил')}</span>
+              </div>
+                 <div className="relative inline-block text-center border border-gray-200 dark:border-gray-700  rounded-lg">
+                   {/* Shadow/outline layer */}
+                <span className="absolute inset-0 text-red-500 text-4xl md:text-5xl font-extrabold blur-[1.5px]">344</span>
+                <h3 className="relative text-white dark:text-indigo-400 text-4xl md:text-5xl font-extrabold">344</h3>
+                <span className="text-sm md:text-base font-normal">{t('about.customers_too', 'мянга гаруй харилцагчидтай')}</span>
+              </div>
+                 <div className="relative inline-block text-center border border-gray-200 dark:border-gray-700  rounded-lg">
+                   {/* Shadow/outline layer */}
+                <span className="absolute inset-0 text-red-500 text-4xl md:text-5xl font-extrabold blur-[1.5px]">3</span>
+                <h3 className="relative text-white dark:text-indigo-400 text-4xl md:text-5xl font-extrabold">3</h3>
+                <span className="text-sm md:text-base font-normal">{t('about.salbar', 'салбартай')}</span>
+              </div>
+
+           {/* <div className="border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
+              <h3 className="text-3xl md:text-4xl font-bold text-bdsec dark:text-indigo-400">2.0 <span className="text-sm md:text-base font-normal">{t('about.billion', 'их наяд')}</span></h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('about.billionAssets')}</p>
+            </div>
+            <div className="border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
+              <h3 className="text-3xl md:text-4xl font-bold text-bdsec dark:text-indigo-400">06 <span className="text-sm md:text-base font-normal">{t('about.deals', 'онд')}</span></h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('about.ipoDeals')}</p>
+            </div>
+            */}
+          </div> 
+            </div>
             {/* Services Section */}
-            <div className="mb-8">
+          {/* <div className="mb-8">
               <h2 className="text-base font-medium mb-4 text-bdsec dark:text-indigo-400">{t('about.services')}</h2>
               <ul className="space-y-3 text-sm">
                 <li className="flex items-center">
@@ -99,9 +129,9 @@ const AboutUs = () => {
                   {t('about.exchange')}
                 </li>
               </ul>
-            </div>
+            </div> 
           </div>
-          
+          */}
           {/* Right column with Market Movers - always shown to the right */}
           <div className="w-2/4 sm:w-1/3  px-2 sm:px-0">
             <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden h-full">
@@ -169,20 +199,10 @@ const AboutUs = () => {
         {/* Bottom section */}
         <div className="lg:pr-4 px-4 md:px-6">
           {/* Company Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <div className="border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
-              <h3 className="text-3xl md:text-4xl font-bold text-bdsec dark:text-indigo-400">34 <span className="text-sm md:text-base font-normal">{t('about.years', 'жил')}</span></h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('about.yearsExperience')}</p>
+               <div className="mb-6">
+              <h2 className="text-base font-medium mb-3 text-bdsec dark:text-indigo-400">{t('about.bdsec_did')}</h2>
+            
             </div>
-            <div className="border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
-              <h3 className="text-3xl md:text-4xl font-bold text-bdsec dark:text-indigo-400">2.0 <span className="text-sm md:text-base font-normal">{t('about.billion', 'их наяд')}</span></h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('about.billionAssets')}</p>
-            </div>
-            <div className="border border-gray-200 dark:border-gray-700 p-4 rounded-lg">
-              <h3 className="text-3xl md:text-4xl font-bold text-bdsec dark:text-indigo-400">06 <span className="text-sm md:text-base font-normal">{t('about.deals', 'онд')}</span></h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t('about.ipoDeals')}</p>
-            </div>
-          </div>
           
           {/* Contact and Address in two columns */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -229,6 +249,7 @@ const AboutUs = () => {
                 </div>
               </div>
             </div>
+            
           </div>
         </div>
       </div>

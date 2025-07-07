@@ -575,89 +575,100 @@ const DashboardContent = () => {
               
               <div className="grid grid-cols-2 gap-3 sm:gap-6 mt-3 min-h-[200px]">
                 {/* Sell Orders */}
-                <div className="overflow-hidden">
-                  <div className="px-2 sm:px-4 py-2 bg-red-50 dark:bg-red-900/10">
-                    <h3 className="text-xs sm:text-sm text-red-500 font-medium flex items-center justify-between">
-                      <span className="flex items-center">
-                        <ArrowDown size={12} className="mr-1" /> {t('dashboard.sell')}
-                      </span>
-                      <span className="text-xs text-gray-500">{t('dashboard.quantity')}</span>
-                    </h3>
-                  </div>
-                  <div className="p-2 sm:p-3">
-                    {loading ? (
-                      // Loading placeholders for sell orders
-                      Array(5).fill(0).map((_, index) => (
-                        <div key={`sell-loading-${index}`} className="flex justify-between text-xs sm:text-sm py-2 animate-pulse">
-                          <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                          <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                        </div>
-                      ))
-                    ) : processedOrderBook.sell.length > 0 ? (
-                      processedOrderBook.sell.map((order, index) => {
-                     
-                        return (
-                          <div 
-                            key={`sell-${order.id}-${index}`} 
-                            className="flex justify-between text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
-                          >
-                            <span className="text-red-500 font-medium" >
-                              {order.MDEntryPx.toLocaleString()} ₮
-                            </span>
-                            <span className="bg-red-50 dark:bg-red-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs">
-                              {order.MDEntrySize.toLocaleString()}
-                            </span>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center text-gray-400 text-sm py-6">{t('dashboard.noSellOrders')}</div>
-                    )}
-                  </div>
-                </div>
+             <div className="overflow-hidden">
+               {/* Header */}
+                 <div className="px-2 sm:px-4 py-2 bg-red-50 dark:bg-red-900/10">
+                     <div className="grid grid-cols-2 text-right">
+                            <h3 className="text-xs sm:text-sm text-red-500 font-medium flex items-center">
+                               <ArrowDown size={12} className="mr-1" />
+                                              {t('dashboard.sell')}
+                                                     </h3>
+                               <h3 className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.quantity')}</h3>
+                           </div>
+                   </div>
+
+             {/* Body */}
+             <div className="p-2 sm:p-3">
+                 {loading ? (
+                    Array(5).fill(0).map((_, index) => (
+                        <div
+                        key={`sell-loading-${index}`}
+                      className="grid grid-cols-2 text-right text-xs sm:text-sm py-2 animate-pulse"
+                           >
+                    <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded justify-self-end"></div>
+                 <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded justify-self-end"></div>
+              </div>
+             ))
+    ) : processedOrderBook.sell.length > 0 ? (
+      processedOrderBook.sell.map((order, index) => (
+        <div
+          key={`sell-${order.id}-${index}`}
+          className="grid grid-cols-2 text-right text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+        >
+          <span className="text-red-500 font-medium justify-self-end">
+            {order.MDEntryPx.toLocaleString()} ₮
+          </span>
+          <span className="bg-red-50 dark:bg-red-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
+            {order.MDEntrySize.toLocaleString()}
+          </span>
+        </div>
+      ))
+    ) : (
+      <div className="text-center text-gray-400 text-sm py-6">
+        {t('dashboard.noSellOrders')}
+      </div>
+    )}
+  </div>
+</div>
+
                 
                 {/* Buy Orders */}
-                <div className="overflow-hidden">
-                  <div className="px-2 sm:px-4 py-2 bg-green-50 dark:bg-green-900/10">
-                    <h3 className="text-xs sm:text-sm text-green-500 font-medium flex items-center justify-between">
-                      <span className="flex items-center">
-                        <ArrowUp size={12} className="mr-1" /> {t('dashboard.buy')}
-                      </span>
-                      <span className="text-xs text-gray-500">{t('dashboard.quantity')}</span>
-                    </h3>
-                  </div>
-                  <div className="p-2 sm:p-3">
-                    {loading ? (
-                      // Loading placeholders for buy orders
-                      Array(5).fill(0).map((_, index) => (
-                        <div key={`buy-loading-${index}`} className="flex justify-between text-xs sm:text-sm py-2 animate-pulse">
-                          <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                          <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                        </div>
-                      ))
-                    ) : processedOrderBook.buy.length > 0 ? (
-                      processedOrderBook.buy.map((order, index) => {
-                        // Calculate opacity based on position (higher index = lower opacity)
-                     
-                        return (
-                          <div 
-                            key={`buy-${order.id}-${index}`} 
-                            className="flex justify-between text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
-                          >
-                            <span className="text-green-500 font-medium" >
-                              {order.MDEntryPx.toLocaleString()} ₮
-                            </span>
-                            <span className="bg-green-50 dark:bg-green-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs">
-                              {order.MDEntrySize.toLocaleString()}
-                            </span>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center text-gray-400 text-sm py-6">{t('dashboard.noBuyOrders')}</div>
-                    )}
-                  </div>
+               <div className="overflow-hidden">
+               {/* Header */}
+       <div className="px-2 sm:px-4 py-2 bg-green-50 dark:bg-green-900/10">
+          <div className="grid grid-cols-2 text-right">
+             <h3 className="text-xs sm:text-sm text-green-500 font-medium flex items-center">
+            <ArrowUp size={12} className="mr-1" />
+                 {t('dashboard.buy')}
+               </h3>
+                <h3 className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.quantity')}</h3>
+           </div>
+        </div>
+
+        {/* Body */}
+             <div className="p-2 sm:p-3">
+              {loading ? (
+                Array(5).fill(0).map((_, index) => (
+                <div
+                   key={`buy-loading-${index}`}
+                  className="grid grid-cols-2 text-right text-xs sm:text-sm py-2 animate-pulse"
+                     >
+                   <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded justify-self-end"></div>
+                    <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded justify-self-end"></div>
                 </div>
+               ))
+     ) : processedOrderBook.buy.length > 0 ? (
+      processedOrderBook.buy.map((order, index) => (
+        <div
+          key={`buy-${order.id}-${index}`}
+          className="grid grid-cols-2 text-right text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+        >
+          <span className="text-green-500 font-medium justify-self-end">
+            {order.MDEntryPx.toLocaleString()} ₮
+          </span>
+          <span className="bg-green-50 dark:bg-green-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
+            {order.MDEntrySize.toLocaleString()}
+          </span>
+        </div>
+      ))
+    ) : (
+      <div className="text-center text-gray-400 text-sm py-6">
+        {t('dashboard.noBuyOrders')}
+      </div>
+    )}
+  </div>
+</div>
+
               </div>
             </div>
             
