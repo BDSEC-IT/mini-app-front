@@ -22,9 +22,7 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
     <I18nextProvider i18n={i18n}>
       <ThemeProvider>
         <LanguageProvider>
-          <TokenProvider>
             {children}
-          </TokenProvider>
         </LanguageProvider>
       </ThemeProvider>
     </I18nextProvider>

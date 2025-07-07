@@ -34,7 +34,7 @@ const BottomNavigation = () => {
   // Check account status
   useEffect(() => {
     const checkAccountStatus = async () => {
-      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token')
+      const token = Cookies.get('token')
       if (token) {
         setIsLoggedIn(true)
         try {

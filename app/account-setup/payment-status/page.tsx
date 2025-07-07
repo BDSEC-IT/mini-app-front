@@ -17,7 +17,7 @@ export default function PaymentStatusPage() {
   
   useEffect(() => {
     const pollInvoiceStatus = async () => {
-      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+      const token = Cookies.get('token');
       if (!token) {
         setStatus('failure');
         setMessage('Authentication token not found.');
