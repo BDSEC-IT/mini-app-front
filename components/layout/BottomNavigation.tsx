@@ -63,7 +63,7 @@ const BottomNavigation = () => {
     
     // Listen for login/logout events
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'jwt' || e.key === 'auth_token' || e.key === 'token') {
+      if (e.key === 'jwt' || e.key === 'token') {
         checkAccountStatus();
       }
     };

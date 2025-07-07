@@ -18,7 +18,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Check for authentication token
-  const token = request.cookies.get('auth_token')?.value
+  const token = request.cookies.get('token')?.value
   
   // If no token, redirect to nationality selection
   if (!token) {

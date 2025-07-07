@@ -599,7 +599,7 @@ export default function GeneralInfoPage() {
     };
 
     const demoToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDg4MjN9.CP4XJIAlErOi8fwrQ-vmBA4XT_wzdvIXw2lZ1wFbBII"
-    if (!Cookies.get('jwt') && !Cookies.get('token') && !Cookies.get('auth_token')) {
+    if (!Cookies.get('jwt') && !Cookies.get('token') ) {
         Cookies.set('jwt', demoToken, { expires: 7 })
     }
     
