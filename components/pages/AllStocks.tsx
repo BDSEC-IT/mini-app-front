@@ -128,13 +128,13 @@ const AllStocks = () => {
     })
   }, [filteredStocks, sortConfig])
 
-  // Assign category to stock (mock function - in real app, this would come from API)
+  // Get stock category from MarketSegmentID
   const getStockCategory = (stock: StockData): string => {
-    // This is a mock function - in a real app, you would get this from your API
-    // For now, let's assign categories based on some criteria
-    if (stock.Volume && stock.Volume > 10000) return 'I'
-    if (stock.Volume && stock.Volume > 5000) return 'II'
-    return 'III'
+    if (!stock.MarketSegmentID) return 'III'
+    
+    // Extract category from MarketSegmentID (e.g., "I classification" -> "I")
+    const match = stock.MarketSegmentID.match(/([IV]+)\\s*classification/i)
+    return match ? match[1] : 'III'
   }
 
   // Filter stocks based on search, active tab and category
@@ -202,6 +202,26 @@ const AllStocks = () => {
     return grouped
   }, [sortedStocks])
 
+  // Calculate summary for a category (only stocks with trades today, sizemd > 0, using allStocks)
+  const getCategorySummary = (category: string) => {
+    const stocks = allStocks.filter(stock => {
+      if (!stock.MarketSegmentID) return category === 'III';
+      const match = stock.MarketSegmentID.match(/([IV]+)\\s*classification/i);
+      const cat = match ? match[1] : 'III';
+      
+      // Filter by category and sizemd > 0 (today's trades)
+      // Note: updatedAt is sync time, not trade date, so we only filter by sizemd > 0
+      return cat === category && Number(stock.sizemd) > 0;
+    });
+    
+    return {
+      count: stocks.length,
+      // Calculate today's turnover: sizemd * LastTradedPrice
+      totalTurnover: stocks.reduce((sum, s) => sum + (Number(s.LastTradedPrice) || 0), 0),
+      totalVolume: stocks.reduce((sum, s) => sum + (Number(s.sizemd) || 0), 0),
+    };
+  };
+
   // Render table rows for a category
   const renderCategoryStocks = (stocks: StockData[]) => {
     return stocks.map((stock, index) => (
@@ -237,7 +257,7 @@ const AllStocks = () => {
           </div>
         </td>
         <td className="px-2 py-3 text-right">
-          {stock.Volume?.toLocaleString() || '-'}
+          {Number(stock.sizemd) > 0 ? Number(stock.sizemd).toLocaleString() : '-'}
         </td>
       </tr>
     ))
@@ -346,7 +366,7 @@ const AllStocks = () => {
             </button>
           ))}
         </div>
-        
+
         {/* Stocks Table with Category Groups */}
         {loading ? (
           <div className="flex justify-center items-center py-12">
@@ -358,8 +378,9 @@ const AllStocks = () => {
             {/* Category I */}
             {stocksByCategory['I'] && stocksByCategory['I'].length > 0 && (
               <div className="bg-white dark:bg-gray-900 rounded-lg shadow">
+                {/* Category I Header with summary */}
                 <div 
-                  className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-t-lg cursor-pointer"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-t-lg cursor-pointer gap-2"
                   onClick={() => toggleCategory('I')}
                 >
                   <div className="flex items-center">
@@ -367,9 +388,20 @@ const AllStocks = () => {
                       <ChevronRight size={20} />
                     </span>
                     <h3 className="font-medium ml-2 text-blue-800 dark:text-blue-300">
-                      {t('allStocks.categoryI')} ({stocksByCategory['I'] ? stocksByCategory['I'].length : 0})
+                      {t('allStocks.categoryI')}
                     </h3>
                   </div>
+                  {/* Summary info for I */}
+                  {(() => {
+                    const summary = getCategorySummary('I');
+                    return (
+                      <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
+                        <span>Компани: <span className="font-semibold text-bdsec dark:text-indigo-400">{summary.count}</span></span>
+                        <span>Үнийн дүн: <span className="font-semibold">{summary.totalTurnover.toLocaleString()}₮</span></span>
+                        <span>Тоо ширхэг: <span className="font-semibold">{summary.totalVolume.toLocaleString()}</span></span>
+                      </div>
+                    );
+                  })()}
                 </div>
                 
                 {expandedCategories['I'] && (
@@ -434,8 +466,9 @@ const AllStocks = () => {
             {/* Category II */}
             {stocksByCategory['II'] && stocksByCategory['II'].length > 0 && (
               <div className="bg-white dark:bg-gray-900 rounded-lg shadow">
+                {/* Category II Header with summary */}
                 <div 
-                  className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-t-lg cursor-pointer"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-t-lg cursor-pointer gap-2"
                   onClick={() => toggleCategory('II')}
                 >
                   <div className="flex items-center">
@@ -443,9 +476,20 @@ const AllStocks = () => {
                       <ChevronRight size={20} />
                     </span>
                     <h3 className="font-medium ml-2 text-purple-800 dark:text-purple-300">
-                      {t('allStocks.categoryII')} ({stocksByCategory['II'] ? stocksByCategory['II'].length : 0})
+                      {t('allStocks.categoryII')}
                     </h3>
                   </div>
+                  {/* Summary info for II */}
+                  {(() => {
+                    const summary = getCategorySummary('II');
+                    return (
+                      <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
+                        <span>Компани: <span className="font-semibold text-bdsec dark:text-indigo-400">{summary.count}</span></span>
+                        <span>Үнийн дүн: <span className="font-semibold">{summary.totalTurnover.toLocaleString()}₮</span></span>
+                        <span>Тоо ширхэг: <span className="font-semibold">{summary.totalVolume.toLocaleString()}</span></span>
+                      </div>
+                    );
+                  })()}
                 </div>
                 
                 {expandedCategories['II'] && (
@@ -510,8 +554,9 @@ const AllStocks = () => {
             {/* Category III */}
             {stocksByCategory['III'] && stocksByCategory['III'].length > 0 && (
               <div className="bg-white dark:bg-gray-900 rounded-lg shadow">
+                {/* Category III Header with summary */}
                 <div 
-                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-t-lg cursor-pointer"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-t-lg cursor-pointer gap-2"
                   onClick={() => toggleCategory('III')}
                 >
                   <div className="flex items-center">
@@ -519,9 +564,20 @@ const AllStocks = () => {
                       <ChevronRight size={20} />
                     </span>
                     <h3 className="font-medium ml-2 text-gray-800 dark:text-gray-300">
-                      {t('allStocks.categoryIII')} ({stocksByCategory['III'] ? stocksByCategory['III'].length : 0})
+                      {t('allStocks.categoryIII')}
                     </h3>
                   </div>
+                  {/* Summary info for III */}
+                  {(() => {
+                    const summary = getCategorySummary('III');
+                    return (
+                      <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
+                        <span>Компани: <span className="font-semibold text-bdsec dark:text-indigo-400">{summary.count}</span></span>
+                        <span>Үнийн дүн: <span className="font-semibold">{summary.totalTurnover.toLocaleString()}₮</span></span>
+                        <span>Тоо ширхэг: <span className="font-semibold">{summary.totalVolume.toLocaleString()}</span></span>
+                      </div>
+                    );
+                  })()}
                 </div>
                 
                 {expandedCategories['III'] && (

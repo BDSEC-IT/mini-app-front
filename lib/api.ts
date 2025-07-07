@@ -509,6 +509,7 @@ export const fetchOrderBook = async (symbol: string): Promise<OrderBookResponse>
   }
 };
 
+// Fetch all stocks with enriched data
 export const fetchAllStocks = async (): Promise<AllStocksResponse> => {
   const url = `${BASE_URL}/securities/trading-status`;
   
@@ -539,7 +540,7 @@ export const fetchAllStocks = async (): Promise<AllStocksResponse> => {
 
 
 export const fetchFAQ = async (): Promise<any> => {
-  const url = `${BDSEC_MAIN}/faq`;
+  const url = `${BASE_URL}/faq`;
   type FAQType = {
   id: number;
   mnName: string;
@@ -568,7 +569,7 @@ type FAQ = {
   }
 };
 export const fetchFAQType = async (): Promise<any> => {
-  const url = `${BDSEC_MAIN}/faq/types`;
+  const url = `${BASE_URL}/faq/types`;
   type FAQType = {
   id: number;
   mnName: string;
