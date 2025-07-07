@@ -46,7 +46,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
 
 
   const fetchStatus = async () => {
-    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+    const token = Cookies.get('token');
     if (!token) {
       setIsLoggedIn(prev => false);
       setIsGeneralInfoComplete(prev => false);

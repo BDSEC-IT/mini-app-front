@@ -12,7 +12,7 @@ export default function AccountOpeningProcess() {
   const { t } = useTranslation()
   const [status, setStatus] = useState<'loading' | 'waiting_submission' | 'waiting_approval' | 'error' | 'success'>('loading')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token')
+  const token = Cookies.get('token')
 
   useEffect(() => {
     const fetchData = async () => {

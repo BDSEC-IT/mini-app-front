@@ -413,7 +413,7 @@ export default function GeneralInfoPage() {
 
   useEffect(() => {
     const fetchStatusAndSetMode = async () => {
-        const existingToken = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+        const existingToken = Cookies.get('token');
         
         if (existingToken) {
             try {
@@ -655,7 +655,7 @@ export default function GeneralInfoPage() {
     console.log('Mapped data before API call (camelCase):', mappedData);
     console.log('=== END SUBMIT DEBUG ===');
 
-    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+    const token = Cookies.get('token');
 
     if (!token) {
         setError("Authentication token missing. Please log in.");
@@ -701,7 +701,7 @@ export default function GeneralInfoPage() {
 
   const handleCreateInvoice = async () => {
     setError(null);
-    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+    const token = Cookies.get('token');
     if (!token) {
         setError("Authentication token missing. Please log in.");
         return;
@@ -820,8 +820,8 @@ export default function GeneralInfoPage() {
       setError(t('profile.enterRegisterNumber'));
       return;
     }
-    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
-    const res = await sendRegistrationNumber(registerInput.trim(), nationality, token);
+    const token = Cookies.get('token');
+    const res = await sendRegistrationNumber(registerInput.trim(), nationality, token!);
     if (res.success) {
       setRegisterNumber(registerInput.trim());
       setShowRegisterInput(false);

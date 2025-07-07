@@ -16,7 +16,7 @@ export default function FeePaymentPage() {
   const handlePayment = async () => {
     setIsProcessing(true)
     setError(null)
-    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token')
+    const token = Cookies.get('token')
 
     if (!token) {
       setError("Authentication token not found. Please log in again.")
@@ -129,7 +129,7 @@ export default function FeePaymentPage() {
 
   useEffect(() => {
     const checkAccountStatus = async () => {
-      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+      const token = Cookies.get('token');
       if (!token) return;
       const statusResponse = await getAccountStatusRequest(token);
       if (!statusResponse.success || !statusResponse.data) {

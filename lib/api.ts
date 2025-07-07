@@ -877,7 +877,7 @@ export const digipayLogin = async (userIdKhan: string) => {
 };
 
 // Update the sendRegistrationNumber function to handle all error cases
-export const sendRegistrationNumber = async (registrationNumber: string, nationality: string, token?: string): Promise<RegistrationResponse> => {
+export const sendRegistrationNumber = async (registrationNumber: string, nationality: string, token: string): Promise<RegistrationResponse> => {
   const url = `${BASE_URL}/user/send-registration-number`;
   
   try {
@@ -886,7 +886,7 @@ export const sendRegistrationNumber = async (registrationNumber: string, nationa
       body: JSON.stringify({ registrationNumber, nationality }),
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        'Authorization': `Bearer ${token}`
       }
     });
     
