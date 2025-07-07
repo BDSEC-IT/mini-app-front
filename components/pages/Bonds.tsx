@@ -6,7 +6,7 @@ import { Search, X, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react'
 import { fetchBonds, type BondData } from '@/lib/api'
 
 const Bonds = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [bonds, setBonds] = useState<BondData[]>([])
   const [filteredBonds, setFilteredBonds] = useState<BondData[]>([])
   const [loading, setLoading] = useState(true)
@@ -15,7 +15,7 @@ const Bonds = () => {
     key: keyof BondData | null;
     direction: 'asc' | 'desc';
   }>({ key: null, direction: 'asc' })
-
+  const currentLanguage = i18n.language || 'mn'
   // Fetch bonds data
   const fetchBondsData = useCallback(async () => {
     try {
@@ -60,13 +60,13 @@ const Bonds = () => {
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(bond => 
-        bond.Symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        bond.BondmnName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        bond.BondenName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        bond.Issuer.toLowerCase().includes(searchTerm.toLowerCase())
+        (bond.Symbol?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (bond.BondmnName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (bond.BondenName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (bond.Issuer?.toLowerCase() || '').includes(searchTerm.toLowerCase())
       )
     }
-    
+    console.log(filteredBonds, "filteredBonds")
     // Apply sorting
     if (sortConfig.key) {
       filtered.sort((a, b) => {
@@ -109,24 +109,30 @@ const Bonds = () => {
   }
 
   // Format nominal value with safe handling of null/undefined
-  const formatNominalValue = (value: number | null | undefined) => {
+  const formatNominalValue = (value: number | null | undefined, isdollar: string | null) => {
     if (value === null || value === undefined || isNaN(value)) return '-'
-    return value.toLocaleString() + ' ₮'
+    return value.toLocaleString() + (isdollar === null || isdollar === "-" ? ' ₮' : ' $')
+  }
+
+  // Format symbol to show only the first part before "-"
+  const formatSymbol = (symbol: string | null | undefined) => {
+    if (!symbol) return '-';
+    return symbol.split('-')[0];
   }
 
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
-      <div className="px-4 md:px-6 py-6">
-        <h1 className="text-xl font-bold mb-6">{t('bonds.title', 'Bonds')}</h1>
+      <div className="px-2 md:px-6 py-4">
+        <h1 className="text-xl font-bold mb-4">{t('bonds.title', 'Bonds')}</h1>
         
         {/* Search bar */}
-        <div className="relative mb-6">
+        <div className="relative mb-4">
           <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <Search className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <Search className="w-4 h-4 text-gray-500 dark:text-gray-400" />
           </div>
           <input
             type="text"
-            className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-bdsec dark:focus:ring-indigo-500 focus:border-bdsec dark:focus:border-indigo-500 block w-full pl-10 p-2.5"
+            className="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-bdsec dark:focus:ring-indigo-500 focus:border-bdsec dark:focus:border-indigo-500 block w-full pl-9 p-2"
             placeholder={t('bonds.searchPlaceholder', 'Search bonds...')}
             value={searchTerm}
             onChange={handleSearch}
@@ -136,13 +142,13 @@ const Bonds = () => {
               className="absolute inset-y-0 right-0 flex items-center pr-3"
               onClick={clearSearch}
             >
-              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </button>
           )}
         </div>
         
         {/* Bonds table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto -mx-2 md:mx-0">
           {loading ? (
             <div className="flex justify-center items-center py-20">
               <div className="animate-spin h-8 w-8 border-4 border-bdsec dark:border-indigo-500 border-t-transparent rounded-full"></div>
@@ -152,80 +158,80 @@ const Bonds = () => {
               <p>{t('bonds.noResults', 'No bonds found')}</p>
             </div>
           ) : (
-            <table className="w-full text-sm text-left">
+            <table className="w-full text-xs md:text-sm text-left">
               <thead className="text-xs uppercase bg-gray-100 dark:bg-gray-800">
                 <tr>
-                  <th className="px-4 py-3 cursor-pointer" onClick={() => handleSort('Symbol')}>
+                  <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer whitespace-nowrap" onClick={() => handleSort('Symbol')}>
                     <div className="flex items-center">
                       {t('bonds.symbol', 'Symbol')}
                       {sortConfig.key === 'Symbol' && (
                         sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-4 w-4" /> 
-                          : <ArrowDown className="ml-1 h-4 w-4" />
+                          ? <ArrowUp className="ml-1 h-3 w-3" /> 
+                          : <ArrowDown className="ml-1 h-3 w-3" />
                       )}
                     </div>
                   </th>
-                  <th className="px-4 py-3 cursor-pointer" onClick={() => handleSort('BondmnName')}>
+                  <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer" onClick={() => handleSort('BondmnName')}>
                     <div className="flex items-center">
                       {t('bonds.name', 'Name')}
                       {sortConfig.key === 'BondmnName' && (
                         sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-4 w-4" /> 
-                          : <ArrowDown className="ml-1 h-4 w-4" />
+                          ? <ArrowUp className="ml-1 h-3 w-3" /> 
+                          : <ArrowDown className="ml-1 h-3 w-3" />
                       )}
                     </div>
                   </th>
-                  <th className="px-4 py-3 cursor-pointer" onClick={() => handleSort('Issuer')}>
+                  <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer" onClick={() => handleSort('Issuer')}>
                     <div className="flex items-center">
                       {t('bonds.issuer', 'Issuer')}
                       {sortConfig.key === 'Issuer' && (
                         sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-4 w-4" /> 
-                          : <ArrowDown className="ml-1 h-4 w-4" />
+                          ? <ArrowUp className="ml-1 h-3 w-3" /> 
+                          : <ArrowDown className="ml-1 h-3 w-3" />
                       )}
                     </div>
                   </th>
-                  <th className="px-4 py-3 cursor-pointer" onClick={() => handleSort('Interest')}>
+                  <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer" onClick={() => handleSort('TradedDate')}>
                     <div className="flex items-center">
-                      {t('bonds.interest', 'Interest')}
-                      {sortConfig.key === 'Interest' && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-4 w-4" /> 
-                          : <ArrowDown className="ml-1 h-4 w-4" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 cursor-pointer" onClick={() => handleSort('NominalValue')}>
-                    <div className="flex items-center">
-                      {t('bonds.nominalValue', 'Nominal Value')}
-                      {sortConfig.key === 'NominalValue' && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-4 w-4" /> 
-                          : <ArrowDown className="ml-1 h-4 w-4" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 cursor-pointer" onClick={() => handleSort('TradedDate')}>
-                    <div className="flex items-center">
-                      {t('bonds.tradedDate', 'Traded Date')}
+                      Хугацаа
                       {sortConfig.key === 'TradedDate' && (
                         sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-4 w-4" /> 
-                          : <ArrowDown className="ml-1 h-4 w-4" />
+                          ? <ArrowUp className="ml-1 h-3 w-3" /> 
+                          : <ArrowDown className="ml-1 h-3 w-3" />
                       )}
                     </div>
                   </th>
-                  <th className="px-4 py-3 cursor-pointer" onClick={() => handleSort('RefundDate')}>
+                  <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer" onClick={() => handleSort('Interest')}>
                     <div className="flex items-center">
-                      {t('bonds.refundDate', 'Refund Date')}
+                      {t('bonds.yield', 'Yield %')}
+                      {sortConfig.key === 'Interest' && (
+                        sortConfig.direction === 'asc' 
+                          ? <ArrowUp className="ml-1 h-3 w-3" /> 
+                          : <ArrowDown className="ml-1 h-3 w-3" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer" onClick={() => handleSort('NominalValue')}>
+                    <div className="flex items-center">
+                      {t('bonds.price', 'Price')}
+                      {sortConfig.key === 'NominalValue' && (
+                        sortConfig.direction === 'asc' 
+                          ? <ArrowUp className="ml-1 h-3 w-3" /> 
+                          : <ArrowDown className="ml-1 h-3 w-3" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer" onClick={() => handleSort('RefundDate')}>
+                    <div className="flex items-center">
+                      {t('bonds.refundDate', 'Refund')}
                       {sortConfig.key === 'RefundDate' && (
                         sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-4 w-4" /> 
-                          : <ArrowDown className="ml-1 h-4 w-4" />
+                          ? <ArrowUp className="ml-1 h-3 w-3" /> 
+                          : <ArrowDown className="ml-1 h-3 w-3" />
                       )}
                     </div>
                   </th>
-                  <th className="px-4 py-3">
+                  <th className="px-2 py-2 md:px-4 md:py-3">
                     {t('bonds.details', 'Details')}
                   </th>
                 </tr>
@@ -236,14 +242,22 @@ const Bonds = () => {
                     key={bond.pkId || `${bond.Symbol}-${index}`} 
                     className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                   >
-                    <td className="px-4 py-3 font-medium">{bond.Symbol}</td>
-                    <td className="px-4 py-3">{bond.BondmnName}</td>
-                    <td className="px-4 py-3">{bond.Issuer}</td>
-                    <td className="px-4 py-3">{bond.Interest}</td>
-                    <td className="px-4 py-3">{formatNominalValue(bond.NominalValue)}</td>
-                    <td className="px-4 py-3">{formatDate(bond.TradedDate)}</td>
-                    <td className="px-4 py-3">{formatDate(bond.RefundDate)}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-2 md:px-4 md:py-3 font-medium">
+                      {bond.Symbol ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                          {formatSymbol(bond.Symbol)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500 dark:text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="px-2 py-2 md:px-4 md:py-3">{currentLanguage === 'mn' ? bond.BondmnName : bond.BondenName}</td>
+                    <td className="px-2 py-2 md:px-4 md:py-3">{currentLanguage === 'mn' ? bond.Issuer : bond.IssuerEn}</td>
+                    <td className="px-2 py-2 md:px-4 md:py-3">{formatDate(bond.Date)} {bond.Date==="-" ? '' : 'жил'}</td>
+                    <td className="px-2 py-2 md:px-4 md:py-3">{formatPercentage(bond.Interest)}</td>
+                    <td className="px-2 py-2 md:px-4 md:py-3">{formatNominalValue(bond.NominalValue, bond.Isdollar)}</td>
+                    <td className="px-2 py-2 md:px-4 md:py-3">{formatDate(bond.RefundDate)}</td>
+                    <td className="px-2 py-2 md:px-4 md:py-3">
                       {bond.MoreInfo && (
                         <a 
                           href={bond.MoreInfo} 
@@ -251,7 +265,7 @@ const Bonds = () => {
                           rel="noopener noreferrer"
                           className="text-bdsec dark:text-indigo-400 hover:underline flex items-center"
                         >
-                          <ExternalLink className="h-4 w-4 mr-1" />
+                          <ExternalLink className="h-3 w-3 mr-1" />
                           {t('bonds.viewMore', 'View')}
                         </a>
                       )}
@@ -265,6 +279,10 @@ const Bonds = () => {
       </div>
     </div>
   )
+}
+function formatPercentage(percentageStr: string): string {
+  const num = parseFloat(percentageStr.replace('%', ''));
+  return `${Number(num.toFixed(2))}%`;
 }
 
 export default Bonds 
