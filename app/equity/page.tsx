@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/contexts/ThemeContext'
-import { useLanguage } from '@/contexts/LanguageContext'
-import { api } from '@/lib/api'
+import { fetchAllStocks } from '@/lib/api'
 
 interface TradingStatus {
   pkId: number
@@ -56,7 +56,7 @@ interface SummaryByType {
 
 export default function EquityPage() {
   const { theme } = useTheme()
-  const { t } = useLanguage()
+  const { t } = useTranslation()
   const [tradingData, setTradingData] = useState<TradingStatus[]>([])
   const [summaryByType, setSummaryByType] = useState<SummaryByType[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,10 +69,10 @@ export default function EquityPage() {
         setLoading(true)
         setError(null)
         
-        const response = await api.get('/securities/trading-status')
+        const response = await fetchAllStocks()
         
-        if (response.data.success) {
-          const data = response.data.data
+        if (response.success && response.data) {
+          const data = response.data
           setTradingData(data)
           
           // Calculate summary by type
