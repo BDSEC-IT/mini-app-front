@@ -204,15 +204,17 @@ export default function AccountFixFormMCSD({token}:{token:string}){
                 <FormProvider {...methods}>
                     <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
                         <FormField
-                            name="LastName"
-                            label={t("profile.lastName", "Last Name")}
-                            placeholder={t("profile.enterLastName", "Enter last name")}
+                            name="FirstName"
+                            disabled={true}
+                            label={t("profile.firstName", "First Name")}
+                            placeholder={t("profile.enterFirstName", "Enter first name")}
                             required
                         />
                         <FormField
-                            name="FirstName"
-                            label={t("profile.firstName", "First Name")}
-                            placeholder={t("profile.enterFirstName", "Enter first name")}
+                            name="LastName"
+                            disabled={true}
+                            label={t("profile.lastName", "Last Name")}
+                            placeholder={t("profile.enterLastName", "Enter last name")}
                             required
                         />
 

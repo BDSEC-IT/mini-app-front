@@ -56,13 +56,7 @@ const Header = () => {
           </div>
           
           {!isLoggedIn && (
-            <Link
-              href="/auth/nationality"
-              className="text-bdsec dark:text-indigo-400 hover:text-gray-500 dark:hover:text-white p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center"
-            >
-              <LogIn size={iconSize} className="mr-1" />
-              <span className="hidden sm:inline">{t('auth.login')}</span>
-            </Link>
+            <p className="text-sm lg:text-base ">DiGiPAY</p>
           )}
           
           <button
