@@ -190,10 +190,10 @@
     "mongolian": "Mongolian"
   },
   "menu": {
-    "about": "ABOUT US",
-    "faq": "FREQUENTLY ASKED QUESTIONS",
-    "news": "NEWS & INFORMATION",
-    "withdraw": "WITHDRAW MONEY"
+    "about": "About Us",
+    "faq": "Frequently Asked Questions",
+    "news": "News",
+    "withdraw": "Withdraw Money"
   },
   "chart": {
     "1d": "1D",

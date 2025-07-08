@@ -29,6 +29,7 @@ interface FAQItem {
   FAQType: FAQType;
 }
 const FAQ = () => {
+  console.log("FAQ");
   const { t, i18n } = useTranslation()
   const [searchTerm, setSearchTerm] = useState('')
   const [activeCategory, setActiveCategory] = useState<number | 'all'>('all')
@@ -38,19 +39,36 @@ const FAQ = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const currentLanguage = i18n.language || 'mn'
+
   useEffect(() => {
     const fetchFAQData = async () => {
-      setLoading(true)
-      setError(null)
-      const data= await fetchFAQ();
-      const dataType = await fetchFAQType();
-      setFaqItems(data)
-      setFaqTypes(dataType)
-      console.log("data arrived,",data);
-      setLoading(false);
+      try {
+        setLoading(true)
+        setError(null)
+        const [data, dataType] = await Promise.all([fetchFAQ(), fetchFAQType()]);
+
+        if (data && Array.isArray(data)) {
+          setFaqItems(data)
+        } else {
+          setFaqItems([])
+        }
+        console.log("data arrived,",data);
+
+        if (dataType && Array.isArray(dataType)) {
+          setFaqTypes(dataType)
+        } else {
+          setFaqTypes([])
+        }
+      } catch (err) {
+        setError(t('common.errorOccurred'))
+        setFaqItems([])
+        setFaqTypes([])
+      } finally {
+        setLoading(false)
+      }
     }
     fetchFAQData()
-  }, [])
+  }, [t])
   const toggleItem = (index: number) => {
     if (openItems.includes(index)) {
       setOpenItems(openItems.filter(item => item !== index))
