@@ -261,6 +261,13 @@ const DashboardContent = () => {
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
       <div className="max-w-4xl mx-auto py-8">
+                  <StockList
+            loading={loading}
+            activeFilter={activeFilter}
+            filteredStocks={filteredStocks}
+            onFilterChange={setActiveFilter}
+            onStockSelect={handleStockSelect}
+          />
         <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 relative">
           <StockHeader
             selectedSymbol={selectedSymbol}
@@ -293,13 +300,7 @@ const DashboardContent = () => {
         </div>
 
         <div className="px-2 sm:px-4 flex flex-col gap-4 sm:gap-6 mt-10 sm:mt-12">
-          <StockList
-            loading={loading}
-            activeFilter={activeFilter}
-            filteredStocks={filteredStocks}
-            onFilterChange={setActiveFilter}
-            onStockSelect={handleStockSelect}
-          />
+
 
           <OrderBook
             selectedSymbol={selectedSymbol}
