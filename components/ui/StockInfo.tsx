@@ -32,7 +32,14 @@ export default function StockInfo({
   changePercent,
   details
 }: StockInfoProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.language || 'mn';
+  
+  // Helper function to get company name based on current language
+  const getCompanyName = (stock: StockData) => {
+    return currentLanguage === 'mn' ? stock.mnName : stock.enName;
+  };
+
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [allStocks, setAllStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +74,7 @@ export default function StockInfo({
     if (isMobile) {
       return `${baseSymbol}`;
     }
-    return `${baseSymbol} - ${stock.mnName || stock.enName}`;
+    return `${baseSymbol} - ${getCompanyName(stock)}`;
   };
 
   const fetchData = useCallback(async () => {
@@ -152,7 +159,7 @@ export default function StockInfo({
           </select>
           {stockData && isMobile && (
             <span className="text-xs bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-full truncate max-w-[100px]">
-              {stockData.mnName || stockData.enName}
+              {getCompanyName(stockData)}
             </span>
           )}
         </div>

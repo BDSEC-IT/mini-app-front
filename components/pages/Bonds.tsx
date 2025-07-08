@@ -61,9 +61,8 @@ const Bonds = () => {
     if (searchTerm) {
       filtered = filtered.filter(bond => 
         (bond.Symbol?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (bond.BondmnName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (bond.BondenName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (bond.Issuer?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+        (currentLanguage === 'mn' ? bond.BondmnName?.toLowerCase() : bond.BondenName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (currentLanguage === 'mn' ? bond.Issuer?.toLowerCase() : bond.IssuerEn?.toLowerCase() || '').includes(searchTerm.toLowerCase())
       )
     }
     console.log(filteredBonds, "filteredBonds")
@@ -105,6 +104,9 @@ const Bonds = () => {
   // Format date - improved to handle different formats
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return '-'
+    if (dateString === 'Буцаан төлөгдсөн') {
+      return t('bonds.refunded', 'Refunded')
+    }
     return dateString
   }
 
@@ -171,20 +173,20 @@ const Bonds = () => {
                       )}
                     </div>
                   </th>
-                  <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer" onClick={() => handleSort('BondmnName')}>
+                  <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer" onClick={() => handleSort(currentLanguage === 'mn' ? 'BondmnName' : 'BondenName')}>
                     <div className="flex items-center">
                       {t('bonds.name', 'Name')}
-                      {sortConfig.key === 'BondmnName' && (
+                      {sortConfig.key === (currentLanguage === 'mn' ? 'BondmnName' : 'BondenName') && (
                         sortConfig.direction === 'asc' 
                           ? <ArrowUp className="ml-1 h-3 w-3" /> 
                           : <ArrowDown className="ml-1 h-3 w-3" />
                       )}
                     </div>
                   </th>
-                  <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer" onClick={() => handleSort('Issuer')}>
+                  <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer" onClick={() => handleSort(currentLanguage === 'mn' ? 'Issuer' : 'IssuerEn')}>
                     <div className="flex items-center">
                       {t('bonds.issuer', 'Issuer')}
-                      {sortConfig.key === 'Issuer' && (
+                      {sortConfig.key === (currentLanguage === 'mn' ? 'Issuer' : 'IssuerEn') && (
                         sortConfig.direction === 'asc' 
                           ? <ArrowUp className="ml-1 h-3 w-3" /> 
                           : <ArrowDown className="ml-1 h-3 w-3" />
@@ -193,7 +195,7 @@ const Bonds = () => {
                   </th>
                   <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer" onClick={() => handleSort('TradedDate')}>
                     <div className="flex items-center">
-                      Хугацаа
+                      {t('bonds.period', 'Period')}
                       {sortConfig.key === 'TradedDate' && (
                         sortConfig.direction === 'asc' 
                           ? <ArrowUp className="ml-1 h-3 w-3" /> 
@@ -205,6 +207,16 @@ const Bonds = () => {
                     <div className="flex items-center">
                       {t('bonds.yield', 'Yield %')}
                       {sortConfig.key === 'Interest' && (
+                        sortConfig.direction === 'asc' 
+                          ? <ArrowUp className="ml-1 h-3 w-3" /> 
+                          : <ArrowDown className="ml-1 h-3 w-3" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-2 py-2 md:px-4 md:py-3 cursor-pointer" onClick={() => handleSort(currentLanguage === 'mn' ? 'mnInterestConditions' : 'enInterestConditions')}>
+                    <div className="flex items-center">
+                      {t('bonds.conditions', 'Conditions')}
+                      {sortConfig.key === (currentLanguage === 'mn' ? 'mnInterestConditions' : 'enInterestConditions') && (
                         sortConfig.direction === 'asc' 
                           ? <ArrowUp className="ml-1 h-3 w-3" /> 
                           : <ArrowDown className="ml-1 h-3 w-3" />
@@ -253,8 +265,9 @@ const Bonds = () => {
                     </td>
                     <td className="px-2 py-2 md:px-4 md:py-3">{currentLanguage === 'mn' ? bond.BondmnName : bond.BondenName}</td>
                     <td className="px-2 py-2 md:px-4 md:py-3">{currentLanguage === 'mn' ? bond.Issuer : bond.IssuerEn}</td>
-                    <td className="px-2 py-2 md:px-4 md:py-3">{formatDate(bond.Date)} {bond.Date==="-" ? '' : 'жил'}</td>
+                    <td className="px-2 py-2 md:px-4 md:py-3">{formatDate(bond.Date)} {bond.Date==="-" ? '' : t('bonds.years', 'years')}</td>
                     <td className="px-2 py-2 md:px-4 md:py-3">{formatPercentage(bond.Interest)}</td>
+                    <td className="px-2 py-2 md:px-4 md:py-3">{currentLanguage === 'mn' ? bond.mnInterestConditions : bond.enInterestConditions}</td>
                     <td className="px-2 py-2 md:px-4 md:py-3">{formatNominalValue(bond.NominalValue, bond.Isdollar)}</td>
                     <td className="px-2 py-2 md:px-4 md:py-3">{formatDate(bond.RefundDate)}</td>
                     <td className="px-2 py-2 md:px-4 md:py-3">

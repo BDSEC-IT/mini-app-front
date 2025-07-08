@@ -13,7 +13,14 @@ interface Category {
 }
 
 const AllStocks = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const currentLanguage = i18n.language || 'mn';
+  
+  // Helper function to get company name based on current language
+  const getCompanyName = (stock: StockData) => {
+    return currentLanguage === 'mn' ? stock.mnName : stock.enName;
+  };
+
   const [allStocks, setAllStocks] = useState<StockData[]>([])
   const [filteredStocks, setFilteredStocks] = useState<StockData[]>([])
   const [loading, setLoading] = useState(true)
@@ -232,7 +239,7 @@ const AllStocks = () => {
         <td className="px-2 py-3">
           <div>
             <div className="font-medium">{stock.Symbol}</div>
-            <div className="text-xs text-gray-500">{stock.mnName || stock.enName}</div>
+            <div className="text-xs text-gray-500">{getCompanyName(stock)}</div>
           </div>
         </td>
         <td className="px-2 py-3 text-right">

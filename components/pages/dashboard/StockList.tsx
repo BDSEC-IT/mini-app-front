@@ -32,7 +32,13 @@ export const StockList = ({
   onFilterChange,
   onStockSelect
 }: StockListProps) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const currentLanguage = i18n.language || 'mn';
+  
+  // Helper function to get company name based on current language
+  const getCompanyName = (stock: StockData) => {
+    return currentLanguage === 'mn' ? stock.mnName : stock.enName;
+  };
   const autoplayPlugin = useRef(
     Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: false })
   )
@@ -127,8 +133,8 @@ export const StockList = ({
                           </div>
                         </div>
                         <div className="mt-2">
-                          <p className="font-medium text-gray-800 truncate text-s dark:text-gray-200" title={stock.mnName || stock.enName}>
-                            {stock.mnName || stock.enName}
+                          <p className="font-medium text-gray-800 truncate text-s dark:text-gray-200" title={getCompanyName(stock)}>
+                            {getCompanyName(stock)}
                           </p>
                         </div>
                         <div className="mt-4">

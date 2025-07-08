@@ -521,9 +521,8 @@ export function TradingViewChart({
         canvas.width = rect.width * window.devicePixelRatio
         canvas.height = rect.height * window.devicePixelRatio
         
-        // Redraw chart
-        const event = new Event('resize')
-        window.dispatchEvent(event)
+        // The chart will redraw automatically when the canvas size changes
+        // No need to manually trigger a redraw here
       }
     }
     

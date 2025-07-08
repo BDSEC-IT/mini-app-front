@@ -1,8 +1,8 @@
 import { AccountSetupFormData, mongolianBanks } from './schemas';
 
 // API base URL
-export const BASE_URL = 'https://miniapp.bdsec.mn/apitest';
-export const BDSEC_MAIN = 'https://new.bdsec.mn/api/v1'
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
+export const BDSEC_MAIN = process.env.NEXT_PUBLIC_BDSEC_URL || 'https://miniapp.bdsec.mn/apitest'
 interface StockData {
   pkId: number;
   id: number;
@@ -474,26 +474,126 @@ const logDev = (message: string) => {
 };
 
 export const fetchStockData = async (symbol?: string): Promise<ApiResponse<StockData[]>> => {
-  const url = symbol 
-    ? `${BASE_URL}/securities/trading-status/${symbol}`
+  // Use lowercase symbol for trading status endpoint
+  const tradingSymbol = symbol ? symbol.toLowerCase() : undefined;
+  const url = tradingSymbol 
+    ? `${BASE_URL}/securities/trading-status/${tradingSymbol}`
     : `${BASE_URL}/securities/trading-status`;
+  
+  console.log('=== TRADING STATUS API DEBUG ===');
+  console.log('Original symbol:', symbol);
+  console.log('Trading symbol (lowercase):', tradingSymbol);
+  console.log('Trading status URL:', url);
   
   try {
     const response = await fetchWithTimeout(url)
     
+    // Response status logging removed
+    
     if (!response.ok) {
-      logDev(`Using mock stock data (${response.status})`);
+      logDev(`API call failed with status ${response.status}`);
+      console.error('API call failed:', response.status, response.statusText);
+      // For debugging, let's see what the error response is
+      try {
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+      } catch (e) {
+        console.error('Could not read error response');
+      }
+      
       // Return mock data instead of throwing
       const mockData = generateMockStockData(symbol)
+      console.log('Using mock data:', mockData);
       return {
         success: true,
         message: 'Mock data',
         data: mockData
       }
     }
-    return response.json()
+    
+    const responseData = await response.json();
+    console.log('fetchStockData real data:', responseData);
+    return responseData;
   } catch (error) {
     logDev('Using fallback mock stock data');
+    console.error('fetchStockData error:', error);
+    
+    // Return mock data as fallback
+    const mockData = generateMockStockData(symbol)
+    console.log('Using fallback mock data:', mockData);
+    
+    return {
+      success: true,
+      message: 'Mock data',
+      data: mockData
+    }
+  }
+};
+
+// Enhanced version of fetchStockData that includes company information
+export const fetchStockDataWithCompanyInfo = async (symbol?: string): Promise<ApiResponse<StockData[]>> => {
+  try {
+    console.log('=== fetchStockDataWithCompanyInfo START ===');
+    console.log('Symbol:', symbol);
+    
+    // Fetch trading data first
+    const tradingResponse = await fetchStockData(symbol);
+    console.log('Trading response:', tradingResponse.success, tradingResponse.data ? 'has data' : 'no data');
+
+    if (!tradingResponse.success || !tradingResponse.data) {
+      console.log('Trading data failed, using mock data');
+      const mockData = generateMockStockData(symbol)
+      return {
+        success: true,
+        message: 'Mock data',
+        data: mockData
+      };
+    }
+
+    // Fetch company data for the specific symbol (use original case for companies API)
+    const companiesResponse = await fetchCompanies(1, 5000, symbol);
+    console.log('Companies response:', companiesResponse.success, companiesResponse.data ? companiesResponse.data.length : 0, 'companies');
+
+    let stocksData = tradingResponse.data;
+    let companiesData: CompanyData[] = [];
+
+    if (companiesResponse.success && companiesResponse.data) {
+      companiesData = companiesResponse.data;
+    }
+
+    // Get company info (should be only one company for the specific symbol)
+    const companyInfo = companiesData.length > 0 ? companiesData[0] : null;
+    console.log('Company info found:', companyInfo?.mnTitle, companyInfo?.enTitle);
+
+    // Handle single stock object vs array
+    const stocksArray = Array.isArray(stocksData) ? stocksData : [stocksData];
+    console.log('Stocks data type:', Array.isArray(stocksData) ? 'array' : 'object', 'length:', stocksArray.length);
+
+    // Merge trading data with company information
+    const enrichedStocks = stocksArray.map(stock => {
+      const baseSymbol = stock.Symbol.split('-')[0];
+      
+      const enrichedStock = {
+        ...stock,
+        mnName: companyInfo?.mnTitle || stock.mnName || `${baseSymbol} Компани`,
+        enName: companyInfo?.enTitle || stock.enName || `${baseSymbol} Company`
+      };
+      
+      console.log(`Enriched ${stock.Symbol}:`, enrichedStock.mnName, enrichedStock.enName);
+      return enrichedStock;
+    });
+
+    console.log('=== fetchStockDataWithCompanyInfo SUCCESS ===');
+    return {
+      success: true,
+      message: tradingResponse.message,
+      data: enrichedStocks
+    };
+
+  } catch (error) {
+    console.error('=== fetchStockDataWithCompanyInfo ERROR ===');
+    console.error('Error details:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
     // Return mock data as fallback
     const mockData = generateMockStockData(symbol)
@@ -506,8 +606,11 @@ export const fetchStockData = async (symbol?: string): Promise<ApiResponse<Stock
   }
 };
 
+
 export const fetchOrderBook = async (symbol: string): Promise<OrderBookResponse> => {
-  const url = `${BASE_URL}/securities/order-book/${symbol}`;
+  // Use lowercase symbol for order book endpoint
+  const tradingSymbol = symbol.toLowerCase();
+  const url = `${BASE_URL}/securities/order-book/${tradingSymbol}`;
   
   try {
     const response = await fetchWithTimeout(url)
@@ -563,6 +666,79 @@ export const fetchAllStocks = async (): Promise<AllStocksResponse> => {
   }
 };
 
+// Enhanced function that merges stock trading data with company information
+export const fetchAllStocksWithCompanyInfo = async (): Promise<AllStocksResponse> => {
+  try {
+    // Fetch both trading data and company data in parallel
+    const [tradingResponse, companiesResponse] = await Promise.all([
+      fetchAllStocks(),
+      fetchCompanies()
+    ]);
+
+    if (!tradingResponse.success || !tradingResponse.data) {
+      logDev('Failed to fetch trading data, using mock data');
+      return {
+        success: true,
+        data: generateMockStockData()
+      };
+    }
+
+    let stocksData = tradingResponse.data;
+    let companiesData: CompanyData[] = [];
+
+    if (companiesResponse.success && companiesResponse.data) {
+      companiesData = companiesResponse.data;
+    }
+
+    // Create a map of company data by symbol for quick lookup
+    const companyMap = new Map<string, CompanyData>();
+    companiesData.forEach(company => {
+      // Only include actual stocks (ending with -O-0000)
+      if (company.symbol && company.symbol.endsWith('-O-0000')) {
+        // Store with full symbol as key
+        companyMap.set(company.symbol, company);
+        
+        // Also store with base symbol (without -O-0000) as key for fallback
+        const baseSymbol = company.symbol.split('-')[0];
+        companyMap.set(baseSymbol, company);
+      }
+    });
+
+    // Merge trading data with company information
+    const enrichedStocks = stocksData.map(stock => {
+      const baseSymbol = stock.Symbol.split('-')[0];
+      let companyInfo = companyMap.get(stock.Symbol); // Try exact match first
+      
+      if (!companyInfo) {
+        companyInfo = companyMap.get(baseSymbol); // Fallback to base symbol
+      }
+      
+      return {
+        ...stock,
+        mnName: companyInfo?.mnTitle || stock.mnName || `${baseSymbol} Компани`,
+        enName: companyInfo?.enTitle || stock.enName || `${baseSymbol} Company`
+      };
+    });
+
+    logDev(`Enriched ${enrichedStocks.length} stocks with company data from ${companiesData.length} companies`);
+
+    return {
+      success: true,
+      data: enrichedStocks
+    };
+
+  } catch (error) {
+    logDev('Error in fetchAllStocksWithCompanyInfo, using fallback mock data');
+    
+    // Return mock data as fallback
+    const mockData = generateMockStockData()
+    
+    return {
+      success: true,
+      data: mockData
+    }
+  }
+};
 
 export const fetchFAQ = async () => {
   console.log("fetchFAQ");
@@ -594,6 +770,7 @@ type FAQ = {
     
   }
 };
+
 export const fetchFAQType = async () => {
   console.log("fetchFAQTypes");
   const url = `${BDSEC_MAIN}/faq/types`;
@@ -616,7 +793,6 @@ export const fetchFAQType = async () => {
       console.log("error",error);
   }
 };
-
 
 export const fetchTradingHistory = async (symbol: string, page: number = 1, limit: number = 100): Promise<TradingHistoryResponse> => {
   const url = `${BASE_URL}/securities/trading-history?page=${page}&limit=${limit}&sortField&sortOrder=desc&symbol=${symbol}`;
@@ -762,18 +938,32 @@ export const fetchBonds = async (page: number = 1, limit: number = 5000): Promis
   }
 };
 
-export const fetchCompanies = async (page: number = 1, limit: number = 5000): Promise<CompaniesResponse> => {
-  const url = `${BASE_URL}/securities/companies?page=${page}&limit=${limit}&sortField`;
-  logDev(`Fetching companies from: ${url}`);
+export const fetchCompanies = async (page: number = 1, limit: number = 5000, symbol?: string): Promise<CompaniesResponse> => {
+  const url = symbol 
+    ? `${BASE_URL}/securities/companies?page=${page}&limit=${limit}&sortField&symbol=${symbol}`
+    : `${BASE_URL}/securities/companies?page=${page}&limit=${limit}&sortField`;
+    
+  console.log('=== COMPANIES API DEBUG ===');
+  console.log('fetchCompanies URL:', url);
+  console.log('Symbol filter:', symbol);
+  
   try {
     const response = await fetchWithTimeout(url);
+    console.log('Companies response status:', response.status);
+    console.log('Companies response statusText:', response.statusText);
+    
     if (!response.ok) {
+      console.error(`Error fetching companies: ${response.status} ${response.statusText}`);
       logDev(`Error fetching companies: ${response.statusText}`);
       return { success: false, data: [] };
     }
-    return response.json();
+    
+    const data = await response.json();
+    console.log('Companies response data:', data);
+    return data;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Companies API exception:', error);
     logDev(`Exception in fetchCompanies: ${errorMessage}`);
     return { success: false, data: [] };
   }
@@ -1099,7 +1289,6 @@ export const getUserProfile = async (token?: string): Promise<UserProfileRespons
     
     // For development purposes, return mock profile data
     console.log('Using mock profile data for development');
-    
     return {
       success: true,
       message: 'Using mock profile data',
@@ -1178,6 +1367,7 @@ export const getUserAccountInformation = async (token?: string): Promise<UserAcc
     }
   }
 }
+
 export const getUpdateMCSDStatus=async(token:string)=>{
   const url = `${BASE_URL}/user/get-update-mcsd-status`;
   try {
