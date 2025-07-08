@@ -143,6 +143,7 @@ interface TradingViewChartProps {
   theme?: string
   period?: string
   onPriceHover?: (price: number | null, change?: number, changePercent?: number) => void
+  onLatestTimeUpdate?: (latestTime: string) => void
 }
 
 interface Point {
@@ -152,13 +153,15 @@ interface Point {
   value: number
   change: number
   changePercent: number
+  entryTime: string
 }
 
 export function TradingViewChart({ 
   symbol = 'BDS-O-0000', 
   theme = 'light', 
   period = 'ALL',
-  onPriceHover 
+  onPriceHover,
+  onLatestTimeUpdate
 }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -174,7 +177,8 @@ export function TradingViewChart({
     date: Date, 
     value: number, 
     change: number, 
-    changePercent: number
+    changePercent: number,
+    entryTime: string
   }>({
     visible: false,
     x: 0,
@@ -183,11 +187,12 @@ export function TradingViewChart({
     value: 0,
     change: 0,
     changePercent: 0,
+    entryTime: '',
   })
   // Track if we've ever shown a tooltip
   const [hasInteracted, setHasInteracted] = useState(false)
   // Store the last valid tooltip
-  const lastValidTooltipRef = useRef<{x: number, y: number, date: Date, value: number, change: number, changePercent: number} | null>(null)
+  const lastValidTooltipRef = useRef<{x: number, y: number, date: Date, value: number, change: number, changePercent: number, entryTime: string} | null>(null)
   
   const pointsRef = useRef<Point[]>([])
   const { t } = useTranslation()
@@ -220,7 +225,7 @@ export function TradingViewChart({
     setActivePeriod(period)
   }, [period])
 
-  // Update latest price when chart data changes
+  // Update latest price and time when chart data changes
   useEffect(() => {
     if (chartData.length > 0) {
       const sortedData = [...chartData].sort((a, b) => new Date(b.dates).getTime() - new Date(a.dates).getTime())
@@ -231,8 +236,13 @@ export function TradingViewChart({
       if (onPriceHover && !tooltip.visible) {
         onPriceHover(latestData.ClosingPrice, undefined, undefined)
       }
+      
+      // Pass the latest MDEntryTime to parent component
+      if (onLatestTimeUpdate && latestData.MDEntryTime) {
+        onLatestTimeUpdate(latestData.MDEntryTime)
+      }
     }
-  }, [chartData, onPriceHover, tooltip.visible])
+  }, [chartData, onPriceHover, onLatestTimeUpdate, tooltip.visible])
 
   // Filter data based on the selected time period
   const filterDataByPeriod = useCallback((data: TradingHistoryData[], period: string): TradingHistoryData[] => {
@@ -390,7 +400,7 @@ export function TradingViewChart({
         ? (change / sortedData[i - 1].ClosingPrice) * 100
         : 0;
         
-      return { x, y, date, value: d.ClosingPrice, change, changePercent }
+      return { x, y, date, value: d.ClosingPrice, change, changePercent, entryTime: d.MDEntryTime }
     })
     
     // Store points for interaction
@@ -543,7 +553,8 @@ export function TradingViewChart({
         date: closestPoint.date,
         value: closestPoint.value,
         change: closestPoint.change,
-        changePercent: closestPoint.changePercent
+        changePercent: closestPoint.changePercent,
+        entryTime: closestPoint.entryTime
       })
       
       // Store last valid tooltip
@@ -553,7 +564,8 @@ export function TradingViewChart({
         date: closestPoint.date,
         value: closestPoint.value,
         change: closestPoint.change,
-        changePercent: closestPoint.changePercent
+        changePercent: closestPoint.changePercent,
+        entryTime: closestPoint.entryTime
       }
       
       // Mark that we've interacted with the chart
@@ -645,14 +657,47 @@ export function TradingViewChart({
           </div>
         )}
         
-        {/* Updated Tooltip */}
+        {/* Updated Tooltip with smart positioning */}
         {(tooltip.visible || (hasInteracted && lastValidTooltipRef.current)) && (
           <div 
-            className="absolute pointer-events-none bg-white dark:bg-gray-800 border border-soft border-opacity-50 rounded-md px-3 py-2 z-10 transform -translate-x-1/2 -translate-y-full text-xs"
+            className="absolute pointer-events-none bg-white dark:bg-gray-800 border border-soft border-opacity-50 rounded-md px-3 py-2 z-10 text-xs shadow-lg"
             style={{ 
-              left: tooltip.visible ? tooltip.x : (lastValidTooltipRef.current?.x || 0), 
-              top: (tooltip.visible ? tooltip.y : (lastValidTooltipRef.current?.y || 0)) - 8,
-              transform: 'translate(-50%, -100%)'
+              left: (() => {
+                const tooltipX = tooltip.visible ? tooltip.x : (lastValidTooltipRef.current?.x || 0)
+                const containerWidth = containerRef.current?.offsetWidth || 0
+                const tooltipWidth = 120 // Approximate tooltip width
+                const margin = 10 // Minimum margin from edges
+                
+                // Calculate the ideal centered position
+                let left = tooltipX - (tooltipWidth / 2)
+                
+                // Adjust if tooltip would go off the left edge
+                if (left < margin) {
+                  left = margin
+                }
+                
+                // Adjust if tooltip would go off the right edge
+                if (left + tooltipWidth > containerWidth - margin) {
+                  left = containerWidth - tooltipWidth - margin
+                }
+                
+                return `${left}px`
+              })(),
+              top: (() => {
+                const tooltipY = tooltip.visible ? tooltip.y : (lastValidTooltipRef.current?.y || 0)
+                const tooltipHeight = 80 // Approximate tooltip height
+                const margin = 10 // Minimum margin from edges
+                
+                // Position tooltip above the point
+                let top = tooltipY - tooltipHeight - margin
+                
+                // If tooltip would go above the container, position it below the point
+                if (top < margin) {
+                  top = tooltipY + margin
+                }
+                
+                return `${top}px`
+              })()
             }}
           >
             <div className="font-bold text-base text-gray-900 dark:text-white">
@@ -674,6 +719,11 @@ export function TradingViewChart({
             </div>
             <div className="text-gray-500 dark:text-gray-400 text-xs mt-1">
               {(tooltip.visible ? tooltip.date : (lastValidTooltipRef.current?.date || new Date())).toLocaleDateString()}
+              {(tooltip.visible ? tooltip.entryTime : (lastValidTooltipRef.current?.entryTime || '')) && (
+                <span className="ml-2">
+                  {(tooltip.visible ? tooltip.entryTime : (lastValidTooltipRef.current?.entryTime || ''))}
+                </span>
+              )}
             </div>
           </div>
         )}

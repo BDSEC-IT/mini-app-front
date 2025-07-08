@@ -33,6 +33,24 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function formatDateTime(dateString: string) {
+  if (!dateString) return '';
+  // Try to parse as ISO, fallback to just time
+  const date = new Date(dateString);
+  if (!isNaN(date.getTime())) {
+    // Format as 'YYYY-MM-DD HH:mm:ss'
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    const h = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const s = String(date.getSeconds()).padStart(2, '0');
+    return `${y}-${m}-${d} ${h}:${min}:${s}`;
+  }
+  // If not ISO, just return as is
+  return dateString;
+}
+
 const DashboardContent = () => {
   const [selectedSymbol, setSelectedSymbol] = useState('BDS')
   const { theme } = useTheme()
@@ -54,6 +72,8 @@ const DashboardContent = () => {
   const [hoveredChangePercent, setHoveredChangePercent] = useState<number | null>(null)
   const [selectedStockData, setSelectedStockData] = useState<StockData | null>(null)
   const [chartRefreshKey, setChartRefreshKey] = useState<number>(0)
+  const [latestEntryTime, setLatestEntryTime] = useState<string>('')
+  const [chartLoading, setChartLoading] = useState(true);
   
   const autoplayPlugin = useRef(
     Autoplay({ delay: 5000, stopOnInteraction: true, stopOnMouseEnter: true })
@@ -312,6 +332,21 @@ const DashboardContent = () => {
     setHoveredChange(change ?? null);
     setHoveredChangePercent(changePercent ?? null);
   };
+
+  const handleLatestTimeUpdate = (latestTime: string) => {
+    setLatestEntryTime(latestTime);
+  };
+
+  // When latestEntryTime is set, set chartLoading to false
+  useEffect(() => {
+    if (latestEntryTime) setChartLoading(false);
+  }, [latestEntryTime]);
+
+  // When selectedSymbol or activeTab changes, reset chartLoading
+  useEffect(() => {
+    setChartLoading(true);
+    setLatestEntryTime('');
+  }, [selectedSymbol, activeTab]);
   
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
@@ -330,10 +365,17 @@ const DashboardContent = () => {
               </div>
               
               <div className="mt-2">
-                <div className="">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">
+                <div className="flex flex-col items-start mb-2 px-2 sm:px-4">
+                  <div className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
                     {selectedStockData ? formatPrice(selectedStockData.PreviousClose) : '-'} ₮
-                  </h1>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1 min-h-[20px] flex items-center">
+                    {chartLoading && !latestEntryTime ? (
+                      <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-bdsec dark:border-t-white rounded-full animate-spin mr-2"></span>
+                    ) : latestEntryTime ? (
+                      formatDateTime(latestEntryTime)
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </div>
@@ -407,22 +449,6 @@ const DashboardContent = () => {
           {/* Chart section with proper containment */}
           <div className="relative w-full max-w-full overflow-hidden">
             <div className="h-[350px] sm:h-[380px] md:h-[400px] lg:h-[420px] mt-4 mb-8 sm:mb-12 rounded-lg bg-transparent mx-2 sm:mx-0">
-              <div className="flex justify-between items-center mb-2 px-2 sm:px-4">
-                <div className="text-sm text-gray-500">
-                  {hoveredPrice ? (
-                    <span className="font-medium text-bdsec dark:text-indigo-400">
-                      {hoveredPrice.toLocaleString()} ₮
-                    </span>
-                  ) : selectedStockData?.PreviousClose ? (
-                    <span className="font-medium text-bdsec dark:text-indigo-400">
-                      {selectedStockData.PreviousClose.toLocaleString()} ₮
-                    </span>
-                  ) : null}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                </div>
-              </div>
               <div className="relative w-full h-full overflow-hidden">
                 <TradingViewChart 
                   key={`${selectedSymbol}-${chartRefreshKey}`}
@@ -430,6 +456,7 @@ const DashboardContent = () => {
                   theme={theme}
                   period={activeTab}
                   onPriceHover={handlePriceHover}
+                  onLatestTimeUpdate={handleLatestTimeUpdate}
                 />
               </div>
             </div>
@@ -449,13 +476,13 @@ const DashboardContent = () => {
           {/* Stock List Section */}
           <div className="w-full">
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-lg font-medium flex items-center">
+              <h2 className="text-base sm:text-lg font-medium flex items-center">
                 <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
                 {t('dashboard.popularStocks')}
               </h2>
               <Link 
                 href="/stocks" 
-                className="flex items-center px-3 py-1.5 bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 rounded-md hover:bg-bdsec/20 dark:hover:bg-indigo-500/30 transition-colors"
+                className="flex items-center text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-1.5 bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 rounded-md hover:bg-bdsec/20 dark:hover:bg-indigo-500/30 transition-colors"
               >
                 {t('dashboard.viewAll')} <ChevronRight size={16} className="ml-1" />
               </Link>
@@ -471,7 +498,7 @@ const DashboardContent = () => {
                    ].map((filter) => (
     <button
                   key={filter.id}
-                  className={`px-3 py-1 text-xs sm:text-sm rounded-full whitespace-nowrap flex items-center ${
+                  className={`px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm rounded-full whitespace-nowrap flex items-center ${
                      activeFilter === filter.id
                         ? 'bg-bdsec dark:bg-bdsec-dark text-white'
                        : 'border text-gray-500'

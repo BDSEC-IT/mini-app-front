@@ -149,7 +149,7 @@ export default function GeneralInfoPage() {
           countryCode: existingData.countryCode || nationality
         });
       }
-    }, [existingData, registerNumber, methods])
+    }, [existingData, registerNumber, methods, nationality])
     
     const onSubmit = (data: AdultInfoFormData) => {
       onNext({ ...data, customerType: '0' });
@@ -158,9 +158,27 @@ export default function GeneralInfoPage() {
     return (
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField name="registerNumber" label={t('profile.registerNumber')} placeholder="AA00112233" required disabled={!!registerNumber} />
-          <FormField name="lastName" label={t('profile.lastName')} placeholder={t('profile.enterLastName')} required />
-          <FormField name="firstName" label={t('profile.firstName')} placeholder={t('profile.enterFirstName')} required />
+          <FormField 
+            name="registerNumber" 
+            label={t('profile.registerNumber')} 
+            placeholder="AA00112233" 
+            required 
+            disabled={!!registerNumber} 
+          />
+          <FormField 
+            name="lastName" 
+            label={t('profile.lastName')} 
+            placeholder={t('profile.enterLastName')} 
+            required 
+            disabled={true}
+          />
+          <FormField 
+            name="firstName" 
+            label={t('profile.firstName')} 
+            placeholder={t('profile.enterFirstName')} 
+            required 
+            disabled={true}
+          />
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.gender')} <span className="text-red-500">*</span></label>
             <div className="flex space-x-4">
@@ -413,198 +431,172 @@ export default function GeneralInfoPage() {
 
   useEffect(() => {
     const fetchStatusAndSetMode = async () => {
-        const existingToken = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
-        
-        if (existingToken) {
-            try {
-                // First, check if user has a registration number
-                const regRes = await getRegistrationNumber(existingToken);
-                // console.log('General page - Registration number response:', regRes);
-                
-                if (!regRes.registerNumber) {
-                    // No registration number, show register input form
-                    setShowRegisterInput(true);
-                    setViewMode('loading');
-                    return;
-                } else {
-                    // User has registration number, set it and continue with status check
-                    setShowRegisterInput(false);
-                    setRegisterNumber(regRes.registerNumber);
-                }
-                
-                // Now check account status
-                const statusResponse = await getAccountStatusRequest(existingToken);
-                
-                // Reduced debug logging to improve performance
-                // console.log('General page - statusResponse:', statusResponse);
-                
-                let hasSubmittedData = false;
-                let isDataComplete = false;
-                
-                if (statusResponse.success && statusResponse.data) {
-                    const data = statusResponse.data;
-                    
-                    // Check if we have valid status data
-                    const hasValidStatus = statusResponse.success;
-                    const hasId = data && data.id;
-                    const hasPascalCaseData = data && (data.FirstName || data.LastName || data.RegistryNumber);
-                    const hasCamelCaseData = data && (data.firstName || data.lastName || data.registerNumber);
-                    const hasFallbackData = data && Object.keys(data).length > 0;
-                    
-                    hasSubmittedData = hasValidStatus || hasId || hasPascalCaseData || hasCamelCaseData || hasFallbackData;
-                    
-                    // Trust the backend's validation if it exists
-                    const backendValidation = (statusResponse.data as any)?.validation;
-                    
-                    if (backendValidation) {
-                        // Backend provides validation, trust it
-                        isDataComplete = backendValidation.isValid === true;
-                        console.log('General page - Using backend validation:', backendValidation);
-                    } else {
-                        // Fallback validation if backend doesn't provide validation
-                        const requiredFields = [
-                            'FirstName', 'LastName', 'RegistryNumber', 'MobilePhone', 
-                            'Gender', 'BirthDate', 'Occupation', 'HomeAddress', 
-                            'BankCode', 'BankAccountNumber', 'CustomerType', 'Country'
-                        ];
-                        
-                        const missingRequiredFields = requiredFields.filter(field => {
-                            const value = data[field];
-                            // Check if the field is null, undefined, or empty string
-                            return value === null || value === undefined || value === '';
-                        });
-                        
-                        isDataComplete = missingRequiredFields.length === 0;
-                        
-                        console.log('General page - Fallback validation:', {
-                            missingRequiredFields,
-                            isDataComplete
-                        });
-                    }
-                    
-                    console.log('General page - Data completeness check:', {
-                        isDataComplete,
-                        backendValidation,
-                        hasSubmittedData
-                    });
-                } else {
-                    // 404 or other error - user hasn't submitted data yet
-                    // console.log('General page - No account status found (404 expected for new users)');
-                    hasSubmittedData = false;
-                    isDataComplete = false;
-                }
-                
-                if (hasSubmittedData && isDataComplete) {
-                    // User has submitted complete info, show summary
-                    // console.log('General page - User has submitted complete data, showing summary');
-                    // console.log('About to set summaryData with:', statusResponse.data);
-                    // console.log('Type of statusResponse:', typeof statusResponse);
-                    // console.log('Keys of statusResponse:', Object.keys(statusResponse));
-                    // console.log('Type of statusResponse.data:', typeof statusResponse.data);
-                    
-                    // Fix: Set only the data portion, not the entire response
-                    const invoiceStatus = await checkInvoiceStatus(existingToken);
-                    if(invoiceStatus.success && invoiceStatus.data?.data?.registrationFee?.status === 'COMPLETED'){
-                      statusResponse.data.data.invoiceStatus = 'PAID';
-                      setSummaryData(statusResponse.data);
-                      setViewMode('summary');
-                      return
-                    }
-                    else{
-                      setSummaryData(statusResponse.data);
-                    }
-                    setViewMode('summary');
-                    
-                    // Pre-populate form data for edit mode
-                    const existingData = statusResponse.data;
-                    const mappedData = {
-                        isAdult: existingData.isAdult || (existingData.CustomerType === 1) || 
-                                // Fallback: if no explicit customer type, assume adult if we have occupation
-                                (existingData.Occupation || existingData.occupation ? true : undefined),
-                        registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber || '',
-                        childRegisterNumber: existingData.childRegisterNumber || '',
-                        parentRegisterNumber: existingData.parentRegisterNumber || '',
-                        firstName: existingData.FirstName || existingData.firstName || '',
-                        lastName: existingData.LastName || existingData.lastName || '',
-                        phoneNumber: existingData.MobilePhone || existingData.phoneNumber || '',
-                        homePhone: existingData.HomePhone || existingData.homePhone || '',
-                        gender: existingData.Gender || existingData.gender || '',
-                        birthDate: existingData.BirthDate || existingData.birthDate || '',
-                        occupation: existingData.Occupation || existingData.occupation || '',
-                        homeAddress: existingData.HomeAddress || existingData.homeAddress || '',
-                        bankCode: existingData.BankCode || existingData.bankCode || '',
-                        accountNumber: existingData.BankAccountNumber || existingData.bankAccountNumber || existingData.accountNumber || '',
-                        customerType: existingData.CustomerType || existingData.customerType || '0',
-                        countryCode: existingData.Country || existingData.countryCode || nationality
-                    };
-                    
-                    setFormData(mappedData);
-                    
-                    // Set step to 2 since we have submitted data
-                    setStep(2);
-                    
-                    console.log('General page - Set summary mode with data:', mappedData);
-                    // console.log('General page - Summary data should be:', statusResponse.data);
-                } else if (hasSubmittedData && !isDataComplete) {
-                    // User has submitted incomplete data, show form in edit mode
-                    // console.log('General page - User has submitted incomplete data, showing form in edit mode');
-                    
-                    // Pre-populate form data with existing data
-                    const existingData = statusResponse.data;
-                    const mappedData = {
-                        isAdult: existingData.isAdult || (existingData.CustomerType === 1) || 
-                                // Fallback: if no explicit customer type, assume adult if we have occupation
-                                (existingData.Occupation || existingData.occupation ? true : undefined),
-                        registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber || '',
-                        childRegisterNumber: existingData.childRegisterNumber || '',
-                        parentRegisterNumber: existingData.parentRegisterNumber || '',
-                        firstName: existingData.FirstName || existingData.firstName || '',
-                        lastName: existingData.LastName || existingData.lastName || '',
-                        phoneNumber: existingData.MobilePhone || existingData.phoneNumber || '',
-                        homePhone: existingData.HomePhone || existingData.homePhone || '',
-                        gender: existingData.Gender || existingData.gender || '',
-                        birthDate: existingData.BirthDate || existingData.birthDate || '',
-                        occupation: existingData.Occupation || existingData.occupation || '',
-                        homeAddress: existingData.HomeAddress || existingData.homeAddress || '',
-                        bankCode: existingData.BankCode || existingData.bankCode || '',
-                        accountNumber: existingData.BankAccountNumber || existingData.bankAccountNumber || existingData.accountNumber || '',
-                        customerType: existingData.CustomerType || existingData.customerType || '0',
-                        countryCode: existingData.Country || existingData.countryCode || nationality
-                    };
-                    
-                    setFormData(mappedData);
-                    setViewMode('form');
-                    setStep(2); // Skip step 1 since we know it's an adult
-                    
-                    console.log('General page - Set form mode with existing data:', mappedData);
-                } else {
-                    // New user, show form
-                    // console.log('General page - User has NOT submitted data, showing form');
-                    const authRegNumber = searchParams.get('registerNumber');
-                    if (authRegNumber) {
-                        setRegisterNumber(authRegNumber);
-                    }
-                    setViewMode('form');
-                    // console.log('General page - Set form mode');
-                }
-            } catch (error) {
-                console.error('Error fetching status:', error);
-                setViewMode('form');
+      const existingToken = Cookies.get('token');
+      
+      if (existingToken) {
+        try {
+          // First, check if user has a registration number and account info
+          const [regRes, accountRes] = await Promise.all([
+            getRegistrationNumber(existingToken),
+            getUserAccountInformation(existingToken)
+          ]);
+          
+          if (!regRes.registerNumber) {
+            setShowRegisterInput(true);
+            setViewMode('loading');
+            return;
+          } else {
+            setShowRegisterInput(false);
+            setRegisterNumber(regRes.registerNumber);
+            
+            // Set name data from account info
+            if (accountRes.success && accountRes.data?.khanUser) {
+              const { firstName, lastName } = accountRes.data.khanUser;
+              setFormData(prev => ({
+                ...prev,
+                firstName,
+                lastName
+              }));
             }
-        } else {
-            // No token, treat as a new user for now
-            // console.log('General page - No token, showing form');
+          }
+          
+          // Now check account status
+          const statusResponse = await getAccountStatusRequest(existingToken);
+          
+          let hasSubmittedData = false;
+          let isDataComplete = false;
+          
+          if (statusResponse.success && statusResponse.data) {
+            const data = statusResponse.data;
+            
+            // Check if we have valid status data
+            const hasValidStatus = statusResponse.success;
+            const hasId = data && data.id;
+            const hasPascalCaseData = data && (data.FirstName || data.LastName || data.RegistryNumber);
+            const hasCamelCaseData = data && (data.firstName || data.lastName || data.registerNumber);
+            const hasFallbackData = data && Object.keys(data).length > 0;
+            
+            hasSubmittedData = hasValidStatus || hasId || hasPascalCaseData || hasCamelCaseData || hasFallbackData;
+            
+            // Trust the backend's validation if it exists
+            const backendValidation = (statusResponse.data as any)?.validation;
+            
+            if (backendValidation) {
+              isDataComplete = backendValidation.isValid === true;
+            } else {
+              const requiredFields = [
+                'FirstName', 'LastName', 'RegistryNumber', 'MobilePhone', 
+                'Gender', 'BirthDate', 'Occupation', 'HomeAddress', 
+                'BankCode', 'BankAccountNumber', 'CustomerType', 'Country'
+              ];
+              
+              const missingRequiredFields = requiredFields.filter(field => {
+                const value = data[field];
+                return value === null || value === undefined || value === '';
+              });
+              
+              isDataComplete = missingRequiredFields.length === 0;
+            }
+          }
+          
+          if (hasSubmittedData && isDataComplete) {
+            const invoiceStatus = await checkInvoiceStatus(existingToken);
+            if(invoiceStatus.message==="MCSD Account found"){
+              statusResponse.data.data.invoiceStatus = 'PAID';
+              setSummaryData(statusResponse.data);
+              setViewMode('summary');
+              return
+            }
+            else if(invoiceStatus.success && invoiceStatus.data?.data?.registrationFee?.status === 'COMPLETED'){
+              statusResponse.data.data.invoiceStatus = 'PAID';
+              setSummaryData(statusResponse.data);
+              setViewMode('summary');
+              return
+            }
+            else{
+              setSummaryData(statusResponse.data);
+            }
+            setViewMode('summary');
+            
+            // Pre-populate form data for edit mode
+            const existingData = statusResponse.data;
+            const mappedData = {
+              isAdult: existingData.isAdult || (existingData.CustomerType === 1) || 
+                      (existingData.Occupation || existingData.occupation ? true : undefined),
+              registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber || '',
+              childRegisterNumber: existingData.childRegisterNumber || '',
+              parentRegisterNumber: existingData.parentRegisterNumber || '',
+              firstName: existingData.FirstName || existingData.firstName || accountRes.data?.khanUser?.firstName || '',
+              lastName: existingData.LastName || existingData.lastName || accountRes.data?.khanUser?.lastName || '',
+              phoneNumber: existingData.MobilePhone || existingData.phoneNumber || '',
+              homePhone: existingData.HomePhone || existingData.homePhone || '',
+              gender: existingData.Gender || existingData.gender || '',
+              birthDate: existingData.BirthDate || existingData.birthDate || '',
+              occupation: existingData.Occupation || existingData.occupation || '',
+              homeAddress: existingData.HomeAddress || existingData.homeAddress || '',
+              bankCode: existingData.BankCode || existingData.bankCode || '',
+              accountNumber: existingData.BankAccountNumber || existingData.bankAccountNumber || existingData.accountNumber || '',
+              customerType: existingData.CustomerType || existingData.customerType || '0',
+              countryCode: existingData.Country || existingData.countryCode || nationality
+            };
+            
+            setFormData(mappedData);
+            
+            setStep(2);
+          } else if (hasSubmittedData && !isDataComplete) {
+            const existingData = statusResponse.data;
+            const mappedData = {
+              isAdult: existingData.isAdult || (existingData.CustomerType === 1) || 
+                      (existingData.Occupation || existingData.occupation ? true : undefined),
+              registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber || '',
+              childRegisterNumber: existingData.childRegisterNumber || '',
+              parentRegisterNumber: existingData.parentRegisterNumber || '',
+              firstName: existingData.FirstName || existingData.firstName || accountRes.data?.khanUser?.firstName || '',
+              lastName: existingData.LastName || existingData.lastName || accountRes.data?.khanUser?.lastName || '',
+              phoneNumber: existingData.MobilePhone || existingData.phoneNumber || '',
+              homePhone: existingData.HomePhone || existingData.homePhone || '',
+              gender: existingData.Gender || existingData.gender || '',
+              birthDate: existingData.BirthDate || existingData.birthDate || '',
+              occupation: existingData.Occupation || existingData.occupation || '',
+              homeAddress: existingData.HomeAddress || existingData.homeAddress || '',
+              bankCode: existingData.BankCode || existingData.bankCode || '',
+              accountNumber: existingData.BankAccountNumber || existingData.bankAccountNumber || existingData.accountNumber || '',
+              customerType: existingData.CustomerType || existingData.customerType || '0',
+              countryCode: existingData.Country || existingData.countryCode || nationality
+            };
+            
+            setFormData(mappedData);
             setViewMode('form');
+            setStep(2);
+          } else {
+            const authRegNumber = searchParams.get('registerNumber');
+            if (authRegNumber) {
+              setRegisterNumber(authRegNumber);
+            }
+            
+            // Set initial form data with name from account info
+            if (accountRes.success && accountRes.data?.khanUser) {
+              const { firstName, lastName } = accountRes.data.khanUser;
+              setFormData(prev => ({
+                ...prev,
+                firstName,
+                lastName
+              }));
+            }
+            
+            setViewMode('form');
+          }
+        } catch (error) {
+          console.error('Error fetching status:', error);
+          setViewMode('form');
         }
+      } else {
+        setViewMode('form');
+      }
     };
 
-    const demoToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDg4MjN9.CP4XJIAlErOi8fwrQ-vmBA4XT_wzdvIXw2lZ1wFbBII"
-    if (!Cookies.get('jwt') && !Cookies.get('token') && !Cookies.get('auth_token')) {
-        Cookies.set('jwt', demoToken, { expires: 7 })
-    }
-    
     fetchStatusAndSetMode();
-  }, [searchParams, t])
+  }, [searchParams, t, nationality]);
 
   
   const handleStep1Submit = (data: AdultCheckFormData) => {
@@ -655,7 +647,7 @@ export default function GeneralInfoPage() {
     console.log('Mapped data before API call (camelCase):', mappedData);
     console.log('=== END SUBMIT DEBUG ===');
 
-    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+    const token = Cookies.get('token');
 
     if (!token) {
         setError("Authentication token missing. Please log in.");
@@ -671,6 +663,12 @@ export default function GeneralInfoPage() {
         console.log('Nationality:', nationality);
         console.log('Mapped data being sent:', mappedData);
         console.log('=== END DEBUG ===');
+        // Ensure bank account number contains only digits and is at least 6 digits long
+        mappedData.bankAccountNumber = mappedData.bankAccountNumber.replace(/[^0-9]/g, '');
+        if(mappedData.bankAccountNumber.length < 6){
+          setError("Bank account number must be at least 6 digits");
+          return;
+        }
         const result = await sendAccountStatusRequest(mappedData, token);
         
         if (result.success) {
@@ -701,7 +699,7 @@ export default function GeneralInfoPage() {
 
   const handleCreateInvoice = async () => {
     setError(null);
-    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+    const token = Cookies.get('token');
     if (!token) {
         setError("Authentication token missing. Please log in.");
         return;
@@ -820,8 +818,8 @@ export default function GeneralInfoPage() {
       setError(t('profile.enterRegisterNumber'));
       return;
     }
-    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
-    const res = await sendRegistrationNumber(registerInput.trim(), nationality, token);
+    const token = Cookies.get('token');
+    const res = await sendRegistrationNumber(registerInput.trim(), nationality, token!);
     if (res.success) {
       setRegisterNumber(registerInput.trim());
       setShowRegisterInput(false);

@@ -34,7 +34,7 @@ const BottomNavigation = () => {
   // Check account status
   useEffect(() => {
     const checkAccountStatus = async () => {
-      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token')
+      const token = Cookies.get('token')
       if (token) {
         setIsLoggedIn(true)
         try {
@@ -63,7 +63,7 @@ const BottomNavigation = () => {
     
     // Listen for login/logout events
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'jwt' || e.key === 'auth_token' || e.key === 'token') {
+      if (e.key === 'jwt' || e.key === 'token') {
         checkAccountStatus();
       }
     };

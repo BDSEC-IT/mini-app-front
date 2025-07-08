@@ -24,38 +24,7 @@ export default function RegisterPage() {
   }>({ type: null, message: null })
   
   // Get token on component mount if it doesn't exist
-  useEffect(() => {
-    const authToken = Cookies.get('auth_token')
-    if (authToken) {
-      setToken(authToken)
-    } else {
-      // Get token if it doesn't exist
-      const getToken = async () => {
-        try {
-          const response = await digipayLogin('demo_user_id')
-          if (response.success && response.data?.token) {
-            Cookies.set('auth_token', response.data.token, { expires: 7 })
-            setToken(response.data.token)
-          } else {
-            // Set a fallback demo token for testing purposes
-            const demoToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDg4MjN9.CP4XJIAlErOi8fwrQ-vmBA4XT_wzdvIXw2lZ1wFbBII"
-            Cookies.set('auth_token', demoToken, { expires: 7 })
-            setToken(demoToken)
-            console.log('Using fallback demo token for testing')
-          }
-        } catch (error) {
-          console.error('Error getting token:', error)
-          // Set a fallback demo token for testing purposes
-          const demoToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDg4MjN9.CP4XJIAlErOi8fwrQ-vmBA4XT_wzdvIXw2lZ1wFbBII"
-          Cookies.set('auth_token', demoToken, { expires: 7 })
-          setToken(demoToken)
-          console.log('Using fallback demo token for testing')
-        }
-      }
-      
-      getToken()
-    }
-  }, [])
+
   
   // Handle registration number input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +47,7 @@ export default function RegisterPage() {
     setResponseStatus({ type: null, message: null })
     
     try {
-      const response = await sendRegistrationNumber(registerNumber, nationality, token || undefined)
+      const response = await sendRegistrationNumber(registerNumber, nationality, token! )
       
       if (response.success) {
         // Handle different success cases
@@ -207,7 +176,7 @@ export default function RegisterPage() {
   
   useEffect(() => {
     const checkRegister = async () => {
-      const token = Cookies.get('auth_token');
+      const token = Cookies.get('token');
       if (token) {
         const regRes = await getRegistrationNumber(token);
         if (regRes.registerNumber) {

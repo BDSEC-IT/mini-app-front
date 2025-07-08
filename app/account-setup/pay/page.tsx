@@ -14,7 +14,7 @@ export default function PayPage() {
 
   useEffect(() => {
     const processPayment = async () => {
-      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+      const token = Cookies.get('token');
       if (!token) {
         setError("Та нэвтрээгүй байна. Нэвтэрч дахин оролдоно уу.");
         setTimeout(() => router.push('/auth/nationality'), 3000);
