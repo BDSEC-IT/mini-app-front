@@ -236,21 +236,33 @@ const AllStocks = () => {
           </div>
         </td>
         <td className="px-2 py-3 text-right">
-          {formatPrice(stock.LastTradedPrice)}
+          {Number(stock.Volume)}
         </td>
         <td className="px-2 py-3 text-right">
-          {formatPrice(stock.HighestBidPrice)}
+          {formatPrice(stock.Turnover)}
         </td>
         <td className="px-2 py-3 text-right">
-          {formatPrice(stock.LowestOfferPrice)}
+          {formatPrice(stock.PreviousClose)}
         </td>
         <td className="px-2 py-3 text-right">
-          {formatPrice(stock.HighPrice)}
+          {formatPrice(stock.OpeningPrice )}
         </td>
         <td className="px-2 py-3 text-right">
-          {formatPrice(stock.LowPrice)}
+          {formatPrice(stock.HighPrice )}
         </td>
-        <td className={`px-2 py-3 text-right ${stock.Changep >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+           <td className="px-2 py-3 text-right">
+          {formatPrice(stock.LowPrice  )}
+        </td>
+            <td className="px-2 py-3 text-right">
+          {formatPrice(stock.LastTradedPrice )}
+        </td>
+            <td className="px-2 py-3 text-right">
+          {formatPrice(stock.ClosingPrice)}
+        </td>
+           <td className={`px-2 py-3 text-right ${stock.Changes >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+        {formatPrice(stock.Changes)}
+        </td>
+            <td className={`px-2 py-3 text-right ${stock.Changep >= 0 ? 'text-green-500' : 'text-red-500'}`}>
           <div className="flex items-center justify-end">
             {stock.Changep >= 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
             <span>{stock.Changep?.toFixed(2)}%</span>
@@ -259,6 +271,16 @@ const AllStocks = () => {
         <td className="px-2 py-3 text-right">
           {Number(stock.sizemd) > 0 ? Number(stock.sizemd).toLocaleString() : '-'}
         </td>
+              <td className="px-2 py-3 text-right">
+          {formatPrice(stock.MDEntryPx)}
+        </td>
+         <td className="px-2 py-3 text-right">
+          {formatPrice(stock.MDEntryPx2)}
+        </td>
+          <td className="px-2 py-3 text-right">
+          {Number(stock.sizemd2) > 0 ? Number(stock.sizemd2).toLocaleString() : '-'}
+        </td>
+           
       </tr>
     ))
   }
@@ -419,28 +441,28 @@ const AllStocks = () => {
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LastTradedPrice')}>
-                              {t('allStocks.price')}
+                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
+                              {t('allStocks.volume')}
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
                             <div className="flex items-center justify-end cursor-pointer">
-                              {t('allStocks.bid')}
+                              Үнийн дүн 
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
                             <div className="flex items-center justify-end cursor-pointer">
-                              {t('allStocks.ask')}
+                             Өмнөх хаалт 
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
                             <div className="flex items-center justify-end cursor-pointer">
-                              {t('allStocks.high')}
+                            Нээлт
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
                             <div className="flex items-center justify-end cursor-pointer">
-                              {t('allStocks.low')}
+                            Дээд үнэ 
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
@@ -595,38 +617,73 @@ const AllStocks = () => {
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LastTradedPrice')}>
-                              {t('allStocks.price')}
+                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
+                              {t('allStocks.volume')}
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
                             <div className="flex items-center justify-end cursor-pointer">
-                              {t('allStocks.bid')}
+                              Үнийн дүн 
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
                             <div className="flex items-center justify-end cursor-pointer">
-                              {t('allStocks.ask')}
+                              Өмнөх хаалт
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
                             <div className="flex items-center justify-end cursor-pointer">
-                              {t('allStocks.high')}
+                              Нээлт
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
                             <div className="flex items-center justify-end cursor-pointer">
-                              {t('allStocks.low')}
+                              Дээд үнэ
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
-                              {t('allStocks.change')}
+                            <div className="flex items-center justify-end cursor-pointer">
+                          Доод үнэ
                             </div>
                           </th>
                           <th className="px-2 py-3 text-right">
                             <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
-                              {t('allStocks.volume')}
+                             Сүүлийн ханш
+                            </div>
+                          </th>
+                             <th className="px-2 py-3 text-right">
+                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
+                             Хаалт
+                            </div>
+                          </th>
+                             <th className="px-2 py-3 text-right">
+                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
+                             Өөрчлөлт
+                            </div>
+                          </th>
+                             <th className="px-2 py-3 text-right">
+                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
+                             %
+                            </div>
+                          </th>
+                             <th className="px-2 py-3 text-right">
+                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
+                             Авах тоо
+                            </div>
+                          </th>
+                             <th className="px-2 py-3 text-right">
+                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
+                             Авах үнэ
+                            </div>
+                          </th>
+                             <th className="px-2 py-3 text-right">
+                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
+                             Зарах үнэ
+                            </div>
+                          </th>
+                            <th className="px-2 py-3 text-right">
+                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
+                             Зарах тоо
                             </div>
                           </th>
                         </tr>

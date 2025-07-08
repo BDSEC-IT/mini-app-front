@@ -211,7 +211,7 @@
     "change": "Change",
     "marketCap": "Market Cap",
     "volume": "Volume",
-    "popularStocks": "Popular Stocks",
+    "popularStocks": "Trading",
     "viewAll": "View All",
     "mostActive": "Most Active",
     "gainers": "Gainers",
@@ -301,6 +301,7 @@
     "categoryII": "Category II",
     "categoryIII": "Category III",
     "timeFilter": "Time Period"
+ 
   },
   "bonds": {
     "title": "Bonds",
