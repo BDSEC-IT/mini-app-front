@@ -348,10 +348,11 @@ const AllStocks = () => {
         {/* Filter Tabs */}
         <div className="flex mb-4 border-b overflow-x-auto">
           {[
+              { id: 'all', label: t('allStocks.all') },
             { id: 'active', label: t('allStocks.active') },
             { id: 'gainers', label: t('dashboard.gainers') },
             { id: 'losers', label: t('dashboard.losers') },
-            { id: 'all', label: t('allStocks.all') }
+          
           ].map((tab) => (
             <button
               key={tab.id}
