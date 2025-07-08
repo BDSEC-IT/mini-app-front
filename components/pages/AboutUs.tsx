@@ -7,6 +7,9 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useState, useEffect } from 'react'
 import { fetchAllStocks, type StockData } from '@/lib/api'
 import Image from 'next/image'
+import CircularProgress from '../ui/CircularProcess'
+
+
 
 const AboutUs = () => {
   const { t } = useTranslation()
@@ -14,13 +17,34 @@ const AboutUs = () => {
   const [topGainers, setTopGainers] = useState<StockData[]>([])
   const [topLosers, setTopLosers] = useState<StockData[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  
+
+
+const chartData = {
+  underwriter: [
+    { value: 30.1, sublabel: 'Тэрбум ₮', otherValue: 208.9 },
+    { value: 57.7, sublabel: 'Тэрбум₮', otherValue: 48.9 },
+    { value: 77.5, sublabel: 'Их наяд ₮', otherValue: 1.71 },
+  ],
+  broker: [
+    { year: '2021', value: 37, label: '1.04', sublabel: 'Их наяд ₮', otherValue: 2.8 },
+    { year: '2022', value: 18, label: '207.8', sublabel: 'Тэрбум ₮', otherValue: 1.2 },
+    { year: '2023', value: 26.8, label: '389.2', sublabel: 'Тэрбум ₮', otherValue: 1.45 },
+    { year: '2024', value: 37, label: '1.04', sublabel: 'Их наяд ₮', otherValue: 2.8 },
+  ],
+}
+
+// аль төрлийн график харуулах вэ гэдгийг хадгалах state
+const [selectedType, setSelectedType] = useState<'underwriter' | 'broker'>('underwriter')
+
+const data = chartData[selectedType]
+
   // Fetch stock data
   useEffect(() => {
     const fetchStockData = async () => {
       try {
         setIsLoading(true)
         const response = await fetchAllStocks()
+        console.log("responsechangep", response)
         
         if (response.success && response.data) {
           // Filter out stocks with no price change data
@@ -155,7 +179,7 @@ const AboutUs = () => {
                           <div className="text-[9px] md:text-xs text-gray-600 dark:text-gray-400 truncate max-w-[100px]">{stock.mnName || stock.enName}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-green-500 dark:text-green-400 text-[10px] md:text-xs font-medium">+{stock.Changep.toFixed(2)}%</div>
+                          <div className="text-green-500 dark:text-green-400 text-[10px] md:text-xs font-medium">+{stock?.Changep?.toFixed(2)}%</div>
                           <div className="text-[9px] md:text-xs">{formatPrice(stock.LastTradedPrice)} ₮</div>
                         </div>
                       </div>
@@ -184,7 +208,7 @@ const AboutUs = () => {
                           <div className="text-[9px] md:text-xs text-gray-600 dark:text-gray-400 truncate max-w-[100px]">{stock.mnName || stock.enName}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-red-500 dark:text-red-400 text-[10px] md:text-xs font-medium">{stock.Changep.toFixed(2)}%</div>
+                          <div className="text-red-500 dark:text-red-400 text-[10px] md:text-xs font-medium">{stock?.Changep?.toFixed(2)}%</div>
                           <div className="text-[9px] md:text-xs">{formatPrice(stock.LastTradedPrice)} ₮</div>
                         </div>
                       </div>
@@ -197,17 +221,84 @@ const AboutUs = () => {
         </div>
         
         {/* Bottom section */}
-        <div className="lg:pr-4 px-4 md:px-6">
-          {/* Company Stats */}
-               <div className="mb-6">
-              <h2 className="text-base font-medium mb-3 text-bdsec dark:text-indigo-400">{t('about.bdsec_did')}</h2>
-            
-            </div>
+     <div className="lg:pr-4 px-4 mb-6">
+           <h2 className="text-base font-medium mb-3 text-bdsec dark:text-indigo-400">{t('about.bdsec_did')}</h2>
+         <div className="flex justify-center mb-6 space-x-4">
+            <button
+        className={`px-1 py-2 rounded-full border text-[12px] ${
+        selectedType === 'underwriter'
+        ? 'bg-blue-950 text-white'
+        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300'
+    }`}
+    onClick={() => setSelectedType('underwriter')}
+  >
+    Андеррайтер
+  </button>
+  <button
+    className={`px-4 py-2 rounded-full border  text-[12px] ${
+      selectedType === 'broker'
+        ? 'bg-blue-950 text-white'
+        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300'
+    }`}
+    onClick={() => setSelectedType('broker')}
+  >
+    Брокер
+  </button>
+</div>
+<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 justify-center items-center">
+{/* Graphs */}
+{selectedType === 'broker' &&
+  chartData.broker.map((item, idx) => (
+    <div key={idx} className="text-center">
+      <CircularProgress
+        value={item.value}
+        label={item.label}
+        sublabel={item.sublabel}
+        otherValue={item.otherValue}
+        bottomLabel={item.year}
+        variant="broker"
+      />
+    </div>
+  ))}
+
+{selectedType === 'underwriter' &&
+  chartData.underwriter.map((item, idx) => {
+    const labels = ['IPO', 'FPO', 'Бонд']
+    return (
+      <div
+        key={idx}
+        className="flex items-center gap-4 border border-gray-200 dark:border-gray-700 rounded-md p-2"
+      >
+        <CircularProgress
+          value={item.value}
+          label={item.otherValue.toString()}
+          sublabel={item.sublabel}
+          otherValue={item.otherValue}
+          bottomLabel=""
+          variant="underwriter"
+        />
+        <div className="text-left">
+          <div className="text-sm font-bold text-red-600">
+            {item.value.toFixed(1)}%
+          </div>
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            {labels[idx]}
+          </div>
+        </div>
+      </div>
+    )
+  })}
+
+
+</div>
+
+
+
           
           {/* Contact and Address in two columns */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Address Section */}
-            <div className="mb-6">
+            <div className="mb-8">
               <h2 className="text-base font-medium mb-3 text-bdsec dark:text-indigo-400">{t('about.address')}</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                 {t('about.addressLine1')}<br />

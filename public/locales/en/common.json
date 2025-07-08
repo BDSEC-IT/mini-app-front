@@ -185,14 +185,15 @@
     "accountOpeningSuccessDesc": "Your trading account has been successfully opened. You can now start trading!",
     "processingTime": "Processing time: Up to 72 hours",
     "underReview": "Under review by MCSD",
-    "updateInformation": "Update Information",
-    "goToDashboard": "Go to Dashboard"
+    "updateInformation": "Update Registration Number",
+    "goToDashboard": "Go to Dashboard",
+    "mongolian": "Mongolian"
   },
   "menu": {
-    "about": "ABOUT US",
-    "faq": "FREQUENTLY ASKED QUESTIONS",
-    "news": "NEWS & INFORMATION",
-    "withdraw": "WITHDRAW MONEY"
+    "about": "About Us",
+    "faq": "Frequently Asked Questions",
+    "news": "News",
+    "withdraw": "Withdraw Money"
   },
   "chart": {
     "1d": "1D",
@@ -246,7 +247,8 @@
     "close": "Close",
     "previousClose": "Previous Close",
     "bid": "Bid",
-    "ask": "Ask"
+    "ask": "Ask",
+      "company_search" : "Search : BDS/BDSec"
   },
   "about": {
     "title": "About Us",
