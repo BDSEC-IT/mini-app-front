@@ -19,7 +19,7 @@ export default function AccountOpeningProcess() {
   const [showForm, setShowForm] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const token = Cookies.get('token') 
-
+  const responseFromMCSD=["ХУР системд шалгагдахаар хүлээгдэж байгаа."]
   const handleUpdateRegistryNumber = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newRegNumber) return

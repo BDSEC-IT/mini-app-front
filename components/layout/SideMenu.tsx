@@ -157,9 +157,9 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
         onClick={onClose}
       />
       <div
-        className={`side-menu-content fixed top-0 right-0 h-full w-64 sm:w-72 bg-white dark:bg-gray-900 shadow-xl z-50 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`side-menu-content fixed top-0 right-0 h-full w-64 sm:w-72 bg-white dark:bg-gray-900 shadow-xl z-50 transform transition-transform duration-300 flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('header.menu')}</h2>
             <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white p-1"><X size={24} /></button>
@@ -175,7 +175,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
             <LanguageToggle />
           </div>
         </div>
-        <nav className="p-4">
+        <nav className="p-4 flex-1 overflow-y-auto">
           <ul className="space-y-2">
             {isLoggedIn && (
               <li>

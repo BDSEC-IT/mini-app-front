@@ -4,22 +4,11 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { TradingViewChart } from '../ui/TradingViewChart'
 import StockInfo from '../ui/StockInfo'
 import { useTheme } from '@/contexts/ThemeContext'
-import { useTranslation } from 'react-i18next'
-import { Search, ChevronDown, ArrowDown, ArrowUp, X, TrendingUp, Activity, ChevronRight, BarChart3 } from 'lucide-react'
 import { fetchOrderBook, fetchAllStocks, fetchStockData, type OrderBookEntry, type StockData } from '@/lib/api'
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
-import { useAutoAnimate } from '@formkit/auto-animate/react'
-import Autoplay from 'embla-carousel-autoplay'
-import Link from 'next/link'
-import { TextGenerateEffect } from "../ui/text-generate-effect";
-import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
-import { BackgroundBeams } from "@/components/ui/background-beams";
+import { StockHeader } from './dashboard/StockHeader'
+import { OrderBook } from './dashboard/OrderBook'
+import { StockDetails } from './dashboard/StockDetails'
+import { StockList } from './dashboard/StockList'
 
 // Client-only wrapper component
 function ClientOnly({ children }: { children: React.ReactNode }) {
@@ -33,29 +22,9 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-function formatDateTime(dateString: string) {
-  if (!dateString) return '';
-  // Try to parse as ISO, fallback to just time
-  const date = new Date(dateString);
-  if (!isNaN(date.getTime())) {
-    // Format as 'YYYY-MM-DD HH:mm:ss'
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    const h = String(date.getHours()).padStart(2, '0');
-    const min = String(date.getMinutes()).padStart(2, '0');
-    const s = String(date.getSeconds()).padStart(2, '0');
-    return `${y}-${m}-${d} ${h}:${min}:${s}`;
-  }
-  // If not ISO, just return as is
-  return dateString;
-}
-
 const DashboardContent = () => {
   const [selectedSymbol, setSelectedSymbol] = useState('BDS')
   const { theme } = useTheme()
-  const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState('ALL')
   const [activeFilter, setActiveFilter] = useState('trending')
   const [orderBookData, setOrderBookData] = useState<OrderBookEntry[]>([])
   const [loading, setLoading] = useState(false)
@@ -66,100 +35,91 @@ const DashboardContent = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const [animationParent] = useAutoAnimate()
   const [hoveredPrice, setHoveredPrice] = useState<number | null>(null)
   const [hoveredChange, setHoveredChange] = useState<number | null>(null)
   const [hoveredChangePercent, setHoveredChangePercent] = useState<number | null>(null)
   const [selectedStockData, setSelectedStockData] = useState<StockData | null>(null)
   const [chartRefreshKey, setChartRefreshKey] = useState<number>(0)
   const [latestEntryTime, setLatestEntryTime] = useState<string>('')
-  const [chartLoading, setChartLoading] = useState(true);
-  
-  const autoplayPlugin = useRef(
-    Autoplay({ delay: 5000, stopOnInteraction: true, stopOnMouseEnter: true })
-  );
-  
+  const [chartLoading, setChartLoading] = useState(true)
+
   // Fetch all stocks data
   const fetchStocksData = useCallback(async () => {
     try {
-      const response = await fetchAllStocks();
+      const response = await fetchAllStocks()
       if (response.success && response.data) {
-        setAllStocks(response.data);
-        setFilteredStocks(response.data);
-      } else {
-        console.log('Received unsuccessful response:', response);
+        setAllStocks(response.data)
+        setFilteredStocks(response.data)
       }
     } catch (err) {
-      console.error('Error fetching stocks:', err);
-      // Don't throw the error again, just log it
+      console.error('Error fetching stocks:', err)
     }
-  }, []);
-  
+  }, [])
+
   // Fetch specific stock data for the selected symbol
   const fetchSelectedStockData = useCallback(async () => {
     try {
-      const response = await fetchStockData(`${selectedSymbol}-O-0000`);
+      const response = await fetchStockData(`${selectedSymbol}-O-0000`)
       if (response.success && response.data) {
-        // The API returns a single StockData object when fetching by symbol
-        const stockData = Array.isArray(response.data) ? response.data[0] : response.data;
-        setSelectedStockData(stockData);
+        const stockData = Array.isArray(response.data) ? response.data[0] : response.data
+        setSelectedStockData(stockData)
       }
     } catch (err) {
-      console.error('Error fetching selected stock data:', err);
+      console.error('Error fetching selected stock data:', err)
     }
-  }, [selectedSymbol]);
-  
+  }, [selectedSymbol])
+
   // Fetch order book data
   const fetchOrderBookData = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
-      const response = await fetchOrderBook(`${selectedSymbol}-O-0000`);
+      setLoading(true)
+      setError(null)
+      const response = await fetchOrderBook(`${selectedSymbol}-O-0000`)
       if (response.status && response.data) {
-        setOrderBookData(response.data);
-        setLastUpdated(new Date().toLocaleString());
+        setOrderBookData(response.data)
+        setLastUpdated(new Date().toLocaleString())
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch order book data');
-      console.error('Error fetching order book:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch order book data')
+      console.error('Error fetching order book:', err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [selectedSymbol]);
+  }, [selectedSymbol])
 
   // Fetch data when component mounts or selectedSymbol changes
   useEffect(() => {
-    fetchStocksData();
-    fetchSelectedStockData();
-  }, [fetchStocksData, fetchSelectedStockData]);
+    fetchStocksData()
+    fetchSelectedStockData()
+  }, [fetchStocksData, fetchSelectedStockData])
 
   // Fetch order book when selectedSymbol changes
   useEffect(() => {
-    fetchOrderBookData();
-  }, [fetchOrderBookData]);
+    fetchOrderBookData()
+  }, [fetchOrderBookData])
 
   // Process order book data
   const processedOrderBook = useMemo(() => {
     if (!orderBookData || orderBookData.length === 0) {
-      return { buy: [], sell: [] };
+      return { buy: [], sell: [] }
     }
     
     const buyOrders = orderBookData
       .filter(entry => entry.MDEntryType === '0')
-      .sort((a, b) => b.MDEntryPx - a.MDEntryPx) // Sort by price descending
-      .slice(0, 5); // Take top 5
+      .sort((a, b) => b.MDEntryPx - a.MDEntryPx)
+      .slice(0, 5)
       
     const sellOrders = orderBookData
       .filter(entry => entry.MDEntryType === '1')
-      .sort((a, b) => a.MDEntryPx - b.MDEntryPx) // Sort by price ascending
-      .slice(0, 5); // Take top 5
+      .sort((a, b) => a.MDEntryPx - b.MDEntryPx)
+      .slice(0, 5)
       
-    return { buy: buyOrders, sell: sellOrders };
-  }, [orderBookData]);
-  
-  // Mock data for stock details - updated to be dynamic based on selected stock
+    return { buy: buyOrders, sell: sellOrders }
+  }, [orderBookData])
+
+  // Mock data for stock details
   const getStockDetails = useMemo(() => {
-    const selectedStockData = allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol);
+    const selectedStockData = allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol)
     
     return {
       isin: `MN00SBM${selectedStockData?.id || '05643'}`,
@@ -169,284 +129,136 @@ const DashboardContent = () => {
       marketCap: selectedStockData ? (selectedStockData.LastTradedPrice * 1000000).toFixed(2) : '234132.32',
       listingDate: '2016-07-25',
       email: `info@${selectedSymbol.toLowerCase()}.mn`
-    };
-  }, [selectedSymbol, allStocks]);
-  
+    }
+  }, [selectedSymbol, allStocks])
+
   // Filter stocks based on activeFilter
   useEffect(() => {
-    if (!allStocks.length) return;
+    if (!allStocks.length) return
     
-    let filtered = [...allStocks];
+    let filtered = [...allStocks]
     
-    // Apply category filter
     switch (activeFilter) {
       case 'trending':
-        // Sort by volume
-        filtered = filtered.sort((a, b) => (b.Volume || 0) - (a.Volume || 0));
-        break;
+        filtered = filtered.sort((a, b) => (b.Volume || 0) - (a.Volume || 0))
+        break
       case 'mostActive':
-        // Sort by turnover
-        filtered = filtered.sort((a, b) => (b.Turnover || 0) - (a.Turnover || 0));
-        break;
+        filtered = filtered.sort((a, b) => (b.Turnover || 0) - (a.Turnover || 0))
+        break
       case 'gainers':
-        // Sort by positive change percentage
         filtered = filtered
           .filter(stock => stock.Changep > 0)
-          .sort((a, b) => b.Changep - a.Changep);
-        break;
+          .sort((a, b) => b.Changep - a.Changep)
+        break
       case 'losers':
-        // Sort by negative change percentage
         filtered = filtered
           .filter(stock => stock.Changep < 0)
-          .sort((a, b) => a.Changep - b.Changep);
-        break;
+          .sort((a, b) => a.Changep - b.Changep)
+        break
     }
     
-    setFilteredStocks(filtered.slice(0, 20)); // Limit to 20 stocks for performance
-  }, [allStocks, activeFilter]);
-  
-  // Handle search input
-  const handleSearchClick = () => {
-    setIsSearchOpen(true);
-    setTimeout(() => {
-      if (searchInputRef.current) {
-        searchInputRef.current.focus();
-      }
-    }, 100);
-  };
-  
-  const handleSearchClose = () => {
-    setSearchTerm('');
-    setIsSearchOpen(false);
-  };
-  
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-  
-  // Filter search results separately from category filters
+    setFilteredStocks(filtered.slice(0, 20))
+  }, [allStocks, activeFilter])
+
+  // Search results
   const searchResults = useMemo(() => {
-    if (!searchTerm) return [];
+    if (!searchTerm) return []
     
-    // Filter and ensure unique symbols
-    const uniqueSymbols = new Set();
+    const uniqueSymbols = new Set()
     return allStocks
       .filter(stock => {
-        // Check if symbol matches search term
         const matches = stock.Symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (stock.mnName && stock.mnName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (stock.enName && stock.enName.toLowerCase().includes(searchTerm.toLowerCase()));
+          (stock.enName && stock.enName.toLowerCase().includes(searchTerm.toLowerCase()))
         
-        // Only include if it matches and we haven't seen this symbol yet
         if (matches) {
-          // Extract the base symbol without the -O-0000 suffix
-          const baseSymbol = stock.Symbol.split('-')[0];
+          const baseSymbol = stock.Symbol.split('-')[0]
           if (!uniqueSymbols.has(baseSymbol)) {
-            uniqueSymbols.add(baseSymbol);
-            return true;
+            uniqueSymbols.add(baseSymbol)
+            return true
           }
         }
-        return false;
+        return false
       })
-      .slice(0, 10);
-  }, [allStocks, searchTerm]);
-  
+      .slice(0, 10)
+  }, [allStocks, searchTerm])
+
   const handleStockSelect = (symbol: string) => {
-    // Extract the base symbol without any suffix
-    const baseSymbol = symbol.split('-')[0];
+    const baseSymbol = symbol.split('-')[0]
     
-    // Force refresh even if selecting the same symbol by clearing state first
     if (baseSymbol === selectedSymbol) {
-      setSelectedSymbol('');
-      setSelectedStockData(null);
+      setSelectedSymbol('')
+      setSelectedStockData(null)
       setTimeout(() => {
-        setSelectedSymbol(baseSymbol);
-      }, 10);
+        setSelectedSymbol(baseSymbol)
+      }, 10)
     } else {
-      setSelectedSymbol(baseSymbol);
+      setSelectedSymbol(baseSymbol)
     }
     
-    setSearchTerm('');
-    setIsSearchOpen(false);
-    
-    // Reset chart-related state to ensure fresh data
-    setHoveredPrice(null);
-    setHoveredChange(null);
-    setHoveredChangePercent(null);
-    
-    // Force chart refresh by incrementing the key
-    setChartRefreshKey(prev => prev + 1);
-    
-    // Immediately fetch order book data for the selected symbol
-    setLoading(true);
-    setError(null);
-    fetchOrderBook(`${baseSymbol}-O-0000`)
-      .then(response => {
-        if (response.status && response.data) {
-          setOrderBookData(response.data);
-          setLastUpdated(new Date().toLocaleString());
-        }
-      })
-      .catch(err => {
-        setError(err instanceof Error ? err.message : 'Failed to fetch order book data');
-        console.error('Error fetching order book:', err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-    
-    // Also fetch the specific stock data
-    fetchStockData(`${baseSymbol}-O-0000`)
-      .then(response => {
-        if (response.success && response.data) {
-          const stockData = Array.isArray(response.data) ? response.data[0] : response.data;
-          setSelectedStockData(stockData);
-        }
-      })
-      .catch(err => {
-        console.error('Error fetching selected stock data:', err);
-      });
-  };
-  
-  // Generate chart data points for mini charts
-  const generateChartData = (isPositive: boolean) => {
-    // Generate random data points
-    const points = [];
-    let prev = 50 + Math.random() * 10;
-    for (let i = 0; i < 10; i++) {
-      const change = (Math.random() - (isPositive ? 0.3 : 0.7)) * 10;
-      prev = Math.max(0, Math.min(100, prev + change));
-      points.push(prev);
-    }
-    return points;
-  };
-  
-  // Format price with thousand separators
-  const formatPrice = (price: number | undefined) => {
-    if (price === undefined || price === null) return '-';
-    return price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-  };
-  
+    setSearchTerm('')
+    setIsSearchOpen(false)
+    setHoveredPrice(null)
+    setHoveredChange(null)
+    setHoveredChangePercent(null)
+    setChartRefreshKey(prev => prev + 1)
+  }
+
+  const handleSearchClick = () => {
+    setIsSearchOpen(true)
+    setTimeout(() => {
+      if (searchInputRef.current) {
+        searchInputRef.current.focus()
+      }
+    }, 100)
+  }
+
+  const handleSearchClose = () => {
+    setSearchTerm('')
+    setIsSearchOpen(false)
+  }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+  }
+
   const handlePriceHover = (price: number | null, change?: number, changePercent?: number) => {
-    setHoveredPrice(price);
-    setHoveredChange(change ?? null);
-    setHoveredChangePercent(changePercent ?? null);
-  };
+    setHoveredPrice(price)
+    setHoveredChange(change ?? null)
+    setHoveredChangePercent(changePercent ?? null)
+  }
 
   const handleLatestTimeUpdate = (latestTime: string) => {
-    setLatestEntryTime(latestTime);
-  };
+    setLatestEntryTime(latestTime)
+  }
 
-  // When latestEntryTime is set, set chartLoading to false
   useEffect(() => {
-    if (latestEntryTime) setChartLoading(false);
-  }, [latestEntryTime]);
+    if (latestEntryTime) setChartLoading(false)
+  }, [latestEntryTime])
 
-  // When selectedSymbol or activeTab changes, reset chartLoading
   useEffect(() => {
-    setChartLoading(true);
-    setLatestEntryTime('');
-  }, [selectedSymbol, activeTab]);
-  
+    setChartLoading(true)
+    setLatestEntryTime('')
+  }, [selectedSymbol])
+
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
       <div className="max-w-4xl mx-auto py-8">
-        {/* Stock Index Section */}
         <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 relative">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-bold">{selectedSymbol}</h2>
-                {selectedStockData && (
-                  <span className="text-xs bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-full">
-                    {selectedStockData.mnName || selectedStockData.enName || t('dashboard.stock')}
-                  </span>
-                )}
-              </div>
-              
-              <div className="mt-2">
-                <div className="flex flex-col items-start mb-2 px-2 sm:px-4">
-                  <div className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-                    {selectedStockData ? formatPrice(selectedStockData.PreviousClose) : '-'} ₮
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1 min-h-[20px] flex items-center">
-                    {chartLoading && !latestEntryTime ? (
-                      <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-bdsec dark:border-t-white rounded-full animate-spin mr-2"></span>
-                    ) : latestEntryTime ? (
-                      formatDateTime(latestEntryTime)
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Search bar - optimized for mobile */}
-            <div className="relative">
-              {isSearchOpen ? (
-                <div className="flex items-center border rounded-md px-2 py-1 bg-gray-100 dark:bg-gray-800 w-44 sm:w-52">
-                  <Search size={12} className="text-gray-500 mr-1.5" />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    className="bg-transparent outline-none flex-1 text-xs sm:text-sm"
-                    placeholder={t('common.search')}
-                  />
-                  <button onClick={handleSearchClose} className="ml-1">
-                    <X size={12} className="text-gray-500" />
-                  </button>
-                </div>
-              ) : selectedStockData ? (
-                <div className="flex items-center border rounded-md px-2 py-1 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 max-w-44 sm:max-w-52 cursor-pointer" onClick={handleSearchClick}>
-                  <Search size={12} className="text-blue-500 mr-1" />
-                  <div className="flex items-center text-xs min-w-0 overflow-hidden">
-                    <span className="font-semibold text-blue-700 dark:text-blue-300 flex-shrink-0">{selectedSymbol}</span>
-                    <span className="mx-1 text-blue-400 text-xs flex-shrink-0">•</span>
-                    <span className="text-blue-600 dark:text-blue-400 truncate text-xs">
-                      {(selectedStockData.mnName || selectedStockData.enName || '').substring(0, 8)}
-                    </span>
-                  </div>
-                  <ChevronDown size={12} className="text-blue-500 ml-1 flex-shrink-0" />
-                </div>
-              ) : (
-                <div className="flex items-center border rounded-md px-2 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer" onClick={handleSearchClick}>
-                  <Search size={12} className="text-gray-500 mr-1" />
-                  <span className="text-xs text-gray-500">{t('common.search')}</span>
-                </div>
-              )}
-              
-              {/* Search Results Dropdown - more compact */}
-              {isSearchOpen && searchTerm && (
-                <div className="absolute top-full right-0 mt-1 w-64 sm:w-72 max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border rounded-md shadow-lg z-50">
-                  {searchResults.length > 0 ? (
-                    searchResults.map((stock, index) => {
-                      // Get clean symbol without suffix
-                      const cleanSymbol = stock.Symbol.split('-')[0];
-                      const companyName = stock.mnName || stock.enName || '';
-                      return (
-                        <button
-                          key={`search-${cleanSymbol}-${index}`}
-                          className="w-full text-left px-2.5 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm transition-colors"
-                          onClick={() => handleStockSelect(stock.Symbol)}
-                        >
-                          <div className="flex items-center">
-                            <span className="font-semibold text-gray-900 dark:text-white">{cleanSymbol}</span>
-                            <span className="mx-1.5 text-gray-400 text-xs">•</span>
-                            <span className="text-gray-600 dark:text-gray-300 truncate text-xs">{companyName}</span>
-                          </div>
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <div className="px-2.5 py-2 text-xs text-gray-500">{t('common.noResults')}</div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Chart section with proper containment */}
+          <StockHeader
+            selectedSymbol={selectedSymbol}
+            selectedStockData={selectedStockData}
+            isSearchOpen={isSearchOpen}
+            searchTerm={searchTerm}
+            searchResults={searchResults}
+            chartLoading={chartLoading}
+            latestEntryTime={latestEntryTime}
+            onSearchClick={handleSearchClick}
+            onSearchClose={handleSearchClose}
+            onSearchChange={handleSearchChange}
+            onStockSelect={handleStockSelect}
+          />
+
           <div className="relative w-full max-w-full overflow-hidden">
             <div className="h-[350px] sm:h-[380px] md:h-[400px] lg:h-[420px] mt-4 mb-8 sm:mb-12 rounded-lg bg-transparent mx-2 sm:mx-0">
               <div className="relative w-full h-full overflow-hidden">
@@ -454,7 +266,7 @@ const DashboardContent = () => {
                   key={`${selectedSymbol}-${chartRefreshKey}`}
                   symbol={`${selectedSymbol}-O-0000`}
                   theme={theme}
-                  period={activeTab}
+                  period="ALL"
                   onPriceHover={handlePriceHover}
                   onLatestTimeUpdate={handleLatestTimeUpdate}
                 />
@@ -462,289 +274,34 @@ const DashboardContent = () => {
             </div>
           </div>
         </div>
-        
-        {/* Stock List and Order Book Sections with reduced margins */}
+
         <div className="px-2 sm:px-4 flex flex-col gap-4 sm:gap-6 mt-10 sm:mt-12">
-          {/* Stock Info Card */}
-          <div className="w-full">
+          {/* <div className="w-full">
             <StockInfo 
               symbol={selectedSymbol}
               onSymbolSelect={handleStockSelect}
             />
-          </div>
-          
-          {/* Stock List Section */}
-          <div className="w-full">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-base sm:text-lg font-medium flex items-center">
-                <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
-                {t('dashboard.popularStocks')}
-              </h2>
-              <Link 
-                href="/stocks" 
-                className="flex items-center text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-1.5 bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 rounded-md hover:bg-bdsec/20 dark:hover:bg-indigo-500/30 transition-colors"
-              >
-                {t('dashboard.viewAll')} <ChevronRight size={16} className="ml-1" />
-              </Link>
-            </div>
-            
-            {/* Filter Tabs */}
-       <div className="flex gap-2 mt-2 pb-4 overflow-x-auto flex-nowrap sm:flex-wrap no-scrollbar">
-              {[
-                 { id: 'trending', label: t('dashboard.trending'), icon: TrendingUp },
-                 { id: 'mostActive', label: t('dashboard.mostActive'), icon: Activity },
-                  { id: 'gainers', label: t('dashboard.gainers'), icon: ArrowUp },
-               { id: 'losers', label: t('dashboard.losers'), icon: ArrowDown }
-                   ].map((filter) => (
-    <button
-                  key={filter.id}
-                  className={`px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm rounded-full whitespace-nowrap flex items-center ${
-                     activeFilter === filter.id
-                        ? 'bg-bdsec dark:bg-bdsec-dark text-white'
-                       : 'border text-gray-500'
-      }`}
-      onClick={() => setActiveFilter(filter.id)}
-    >
-      <filter.icon size={12} className="mr-1" />
-      {filter.label}
-    </button>
-  ))}
-</div>
+          </div> */}
 
-            
-            {/* Stock Cards Carousel */}
-            <div className="mt-4" ref={animationParent}>
-              <Carousel
-                opts={{
-                  align: "start",
-                  loop: true,
-                  skipSnaps: false,
-                  containScroll: "trimSnaps",
-                }}
-                plugins={[autoplayPlugin.current]}
-                className="w-full"
-              >
-                <CarouselContent className="-ml-2 md:-ml-4">
-                  {filteredStocks.length > 0 ? (
-                    filteredStocks.map((stock, index) => {
-                      const isPositive = (stock.Changep || 0) >= 0;
-                      
-                      return (
-                        <CarouselItem key={`stock-${stock.Symbol}-${index}`} className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
-                          <div
-                            className="relative w-full p-4 overflow-hidden transition-transform duration-300 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500"
-                            onClick={() => handleStockSelect(stock.Symbol)}
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-transparent opacity-50 dark:hidden"></div>
-                            <svg
-                              className={`absolute text-indigo-500 -top-1/4 -left-1/4 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-0 dark:opacity-60`}
-                              width="200%"
-                              height="200%"
-                              viewBox="0 0 200 200"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                fill="currentColor"
-                                d="M50,-60C60,-40,70,-30,80,-10C90,10,80,30,60,50C40,70,20,90,-10,100C-40,110,-70,110,-90,90C-110,70,-110,40,-100,10C-90,-20,-60,-50,-40,-70C-20,-90,10,-110,30,-100C50,-90,50,-80,50,-60Z"
-                                transform="translate(100 100)"
-                              />
-                            </svg>
-                            <div className="relative z-10">
-                              <div className="flex items-start justify-between mb-4">
-                                <h3 className="flex items-center justify-center font-semibold text-white rounded-full bg-bdsec dark:bg-indigo-500 h-9 w-9">
-                                  {stock.Symbol.split('-')[0]}
-                                </h3>
-                                <div className={`text-sm font-semibold px-2 py-1 rounded-md ${isPositive ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'}`}>
-                                  {isPositive ? '+' : ''}{(stock.Changep || 0).toFixed(2)}%
-                                </div>
-                              </div>
-                              <div className="mt-2">
-                                <p className="font-medium text-gray-800 truncate text-s dark:text-gray-200" title={stock.mnName || stock.enName}>{stock.mnName || stock.enName}</p>
-                              </div>
-                              <div className="mt-4">
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</p>
-                                <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                  {formatPrice(stock.LastTradedPrice)} ₮
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </CarouselItem>
-                      );
-                    })
-                  ) : (
-                    <CarouselItem className="pl-2 md:pl-4 basis-full">
-                      <div className="h-24 flex items-center justify-center">
-                        <p className="text-gray-500">{loading ? t('dashboard.loadingStocks') : t('common.noResults')}</p>
-                      </div>
-                    </CarouselItem>
-                  )}
-                </CarouselContent>
-                <CarouselPrevious className="left-0 bg-bdsec dark:bg-indigo-500 text-white border-none shadow-lg hover:bg-bdsec/90 dark:hover:bg-indigo-600 transition-colors" />
-                <CarouselNext className="right-0 bg-bdsec dark:bg-indigo-500 text-white border-none shadow-lg hover:bg-bdsec/90 dark:hover:bg-indigo-600 transition-colors" />
-              </Carousel>
-            </div>
-          </div>
-          
-          {/* Order Book Section */}
-          <div className="w-full">
-            <div className="mt-8 p-4 ">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-base sm:text-lg font-medium flex items-center">
-                  <Activity size={16} className="mr-2 text-bdsec dark:text-indigo-400" />
-                  {t('dashboard.orderBook')} - {selectedSymbol}
-                </h2>
-                <div className="text-xs text-right text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
-                  <div className="hidden sm:block">{t('dashboard.lastUpdated')}</div>
-                  <div className="text-xs">{lastUpdated}</div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3 sm:gap-6 mt-3 min-h-[200px]">
-                {/* Sell Orders */}
-             <div className="overflow-hidden">
-               {/* Header */}
-                 <div className="px-2 sm:px-4 py-2 bg-red-50 dark:bg-red-900/10">
-                     <div className="grid grid-cols-2 text-right">
-                            <h3 className="text-xs sm:text-sm text-red-500 font-medium flex items-center">
-                               <ArrowDown size={12} className="mr-1" />
-                                              {t('dashboard.sell')}
-                                                     </h3>
-                               <h3 className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.quantity')}</h3>
-                           </div>
-                   </div>
+          <StockList
+            loading={loading}
+            activeFilter={activeFilter}
+            filteredStocks={filteredStocks}
+            onFilterChange={setActiveFilter}
+            onStockSelect={handleStockSelect}
+          />
 
-             {/* Body */}
-             <div className="p-2 sm:p-3">
-                 {loading ? (
-                    Array(5).fill(0).map((_, index) => (
-                        <div
-                        key={`sell-loading-${index}`}
-                      className="grid grid-cols-2 text-right text-xs sm:text-sm py-2 animate-pulse"
-                           >
-                    <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded justify-self-end"></div>
-                 <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded justify-self-end"></div>
-              </div>
-             ))
-    ) : processedOrderBook.sell.length > 0 ? (
-      processedOrderBook.sell.map((order, index) => (
-        <div
-          key={`sell-${order.id}-${index}`}
-          className="grid grid-cols-2 text-right text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
-        >
-          <span className="text-red-500 font-medium justify-self-end">
-            {order.MDEntryPx.toLocaleString()} ₮
-          </span>
-          <span className="bg-red-50 dark:bg-red-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
-            {order.MDEntrySize.toLocaleString()}
-          </span>
-        </div>
-      ))
-    ) : (
-      <div className="text-center text-gray-400 text-sm py-6">
-        {t('dashboard.noSellOrders')}
-      </div>
-    )}
-  </div>
-</div>
+          <OrderBook
+            selectedSymbol={selectedSymbol}
+            loading={loading}
+            lastUpdated={lastUpdated}
+            processedOrderBook={processedOrderBook}
+          />
 
-                
-                {/* Buy Orders */}
-               <div className="overflow-hidden">
-               {/* Header */}
-       <div className="px-2 sm:px-4 py-2 bg-green-50 dark:bg-green-900/10">
-          <div className="grid grid-cols-2 text-right">
-             <h3 className="text-xs sm:text-sm text-green-500 font-medium flex items-center">
-            <ArrowUp size={12} className="mr-1" />
-                 {t('dashboard.buy')}
-               </h3>
-                <h3 className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.quantity')}</h3>
-           </div>
-        </div>
-
-        {/* Body */}
-             <div className="p-2 sm:p-3">
-              {loading ? (
-                Array(5).fill(0).map((_, index) => (
-                <div
-                   key={`buy-loading-${index}`}
-                  className="grid grid-cols-2 text-right text-xs sm:text-sm py-2 animate-pulse"
-                     >
-                   <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded justify-self-end"></div>
-                    <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded justify-self-end"></div>
-                </div>
-               ))
-     ) : processedOrderBook.buy.length > 0 ? (
-      processedOrderBook.buy.map((order, index) => (
-        <div
-          key={`buy-${order.id}-${index}`}
-          className="grid grid-cols-2 text-right text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
-        >
-          <span className="text-green-500 font-medium justify-self-end">
-            {order.MDEntryPx.toLocaleString()} ₮
-          </span>
-          <span className="bg-green-50 dark:bg-green-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
-            {order.MDEntrySize.toLocaleString()}
-          </span>
-        </div>
-      ))
-    ) : (
-      <div className="text-center text-gray-400 text-sm py-6">
-        {t('dashboard.noBuyOrders')}
-      </div>
-    )}
-  </div>
-</div>
-
-              </div>
-            </div>
-            
-            {/* Stock Details Section */}
-            <div className="mt-6 p-4  ">
-              <h2 className="text-lg font-medium mb-4 flex items-center">
-                <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
-                {t('dashboard.stockDetails')} - {selectedSymbol}
-              </h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className=" overflow-hidden">
-              
-                  <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
-                    <div className="flex justify-between items-center p-3">
-                      <span className="text-sm text-gray-500">ISIN:</span>
-                      <span className="text-sm font-medium">{getStockDetails.isin}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3">
-                      <span className="text-sm text-gray-500">{t('dashboard.companyCode')}:</span>
-                      <span className="text-sm font-medium">{getStockDetails.companyCode}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3">
-                      <span className="text-sm text-gray-500">{t('dashboard.email')}:</span>
-                      <span className="text-sm font-medium text-bdsec dark:text-indigo-400">{getStockDetails.email}</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className=" overflow-hidden">
-            
-                  <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
-                    <div className="flex justify-between items-center p-3">
-                      <span className="text-sm text-gray-500">{t('dashboard.totalShares')}:</span>
-                      <span className="text-sm font-medium">{getStockDetails.totalShares}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3">
-                      <span className="text-sm text-gray-500">{t('dashboard.listedShares')}:</span>
-                      <span className="text-sm font-medium">{getStockDetails.listedShares}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-3">
-                      <span className="text-sm text-gray-500">{t('dashboard.listingDate')}:</span>
-                      <span className="text-sm font-medium">{getStockDetails.listingDate}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <StockDetails
+            selectedSymbol={selectedSymbol}
+            details={getStockDetails}
+          />
         </div>
       </div>
     </div>

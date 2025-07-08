@@ -719,11 +719,11 @@ export function TradingViewChart({
             </div>
             <div className="text-gray-500 dark:text-gray-400 text-xs mt-1">
               {(tooltip.visible ? tooltip.date : (lastValidTooltipRef.current?.date || new Date())).toLocaleDateString()}
-              {(tooltip.visible ? tooltip.entryTime : (lastValidTooltipRef.current?.entryTime || '')) && (
+              {/* {(tooltip.visible ? tooltip.entryTime : (lastValidTooltipRef.current?.entryTime || '')) && (
                 <span className="ml-2">
                   {(tooltip.visible ? tooltip.entryTime : (lastValidTooltipRef.current?.entryTime || ''))}
                 </span>
-              )}
+              )} */}
             </div>
           </div>
         )}

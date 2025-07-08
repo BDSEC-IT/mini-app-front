@@ -21,6 +21,7 @@ const AboutUs = () => {
       try {
         setIsLoading(true)
         const response = await fetchAllStocks()
+        console.log("responsechangep", response)
         
         if (response.success && response.data) {
           // Filter out stocks with no price change data
@@ -155,7 +156,7 @@ const AboutUs = () => {
                           <div className="text-[9px] md:text-xs text-gray-600 dark:text-gray-400 truncate max-w-[100px]">{stock.mnName || stock.enName}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-green-500 dark:text-green-400 text-[10px] md:text-xs font-medium">+{stock.Changep.toFixed(2)}%</div>
+                          <div className="text-green-500 dark:text-green-400 text-[10px] md:text-xs font-medium">+{stock?.Changep?.toFixed(2)}%</div>
                           <div className="text-[9px] md:text-xs">{formatPrice(stock.LastTradedPrice)} ₮</div>
                         </div>
                       </div>
@@ -184,7 +185,7 @@ const AboutUs = () => {
                           <div className="text-[9px] md:text-xs text-gray-600 dark:text-gray-400 truncate max-w-[100px]">{stock.mnName || stock.enName}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-red-500 dark:text-red-400 text-[10px] md:text-xs font-medium">{stock.Changep.toFixed(2)}%</div>
+                          <div className="text-red-500 dark:text-red-400 text-[10px] md:text-xs font-medium">{stock?.Changep?.toFixed(2)}%</div>
                           <div className="text-[9px] md:text-xs">{formatPrice(stock.LastTradedPrice)} ₮</div>
                         </div>
                       </div>

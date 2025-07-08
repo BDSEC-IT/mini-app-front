@@ -59,12 +59,12 @@ const Header = () => {
             <p className="text-sm lg:text-base ">DiGiPAY</p>
           )}
           
-          <button
+          {/* <button
             className="text-bdsec dark:text-indigo-400 hover:text-gray-500 dark:hover:text-white p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             aria-label={t('header.notifications')}
           >
             <Bell size={iconSize} />
-          </button>
+          </button> */}
           
           <button
             className="text-bdsec dark:text-indigo-400 hover:text-gray-500 dark:hover:text-white p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

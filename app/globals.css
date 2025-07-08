@@ -280,3 +280,11 @@ a:focus-visible {
   background-color: rgba(var(--primary), 0.2);
   color: rgb(15, 23, 42);
 } 
+
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE 10+ */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}

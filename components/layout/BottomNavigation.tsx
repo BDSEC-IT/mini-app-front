@@ -78,6 +78,7 @@ const BottomNavigation = () => {
   
   // Check if user has MCSD account
   const hasMcsdAccount = accountInfo?.MCSDAccount !== null && accountInfo?.MCSDAccount !== undefined
+  const isActiveMcsdAccount = accountInfo?.MCSDAccount && accountInfo?.MCSDAccount.DGStatus === 'COMPLETED'
   
   // Debug logging - commented out to prevent excessive re-rendering
   // console.log('BottomNavigation DEBUG:', { 
@@ -96,7 +97,7 @@ const BottomNavigation = () => {
       return
     }
     
-    if (!hasMcsdAccount) {
+    if (!hasMcsdAccount ) {
       // User doesn't have MCSD account - show tooltip
       e.preventDefault()
       setShowTooltip(type)
@@ -261,7 +262,7 @@ const BottomNavigation = () => {
               <span className="text-[10px] mt-1">{t('nav.home')}</span>
             </Link>
 
-            {(!isLoggedIn || !hasMcsdAccount) ? (
+            {(!isLoggedIn || !isActiveMcsdAccount) ? (
               // Show basic menus for non-logged in users or users without MCSD account
               <>
                 <Link href="/stocks" className={`flex flex-col items-center ${isActive('/stocks') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>

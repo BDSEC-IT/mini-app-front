@@ -539,8 +539,9 @@ export const fetchAllStocks = async (): Promise<AllStocksResponse> => {
 };
 
 
-export const fetchFAQ = async (): Promise<any> => {
-  const url = `${BASE_URL}/faq`;
+export const fetchFAQ = async () => {
+  console.log("fetchFAQ");
+  const url = `${BDSEC_MAIN}/faq`;
   type FAQType = {
   id: number;
   mnName: string;
@@ -568,8 +569,9 @@ type FAQ = {
     
   }
 };
-export const fetchFAQType = async (): Promise<any> => {
-  const url = `${BASE_URL}/faq/types`;
+export const fetchFAQType = async () => {
+  console.log("fetchFAQTypes");
+  const url = `${BDSEC_MAIN}/faq/types`;
   type FAQType = {
   id: number;
   mnName: string;
@@ -583,9 +585,10 @@ export const fetchFAQType = async (): Promise<any> => {
   try {
   const response = await fetchWithTimeout(url)
     const responseData = await response.json();
+    console.log("responseData",responseData);
   return (responseData as any).data as FAQType
   } catch (error) {
-    
+      console.log("error",error);
   }
 };
 
