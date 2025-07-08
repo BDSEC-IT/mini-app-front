@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { TradingViewChart } from '../ui/TradingViewChart'
 import { useTheme } from '@/contexts/ThemeContext'
-import { fetchOrderBook, fetchAllStocks, fetchStockData, type OrderBookEntry, type StockData } from '@/lib/api'
+import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, type OrderBookEntry, type StockData } from '@/lib/api'
 import { StockHeader } from './dashboard/StockHeader'
 import { OrderBook } from './dashboard/OrderBook'
 import { StockDetails } from './dashboard/StockDetails'
@@ -42,10 +42,14 @@ const DashboardContent = () => {
   const [latestEntryTime, setLatestEntryTime] = useState<string>('')
   const [chartLoading, setChartLoading] = useState(true)
 
-  // Fetch all stocks data
+  // Fetch all stocks data with company information
   const fetchStocksData = useCallback(async () => {
+    console.log('=== Dashboard: fetchStocksData START ===');
     try {
-      const response = await fetchAllStocks()
+      console.log('Calling fetchAllStocksWithCompanyInfo...');
+      const response = await fetchAllStocksWithCompanyInfo()
+      console.log('fetchStocksData response:', response.success, response.data ? response.data.length : 0, 'stocks');
+      
       if (response.success && response.data) {
         setAllStocks(response.data)
         setFilteredStocks(response.data)
@@ -53,19 +57,29 @@ const DashboardContent = () => {
     } catch (err) {
       console.error('Error fetching stocks:', err)
     }
+    console.log('=== Dashboard: fetchStocksData END ===');
   }, [])
 
-  // Fetch specific stock data for the selected symbol
+  // Fetch specific stock data for the selected symbol with company information
   const fetchSelectedStockData = useCallback(async () => {
+    console.log('=== Dashboard: fetchSelectedStockData START ===');
+    console.log('Selected symbol:', selectedSymbol);
+    
     try {
-      const response = await fetchStockData(`${selectedSymbol}-O-0000`)
+      console.log('Calling fetchStockDataWithCompanyInfo...');
+      const response = await fetchStockDataWithCompanyInfo(selectedSymbol)
+      console.log('Response received:', response.success, response.data ? 'has data' : 'no data');
+      
       if (response.success && response.data) {
         const stockData = Array.isArray(response.data) ? response.data[0] : response.data
+        console.log('Stock data:', stockData);
         setSelectedStockData(stockData)
       }
     } catch (err) {
       console.error('Error fetching selected stock data:', err)
     }
+    
+    console.log('=== Dashboard: fetchSelectedStockData END ===');
   }, [selectedSymbol])
 
   // Fetch order book data
@@ -88,6 +102,10 @@ const DashboardContent = () => {
 
   // Fetch data when component mounts or selectedSymbol changes
   useEffect(() => {
+    console.log('=== Dashboard: useEffect triggered ===');
+    console.log('fetchStocksData function:', typeof fetchStocksData);
+    console.log('fetchSelectedStockData function:', typeof fetchSelectedStockData);
+    
     fetchStocksData()
     fetchSelectedStockData()
   }, [fetchStocksData, fetchSelectedStockData])
@@ -275,13 +293,6 @@ const DashboardContent = () => {
         </div>
 
         <div className="px-2 sm:px-4 flex flex-col gap-4 sm:gap-6 mt-10 sm:mt-12">
-          {/* <div className="w-full">
-            <StockInfo 
-              symbol={selectedSymbol}
-              onSymbolSelect={handleStockSelect}
-            />
-          </div> */}
-
           <StockList
             loading={loading}
             activeFilter={activeFilter}

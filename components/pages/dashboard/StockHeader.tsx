@@ -36,8 +36,9 @@ export const StockHeader = ({
   onSearchChange,
   onStockSelect
 }: StockHeaderProps) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const searchRef = useRef<HTMLDivElement>(null);
+  const currentLanguage = i18n.language || 'mn';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,7 +53,17 @@ export const StockHeader = ({
     };
   }, [onSearchClose]);
 
-  console.log("selectedStockDatanow",selectedStockData);
+  console.log("selectedStockData", selectedStockData);
+  console.log("LastTradedPrice", selectedStockData?.LastTradedPrice);
+  console.log("ClosingPrice", selectedStockData?.ClosingPrice);
+  console.log("PreviousClose", selectedStockData?.PreviousClose);
+  
+  // Helper function to get company name based on current language
+  const getCompanyName = (stock: StockData | null) => {
+    if (!stock) return t('dashboard.stock');
+    return currentLanguage === 'mn' ? stock.mnName : stock.enName;
+  };
+  
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-col">
@@ -60,7 +71,7 @@ export const StockHeader = ({
           <h2 className="text-lg sm:text-xl font-bold">{selectedSymbol}</h2>
           {selectedStockData && (
             <span className="text-xs bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-full">
-              {selectedStockData.mnName || selectedStockData.enName || t('dashboard.stock')}
+              {getCompanyName(selectedStockData)}
             </span>
           )}
         </div>
@@ -68,7 +79,7 @@ export const StockHeader = ({
         <div className="mt-2">
           <div className="flex flex-col items-start mb-2 px-2 sm:px-4">
             <div className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-              {selectedStockData ? formatPrice(selectedStockData.PreviousClose) : '-'} ₮
+              {selectedStockData ? formatPrice(selectedStockData.LastTradedPrice || selectedStockData.ClosingPrice) : '-'} ₮
             </div>
             <div className="text-xs text-gray-500 mt-1 min-h-[20px] flex items-center">
               {chartLoading && !latestEntryTime ? (
@@ -102,7 +113,7 @@ export const StockHeader = ({
                 {searchResults.length > 0 ? (
                   searchResults.map((stock, index) => {
                     const cleanSymbol = stock.Symbol.split('-')[0]
-                    const companyName = stock.mnName || stock.enName || ''
+                    const companyName = getCompanyName(stock)
                     return (
                       <button
                         key={`search-${cleanSymbol}-${index}`}
@@ -136,7 +147,7 @@ export const StockHeader = ({
               <span className="font-semibold text-blue-700 dark:text-blue-300 flex-shrink-0">{selectedSymbol}</span>
               <span className="mx-1 text-blue-400 text-xs flex-shrink-0">•</span>
               <span className="text-blue-600 dark:text-blue-400 truncate text-xs">
-                {(selectedStockData.mnName || selectedStockData.enName || '').substring(0, 8)}
+                {(getCompanyName(selectedStockData) || '').substring(0, 8)}
               </span>
             </div>
             <ChevronDown size={12} className="text-blue-500 ml-1 flex-shrink-0" />
