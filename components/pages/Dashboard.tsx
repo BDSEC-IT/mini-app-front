@@ -251,61 +251,19 @@ const DashboardContent = () => {
       .slice(0, 10);
   }, [allStocks, searchTerm]);
   
+  // Handle stock selection and refresh chart
   const handleStockSelect = (symbol: string) => {
-    // Extract the base symbol without any suffix
-    const baseSymbol = symbol.split('-')[0];
-    
-    // Force refresh even if selecting the same symbol by clearing state first
-    if (baseSymbol === selectedSymbol) {
-      setSelectedSymbol('');
-      setSelectedStockData(null);
-      setTimeout(() => {
-        setSelectedSymbol(baseSymbol);
-      }, 10);
+    const stock = allStocks.find(s => s.Symbol.split('-')[0] === symbol);
+    if (stock) {
+      setSelectedStockData(stock);
+      setSelectedSymbol(symbol);
+      setChartRefreshKey(prev => prev + 1);
+      setChartLoading(true);
     } else {
-      setSelectedSymbol(baseSymbol);
+      console.warn(`Stock with symbol ${symbol} not found in allStocks.`);
     }
-    
     setSearchTerm('');
     setIsSearchOpen(false);
-    
-    // Reset chart-related state to ensure fresh data
-    setHoveredPrice(null);
-    setHoveredChange(null);
-    setHoveredChangePercent(null);
-    
-    // Force chart refresh by incrementing the key
-    setChartRefreshKey(prev => prev + 1);
-    
-    // Immediately fetch order book data for the selected symbol
-    setLoading(true);
-    setError(null);
-    fetchOrderBook(`${baseSymbol}-O-0000`)
-      .then(response => {
-        if (response.status && response.data) {
-          setOrderBookData(response.data);
-          setLastUpdated(new Date().toLocaleString());
-        }
-      })
-      .catch(err => {
-        setError(err instanceof Error ? err.message : 'Failed to fetch order book data');
-        console.error('Error fetching order book:', err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-    
-    // Also fetch the specific stock data
-    fetchStockData(`${baseSymbol}-O-0000`)
-      .then(response => {
-        if (response.success && response.data) {
-          const stockData = Array.isArray(response.data) ? response.data[0] : response.data;
-          setSelectedStockData(stockData);
-        }
-      })
-      .catch(err => {
-        console.error('Error fetching selected stock data:', err);
-      });
   };
   
   // Generate chart data points for mini charts

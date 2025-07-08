@@ -2,17 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { 
-  Home, 
-  Wallet, 
-  TrendingUp, 
-  Landmark, 
-  Lock,
-  Newspaper,
-  Rocket,
-  ClipboardList,
-  Repeat
-} from 'lucide-react'
+import { Home, Wallet, TrendingUp, Building, Lock, Briefcase } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -29,12 +19,12 @@ const BottomNavigation = () => {
   // Account status state
   const [accountInfo, setAccountInfo] = useState<UserAccountResponse['data'] | null>(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [showTooltip, setShowTooltip] = useState<'balance' | 'returns' | 'ipo' | 'exchange' | null>(null)
+  const [showTooltip, setShowTooltip] = useState<'balance' | 'returns' | 'ipo' | 'exchange' | 'companies' | null>(null)
   
   // Check account status
   useEffect(() => {
     const checkAccountStatus = async () => {
-      const token = Cookies.get('token')
+      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token')
       if (token) {
         setIsLoggedIn(true)
         try {
@@ -45,50 +35,20 @@ const BottomNavigation = () => {
         } catch (error) {
           console.error('Error fetching account info:', error)
         }
-      } else {
-        setIsLoggedIn(false)
-        setAccountInfo(null)
       }
     }
     
     checkAccountStatus()
-    
-    // Listen for account setup data changes
-    const handleAccountSetupChange = () => {
-      console.log('BottomNavigation: Account setup data changed event triggered');
-      checkAccountStatus();
-    };
-    
-    window.addEventListener('accountSetupDataChanged', handleAccountSetupChange);
-    
-    // Listen for login/logout events
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'jwt' || e.key === 'token') {
-        checkAccountStatus();
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('accountSetupDataChanged', handleAccountSetupChange);
-      window.removeEventListener('storage', handleStorageChange);
-    };
   }, [])
   
   // Check if user has MCSD account
-  const hasMcsdAccount = accountInfo?.MCSDAccount !== null && accountInfo?.MCSDAccount !== undefined
+  const hasMcsdAccount = accountInfo?.MCSDAccount !== null
   
-  // Debug logging - commented out to prevent excessive re-rendering
-  // console.log('BottomNavigation DEBUG:', { 
-  //   isLoggedIn, 
-  //   hasMcsdAccount, 
-  //   accountInfo: accountInfo,
-  //   mcsdAccount: accountInfo?.MCSDAccount 
-  // });
+  // Debug logging can be removed once everything is working
+  // console.log('BottomNavigation DEBUG:', { isLoggedIn, hasMcsdAccount });
   
   // Handle menu item click
-  const handleMenuClick = (e: React.MouseEvent, type: 'balance' | 'returns' | 'ipo' | 'exchange') => {
+  const handleMenuClick = (e: React.MouseEvent, type: 'balance' | 'returns' | 'ipo' | 'exchange' | 'companies') => {
     if (!isLoggedIn) {
       e.preventDefault()
       setShowTooltip(type)
@@ -112,6 +72,8 @@ const BottomNavigation = () => {
         window.location.href = '/returns'
       } else if (type === 'ipo') {
         window.location.href = '/ipo'
+      } else if (type === 'companies') {
+        window.location.href = '/companies'
       }
     }
   }
@@ -149,14 +111,6 @@ const BottomNavigation = () => {
   // overlap amount & side widths
   const overlap = 8   // px
   const sideW = Math.max(0, (winW - CURVE_W) / 2) + overlap
-
-  // Add a helper to determine allowed menus
-  const allowedMenus = [
-    { href: '/', icon: Home, label: t('nav.home') },
-    { href: '/stocks', icon: TrendingUp, label: t('common.stocks') },
-    { href: '/bonds', icon: Landmark, label: t('common.bonds') },
-    { href: '/news', icon: Newspaper, label: t('menu.news') },
-  ];
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
@@ -241,7 +195,36 @@ const BottomNavigation = () => {
                 )}
                 
                 {/* secondary market exchange icon */}
-                <Repeat size={26} />
+                <svg width="26" height="26" viewBox="0 0 30 30" fill="none">
+                  <path
+                    d="M25.625 18.7373L19.3625 25.0123"
+                    stroke="white"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4.375 18.7373H25.625"
+                    stroke="white"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4.375 11.2623L10.6375 4.9873"
+                    stroke="white"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M25.625 11.2627H4.375"
+                    stroke="white"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </button>
               
               {showTooltip === 'exchange' && (
@@ -255,92 +238,67 @@ const BottomNavigation = () => {
 
           {/* nav items */}
           <div className="absolute bottom-2 inset-x-0 flex justify-between items-center px-4 md:px-6 lg:px-8 mx-auto max-w-[1400px] pointer-events-auto z-30">
-            {/* Always show home menu */}
-            <Link href="/" className={`flex flex-col items-center ${isActive('/') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
+            <Link
+              href="/"
+              className={`flex flex-col items-center ${
+                isActive('/') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'
+              }`}
+            >
               <Home size={iconSize} />
-              <span className="text-[10px] mt-1">{t('nav.home')}</span>
+              <span className="text-[10px] mt-1">нүүр</span>
             </Link>
 
-            {(!isLoggedIn || !hasMcsdAccount) ? (
-              // Show basic menus for non-logged in users or users without MCSD account
-              <>
-                <Link href="/stocks" className={`flex flex-col items-center ${isActive('/stocks') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
-                  <TrendingUp size={iconSize} />
-                  <span className="text-[10px] mt-1">{t('common.stocks')}</span>
-                </Link>
-                <Link href="/bonds" className={`flex flex-col items-center ${isActive('/bonds') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
-                  <Landmark size={iconSize} />
-                  <span className="text-[10px] mt-1">{t('common.bonds')}</span>
-                </Link>
-                <Link href="/news" className={`flex flex-col items-center ${isActive('/news') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
-                  <Newspaper size={iconSize} />
-                  <span className="text-[10px] mt-1">{t('menu.news')}</span>
-                </Link>
-              </>
-            ) : (
-              // Show advanced menus for logged in users with MCSD account
-              <>
-                <div className="relative">
-                  <button
-                    onClick={(e) => handleMenuClick(e, 'balance')}
-                    className={`flex flex-col items-center ${
-                      (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
-                    }`}
-                  >
-                    {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
-                    <Wallet size={iconSize} />
-                    <span className="text-[10px] mt-1">{t('nav.balance')}</span>
-                  </button>
-                  
-                  {showTooltip === 'balance' && (
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
-                      {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-                    </div>
-                  )}
+            <div className="relative">
+              <button
+                onClick={(e) => handleMenuClick(e, 'balance')}
+                className={`flex flex-col items-center ${
+                  (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
+                }`}
+              >
+                {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
+                <Wallet size={iconSize} />
+                <span className="text-[10px] mt-1">үлдэгдэл</span>
+              </button>
+              
+              {showTooltip === 'balance' && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
+                  {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
                 </div>
+              )}
+            </div>
 
-                <div className="relative">
-                  <button
-                    onClick={(e) => handleMenuClick(e, 'returns')}
-                    className={`flex flex-col items-center ${
-                      (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
-                    }`}
-                  >
-                    {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
-                    <ClipboardList size={iconSize} />
-                    <span className="text-[10px] mt-1">{t('nav.orders')}</span>
-                  </button>
-                  
-                  {showTooltip === 'returns' && (
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
-                      {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-                    </div>
-                  )}
-                </div>
+            <div className="w-16" />
 
-                <div className="relative">
-                  <button
-                    onClick={(e) => handleMenuClick(e, 'ipo')}
-                    className={`flex flex-col items-center ${
-                      (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
-                    }`}
-                  >
-                    {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
-                    <Rocket size={iconSize} />
-                    <span className="text-[10px] mt-1">{t('nav.ipo')}</span>
-                  </button>
-                  
-                  {showTooltip === 'ipo' && (
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
-                      {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-                    </div>
-                  )}
+            <div className="relative">
+              <button
+                onClick={(e) => handleMenuClick(e, 'returns')}
+                className={`flex flex-col items-center ${
+                  (!isLoggedIn || !hasMcsdAccount) ? 'text-gray-400 opacity-60' : 'text-gray-400 hover:text-bdsec dark:hover:text-indigo-400'
+                }`}
+              >
+                {(!isLoggedIn || !hasMcsdAccount) && <Lock size={12} className="absolute -top-1 -right-1" />}
+                <TrendingUp size={iconSize} />
+                <span className="text-[10px] mt-1">өгөөж</span>
+              </button>
+              
+              {showTooltip === 'returns' && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
+                  {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !hasMcsdAccount ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
                 </div>
-              </>
-            )}
+              )}
+            </div>
+            
+            <div className="relative">
+              <button
+                onClick={(e) => handleMenuClick(e, 'companies')}
+                className={`flex flex-col items-center text-gray-400 hover:text-bdsec dark:hover:text-indigo-400`}
+              >
+                <Briefcase size={iconSize} />
+                <span className="text-[10px] mt-1">{t('nav.companies')}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

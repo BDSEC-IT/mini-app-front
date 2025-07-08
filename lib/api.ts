@@ -121,6 +121,31 @@ interface BondsResponse {
   data: BondData[];
 }
 
+interface CompanyData {
+  id: number;
+  mnTitle: string;
+  enTitle: string;
+  ruTitle: string | null;
+  jpTitle: string | null;
+  companycode: number;
+  symbol: string;
+  logo: string | null;
+  issued_shares: string;
+  outstanding_shares: string;
+  MarketSegmentID: string;
+  segments: number;
+  state_own: number;
+  state_own_date: string | null;
+  ISIN: string;
+  changedate: string;
+  adjustmentcoef: number;
+}
+
+interface CompaniesResponse {
+  success: boolean;
+  data: CompanyData[];
+}
+
 interface WeekHighLowResponse {
   success: boolean;
   data: WeekHighLowData[];
@@ -720,34 +745,40 @@ export const fetchTradingHistory = async (symbol: string, page: number = 1, limi
 
 export const fetchBonds = async (page: number = 1, limit: number = 5000): Promise<BondsResponse> => {
   const url = `${BASE_URL}/securities/bonds?page=${page}&limit=${limit}&sortField`;
-  
+  logDev(`Fetching bonds from: ${url}`);
   try {
-    const response = await fetchWithTimeout(url)
-    
+    const response = await fetchWithTimeout(url);
     if (!response.ok) {
       logDev(`Using mock bonds data (${response.status})`);
-      // Return mock data instead of throwing
-      return {
-        success: true,
-        data: generateMockBonds(page, limit)
-      }
+      return { success: false, data: [] };
     }
-    return response.json()
+    return response.json();
   } catch (error) {
     logDev('Using fallback mock bonds data');
-    
-    // Return mock data as fallback
-    const mockData = generateMockBonds(page, limit)
-    
-    return {
-      success: true,
-      data: mockData
+    return { success: false, data: [] };
+  }
+};
+
+export const fetchCompanies = async (page: number = 1, limit: number = 5000): Promise<CompaniesResponse> => {
+  const url = `${BASE_URL}/securities/companies?page=${page}&limit=${limit}&sortField`;
+  logDev(`Fetching companies from: ${url}`);
+  try {
+    const response = await fetchWithTimeout(url);
+    if (!response.ok) {
+      logDev(`Error fetching companies: ${response.statusText}`);
+      return { success: false, data: [] };
     }
+    return response.json();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    logDev(`Exception in fetchCompanies: ${errorMessage}`);
+    return { success: false, data: [] };
   }
 };
 
 export const fetch52WeekHighLow = async (): Promise<WeekHighLowResponse> => {
   const url = `${BASE_URL}/securities/52-week-high-low`;
+  logDev('Fetching 52-week high-low data...');
   
   try {
     const response = await fetchWithTimeout(url)
@@ -1509,5 +1540,7 @@ export type {
   UserAccountResponse,
   AccountSetupResponse,
   NewsData,
-  NewsResponse
+  NewsResponse,
+  CompanyData,
+  CompaniesResponse
 };
