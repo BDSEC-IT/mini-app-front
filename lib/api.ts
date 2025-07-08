@@ -669,7 +669,6 @@ export const fetchAllStocks = async (): Promise<AllStocksResponse> => {
 // Enhanced function that merges stock trading data with company information
 export const fetchAllStocksWithCompanyInfo = async (): Promise<AllStocksResponse> => {
   try {
-    // Fetch both trading data and company data in parallel
     const [tradingResponse, companiesResponse] = await Promise.all([
       fetchAllStocks(),
       fetchCompanies()
@@ -677,66 +676,48 @@ export const fetchAllStocksWithCompanyInfo = async (): Promise<AllStocksResponse
 
     if (!tradingResponse.success || !tradingResponse.data) {
       logDev('Failed to fetch trading data, using mock data');
-      return {
-        success: true,
-        data: generateMockStockData()
-      };
+      return { success: true, data: generateMockStockData() };
     }
 
     let stocksData = tradingResponse.data;
-    let companiesData: CompanyData[] = [];
+    let companiesData: CompanyData[] = companiesResponse.success && companiesResponse.data ? companiesResponse.data : [];
 
-    if (companiesResponse.success && companiesResponse.data) {
-      companiesData = companiesResponse.data;
-    }
-
-    // Create a map of company data by symbol for quick lookup
+    // Create a map of company data by both base symbol and full symbol (uppercase)
     const companyMap = new Map<string, CompanyData>();
     companiesData.forEach(company => {
-      // Only include actual stocks (ending with -O-0000)
       if (company.symbol && company.symbol.endsWith('-O-0000')) {
-        // Store with full symbol as key
-        companyMap.set(company.symbol, company);
-        
-        // Also store with base symbol (without -O-0000) as key for fallback
-        const baseSymbol = company.symbol.split('-')[0];
+        const baseSymbol = company.symbol.split('-')[0].toUpperCase();
         companyMap.set(baseSymbol, company);
+        companyMap.set(company.symbol.toUpperCase(), company); // Add full symbol as key
       }
     });
 
     // Merge trading data with company information
-    const enrichedStocks = stocksData.map(stock => {
-      const baseSymbol = stock.Symbol.split('-')[0];
-      let companyInfo = companyMap.get(stock.Symbol); // Try exact match first
-      
-      if (!companyInfo) {
-        companyInfo = companyMap.get(baseSymbol); // Fallback to base symbol
-      }
-      
-      return {
+    const enrichedStocks: StockData[] = [];
+    const seen = new Set<string>();
+
+    for (const stock of stocksData) {
+      const baseSymbol = stock.Symbol.split('-')[0].toUpperCase();
+      if (seen.has(baseSymbol)) continue; // Skip duplicates
+      seen.add(baseSymbol);
+
+      // Try full symbol first, then base symbol
+      const companyInfo = companyMap.get(stock.Symbol.toUpperCase()) || companyMap.get(baseSymbol);
+
+      enrichedStocks.push({
         ...stock,
         mnName: companyInfo?.mnTitle || stock.mnName || `${baseSymbol} Компани`,
         enName: companyInfo?.enTitle || stock.enName || `${baseSymbol} Company`
-      };
-    });
+      });
+    }
 
     logDev(`Enriched ${enrichedStocks.length} stocks with company data from ${companiesData.length} companies`);
 
-    return {
-      success: true,
-      data: enrichedStocks
-    };
+    return { success: true, data: enrichedStocks };
 
   } catch (error) {
     logDev('Error in fetchAllStocksWithCompanyInfo, using fallback mock data');
-    
-    // Return mock data as fallback
-    const mockData = generateMockStockData()
-    
-    return {
-      success: true,
-      data: mockData
-    }
+    return { success: true, data: generateMockStockData() };
   }
 };
 
@@ -1102,13 +1083,13 @@ export const digipayLogin = async (userIdKhan: string) => {
 };
 
 // Update the sendRegistrationNumber function to handle all error cases
-export const sendRegistrationNumber = async (registrationNumber: string, nationality: string, token: string): Promise<RegistrationResponse> => {
+export const sendRegistrationNumber = async (registrationNumber: string, token: string): Promise<RegistrationResponse> => {
   const url = `${BASE_URL}/user/send-registration-number`;
   
   try {
     const response = await fetchWithTimeout(url, {
       method: 'POST',
-      body: JSON.stringify({ registrationNumber, nationality }),
+      body: JSON.stringify({ registrationNumber }),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`

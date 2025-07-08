@@ -131,8 +131,11 @@ export default function GeneralInfoPage() {
       }
     })
     
-    // Reset form with existing data when it becomes available
+    // Debug: Log existingData every time it changes
     useEffect(() => {
+      console.log('[DEBUG] Step2Adult existingData:', existingData);
+      console.log('[DEBUG] Step2Adult existingData keys:', existingData ? Object.keys(existingData) : 'null');
+      console.log('[DEBUG] Step2Adult form values before reset:', methods.getValues());
       if (existingData) {
         methods.reset({
           registerNumber: existingData.registerNumber || registerNumber || '',
@@ -146,8 +149,9 @@ export default function GeneralInfoPage() {
           homeAddress: existingData.homeAddress || '',
           bankCode: existingData.bankCode || '',
           accountNumber: existingData.accountNumber || '',
-          countryCode: existingData.countryCode || nationality
+          countryCode: existingData?.countryCode || nationality
         });
+        console.log('[DEBUG] Step2Adult form values after reset:', methods.getValues());
       }
     }, [existingData, registerNumber, methods, nationality])
     
@@ -431,21 +435,33 @@ export default function GeneralInfoPage() {
 
   useEffect(() => {
     const fetchStatusAndSetMode = async () => {
+      console.log('[DEBUG] Starting fetchStatusAndSetMode');
       const existingToken = Cookies.get('token');
       
+              console.log('[DEBUG] Token check complete');
       if (existingToken) {
+        console.log('[DEBUG] Token found, proceeding with API calls');
         try {
           // First, check if user has a registration number and account info
+          console.log('[DEBUG] Making registration and account API calls');
           const [regRes, accountRes] = await Promise.all([
             getRegistrationNumber(existingToken),
             getUserAccountInformation(existingToken)
           ]);
           
+          console.log('[DEBUG] API calls completed');
+          console.log('[DEBUG] regRes:', regRes);
+          console.log('[DEBUG] accountRes:', accountRes);
+          console.log('[DEBUG] regRes type:', typeof regRes);
+          console.log('[DEBUG] accountRes type:', typeof accountRes);
+          
           if (!regRes.registerNumber) {
+            console.log('[DEBUG] No register number, showing input');
             setShowRegisterInput(true);
             setViewMode('loading');
             return;
           } else {
+            console.log('[DEBUG] Register number found:', regRes.registerNumber);
             setShowRegisterInput(false);
             setRegisterNumber(regRes.registerNumber);
             
@@ -457,11 +473,20 @@ export default function GeneralInfoPage() {
                 firstName,
                 lastName
               }));
+              console.log('[DEBUG] setFormData (from khanUser):', { firstName, lastName });
             }
           }
           
           // Now check account status
           const statusResponse = await getAccountStatusRequest(existingToken);
+          
+          console.log('[DEBUG] Account status loaded');
+          console.log(statusResponse);
+          if (statusResponse.data) {
+            console.log('FirstName:', statusResponse.data.FirstName);
+            console.log('Gender:', statusResponse.data.Gender);
+            console.log('BirthDate:', statusResponse.data.BirthDate);
+          }
           
           let hasSubmittedData = false;
           let isDataComplete = false;
@@ -500,25 +525,7 @@ export default function GeneralInfoPage() {
           }
           
           if (hasSubmittedData && isDataComplete) {
-            const invoiceStatus = await checkInvoiceStatus(existingToken);
-            if(invoiceStatus.message==="MCSD Account found"){
-              statusResponse.data.data.invoiceStatus = 'PAID';
-              setSummaryData(statusResponse.data);
-              setViewMode('summary');
-              return
-            }
-            else if(invoiceStatus.success && invoiceStatus.data?.data?.registrationFee?.status === 'COMPLETED'){
-              statusResponse.data.data.invoiceStatus = 'PAID';
-              setSummaryData(statusResponse.data);
-              setViewMode('summary');
-              return
-            }
-            else{
-              setSummaryData(statusResponse.data);
-            }
-            setViewMode('summary');
-            
-            // Pre-populate form data for edit mode
+            // Pre-populate form data for edit mode FIRST
             const existingData = statusResponse.data;
             const mappedData = {
               isAdult: existingData.isAdult || (existingData.CustomerType === 1) || 
@@ -539,10 +546,9 @@ export default function GeneralInfoPage() {
               customerType: existingData.CustomerType || existingData.customerType || '0',
               countryCode: existingData.Country || existingData.countryCode || nationality
             };
-            
             setFormData(mappedData);
-            
             setStep(2);
+            setViewMode('form');
           } else if (hasSubmittedData && !isDataComplete) {
             const existingData = statusResponse.data;
             const mappedData = {
@@ -566,6 +572,8 @@ export default function GeneralInfoPage() {
             };
             
             setFormData(mappedData);
+            console.log('[DEBUG] setFormData(mappedData) (in incomplete)');
+            console.log(mappedData);
             setViewMode('form');
             setStep(2);
           } else {
@@ -582,12 +590,18 @@ export default function GeneralInfoPage() {
                 firstName,
                 lastName
               }));
+              console.log('[DEBUG] setFormData (from khanUser):', { firstName, lastName });
             }
             
             setViewMode('form');
           }
         } catch (error) {
-          console.error('Error fetching status:', error);
+          console.error('[DEBUG] Error in fetchStatusAndSetMode:', error);
+          console.error('[DEBUG] Error details:', {
+            message: (error as Error).message,
+            stack: (error as Error).stack,
+            name: (error as Error).name
+          });
           setViewMode('form');
         }
       } else {
@@ -780,6 +794,10 @@ export default function GeneralInfoPage() {
   }
   
   const renderContent = () => {
+    console.log('[DEBUG] renderContent formData:', formData);
+    console.log('[DEBUG] renderContent viewMode:', viewMode);
+    console.log('[DEBUG] renderContent step:', step);
+    console.log('[DEBUG] renderContent formData.isAdult:', formData.isAdult);
     // Reduced debug logging to improve performance
     // console.log('renderContent called with viewMode:', viewMode);
     // console.log('renderContent summaryData:', summaryData);
@@ -791,8 +809,10 @@ export default function GeneralInfoPage() {
     
     switch (viewMode) {
         case 'loading':
+            console.log('[DEBUG] Rendering loading view');
             return <div className="text-center p-8">Loading...</div>
         case 'summary':
+            console.log('[DEBUG] Rendering summary view');
             return <SummaryView summaryData={summary} onEdit={() => { 
                 setViewMode('form'); 
                 // Set the correct step based on whether we have age info
@@ -803,10 +823,12 @@ export default function GeneralInfoPage() {
                 }
             }} onPay={handleCreateInvoice} />
         case 'form':
+            console.log('[DEBUG] Rendering form view, step:', step, 'isAdult:', formData.isAdult);
             if (step === 1) return <Step1 onNext={handleStep1Submit} existingData={formData} />
             if (step === 2 && formData.isAdult === true) return <Step2Adult onNext={submitAllData} onBack={handleBack} registerNumber={registerNumber || undefined} existingData={formData} />
             if (step === 2 && formData.isAdult === false) return <Step2Child onNext={submitAllData} onBack={handleBack} registerNumber={registerNumber || undefined} existingData={formData} />
             // Fallback to step 1 if state is inconsistent
+            console.log('[DEBUG] Falling back to Step1');
             return <Step1 onNext={handleStep1Submit} existingData={formData} />
     }
   }
@@ -819,7 +841,7 @@ export default function GeneralInfoPage() {
       return;
     }
     const token = Cookies.get('token');
-    const res = await sendRegistrationNumber(registerInput.trim(), nationality, token!);
+    const res = await sendRegistrationNumber(registerInput.trim(), token!);
     if (res.success) {
       setRegisterNumber(registerInput.trim());
       setShowRegisterInput(false);

@@ -31,7 +31,7 @@ export const OrderBook = ({
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-base sm:text-lg font-medium flex items-center">
           <Activity size={16} className="mr-2 text-bdsec dark:text-indigo-400" />
-          {t('dashboard.orderBook')} - {selectedSymbol}
+          {t('dashboard.orderBook')} - {selectedSymbol.split('-')[0]}
         </h2>
         <div className="text-xs text-right text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
           <div className="hidden sm:block">{t('dashboard.lastUpdated')}</div>

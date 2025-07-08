@@ -21,7 +21,7 @@ export const StockDetails = ({ selectedSymbol, details }: StockDetailsProps) => 
     <div className="mt-6 p-4">
       <h2 className="text-lg font-medium mb-4 flex items-center">
         <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
-        {t('dashboard.stockDetails')} - {selectedSymbol}
+        {t('dashboard.stockDetails')} - {selectedSymbol.split('-')[0]}
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

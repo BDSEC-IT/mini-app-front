@@ -232,7 +232,7 @@
     "marketCap": "Зах зээлийн үнэлгээ",
     "volume": "Эргэлт",
     "popularStocks": "Арилжаа",
-    "viewAll": "Бүгдийг харах",
+    "viewAll": "Дэлгэрэнгүй харах",
     "mostActive": "Хамгийн идэвхтэй",
     "gainers": "Өсөлттэй",
     "losers": "Уналттай",
@@ -269,7 +269,8 @@
     "bid": "Авах үнэ",
     "ask": "Зарах үнэ",
     "selectedStock": "Сонгосон хувьцаа",
-    "company_search" : "Хайх : BDS/БиДиСЕК"
+    "company_search" : "Хайх : BDS/БиДиСЕК",
+    "searchByCompanyOrSymbol": "Компани/симбол"
   },
   "about": {
     "title": "Бидний тухай",

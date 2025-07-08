@@ -68,7 +68,7 @@ export const StockHeader = ({
     <div className="flex items-center justify-between">
       <div className="flex flex-col">
         <div className="w-full flex items-center gap-2">
-          <h2 className="text-lg sm:text-xl font-bold">{selectedSymbol}</h2>
+          <h2 className="text-lg sm:text-xl font-bold">{selectedSymbol.split('-')[0]}</h2>
           {selectedStockData && (
             <span className="text-xs bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-full">
               {getCompanyName(selectedStockData)}
@@ -103,7 +103,7 @@ export const StockHeader = ({
                 value={searchTerm}
                 onChange={onSearchChange}
                 className="bg-transparent outline-none flex-1 text-xs sm:text-sm min-w-0"
-                placeholder={t('common.search')}
+                placeholder={t('dashboard.searchByCompanyOrSymbol')}
               />
             </div>
 
@@ -144,7 +144,7 @@ export const StockHeader = ({
           >
             <Search size={12} className="text-blue-500 mr-1 flex-shrink-0" />
             <div className="flex items-center text-xs min-w-0 overflow-hidden">
-              <span className="font-semibold text-blue-700 dark:text-blue-300 flex-shrink-0">{selectedSymbol}</span>
+              <span className="font-semibold text-blue-700 dark:text-blue-300 flex-shrink-0">{selectedSymbol.split('-')[0]}</span>
               <span className="mx-1 text-blue-400 text-xs flex-shrink-0">•</span>
               <span className="text-blue-600 dark:text-blue-400 truncate text-xs">
                 {getCompanyName(selectedStockData)?.substring(0, 8) || ''}

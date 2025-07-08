@@ -212,7 +212,7 @@
     "marketCap": "Market Cap",
     "volume": "Volume",
     "popularStocks": "Trading",
-    "viewAll": "View All",
+    "viewAll": "View Detailed",
     "mostActive": "Most Active",
     "gainers": "Gainers",
     "losers": "Losers",
@@ -249,7 +249,8 @@
     "bid": "Bid",
     "ask": "Ask",
     "selectedStock": "Selected Stock",
-      "company_search" : "Search : BDS/BDSec"
+      "company_search" : "Search : BDS/BDSec",
+    "searchByCompanyOrSymbol": "Company/symbol"
   },
   "about": {
     "title": "About Us",

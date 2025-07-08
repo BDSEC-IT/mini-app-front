@@ -43,7 +43,8 @@ const DashboardContent = () => {
   const [chartLoading, setChartLoading] = useState(true)
 
   // Derive selectedCard robustly
-  const selectedCard = allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol) || allStocks[0];
+  // Use the same logic as search: match by base symbol
+  const selectedCard = allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol.split('-')[0]) || allStocks[0];
 
   // Fetch all stocks data with company information
   const fetchStocksData = useCallback(async () => {
@@ -90,7 +91,7 @@ const DashboardContent = () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetchOrderBook(`${selectedSymbol}-O-0000`)
+      const response = await fetchOrderBook(selectedCard?.Symbol || `${selectedSymbol}-O-0000`)
       if (response.status && response.data) {
         setOrderBookData(response.data)
         setLastUpdated(new Date().toLocaleString())
@@ -101,7 +102,7 @@ const DashboardContent = () => {
     } finally {
       setLoading(false)
     }
-  }, [selectedSymbol])
+  }, [selectedSymbol, selectedCard])
 
   // Fetch data when component mounts or selectedSymbol changes
   useEffect(() => {
@@ -116,10 +117,10 @@ const DashboardContent = () => {
   // Ensure selectedSymbol is always set on initial load. Default to 'BDS', but if not present in allStocks, set to the first available symbol after allStocks loads. This guarantees the selected card is always shown, even after refresh.
   useEffect(() => {
     if (
-      (!selectedSymbol || !allStocks.some(stock => stock.Symbol.split('-')[0] === selectedSymbol)) &&
+      (!selectedSymbol || !allStocks.some(stock => stock.Symbol.split('-')[0] === selectedSymbol.split('-')[0])) &&
       allStocks.length > 0
     ) {
-      // If BDS is not present, select the first available symbol
+      // If default symbol is not present, select the first available base symbol
       setSelectedSymbol(allStocks[0].Symbol.split('-')[0]);
     }
   }, [allStocks, selectedSymbol]);
@@ -150,8 +151,7 @@ const DashboardContent = () => {
 
   // Mock data for stock details
   const getStockDetails = useMemo(() => {
-    const selectedStockData = allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol)
-    
+    const selectedStockData = allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol.split('-')[0])
     return {
       isin: `MN00SBM${selectedStockData?.id || '05643'}`,
       companyCode: selectedStockData?.id?.toString() || '564',
@@ -231,21 +231,16 @@ const DashboardContent = () => {
   }, [allStocks, searchTerm])
 
   const handleStockSelect = (symbol: string) => {
-    const baseSymbol = symbol.split('-')[0]
-    
     // Always set the new symbol, even if it's the same
-    setSelectedSymbol(baseSymbol)
-    
+    setSelectedSymbol(symbol)
     // Clear search and close search dropdown
     setSearchTerm('')
     setIsSearchOpen(false)
     setHoveredPrice(null)
     setHoveredChange(null)
     setHoveredChangePercent(null)
-    
     // Force chart refresh by incrementing the key
     setChartRefreshKey(prev => prev + 1)
-    
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -295,7 +290,7 @@ const DashboardContent = () => {
           activeFilter={activeFilter}
           filteredStocks={filteredStocks}
           onFilterChange={setActiveFilter}
-          onStockSelect={setSelectedSymbol}
+          onStockSelect={handleStockSelect}
           selectedCard={selectedCard}
         />
         <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 relative">
@@ -316,14 +311,16 @@ const DashboardContent = () => {
           <div className="relative w-full max-w-full overflow-hidden">
             <div className="h-[350px] sm:h-[380px] md:h-[400px] lg:h-[420px] mt-4 mb-8 sm:mb-12 rounded-lg bg-transparent mx-2 sm:mx-0">
               <div className="relative w-full h-full overflow-hidden">
-                <TradingViewChart 
-                  key={`${selectedSymbol}-${chartRefreshKey}`}
-                  symbol={`${selectedSymbol}-O-0000`}
-                  theme={theme}
-                  period="ALL"
-                  onPriceHover={handlePriceHover}
-                  onLatestTimeUpdate={handleLatestTimeUpdate}
-                />
+                {selectedCard && (
+                  <TradingViewChart 
+                    key={`${selectedSymbol}-${chartRefreshKey}`}
+                    symbol={selectedCard.Symbol}
+                    theme={theme}
+                    period="ALL"
+                    onPriceHover={handlePriceHover}
+                    onLatestTimeUpdate={handleLatestTimeUpdate}
+                  />
+                )}
               </div>
             </div>
           </div>

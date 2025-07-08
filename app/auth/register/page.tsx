@@ -16,7 +16,6 @@ export default function RegisterPage() {
   const [registerNumber, setRegisterNumber] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [token, setToken] = useState<string | null>(null)
   const [responseStatus, setResponseStatus] = useState<{
     type: 'error' | 'success' | 'warning' | null;
     message: string | null;
@@ -46,8 +45,16 @@ export default function RegisterPage() {
     setError(null)
     setResponseStatus({ type: null, message: null })
     
+    // Always get the token from the cookie right before the API call
+    const cookieToken = Cookies.get('token');
+    console.log('Token from cookie:', cookieToken);
+    if (!cookieToken) {
+      setError('No token found in cookies. Please log in again.');
+      setIsLoading(false);
+      return;
+    }
     try {
-      const response = await sendRegistrationNumber(registerNumber, nationality, token! )
+      const response = await sendRegistrationNumber(registerNumber, cookieToken)
       
       if (response.success) {
         // Handle different success cases
