@@ -248,6 +248,7 @@
     "previousClose": "Previous Close",
     "bid": "Bid",
     "ask": "Ask",
+    "selectedStock": "Selected Stock",
       "company_search" : "Search : BDS/BDSec"
   },
   "about": {

@@ -22,7 +22,7 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 }
 
 const DashboardContent = () => {
-  const [selectedSymbol, setSelectedSymbol] = useState('BDS')
+  const [selectedSymbol, setSelectedSymbol] = useState('BDS'); // Default to BDS
   const { theme } = useTheme()
   const [activeFilter, setActiveFilter] = useState('trending')
   const [orderBookData, setOrderBookData] = useState<OrderBookEntry[]>([])
@@ -41,6 +41,9 @@ const DashboardContent = () => {
   const [chartRefreshKey, setChartRefreshKey] = useState<number>(0)
   const [latestEntryTime, setLatestEntryTime] = useState<string>('')
   const [chartLoading, setChartLoading] = useState(true)
+
+  // Derive selectedCard robustly
+  const selectedCard = allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol) || allStocks[0];
 
   // Fetch all stocks data with company information
   const fetchStocksData = useCallback(async () => {
@@ -109,6 +112,17 @@ const DashboardContent = () => {
     fetchStocksData()
     fetchSelectedStockData()
   }, [fetchStocksData, fetchSelectedStockData])
+
+  // Ensure selectedSymbol is always set on initial load. Default to 'BDS', but if not present in allStocks, set to the first available symbol after allStocks loads. This guarantees the selected card is always shown, even after refresh.
+  useEffect(() => {
+    if (
+      (!selectedSymbol || !allStocks.some(stock => stock.Symbol.split('-')[0] === selectedSymbol)) &&
+      allStocks.length > 0
+    ) {
+      // If BDS is not present, select the first available symbol
+      setSelectedSymbol(allStocks[0].Symbol.split('-')[0]);
+    }
+  }, [allStocks, selectedSymbol]);
 
   // Fetch order book when selectedSymbol changes
   useEffect(() => {
@@ -182,20 +196,36 @@ const DashboardContent = () => {
     if (!searchTerm) return []
     
     const uniqueSymbols = new Set()
+    const searchLower = searchTerm.toLowerCase()
+    
     return allStocks
       .filter(stock => {
-        const matches = stock.Symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (stock.mnName && stock.mnName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (stock.enName && stock.enName.toLowerCase().includes(searchTerm.toLowerCase()))
+        const baseSymbol = stock.Symbol.split('-')[0]
+        const symbolMatch = baseSymbol.toLowerCase().includes(searchLower)
+        const mnNameMatch = stock.mnName && stock.mnName.toLowerCase().includes(searchLower)
+        const enNameMatch = stock.enName && stock.enName.toLowerCase().includes(searchLower)
         
-        if (matches) {
-          const baseSymbol = stock.Symbol.split('-')[0]
-          if (!uniqueSymbols.has(baseSymbol)) {
-            uniqueSymbols.add(baseSymbol)
-            return true
-          }
+        const matches = symbolMatch || mnNameMatch || enNameMatch
+        
+        if (matches && !uniqueSymbols.has(baseSymbol)) {
+          uniqueSymbols.add(baseSymbol)
+          return true
         }
         return false
+      })
+      .sort((a, b) => {
+        // Prioritize exact symbol matches
+        const aBaseSymbol = a.Symbol.split('-')[0].toLowerCase()
+        const bBaseSymbol = b.Symbol.split('-')[0].toLowerCase()
+        
+        if (aBaseSymbol === searchLower && bBaseSymbol !== searchLower) return -1
+        if (bBaseSymbol === searchLower && aBaseSymbol !== searchLower) return 1
+        
+        // Then prioritize symbol starts with
+        if (aBaseSymbol.startsWith(searchLower) && !bBaseSymbol.startsWith(searchLower)) return -1
+        if (bBaseSymbol.startsWith(searchLower) && !aBaseSymbol.startsWith(searchLower)) return 1
+        
+        return 0
       })
       .slice(0, 10)
   }, [allStocks, searchTerm])
@@ -203,22 +233,21 @@ const DashboardContent = () => {
   const handleStockSelect = (symbol: string) => {
     const baseSymbol = symbol.split('-')[0]
     
-    if (baseSymbol === selectedSymbol) {
-      setSelectedSymbol('')
-      setSelectedStockData(null)
-      setTimeout(() => {
-        setSelectedSymbol(baseSymbol)
-      }, 10)
-    } else {
-      setSelectedSymbol(baseSymbol)
-    }
+    // Always set the new symbol, even if it's the same
+    setSelectedSymbol(baseSymbol)
     
+    // Clear search and close search dropdown
     setSearchTerm('')
     setIsSearchOpen(false)
     setHoveredPrice(null)
     setHoveredChange(null)
     setHoveredChangePercent(null)
+    
+    // Force chart refresh by incrementing the key
     setChartRefreshKey(prev => prev + 1)
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleSearchClick = () => {
@@ -261,13 +290,14 @@ const DashboardContent = () => {
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
       <div className="max-w-4xl mx-auto py-8">
-                  <StockList
-            loading={loading}
-            activeFilter={activeFilter}
-            filteredStocks={filteredStocks}
-            onFilterChange={setActiveFilter}
-            onStockSelect={handleStockSelect}
-          />
+        <StockList
+          loading={loading}
+          activeFilter={activeFilter}
+          filteredStocks={filteredStocks}
+          onFilterChange={setActiveFilter}
+          onStockSelect={setSelectedSymbol}
+          selectedCard={selectedCard}
+        />
         <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 relative">
           <StockHeader
             selectedSymbol={selectedSymbol}

@@ -268,6 +268,7 @@
     "previousClose": "Өмнөх хаалт",
     "bid": "Авах үнэ",
     "ask": "Зарах үнэ",
+    "selectedStock": "Сонгосон хувьцаа",
     "company_search" : "Хайх : BDS/БиДиСЕК"
   },
   "about": {

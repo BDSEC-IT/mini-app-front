@@ -147,7 +147,7 @@ export const StockHeader = ({
               <span className="font-semibold text-blue-700 dark:text-blue-300 flex-shrink-0">{selectedSymbol}</span>
               <span className="mx-1 text-blue-400 text-xs flex-shrink-0">•</span>
               <span className="text-blue-600 dark:text-blue-400 truncate text-xs">
-                {(getCompanyName(selectedStockData) || '').substring(0, 8)}
+                {getCompanyName(selectedStockData)?.substring(0, 8) || ''}
               </span>
             </div>
             <ChevronDown size={12} className="text-blue-500 ml-1 flex-shrink-0" />
