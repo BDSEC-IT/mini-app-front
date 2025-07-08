@@ -2,16 +2,12 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { TradingViewChart } from '../ui/TradingViewChart'
-import StockInfo from '../ui/StockInfo'
 import { useTheme } from '@/contexts/ThemeContext'
 import { fetchOrderBook, fetchAllStocks, fetchStockData, type OrderBookEntry, type StockData } from '@/lib/api'
 import { StockHeader } from './dashboard/StockHeader'
 import { OrderBook } from './dashboard/OrderBook'
 import { StockDetails } from './dashboard/StockDetails'
 import { StockList } from './dashboard/StockList'
-import { formatDateTime } from '@/lib/utils'
-import { formatPrice } from '@/lib/utils'
-import { t } from 'i18next'
 
 // Client-only wrapper component
 function ClientOnly({ children }: { children: React.ReactNode }) {
