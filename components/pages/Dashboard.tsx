@@ -348,8 +348,8 @@ const DashboardContent = () => {
                     type="text"
                     value={searchTerm}
                     onChange={handleSearchChange}
-                    className="bg-transparent outline-none flex-1 text-xs sm:text-sm"
-                    placeholder={t('common.search')}
+                    className="bg-transparent outline-none flex-1 text-xs sm:px-4"
+                    placeholder={t('dashboard.company_search')}
                   />
                   <button onClick={handleSearchClose} className="ml-1">
                     <X size={12} className="text-gray-500" />
