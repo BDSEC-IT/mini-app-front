@@ -9,6 +9,9 @@ import { StockHeader } from './dashboard/StockHeader'
 import { OrderBook } from './dashboard/OrderBook'
 import { StockDetails } from './dashboard/StockDetails'
 import { StockList } from './dashboard/StockList'
+import { formatDateTime } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
+import { t } from 'i18next'
 
 // Client-only wrapper component
 function ClientOnly({ children }: { children: React.ReactNode }) {

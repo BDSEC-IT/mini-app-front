@@ -247,7 +247,8 @@
     "close": "Close",
     "previousClose": "Previous Close",
     "bid": "Bid",
-    "ask": "Ask"
+    "ask": "Ask",
+      "company_search" : "Search : BDS/BDSec"
   },
   "about": {
     "title": "About Us",
