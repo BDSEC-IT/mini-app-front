@@ -128,7 +128,8 @@ export const StockHeader = ({
                     return (
                       <button
                         key={`search-${stock.Symbol}-${index}`}
-                        className="w-full text-left px-2.5 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm transition-colors"
+                        className="w-full text-left px-2.5 py-2 hover:bg-gray-100 
+                        dark:hover:bg-gray-700 text-xs sm:text-sm transition-colors"
                         onClick={() => {
                           onStockSelect(stock.Symbol);
                           window.scrollTo({ top: 0, behavior: 'smooth' });

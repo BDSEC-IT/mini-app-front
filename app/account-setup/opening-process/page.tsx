@@ -18,8 +18,8 @@ export default function AccountOpeningProcess() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
+  const [mcsdIsError, setMcsdIsError] = useState(false)
   const token = Cookies.get('token') 
-  const responseFromMCSD=["ХУР системд шалгагдахаар хүлээгдэж байгаа."]
   const handleUpdateRegistryNumber = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newRegNumber) return
@@ -127,6 +127,7 @@ export default function AccountOpeningProcess() {
 
         // Step 1: Fee paid but not sent to MCSD
         if (data.data?.khanUser?.registrationFee?.status === 'COMPLETED' && !data.data?.MCSDAccount) {
+       
           setStatus('waiting_submission')
           return
         }
@@ -143,6 +144,10 @@ export default function AccountOpeningProcess() {
               return
             }
             else{
+              const mcsdIsErrorValue = data.data.MCSDAccount.Status===2
+              
+              console.log("mcsdIsError",mcsdIsErrorValue)
+              setMcsdIsError(mcsdIsErrorValue)
               // alert(mcsdStatus.message)
               setStatus('waiting_approval')
               return
@@ -209,14 +214,14 @@ export default function AccountOpeningProcess() {
           <div className="space-y-6">
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0 mt-1">
-                <Clock className="h-6 w-6 text-blue-500" />
+                <Clock className={`h-6 w-6 ${mcsdIsError ? 'text-red-500' : 'text-blue-500'}`} />
               </div>
               <div>
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                  {t('profile.waitingApproval', 'Таны мэдээллийг шалгаж байна')}
+                  {mcsdIsError ? t('profile.waitingApprovalError', 'Таны мэдээлэл алдаатай байна') : t('profile.waitingApproval', 'Таны мэдээллийг шалгаж байна')}
                 </h3>
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  {t('profile.waitingApprovalDesc', 'ҮЦТХТ таны мэдээллийг шалгаж байна. Энэ хугацаанд та түр хүлээнэ үү.')}
+                  {!mcsdIsError &&t('profile.waitingApprovalDesc', 'ҮЦТХТ таны мэдээллийг шалгаж байна. Энэ хугацаанд та түр хүлээнэ үү.')}
                 </p>
                 {accountData?.MCSDAccount?.ErrorMessage && (
                   <div className='mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600'>
@@ -237,28 +242,30 @@ export default function AccountOpeningProcess() {
             </div>
             <div className="flex justify-center">
               <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <div className="w-3 h-3 bg-blue-500 rounded-full" />
+                <div className={`w-3 h-3 ${mcsdIsError ? 'bg-red-500' : 'bg-blue-500'} rounded-full`} />
                 <span>{t('profile.underReview', 'Шалгаж байна')}</span>
               </div>
             </div>
-            <div className="mt-6">
-              {!isEditMode ? (
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => {
-                      if (window.confirm('Та мэдээллээ шинэчлэхийг хүсэж байна уу? Энэ үйлдлийг буцаах боломжгүй.')) {
-                        setIsEditMode(true);
-                      }
-                    }}
-                    className="px-4 py-2 bg-bdsec text-white rounded-md hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors"
-                  >
-                    Мэдээллээ шинэчлэх
-                  </button>
-                </div>
-              ) : (
-                <AccountFixFormMCSD token={token!}/>
-              )}
-            </div>
+            {mcsdIsError && (
+              <div className="mt-6">
+                {!isEditMode ? (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Та мэдээллээ шинэчлэхийг хүсэж байна уу? Энэ үйлдлийг буцаах боломжгүй.')) {
+                          setIsEditMode(true);
+                        }
+                      }}
+                      className="px-4 py-2 bg-bdsec text-white rounded-md hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors"
+                    >
+                      {t('profile.update', 'Засварлах')}
+                    </button>
+                  </div>
+                ) : (
+                  <AccountFixFormMCSD token={token!}/>
+                )}
+              </div>
+            )}
           </div>
         )
         //There are two type of errors

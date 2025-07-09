@@ -43,6 +43,8 @@
   },
 
   "profile": {
+    "mcsdMessage": "MCSD Message",
+    "update": "Update",
     "accountProcess" :"Account Process",
     "name": "Bold Erdene",
     "kyc": "KYC Verification",
@@ -181,6 +183,7 @@
     "waitingApproval": "Waiting for MCSD Approval",
     "waitingApprovalDesc": "Your information has been submitted to MCSD and is currently under review. Please check back later for updates.",
     "accountOpeningError": "Account Opening Error",
+    "waitingApprovalError": "MCSD Account Error",
     "accountOpeningSuccess": "Account Opening Successful",
     "accountOpeningSuccessDesc": "Your trading account has been successfully opened. You can now start trading!",
     "processingTime": "Processing time: Up to 72 hours",
@@ -238,6 +241,7 @@
     "quantity": "Quantity",
     "orders": "Orders",
     "lastUpdated": "Last Updated",
+
     "loading": "Loading...",
     "refreshData": "Refresh Data",
     "turnover": "Turnover",
@@ -304,6 +308,14 @@
     "categoryIII": "Category III",
     "timeFilter": "Time Period"
  
+  },
+    "StockAver": {
+    "company_name" : "Company name", 
+    "52data":"52-7 Data", 
+     "close_price":"Closing price",
+     "close_date":"Closing date", 
+      "see_data":"View 52/7 average",
+      "52/7average":"52/7 average"
   },
   "bonds": {
     "title": "Bonds",

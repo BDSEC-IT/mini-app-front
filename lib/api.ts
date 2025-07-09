@@ -731,7 +731,6 @@ export const fetchAllStocksWithCompanyInfo = async (): Promise<AllStocksResponse
 };
 
 export const fetchFAQ = async () => {
-  console.log("fetchFAQ");
   const url = `https://new.bdsec.mn/api/v1/faq`;
   type FAQType = {
   id: number;
@@ -751,18 +750,81 @@ type FAQ = {
   FAQType: FAQType;
 };
 
+  // Mock FAQ data based on the API response you provided
+  const mockFAQData: FAQ[] = [
+    {
+      id: 1,
+      type_id: 1,
+      mnQuestion: "Хувьцаа гэж юу вэ?",
+      enQuestion: "What is share?",
+      mnAnswer: "Хувьцаа гэдэг нь хувь хүн, хуулийн этгээд тодорхой нэг компанид хөрөнгө оруулалт хийснийг баталгаажуулсан үнэт цаас юм. Хувьцаа эзэмшигч нь тухайн компанийн ашиг орлогоос ногдол ашиг авах, мөн хөрөнгийн зах зээл дээр хувьцаагаа арилжих замаар ханшийн зөрүүнээс ашиг олох боломжтой.",
+      enAnswer: "A Share is a type of security that certifies an individual or legal legal entity's investment in a specific company. A shareholder is entitled to receive dividends from the company's profits and may also gain returns by selling the shares on the capital market based on price fluctuations.",
+      createdAt: null,
+      updatedAt: null,
+      FAQType: { id: 1, mnName: "Хувьцаа", enName: "Stock" }
+    },
+    {
+      id: 2,
+      type_id: 1,
+      mnQuestion: "Хувьцааны ханшийг хэрхэн харах вэ ?",
+      enQuestion: "How to check share prices?",
+      mnAnswer: "Та BDSec апп-ын нүүр хуудас болон Монголын хөрөнгийн биржийн mse.mn вэб сайтаас компанийн хувьцаа бүрийн ханшийн мэдээллийг хугацааны үечлэлээр харах боломжтой.",
+      enAnswer: "You can view the share price information of each listed company over different time periods through the homepage of the BDSec mobile application or the official website of the Mongolian Stock Exchange at www.mse.mn",
+      createdAt: null,
+      updatedAt: null,
+      FAQType: { id: 1, mnName: "Хувьцаа", enName: "Stock" }
+    },
+    {
+      id: 3,
+      type_id: 2,
+      mnQuestion: "Бонд гэж юу вэ?",
+      enQuestion: "What is a bond?",
+      mnAnswer: "Бонд гэдэг нь тогтмол орлоготой, эрсдэл багатай үнэт цаас юм. Компанийн болон засгийн газрын бондод хөрөнгө оруулж байгаа нь тухайн компани болон засгийн газарт мөнгө зээлж байна гэсэн ба тодорхой хугацааны дараа үндсэн мөнгө болон хүүг эргэн төлөлтийн хуваарийн дагуу буцаан авдаг.",
+      enAnswer: "A bond is a fixed-income, low-risk security. Investing in corporate or government bonds means lending money to a company or the government. In return, the investor receives periodic interest payments and is repaid the principal amount at the end of the specified term, according to the repayment schedule.",
+      createdAt: null,
+      updatedAt: null,
+      FAQType: { id: 2, mnName: "Бонд", enName: "Bond" }
+    },
+    {
+      id: 4,
+      type_id: 3,
+      mnQuestion: "Хэрхэн арилжаанд орж захиалга өгөх вэ?",
+      enQuestion: "How to Participate in Trading and Place an Order?",
+      mnAnswer: "Та үнэт цаасны арилжаанд оролцохын тулд заавал үнэт цаасны данстай байх шаардлагатай бөгөөд хэрэв та данстай бол \"Арилжаа\" цэс рүү хандаж, тухайн хувьцааг авах эсвэл зарах захиалга өгөх боломжтой",
+      enAnswer: "To participate in securities trading, you must first have a securities account. If you already have an account, you can go to the \"Trading\" section and place a buy or sell order for the desired stock.",
+      createdAt: null,
+      updatedAt: null,
+      FAQType: { id: 3, mnName: "Арилжаанд оролцох", enName: "Trading" }
+    },
+    {
+      id: 5,
+      type_id: 4,
+      mnQuestion: "Хэрхэн онлайн данс нээх вэ ?",
+      enQuestion: "How to Open an Account?",
+      mnAnswer: "Онлайнаар данс нээх : Хэрэв та үнэт цаасны дансгүй бол BDSec апп руу нэвтрэх үед танд Нүүр цэсний дээд талд \"Данс нээх\" харагдах бөгөөд та шаардлагатай мэдээллийг бүрэн бөглөж, дансны хураамж төлснөөр данс нээгдэнэ.",
+      enAnswer: "Opening an Account Online: If you do not have a securities account, when you log into the BDSec app, you will see the \"Open Account\" option at the top of the homepage. By providing the required information and paying the account opening fee, your account will be successfully opened.",
+      createdAt: null,
+      updatedAt: null,
+      FAQType: { id: 4, mnName: "Данс нээх", enName: "Opening account" }
+    }
+  ];
 
   try {
   const response = await fetchWithTimeout(url)
     const responseData = await response.json();
-  return (responseData as any).data as FAQ
-  } catch (error) {
     
+    // Check if the response is successful and has data
+    if (responseData && responseData.success && responseData.data) {
+      return responseData.data as FAQ[]
+    } else {
+      return mockFAQData
+    }
+  } catch (error) {
+    return mockFAQData
   }
 };
 
 export const fetchFAQType = async () => {
-  console.log("fetchFAQTypes");
   const url = `https://new.bdsec.mn/api/v1/faq/types`;
   type FAQType = {
   id: number;
@@ -772,15 +834,27 @@ export const fetchFAQType = async () => {
   updatedAt: string | null;
 };
 
-
+  // Mock FAQ types data based on the API response you provided
+  const mockFAQTypesData: FAQType[] = [
+    { id: 1, mnName: "Хувьцаа", enName: "Stock", createdAt: null, updatedAt: null },
+    { id: 2, mnName: "Бонд", enName: "Bond", createdAt: null, updatedAt: null },
+    { id: 3, mnName: "Арилжаанд оролцох", enName: "Trading", createdAt: null, updatedAt: null },
+    { id: 4, mnName: "Данс нээх", enName: "Opening account", createdAt: null, updatedAt: null },
+    { id: 5, mnName: "1072 хувьцаа", enName: "1072 stock", createdAt: null, updatedAt: null }
+  ];
 
   try {
   const response = await fetchWithTimeout(url)
     const responseData = await response.json();
-    console.log("responseData",responseData);
-  return (responseData as any).data as FAQType
+    
+    // Check if the response is successful and has data
+    if (responseData && responseData.success && responseData.data) {
+      return responseData.data as FAQType[]
+    } else {
+      return mockFAQTypesData
+    }
   } catch (error) {
-      console.log("error",error);
+      return mockFAQTypesData
   }
 };
 

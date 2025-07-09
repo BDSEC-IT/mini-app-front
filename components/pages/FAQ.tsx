@@ -29,7 +29,6 @@ interface FAQItem {
   FAQType: FAQType;
 }
 const FAQ = () => {
-  console.log("FAQ");
   const { t, i18n } = useTranslation()
   const [searchTerm, setSearchTerm] = useState('')
   const [activeCategory, setActiveCategory] = useState<number | 'all'>('all')
@@ -46,13 +45,12 @@ const FAQ = () => {
         setLoading(true)
         setError(null)
         const [data, dataType] = await Promise.all([fetchFAQ(), fetchFAQType()]);
-
+        
         if (data && Array.isArray(data)) {
           setFaqItems(data)
         } else {
           setFaqItems([])
         }
-        console.log("data arrived,",data);
 
         if (dataType && Array.isArray(dataType)) {
           setFaqTypes(dataType)
@@ -69,11 +67,11 @@ const FAQ = () => {
     }
     fetchFAQData()
   }, [t])
-  const toggleItem = (index: number) => {
-    if (openItems.includes(index)) {
-      setOpenItems(openItems.filter(item => item !== index))
+  const toggleItem = (id: number) => {
+    if (openItems.includes(id)) {
+      setOpenItems(openItems.filter(item => item !== id))
     } else {
-      setOpenItems([...openItems, index])
+      setOpenItems([...openItems, id])
     }
   }
   const filteredItems = faqItems.filter(item => {

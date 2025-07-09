@@ -157,79 +157,81 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
         onClick={onClose}
       />
       <div
-        className={`side-menu-content fixed top-0 right-0 h-full w-64 sm:w-72 bg-white dark:bg-gray-900 shadow-xl z-50 transform transition-transform duration-300 flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`side-menu-content fixed top-0 right-0 h-screen w-64 sm:w-72 bg-white dark:bg-gray-900 shadow-xl z-50 transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t('header.menu')}</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white p-1"><X size={24} /></button>
-          </div>
+        <div className="p-3 border-b border-gray-200 dark:border-gray-800">
           <div className="flex justify-between items-center mb-3">
-            <span className="text-sm text-gray-600 dark:text-gray-400">{t('common.theme')}</span>
-            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">{t('header.menu')}</h2>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white p-1"><X size={20} /></button>
+          </div>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-xs text-gray-600 dark:text-gray-400">{t('common.theme')}</span>
+            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600 dark:text-gray-400">{t('common.language')}</span>
+            <span className="text-xs text-gray-600 dark:text-gray-400">{t('common.language')}</span>
             <LanguageToggle />
           </div>
         </div>
-        {/* Make nav scrollable on mobile - use flex-1 to take remaining space */}
-        <nav className="p-4 flex-1 overflow-y-auto min-h-0">
-          <ul className="space-y-2">
+                {/* Simple scrollable container */}
+        <div className="overflow-y-auto" style={{ height: 'calc(100vh - 120px)' }}>
+          <nav className="p-3">
+            <ul className="space-y-1.5">
             {isLoggedIn && (
               <li>
-                <Link href="/profile" onClick={onClose} className={`flex items-center p-3 rounded-lg transition-colors ${pathname === '/profile' ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
-                    <User size={20} className="mr-3" />
-                    <span className="text-sm sm:text-base">{t('profile.title', 'My Profile')}</span>
+                <Link href="/profile" onClick={onClose} className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === '/profile' ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+                    <User size={18} className="mr-2.5" />
+                    <span className="text-sm">{t('profile.title', 'My Profile')}</span>
                 </Link>
               </li>
             )}
             
             {isLoggedIn &&  accountInfo?.MCSDAccount?.DGOrder !== "COMPLETED" && (
-              <li className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="mb-2 px-3">
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('profile.accountSetup')}</h3>
+              <li className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="mb-2 px-2">
+                  <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('profile.accountSetup')}</h3>
                 </div>
-                <Link href="/account-setup/general" onClick={onClose} className={`flex items-center p-3 rounded-lg transition-colors ${pathname === '/account-setup/general' ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}> 
-                  <div className="mr-3">{renderStatusIcon(isGeneralInfoComplete)}</div>
-                  <span className="text-sm sm:text-base">{t('profile.generalInfo')}</span>
+                <Link href="/account-setup/general" onClick={onClose} className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === '/account-setup/general' ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}> 
+                  <div className="mr-2.5">{renderStatusIcon(isGeneralInfoComplete)}</div>
+                  <span className="text-sm">{t('profile.generalInfo')}</span>
                 </Link>
-                <Link href="/account-setup/fee" onClick={onClose} className={`flex items-center p-3 rounded-lg transition-colors ${pathname === '/account-setup/fee' ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}> 
-                  <div className="mr-3">{renderStatusIcon(hasPaidFee)}</div>
-                  <span className="text-sm sm:text-base">{t('profile.accountFee')}</span>
+                <Link href="/account-setup/fee" onClick={onClose} className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === '/account-setup/fee' ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}> 
+                  <div className="mr-2.5">{renderStatusIcon(hasPaidFee)}</div>
+                  <span className="text-sm">{t('profile.accountFee')}</span>
                 </Link>
                 {hasPaidFee && (
-                  <Link href="/account-setup/opening-process" onClick={onClose} className={`flex items-center p-3 rounded-lg transition-colors ${pathname === '/account-setup/opening-process' ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}> 
-                    <div className="mr-3"><CircleDashed size={20} /></div>
-                    <span className="text-sm sm:text-base">{t('profile.accountProcess')}</span>
+                  <Link href="/account-setup/opening-process" onClick={onClose} className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === '/account-setup/opening-process' ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}> 
+                    <div className="mr-2.5"><CircleDashed size={18} /></div>
+                    <span className="text-sm">{t('profile.accountProcess')}</span>
                   </Link>
                 )}
               </li>
             )}
             
-            <li className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <li className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
               {menuItems.map((item) => (
                 <Link href={item.href} onClick={onClose} key={item.href}>
-                  <div className={`flex items-center p-3 rounded-lg transition-colors ${pathname === item.href ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
-                    <item.icon size={20} className="mr-3" />
-                    <span className="text-sm sm:text-base">{t(item.label)}</span>
+                  <div className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === item.href ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+                    <item.icon size={18} className="mr-2.5" />
+                    <span className="text-sm">{t(item.label)}</span>
                   </div>
                 </Link>
               ))}
             </li>
 
             {!isLoggedIn && (
-              <li className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <Link href="/auth/nationality" onClick={onClose} className="flex items-center p-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                    <LogIn size={20} className="mr-3" />
-                    <span className="text-sm sm:text-base">{t('auth.login')}</span>
+              <li className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <Link href="/auth/nationality" onClick={onClose} className="flex items-center p-2.5 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <LogIn size={18} className="mr-2.5" />
+                    <span className="text-sm">{t('auth.login')}</span>
                 </Link>
               </li>
             )}
           </ul>
-        </nav>
+          </nav>
+        </div>
       </div>
     </>
   )
