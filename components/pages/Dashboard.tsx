@@ -8,8 +8,8 @@ import { StockHeader } from './dashboard/StockHeader'
 import { OrderBook } from './dashboard/OrderBook'
 import { StockDetails } from './dashboard/StockDetails'
 import { StockList } from './dashboard/StockList'
-import realTimeService from '@/lib/socket'
-import { Wifi, WifiOff } from 'lucide-react'
+
+
 
 // Client-only wrapper component
 function ClientOnly({ children }: { children: React.ReactNode }) {
@@ -42,13 +42,15 @@ const DashboardContent = () => {
   const [selectedStockData, setSelectedStockData] = useState<StockData | null>(null)
   const [chartRefreshKey, setChartRefreshKey] = useState<number>(0)
   const [chartLoading, setChartLoading] = useState(true)
-  const [isSocketConnected, setIsSocketConnected] = useState(false)
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
-  const socketRef = useRef<any>(null)
+
+
 
   // Derive selectedCard robustly
   // Use the same logic as search: match by base symbol
   const selectedCard = allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol.split('-')[0]) || allStocks[0];
+
+  // Detect if the selected symbol is a bond
+  const isBond = selectedCard?.Symbol?.toUpperCase().includes('-BD');
 
   // Fetch all stocks data with company information
   const fetchStocksData = useCallback(async () => {
@@ -114,108 +116,7 @@ const DashboardContent = () => {
     }
   }, [selectedSymbol, selectedCard, selectedStockData])
 
-  // Initialize real-time connection and updates
-  useEffect(() => {
-    // Only start real-time updates after initial data is loaded
-    if (allStocks.length > 0) {
-      // Connect to real-time service
-      socketRef.current = realTimeService.connect()
-      
-      if (socketRef.current) {
-        // Join trading room
-        realTimeService.joinTradingRoom()
-        
-        // Listen for trading data updates
-        realTimeService.onTradingDataUpdate((data: any) => {
-          console.log('🎯 Dashboard: Real-time trading data received:', data.length, 'stocks')
-          console.log('📈 Sample stock data:', data[0] ? {
-            Symbol: data[0].Symbol,
-            LastTradedPrice: data[0].LastTradedPrice,
-            Changep: data[0].Changep,
-            Volume: data[0].Volume
-          } : 'no data')
-          setLastUpdate(new Date())
-          
-          // Update stocks with real-time data
-          if (data && Array.isArray(data)) {
-            setAllStocks(prevStocks => {
-              const updatedStocks = [...prevStocks]
-              
-              data.forEach((update: any) => {
-                const stockIndex = updatedStocks.findIndex(
-                  stock => stock.Symbol === update.Symbol || stock.Symbol.split('-')[0] === update.Symbol.split('-')[0]
-                )
-                
-                if (stockIndex !== -1) {
-                  const oldStock = updatedStocks[stockIndex]
-                  
-                  // Update stock data with real-time information
-                  updatedStocks[stockIndex] = {
-                    ...oldStock,
-                    ...update,
-                    // Preserve existing fields that might not be in the update
-                    mnName: oldStock.mnName,
-                    enName: oldStock.enName,
-                    MarketSegmentID: oldStock.MarketSegmentID,
-                  }
-                }
-              })
-              
-              return updatedStocks
-            })
-          }
-        })
-        
-        // Listen for stock updates
-        realTimeService.onStockUpdate((data: any) => {
-          console.log('Dashboard: Real-time stock update received:', data)
-          setLastUpdate(new Date())
-          
-          // Update specific stock
-          if (data && data.Symbol) {
-            setAllStocks(prevStocks => {
-              const updatedStocks = [...prevStocks]
-              const stockIndex = updatedStocks.findIndex(
-                stock => stock.Symbol === data.Symbol || stock.Symbol.split('-')[0] === data.Symbol.split('-')[0]
-              )
-              
-              if (stockIndex !== -1) {
-                const oldStock = updatedStocks[stockIndex]
-                
-                updatedStocks[stockIndex] = {
-                  ...oldStock,
-                  ...data,
-                  // Preserve existing fields
-                  mnName: oldStock.mnName,
-                  enName: oldStock.enName,
-                  MarketSegmentID: oldStock.MarketSegmentID,
-                }
-              }
-              
-              return updatedStocks
-            })
-          }
-        })
-        
-        // Update connection status
-        setIsSocketConnected(realTimeService.getConnectionStatus())
-        
-        // Listen for connection status changes
-        socketRef.current.on('connect', () => {
-          setIsSocketConnected(true)
-        })
-        
-        socketRef.current.on('disconnect', () => {
-          setIsSocketConnected(false)
-        })
-      }
-    }
-    
-    // Cleanup on unmount
-    return () => {
-      realTimeService.disconnect()
-    }
-  }, [allStocks.length, selectedStockData]) // Only run when allStocks length changes (after initial load)
+
 
   // Fetch data when component mounts or selectedSymbol changes
   useEffect(() => {
@@ -306,40 +207,26 @@ const DashboardContent = () => {
   // Search results
   const searchResults = useMemo(() => {
     if (!searchTerm) return []
-    
-    const uniqueSymbols = new Set()
     const searchLower = searchTerm.toLowerCase()
-    
     return allStocks
       .filter(stock => {
-        const baseSymbol = stock.Symbol.split('-')[0]
-        const symbolMatch = baseSymbol.toLowerCase().includes(searchLower)
+        const symbolMatch = stock.Symbol.toLowerCase().includes(searchLower)
         const mnNameMatch = stock.mnName && stock.mnName.toLowerCase().includes(searchLower)
         const enNameMatch = stock.enName && stock.enName.toLowerCase().includes(searchLower)
-        
-        const matches = symbolMatch || mnNameMatch || enNameMatch
-        
-        if (matches && !uniqueSymbols.has(baseSymbol)) {
-          uniqueSymbols.add(baseSymbol)
-          return true
-        }
-        return false
+        return symbolMatch || mnNameMatch || enNameMatch
       })
       .sort((a, b) => {
         // Prioritize exact symbol matches
-        const aBaseSymbol = a.Symbol.split('-')[0].toLowerCase()
-        const bBaseSymbol = b.Symbol.split('-')[0].toLowerCase()
-        
-        if (aBaseSymbol === searchLower && bBaseSymbol !== searchLower) return -1
-        if (bBaseSymbol === searchLower && aBaseSymbol !== searchLower) return 1
-        
+        const aSymbol = a.Symbol.toLowerCase()
+        const bSymbol = b.Symbol.toLowerCase()
+        if (aSymbol === searchLower && bSymbol !== searchLower) return -1
+        if (bSymbol === searchLower && aSymbol !== searchLower) return 1
         // Then prioritize symbol starts with
-        if (aBaseSymbol.startsWith(searchLower) && !bBaseSymbol.startsWith(searchLower)) return -1
-        if (bBaseSymbol.startsWith(searchLower) && !aBaseSymbol.startsWith(searchLower)) return 1
-        
+        if (aSymbol.startsWith(searchLower) && !bSymbol.startsWith(searchLower)) return -1
+        if (bSymbol.startsWith(searchLower) && !aSymbol.startsWith(searchLower)) return 1
         return 0
       })
-      .slice(0, 10)
+      .slice(0, 50)
   }, [allStocks, searchTerm])
 
   const handleStockSelect = (symbol: string) => {
@@ -403,7 +290,7 @@ const DashboardContent = () => {
 
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
-      <div className="max-w-4xl mx-auto py-8">
+      <div className="max-w-4xl mx-auto py-8 px-2">
         <StockList
           loading={loading}
           activeFilter={activeFilter}
@@ -420,47 +307,45 @@ const DashboardContent = () => {
             searchTerm={searchTerm}
             searchResults={searchResults}
             chartLoading={chartLoading}
-            isSocketConnected={isSocketConnected}
-            lastUpdate={lastUpdate}
+            isBond={isBond}
             onSearchClick={handleSearchClick}
             onSearchClose={handleSearchClose}
             onSearchChange={handleSearchChange}
             onStockSelect={handleStockSelect}
           />
-
-          <div className="relative w-full max-w-full overflow-hidden">
-            <div className="h-[350px] sm:h-[380px] md:h-[400px] lg:h-[420px] mt-4 mb-8 sm:mb-12 rounded-lg bg-transparent mx-2 sm:mx-0">
-              <div className="relative w-full h-full overflow-hidden">
-                {selectedCard && (
-                  <TradingViewChart 
-                    key={`${selectedSymbol}-${chartRefreshKey}`}
-                    symbol={selectedCard.Symbol}
-                    theme={theme}
-                    period="ALL"
-                    onPriceHover={handlePriceHover}
-                  />
-                )}
-              </div>
+        </div>
+      </div>
+      {/* Chart section: full-bleed, outside the padded container */}
+      {!isBond && (
+        <div className="relative w-full max-w-full overflow-hidden">
+          <div className="h-[350px] sm:h-[380px] md:h-[400px] lg:h-[420px] mt-4 mb-8 sm:mb-12 rounded-lg bg-transparent">
+            <div className="relative w-full h-full overflow-hidden">
+              {selectedCard && (
+                <TradingViewChart 
+                  key={`${selectedSymbol}-${chartRefreshKey}`}
+                  symbol={selectedCard.Symbol}
+                  theme={theme}
+                  period="ALL"
+                  onPriceHover={handlePriceHover}
+                />
+              )}
             </div>
           </div>
         </div>
-
-        <div className="px-2 sm:px-4 flex flex-col gap-4 sm:gap-6 mt-10 sm:mt-12">
-
-
-          <OrderBook
-            selectedSymbol={selectedSymbol}
-            loading={loading}
-            lastUpdated={lastUpdated}
-            processedOrderBook={processedOrderBook}
-            onRefresh={fetchOrderBookData}
-          />
-
-          <StockDetails
-            selectedSymbol={selectedSymbol}
-            details={getStockDetails}
-          />
-        </div>
+      )}
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 flex flex-col gap-4 sm:gap-6 mt-10 sm:mt-12">
+        <OrderBook
+          selectedSymbol={selectedSymbol}
+          loading={loading}
+          lastUpdated={lastUpdated}
+          processedOrderBook={processedOrderBook}
+          onRefresh={fetchOrderBookData}
+        />
+        <StockDetails
+          selectedSymbol={selectedSymbol}
+          details={getStockDetails}
+          infoLabel={isBond ? 'Bond Info' : 'Stock Info'}
+        />
       </div>
     </div>
   )

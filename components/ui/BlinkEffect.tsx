@@ -8,6 +8,7 @@ interface BlinkEffectProps {
   previousValue?: number
   className?: string
   duration?: number
+  enabled?: boolean
 }
 
 export const BlinkEffect = ({ 
@@ -15,7 +16,8 @@ export const BlinkEffect = ({
   value, 
   previousValue, 
   className = '', 
-  duration = 1000 
+  duration = 1000,
+  enabled = true
 }: BlinkEffectProps) => {
   const [isBlinking, setIsBlinking] = useState(false)
   const [blinkColor, setBlinkColor] = useState<'green' | 'red' | null>(null)
@@ -23,7 +25,9 @@ export const BlinkEffect = ({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    // Only trigger blink if we have a previous value to compare
+    // Only trigger blink if enabled and we have a previous value to compare
+    if (!enabled) return;
+    
     if (previousValueRef.current !== undefined && previousValueRef.current !== value) {
       const isIncrease = value > previousValueRef.current
       const isDecrease = value < previousValueRef.current
@@ -55,7 +59,7 @@ export const BlinkEffect = ({
         clearTimeout(timeoutRef.current)
       }
     }
-  }, [value, duration])
+  }, [value, duration, enabled])
 
   const getBlinkClasses = () => {
     if (!isBlinking || !blinkColor) return ''

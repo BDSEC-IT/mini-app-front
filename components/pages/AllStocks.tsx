@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight, Wifi, WifiOff } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight } from 'lucide-react'
 import { fetchAllStocks, type StockData } from '@/lib/api'
 import realTimeService from '@/lib/socket'
 import { BlinkEffect } from '@/components/ui/BlinkEffect'
+import StockAverageModal from '../pages/StockAverageModal'
 
 // Define stock categories
 interface Category {
@@ -13,16 +14,14 @@ interface Category {
   name: string;
   mnName: string;
 }
-
 const AllStocks = () => {
   const { t, i18n } = useTranslation()
   const currentLanguage = i18n.language || 'mn';
-  
   // Helper function to get company name based on current language
   const getCompanyName = (stock: StockData) => {
     return currentLanguage === 'mn' ? stock.mnName : stock.enName;
   };
-
+   const [isModalOpen, setIsModalOpen] = useState(false)
   const [allStocks, setAllStocks] = useState<StockData[]>([])
   const [filteredStocks, setFilteredStocks] = useState<StockData[]>([])
   const [loading, setLoading] = useState(true)
@@ -39,7 +38,6 @@ const AllStocks = () => {
     key: keyof StockData | null;
     direction: 'asc' | 'desc';
   }>({ key: null, direction: 'asc' })
-  const [isSocketConnected, setIsSocketConnected] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const socketRef = useRef<any>(null)
   const [previousStockValues, setPreviousStockValues] = useState<{ [symbol: string]: { price: number; change: number } }>({})
@@ -145,7 +143,8 @@ const AllStocks = () => {
  const getStockCategory = (stock: StockData): string => {
   if (!stock.MarketSegmentID) return '';
 
-  const match = stock.MarketSegmentID.match(/^(I{1,3})\s*classification$/i);
+  // Handle both English and Mongolian formats
+  const match = stock.MarketSegmentID.match(/^(I{1,3})\s*(classification|ангилал)/i);
   const cat = match?.[1] || '';
 
   // Only allow 'I', 'II', or 'III'
@@ -292,18 +291,6 @@ const AllStocks = () => {
             })
           }
         })
-        
-        // Update connection status
-        setIsSocketConnected(realTimeService.getConnectionStatus())
-        
-        // Listen for connection status changes
-        socketRef.current.on('connect', () => {
-          setIsSocketConnected(true)
-        })
-        
-        socketRef.current.on('disconnect', () => {
-          setIsSocketConnected(false)
-        })
       }
     }
     
@@ -389,7 +376,12 @@ const getCategorySummary = (category: string) => {
           {formatPrice(stock.Turnover)}
         </td>
         <td className="px-2 py-3 text-right">
-          {formatPrice(stock.PreviousClose)}
+          {(() => {
+            const isBond = stock.Symbol.toUpperCase().includes('-BD');
+            const displayValue = isBond ? stock.LastTradedPrice : stock.PreviousClose;
+            console.log(`Stock ${stock.Symbol}: isBond=${isBond}, LastTradedPrice=${stock.LastTradedPrice}, PreviousClose=${stock.PreviousClose}, displayValue=${displayValue}`);
+            return formatPrice(displayValue);
+          })()}
         </td>
         <td className="px-2 py-3 text-right">
           {formatPrice(stock.OpeningPrice )}
@@ -460,8 +452,8 @@ const getCategorySummary = (category: string) => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
-      <div className="px-4 py-6">
+    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24 px-2">
+      <div className="py-6">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-3">
             <a 
@@ -471,20 +463,6 @@ const getCategorySummary = (category: string) => {
               <ChevronRight className="transform rotate-180" size={18} />
             </a>
             <h1 className="text-xl font-bold">{t('allStocks.title')}</h1>
-            {/* Real-time status indicator */}
-            <div className="flex items-center gap-2">
-              {isSocketConnected ? (
-                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                  <Wifi size={16} />
-                  <span className="text-xs">Live</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1 text-gray-500">
-                  <WifiOff size={16} />
-                  <span className="text-xs">Offline</span>
-                </div>
-              )}
-            </div>
           </div>
           <div className="text-sm text-gray-500">
             {lastUpdate ? (
@@ -564,28 +542,42 @@ const getCategorySummary = (category: string) => {
         )}
         
         {/* Filter Tabs */}
-        <div className="flex mb-4 border-b overflow-x-auto">
-          {[
-              { id: 'all', label: t('allStocks.all') },
-            { id: 'active', label: t('allStocks.active') },
-            { id: 'gainers', label: t('dashboard.gainers') },
-            { id: 'losers', label: t('dashboard.losers') },
-          
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              className={`px-4 py-2 text-sm whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
-                  : 'text-gray-500'
-              }`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+   <div className="flex mb-4 border-b overflow-x-auto justify-between items-center">
+  <div className="flex">
+    {[
+      { id: 'all', label: t('allStocks.all') },
+      { id: 'active', label: t('allStocks.active') },
+      { id: 'gainers', label: t('dashboard.gainers') },
+      { id: 'losers', label: t('dashboard.losers') },
+    ].map((tab) => (
+      <button
+        key={tab.id}
+        className={`px-4 py-2 text-sm whitespace-nowrap ${
+          activeTab === tab.id
+            ? 'bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
+            : 'text-gray-500'
+        }`}
+        onClick={() => setActiveTab(tab.id)}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
 
+  <div className="px-4 py-2 text-sm whitespace-nowrap">
+    <button
+        onClick={() => setIsModalOpen(true)}
+        className="bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
+            : 'text-gray-500'"
+      >
+        52/7 дундаж харах
+      </button>
+
+      <StockAverageModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+       </div>
+     </div>
+
+          
         {/* Stocks Table with Category Groups */}
         {loading ? (
           <div className="flex justify-center items-center py-12">
@@ -984,6 +976,12 @@ const getCategorySummary = (category: string) => {
           <div>{t('allStocks.lastUpdated')}: {new Date().toLocaleString()}</div>
         </div>
       </div>
+      
+      {/* Stock Average Modal */}
+      <StockAverageModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </div>
   )
 }

@@ -175,7 +175,8 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
             <LanguageToggle />
           </div>
         </div>
-        <nav className="p-4 flex-1 overflow-y-auto">
+        {/* Make nav scrollable on mobile - use flex-1 to take remaining space */}
+        <nav className="p-4 flex-1 overflow-y-auto min-h-0">
           <ul className="space-y-2">
             {isLoggedIn && (
               <li>

@@ -11,16 +11,17 @@ interface StockDetailsProps {
     marketCap: string
     listingDate: string
   }
+  infoLabel?: string // Optional label for stock/bond info
 }
 
-export const StockDetails = ({ selectedSymbol, details }: StockDetailsProps) => {
+export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetailsProps) => {
   const { t } = useTranslation()
 
   return (
     <div className="mt-6 p-4">
       <h2 className="text-lg font-medium mb-4 flex items-center">
         <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
-        {t('dashboard.stockDetails')} - {selectedSymbol.split('-')[0]}
+        {infoLabel || t('dashboard.stockDetails')} - {selectedSymbol.split('-')[0]}
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

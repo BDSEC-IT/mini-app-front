@@ -123,8 +123,8 @@ const Bonds = () => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
-      <div className="px-2 md:px-6 py-4">
+    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24 px-2">
+      <div className="py-6">
         <h1 className="text-xl font-bold mb-4">{t('bonds.title', 'Bonds')}</h1>
         
         {/* Search bar */}

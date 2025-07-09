@@ -474,21 +474,15 @@ const logDev = (message: string) => {
 };
 
 export const fetchStockData = async (symbol?: string): Promise<ApiResponse<StockData[]>> => {
-  // Use lowercase symbol for trading status endpoint
-  const tradingSymbol = symbol ? symbol.toLowerCase() : undefined;
-  const url = tradingSymbol 
-    ? `${BASE_URL}/securities/trading-status/${tradingSymbol}`
-    : `${BASE_URL}/securities/trading-status`;
+  // Always fetch all stocks from the API, then filter if symbol is provided
+  const url = `${BASE_URL}/securities/trading-status`;
   
   console.log('=== TRADING STATUS API DEBUG ===');
   console.log('Original symbol:', symbol);
-  console.log('Trading symbol (lowercase):', tradingSymbol);
   console.log('Trading status URL:', url);
   
   try {
     const response = await fetchWithTimeout(url)
-    
-    // Response status logging removed
     
     if (!response.ok) {
       logDev(`API call failed with status ${response.status}`);
@@ -513,6 +507,21 @@ export const fetchStockData = async (symbol?: string): Promise<ApiResponse<Stock
     
     const responseData = await response.json();
     console.log('fetchStockData real data:', responseData);
+    
+    // If a specific symbol is requested, filter the results
+    if (symbol && responseData.success && responseData.data) {
+      const tradingSymbol = symbol.toLowerCase();
+      const filteredData = responseData.data.filter((stock: StockData) => 
+        stock.Symbol.toLowerCase().includes(tradingSymbol)
+      );
+      
+      console.log(`Filtered data for symbol ${symbol}:`, filteredData.length, 'stocks found');
+      return {
+        ...responseData,
+        data: filteredData
+      };
+    }
+    
     return responseData;
   } catch (error) {
     logDev('Using fallback mock stock data');
@@ -1594,6 +1603,7 @@ export const createOrRenewInvoice = async (token: string) => {
     };
   }
 };
+
 
 // Check invoice status
 export const checkInvoiceStatus = async (token: string) => {

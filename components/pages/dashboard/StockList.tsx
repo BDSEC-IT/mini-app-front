@@ -145,8 +145,9 @@ export const StockList = ({
       setLoadingHistorical(prev => ({ ...prev, [symbol]: false }));
     }
   }, [historicalData, loadingHistorical]);
+  
   const autoplayPlugin = useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: false })
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: true })
   )
 
   const filters = [
@@ -241,22 +242,20 @@ export const StockList = ({
             </svg>
             <div className="flex items-start justify-between mb-2 z-10">
               <h3 className="flex items-center justify-center font-semibold text-xs text-white rounded-full h-8 w-8 bg-bdsec dark:bg-indigo-400   ">
-                {selectedStock.Symbol.split('-')[0]}
+                {selectedStock.Symbol.toUpperCase().includes('-BD') ? selectedStock.Symbol : selectedStock.Symbol.split('-')[0]}
               </h3>
-              <BlinkEffect value={selectedStock.Changep || 0}>
-                <div className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${
-                  Math.abs(selectedStock.Changep || 0) < 0.01 
-                    ? 'text-gray-600 bg-gray-100 dark:bg-gray-500/10 dark:text-gray-400'
-                    : selectedStock.Changep >= 0 
-                      ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' 
-                      : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'
-                }`}>
-                  {Math.abs(selectedStock.Changep || 0) < 0.01 
-                    ? '0.00' 
-                    : (selectedStock.Changep >= 0 ? '+' : '') + (selectedStock.Changep || 0).toFixed(2)
-                  }%
-                </div>
-              </BlinkEffect>
+              <div className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${
+                Math.abs(selectedStock.Changep || 0) < 0.01 
+                  ? 'text-gray-600 bg-gray-100 dark:bg-gray-500/10 dark:text-gray-400'
+                  : selectedStock.Changep >= 0 
+                    ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' 
+                    : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'
+              }`}>
+                {Math.abs(selectedStock.Changep || 0) < 0.01 
+                  ? '0.00' 
+                  : (selectedStock.Changep >= 0 ? '+' : '') + (selectedStock.Changep || 0).toFixed(2)
+                }%
+              </div>
             </div>
             <div className="mt-1 z-10">
               <p className="font-medium text-gray-800 truncate text-xs dark:text-gray-200" title={getCompanyName(selectedStock)}>
@@ -266,9 +265,7 @@ export const StockList = ({
             <div className="mt-2 z-10">
               <div className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
               <div className="text-base font-bold text-gray-900 dark:text-white">
-                <BlinkEffect value={selectedStock.LastTradedPrice || 0}>
-                  {formatPrice(selectedStock.LastTradedPrice)} ₮
-                </BlinkEffect>
+                {formatPrice(selectedStock.LastTradedPrice)} ₮
               </div>
             </div>
             <MiniChart 
@@ -323,22 +320,20 @@ export const StockList = ({
                         </svg>
                         <div className="flex items-start justify-between mb-2 z-10">
                           <h3 className="flex items-center justify-center font-semibold text-xs text-white rounded-full h-8 w-8 bg-bdsec dark:bg-indigo-500">
-                            {stock.Symbol.split('-')[0]}
+                            {stock.Symbol.toUpperCase().includes('-BD') ? stock.Symbol : stock.Symbol.split('-')[0]}
                           </h3>
-                          <BlinkEffect value={stock.Changep || 0}>
-                            <div className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${
-                              Math.abs(stock.Changep || 0) < 0.01 
-                                ? 'text-gray-600 bg-gray-100 dark:bg-gray-500/10 dark:text-gray-400'
-                                : isPositive 
-                                  ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' 
-                                  : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'
-                            }`}>
-                              {Math.abs(stock.Changep || 0) < 0.01 
-                                ? '0.00' 
-                                : (isPositive ? '+' : '') + (stock.Changep || 0).toFixed(2)
-                              }%
-                            </div>
-                          </BlinkEffect>
+                          <div className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${
+                            Math.abs(stock.Changep || 0) < 0.01 
+                              ? 'text-gray-600 bg-gray-100 dark:bg-gray-500/10 dark:text-gray-400'
+                              : isPositive 
+                                ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' 
+                                : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'
+                          }`}>
+                            {Math.abs(stock.Changep || 0) < 0.01 
+                              ? '0.00' 
+                              : (isPositive ? '+' : '') + (stock.Changep || 0).toFixed(2)
+                            }%
+                          </div>
                         </div>
                         <div className="mt-1 z-10">
                           <p className="font-medium text-gray-800 truncate text-xs dark:text-gray-200" title={getCompanyName(stock)}>
@@ -348,9 +343,7 @@ export const StockList = ({
                         <div className="mt-2 z-10">
                           <div className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
                           <div className="text-base font-bold text-gray-900 dark:text-white">
-                            <BlinkEffect value={stock.LastTradedPrice || 0}>
-                              {formatPrice(stock.LastTradedPrice)} ₮
-                            </BlinkEffect>
+                            {formatPrice(stock.LastTradedPrice)} ₮
                           </div>
                         </div>
                         <MiniChart 

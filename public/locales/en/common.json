@@ -276,7 +276,7 @@
   },
   "allStocks": {
     "title": "All Stocks",
-    "active": "Active",
+    "active": "Today",
     "all": "All",
     "symbol": "Symbol",
     "price": "Price",

@@ -1,4 +1,4 @@
-import { Search, ChevronDown, X, Wifi, WifiOff } from 'lucide-react'
+import { Search, ChevronDown, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { formatDateTime } from '@/lib/utils'
 import type { StockData } from '@/lib/api'
@@ -12,8 +12,7 @@ interface StockHeaderProps {
   searchTerm: string
   searchResults: StockData[]
   chartLoading: boolean
-  isSocketConnected?: boolean
-  lastUpdate?: Date | null
+  isBond?: boolean
   onSearchClick: () => void
   onSearchClose: () => void
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -32,8 +31,7 @@ export const StockHeader = ({
   searchTerm,
   searchResults,
   chartLoading,
-  isSocketConnected,
-  lastUpdate,
+  isBond,
   onSearchClick,
   onSearchClose,
   onSearchChange,
@@ -66,12 +64,17 @@ export const StockHeader = ({
     if (!stock) return t('dashboard.stock');
     return currentLanguage === 'mn' ? stock.mnName : stock.enName;
   };
+
+  // Debug log for search results
+  if (searchTerm && searchResults) {
+    console.log('SearchResults:', searchResults.length, searchResults.map(s => s.Symbol));
+  }
   
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-col">
         <div className="w-full flex items-center gap-2">
-          <h2 className="text-lg sm:text-xl font-bold">{selectedSymbol.split('-')[0]}</h2>
+          <h2 className="text-lg sm:text-xl font-bold">{selectedStockData?.Symbol?.toUpperCase().includes('-BD') ? selectedStockData?.Symbol : selectedStockData?.Symbol?.split('-')[0]}</h2>
           {selectedStockData && (
             <span className="text-xs bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-full">
               {getCompanyName(selectedStockData)}
@@ -80,42 +83,22 @@ export const StockHeader = ({
         </div>
         
         <div className="mt-2">
-          <div className="flex flex-col items-start mb-2 px-2 sm:px-4">
-            <BlinkEffect value={selectedStockData?.LastTradedPrice || selectedStockData?.ClosingPrice || 0}>
+          <div className="flex flex-col items-start mb-2 px-2">
+            <BlinkEffect 
+              value={selectedStockData?.LastTradedPrice || selectedStockData?.ClosingPrice || 0}
+            >
               <div className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white">
                 {selectedStockData ? formatPrice(selectedStockData.LastTradedPrice || selectedStockData.ClosingPrice) : '-'} ₮
               </div>
             </BlinkEffect>
             <div className="text-xs text-gray-500 mt-1 min-h-[20px] flex items-center gap-2">
-              {chartLoading && !selectedStockData?.MDEntryTime ? (
+              {!isBond && chartLoading && !selectedStockData?.MDEntryTime ? (
                 <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-bdsec dark:border-t-white rounded-full animate-spin mr-2"></span>
               ) : selectedStockData?.MDEntryTime ? (
                 formatDateTime(selectedStockData.MDEntryTime)
               ) : null}
               
-              {/* Real-time status indicator */}
-              {isSocketConnected !== undefined && (
-                <div className="flex items-center gap-1">
-                  {isSocketConnected ? (
-                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
-                      <Wifi size={12} />
-                      <span className="text-xs">Live</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1 text-gray-500">
-                      <WifiOff size={12} />
-                      <span className="text-xs">Offline</span>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {/* Last update time */}
-              {lastUpdate && (
-                <span className="text-xs text-gray-400">
-                  Updated: {lastUpdate.toLocaleTimeString()}
-                </span>
-              )}
+
             </div>
           </div>
         </div>
@@ -141,21 +124,19 @@ export const StockHeader = ({
               <div className="absolute right-0 mt-1 w-64 sm:w-72 max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border rounded-md shadow-lg z-50" style={{ minWidth: '200px', maxWidth: 'calc(100vw - 2rem)' }}>
                 {searchResults.length > 0 ? (
                   searchResults.map((stock, index) => {
-                    const cleanSymbol = stock.Symbol.split('-')[0]
                     const companyName = getCompanyName(stock)
                     return (
                       <button
-                        key={`search-${cleanSymbol}-${index}`}
+                        key={`search-${stock.Symbol}-${index}`}
                         className="w-full text-left px-2.5 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm transition-colors"
                         onClick={() => {
                           onStockSelect(stock.Symbol);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                       >
-                        <div className="flex items-center">
-                          <span className="font-semibold text-gray-900 dark:text-white flex-shrink-0">{cleanSymbol}</span>
-                          <span className="mx-1.5 text-gray-400 text-xs flex-shrink-0">•</span>
-                          <span className="text-gray-600 dark:text-gray-300 truncate text-xs">{companyName}</span>
+                        <div className="flex flex-col items-start">
+                          <span className="font-semibold text-gray-900 dark:text-white flex-shrink-0">{stock.Symbol}</span>
+                          <span className="text-gray-600 dark:text-gray-300 truncate text-xs mt-0.5">{companyName}</span>
                         </div>
                       </button>
                     )
