@@ -525,7 +525,6 @@ export default function GeneralInfoPage() {
           }
           
           if (hasSubmittedData && isDataComplete) {
-            // Pre-populate form data for edit mode FIRST
             const existingData = statusResponse.data;
             const mappedData = {
               isAdult: existingData.isAdult || (existingData.CustomerType === 1) || 

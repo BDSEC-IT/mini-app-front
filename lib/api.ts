@@ -2,7 +2,7 @@ import { AccountSetupFormData, mongolianBanks } from './schemas';
 
 // API base URL
 export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
-export const BDSEC_MAIN = process.env.NEXT_PUBLIC_BDSEC_URL || 'https://miniapp.bdsec.mn/apitest'
+export const BDSEC_MAIN =  'https://new.bdsec.mn'
 interface StockData {
   pkId: number;
   id: number;
@@ -723,7 +723,7 @@ export const fetchAllStocksWithCompanyInfo = async (): Promise<AllStocksResponse
 
 export const fetchFAQ = async () => {
   console.log("fetchFAQ");
-  const url = `${BDSEC_MAIN}/faq`;
+  const url = `https://new.bdsec.mn/api/v1/faq`;
   type FAQType = {
   id: number;
   mnName: string;
@@ -754,7 +754,7 @@ type FAQ = {
 
 export const fetchFAQType = async () => {
   console.log("fetchFAQTypes");
-  const url = `${BDSEC_MAIN}/faq/types`;
+  const url = `https://new.bdsec.mn/api/v1/faq/types`;
   type FAQType = {
   id: number;
   mnName: string;
