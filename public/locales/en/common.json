@@ -305,6 +305,14 @@
     "timeFilter": "Time Period"
  
   },
+    "StockAver": {
+    "company_name" : "Company name", 
+    "52data":"52-7 Data", 
+     "close_price":"Closing price",
+     "close_date":"Closing date", 
+      "see_data":"View 52/7 average",
+      "52/7average":"52/7 average"
+  },
   "bonds": {
     "title": "Bonds",
     "searchPlaceholder": "Search bonds...",

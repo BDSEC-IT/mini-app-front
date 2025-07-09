@@ -325,6 +325,14 @@
     "categoryIII": "III ангилал",
     "timeFilter": "Хугацааны шүүлтүүр"
   },
+   "StockAver": {
+    "company_name" : "Компанийн нэр",
+    "52data":"52-7 Дата", 
+     "close_price":"Хаалтын ханш", 
+     "close_date":"Хаалтын огноо", 
+      "see_data":"52/7 дундаж харах",
+      "52/7average":"52/7 дундаж"
+  },
   "bonds": {
     "title": "Бондууд",
     "searchPlaceholder": "Бонд хайх...",

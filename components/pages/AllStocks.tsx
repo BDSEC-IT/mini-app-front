@@ -139,7 +139,7 @@ const AllStocks = () => {
  const getStockCategory = (stock: StockData): string => {
   if (!stock.MarketSegmentID) return '';
 
-  const match = stock.MarketSegmentID.match(/^(I{1,3})\s*classification$/i);
+  const match = stock.MarketSegmentID.match(/([IV]+)\s*classification/i);
   const cat = match?.[1] || '';
 
   // Only allow 'I', 'II', or 'III'
@@ -216,7 +216,11 @@ const AllStocks = () => {
 const getCategorySummary = (category: string) => {
   const stocks = allStocks.filter(stock => {
     const cat = getStockCategory(stock);
-    return cat === category && Number(stock.sizemd && stock.sizemd2) > 0;
+   return (
+  cat === category &&
+  (Number(stock.sizemd) > 0 || Number(stock.sizemd2) > 0)
+);
+
   });
 
   return {
@@ -379,7 +383,7 @@ const getCategorySummary = (category: string) => {
         )}
         
         {/* Filter Tabs */}
-   <div className="flex mb-4 border-b overflow-x-auto justify-between items-center">
+ <div className="flex mb-4 border-b overflow-x-auto justify-between items-center">
   <div className="flex">
     {[
       { id: 'all', label: t('allStocks.all') },
@@ -401,18 +405,29 @@ const getCategorySummary = (category: string) => {
     ))}
   </div>
 
+  {/* 52/7 Button */}
   <div className="px-4 py-2 text-sm whitespace-nowrap">
     <button
-        onClick={() => setIsModalOpen(true)}
-        className="bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
-            : 'text-gray-500'"
-      >
-        52/7 дундаж харах
-      </button>
+      onClick={() => {
+        setActiveTab('average'); // Set this as the active tab
+        setIsModalOpen(true);    // Also open modal
+      }}
+      className={`px-4 py-2 text-sm whitespace-nowrap ${
+        activeTab === 'average'
+          ? 'bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
+          : 'text-gray-500'
+      }`}
+    >
+   {t('StockAver.see_data') }
+    </button>
 
-      <StockAverageModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-       </div>
-     </div>
+    <StockAverageModal
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+    />
+  </div>
+</div>
+
 
           
         {/* Stocks Table with Category Groups */}
