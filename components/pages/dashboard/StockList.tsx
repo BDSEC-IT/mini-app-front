@@ -113,7 +113,7 @@ export const StockList = ({
     return currentLanguage === 'mn' ? stock.mnName : stock.enName;
   };
   const autoplayPlugin = useRef(
-    Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: false })
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: false })
   )
 
   const filters = [

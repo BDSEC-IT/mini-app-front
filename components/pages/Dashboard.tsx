@@ -94,7 +94,13 @@ const DashboardContent = () => {
       const response = await fetchOrderBook(selectedCard?.Symbol || `${selectedSymbol}-O-0000`)
       if (response.status && response.data) {
         setOrderBookData(response.data)
-        setLastUpdated(new Date().toLocaleString())
+        
+        // Use MDEntryTime from the selected stock data if available
+        if (selectedStockData?.MDEntryTime) {
+          setLastUpdated(selectedStockData.MDEntryTime)
+        } else {
+          setLastUpdated(new Date().toLocaleString())
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch order book data')
@@ -102,7 +108,7 @@ const DashboardContent = () => {
     } finally {
       setLoading(false)
     }
-  }, [selectedSymbol, selectedCard])
+  }, [selectedSymbol, selectedCard, selectedStockData])
 
   // Fetch data when component mounts or selectedSymbol changes
   useEffect(() => {
@@ -269,7 +275,9 @@ const DashboardContent = () => {
   }
 
   const handleLatestTimeUpdate = (latestTime: string) => {
-    setLatestEntryTime(latestTime)
+    // Use MDEntryTime from the selected stock data if available, otherwise use the chart time
+    const timeToUse = selectedStockData?.MDEntryTime || latestTime
+    setLatestEntryTime(timeToUse)
   }
 
   useEffect(() => {
