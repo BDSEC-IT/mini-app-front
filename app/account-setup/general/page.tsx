@@ -546,8 +546,8 @@ export default function GeneralInfoPage() {
               countryCode: existingData.Country || existingData.countryCode || nationality
             };
             setFormData(mappedData);
-            setStep(2);
-            setViewMode('form');
+            setSummaryData(existingData);
+            setViewMode('summary');
           } else if (hasSubmittedData && !isDataComplete) {
             const existingData = statusResponse.data;
             const mappedData = {
