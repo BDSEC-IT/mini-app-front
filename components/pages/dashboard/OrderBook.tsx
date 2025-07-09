@@ -26,6 +26,7 @@ export const OrderBook = ({
   const seconds = date.getSeconds().toString().padStart(2, '0');
   
   const formattedTime = `${hours}:${minutes}:${seconds}`;
+  const formattedDate = date.toLocaleDateString();
   return (
     <div className="mt-8 p-4">
       <div className="flex justify-between items-center mb-4">
@@ -35,6 +36,7 @@ export const OrderBook = ({
         </h2>
         <div className="text-xs text-right text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
           <div className="hidden sm:block">{t('dashboard.lastUpdated')}</div>
+          <div className="text-xs">{formattedDate}</div>
           <div className="text-xs">{formattedTime}</div>
         </div>
       </div>

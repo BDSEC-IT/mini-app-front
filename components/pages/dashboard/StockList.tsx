@@ -13,6 +13,75 @@ import {
 import Autoplay from 'embla-carousel-autoplay'
 import type { StockData } from '@/lib/api'
 
+// Mini Chart Component
+const MiniChart = ({ data, isPositive, changePercent = 0, width = 60, height = 30 }: { 
+  data: number[], 
+  isPositive: boolean, 
+  changePercent?: number,
+  width?: number, 
+  height?: number 
+}) => {
+  // Determine if we should show neutral colors (when change is very small or 0)
+  const isNeutral = Math.abs(changePercent) < 0.01
+  
+  if (!data || data.length < 2) {
+    // Generate mock data if no real data
+    const mockData = Array.from({ length: 10 }, (_, i) => {
+      const base = 100
+      if (isNeutral) {
+        // Flat line for neutral
+        return base + (Math.random() * 4 - 2)
+      }
+      const trend = isPositive ? 1 : -1
+      return base + (Math.random() * 20 - 10) + (trend * i * 2)
+    })
+    data = mockData
+  }
+
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min || 1
+
+  const points = data.map((value, index) => ({
+    x: (index / (data.length - 1)) * width,
+    y: height - ((value - min) / range) * height
+  }))
+
+  const pathData = points.map((point, index) => 
+    `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
+  ).join(' ')
+
+  const areaPathData = pathData + ` L ${width} ${height} L 0 ${height} Z`
+
+  // Color logic
+  const lineColor = isNeutral ? '#6b7280' : (isPositive ? '#10b981' : '#ef4444')
+  const gradientId = isNeutral ? 'gradient-neutral' : `gradient-${isPositive ? 'up' : 'down'}`
+
+  return (
+    <svg width={width} height={height} className="absolute bottom-2 right-2 opacity-60">
+      <defs>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={lineColor} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={lineColor} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path
+        d={areaPathData}
+        fill={`url(#${gradientId})`}
+        stroke="none"
+      />
+      <path
+        d={pathData}
+        stroke={lineColor}
+        strokeWidth="1.5"
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 interface StockListProps {
   loading: boolean
   activeFilter: string
@@ -44,7 +113,7 @@ export const StockList = ({
     return currentLanguage === 'mn' ? stock.mnName : stock.enName;
   };
   const autoplayPlugin = useRef(
-    Autoplay({ delay: 5000, stopOnInteraction: false, stopOnMouseEnter: false })
+    Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: false })
   )
 
   const filters = [
@@ -105,11 +174,11 @@ export const StockList = ({
       </div>
 
       {/* Selected card pinned to the left, outside the scrollable carousel */}
-      <div className="flex items-stretch gap-2 mt-4 py-2">
+      <div className="flex items-stretch gap-2 mt-4 py-4">
         
         {selectedStock && (
           <div
-            className={`shrink-0 ${getBasisClass()} border-bdsec border-[2px] dark:border-indigo-400 bg-gradient-to-br from-bdsec/5 to-bdsec/10 dark:from-indigo-500/10 dark:to-indigo-500/5 rounded-xl  p-2 sm:p-3 flex flex-col justify-between transition-all duration-300 relative overflow-hidden z-10`}
+            className={`shrink-0 ${getBasisClass()} border-bdsec border-[2px]  dark:border-indigo-400  dark:from-indigo-500/10 dark:to-indigo-500/5 rounded-xl  p-2 my-2 sm:p-3 flex flex-col justify-between transition-all duration-300 relative overflow-hidden z-10`}
             style={{ minWidth: 150, maxWidth: 150 }}
           >
             {/* SVG Illumination Effect */}
@@ -145,6 +214,13 @@ export const StockList = ({
                 {formatPrice(selectedStock.LastTradedPrice)} ₮
               </p>
             </div>
+            <MiniChart 
+              data={[]} 
+              isPositive={selectedStock.Changep >= 0} 
+              changePercent={selectedStock.Changep}
+              width={50} 
+              height={25} 
+            />
           </div>
         )}
         {/* Scrollable carousel for other cards */}
@@ -160,7 +236,7 @@ export const StockList = ({
             className="w-full"
             setApi={setApi}
           >
-            <CarouselContent className="flex pl-8">
+            <CarouselContent className="flex pl-8 py-2">
               {otherStocks.length > 0 ? (
                 otherStocks.map((stock, index) => {
                   const isPositive = (stock.Changep || 0) >= 0;
@@ -207,6 +283,13 @@ export const StockList = ({
                             {formatPrice(stock.LastTradedPrice)} ₮
                           </p>
                         </div>
+                        <MiniChart 
+                          data={[]} 
+                          isPositive={isPositive} 
+                          changePercent={stock.Changep}
+                          width={50} 
+                          height={25} 
+                        />
                       </div>
                     </CarouselItem>
                   )
