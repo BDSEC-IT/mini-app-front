@@ -12,7 +12,6 @@ interface StockDetails {
   listedShares: string;
   marketCap: string;
   listingDate: string;
-  email: string;
 }
 
 interface StockInfoProps {
@@ -221,10 +220,6 @@ export default function StockInfo({
               <div className="flex justify-between">
                 <span>{t('dashboard.companyCode')}</span>
                 <span className="font-semibold">{details.companyCode}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{t('dashboard.email')}</span>
-                <span className="font-semibold">{details.email}</span>
               </div>
             </div>
           </div>

@@ -10,7 +10,6 @@ interface StockDetailsProps {
     listedShares: string
     marketCap: string
     listingDate: string
-    email: string
   }
 }
 
@@ -34,10 +33,6 @@ export const StockDetails = ({ selectedSymbol, details }: StockDetailsProps) => 
             <div className="flex justify-between items-center p-3">
               <span className="text-sm text-gray-500">{t('dashboard.companyCode')}:</span>
               <span className="text-sm font-medium">{details.companyCode}</span>
-            </div>
-            <div className="flex justify-between items-center p-3">
-              <span className="text-sm text-gray-500">{t('dashboard.email')}:</span>
-              <span className="text-sm font-medium text-bdsec dark:text-indigo-400">{details.email}</span>
             </div>
           </div>
         </div>

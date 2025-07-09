@@ -142,9 +142,22 @@ export function TradingViewChart({
       }
     }
     
+    // Initial size update
     updateSize()
+    
+    // Use ResizeObserver for better performance
+    const resizeObserver = new ResizeObserver(updateSize)
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current)
+    }
+    
+    // Fallback for older browsers
     window.addEventListener('resize', updateSize)
-    return () => window.removeEventListener('resize', updateSize)
+    
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', updateSize)
+    }
   }, [])
 
   // Draw chart using SVG
@@ -308,8 +321,23 @@ export function TradingViewChart({
   // Set mounted state
   useEffect(() => {
     setMounted(true)
+    // Force initial size calculation after mount
+    setTimeout(() => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        setContainerSize({ width: rect.width, height: rect.height })
+      }
+    }, 0)
     return () => setMounted(false)
   }, [])
+
+  // Force size update when chartData changes
+  useEffect(() => {
+    if (chartData.length > 0 && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
+      setContainerSize({ width: rect.width, height: rect.height })
+    }
+  }, [chartData])
 
   // Handle period change
   const handlePeriodChange = (newPeriod: string) => {
@@ -350,6 +378,8 @@ export function TradingViewChart({
           ref={svgRef} 
           className="w-full h-full"
           style={{ transform: 'translate3d(0, 0, 0)' }}
+          viewBox={`0 0 ${containerSize.width || 400} ${containerSize.height || 300}`}
+          preserveAspectRatio="xMidYMid meet"
         />
         
         {isFallbackData && (

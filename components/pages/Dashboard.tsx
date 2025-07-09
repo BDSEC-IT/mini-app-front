@@ -158,8 +158,7 @@ const DashboardContent = () => {
       totalShares: (Math.floor(Math.random() * 50000000) + 1000000).toString(),
       listedShares: (Math.floor(Math.random() * 30000000) + 1000000).toString(),
       marketCap: selectedStockData ? (selectedStockData.LastTradedPrice * 1000000).toFixed(2) : '234132.32',
-      listingDate: '2016-07-25',
-      email: `info@${selectedSymbol.toLowerCase()}.mn`
+      listingDate: '2016-07-25'
     }
   }, [selectedSymbol, allStocks])
 
