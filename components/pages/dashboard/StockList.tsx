@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useLayoutEffect } from 'react'
+import { useRef, useEffect, useState, useLayoutEffect, useCallback } from 'react'
 import { BarChart3, ChevronRight, TrendingUp, Activity, ArrowUp, ArrowDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
@@ -11,11 +11,13 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel"
 import Autoplay from 'embla-carousel-autoplay'
-import type { StockData } from '@/lib/api'
+import type { StockData, TradingHistoryData } from '@/lib/api'
+import { fetchTradingHistory } from '@/lib/api'
+import { BlinkEffect } from '@/components/ui/BlinkEffect'
 
 // Mini Chart Component
-const MiniChart = ({ data, isPositive, changePercent = 0, width = 60, height = 30 }: { 
-  data: number[], 
+const MiniChart = ({ historicalData, isPositive, changePercent = 0, width = 60, height = 30 }: { 
+  historicalData: TradingHistoryData[], 
   isPositive: boolean, 
   changePercent?: number,
   width?: number, 
@@ -24,18 +26,29 @@ const MiniChart = ({ data, isPositive, changePercent = 0, width = 60, height = 3
   // Determine if we should show neutral colors (when change is very small or 0)
   const isNeutral = Math.abs(changePercent) < 0.01
   
-  if (!data || data.length < 2) {
-    // Generate mock data if no real data
-    const mockData = Array.from({ length: 10 }, (_, i) => {
-      const base = 100
-      if (isNeutral) {
-        // Flat line for neutral
-        return base + (Math.random() * 4 - 2)
-      }
-      const trend = isPositive ? 1 : -1
-      return base + (Math.random() * 20 - 10) + (trend * i * 2)
-    })
-    data = mockData
+  // Use useRef to generate stable mock data as fallback
+  const mockDataRef = useRef<number[] | undefined>(undefined);
+  
+  let data: number[] = [];
+  
+  if (historicalData && historicalData.length >= 2) {
+    // Use real historical data - get the last 10 closing prices
+    const recentData = historicalData.slice(-10);
+    data = recentData.map(item => item.ClosingPrice);
+  } else {
+    // Generate mock data only once if no real data
+    if (!mockDataRef.current) {
+      mockDataRef.current = Array.from({ length: 10 }, (_, i) => {
+        const base = 100
+        if (isNeutral) {
+          // Flat line for neutral
+          return base + (Math.random() * 4 - 2)
+        }
+        const trend = isPositive ? 1 : -1
+        return base + (Math.random() * 20 - 10) + (trend * i * 2)
+      })
+    }
+    data = mockDataRef.current
   }
 
   const min = Math.min(...data)
@@ -107,11 +120,31 @@ export const StockList = ({
   const { t, i18n } = useTranslation()
   const currentLanguage = i18n.language || 'mn';
   const [api, setApi] = useState<CarouselApi>()
+  const [historicalData, setHistoricalData] = useState<{ [symbol: string]: TradingHistoryData[] }>({})
+  const [loadingHistorical, setLoadingHistorical] = useState<{ [symbol: string]: boolean }>({})
 
   // Helper function to get company name based on current language
   const getCompanyName = (stock: StockData) => {
     return currentLanguage === 'mn' ? stock.mnName : stock.enName;
   };
+
+  // Fetch historical data for a stock
+  const fetchStockHistoricalData = useCallback(async (symbol: string) => {
+    if (historicalData[symbol] || loadingHistorical[symbol]) return;
+    
+    setLoadingHistorical(prev => ({ ...prev, [symbol]: true }));
+    
+    try {
+      const response = await fetchTradingHistory(symbol, 1, 10); // Get last 10 data points
+      if (response.success && response.data) {
+        setHistoricalData(prev => ({ ...prev, [symbol]: response.data }));
+      }
+    } catch (error) {
+      console.error(`Error fetching historical data for ${symbol}:`, error);
+    } finally {
+      setLoadingHistorical(prev => ({ ...prev, [symbol]: false }));
+    }
+  }, [historicalData, loadingHistorical]);
   const autoplayPlugin = useRef(
     Autoplay({ delay: 4000, stopOnInteraction: false, stopOnMouseEnter: false })
   )
@@ -139,6 +172,17 @@ export const StockList = ({
     // Always scroll to the first card (start) on symbol change or card update
     api.scrollTo(0, false)
   }, [selectedCard, api, otherStocks.length])
+
+  // Fetch historical data for visible stocks
+  useEffect(() => {
+    const stocksToFetch = [selectedCard, ...otherStocks.slice(0, 5)].filter(Boolean) as StockData[];
+    
+    stocksToFetch.forEach(stock => {
+      if (stock.Symbol) {
+        fetchStockHistoricalData(stock.Symbol);
+      }
+    });
+  }, [filteredStocks, selectedCard, fetchStockHistoricalData]);
 
   return (
     <div className="w-full px-2 sm:px-4">
@@ -199,9 +243,20 @@ export const StockList = ({
               <h3 className="flex items-center justify-center font-semibold text-xs text-white rounded-full h-8 w-8 bg-bdsec dark:bg-indigo-400   ">
                 {selectedStock.Symbol.split('-')[0]}
               </h3>
-              <div className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${selectedStock.Changep >= 0 ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'}`}>
-                {selectedStock.Changep >= 0 ? '+' : ''}{(selectedStock.Changep || 0).toFixed(2)}%
-              </div>
+              <BlinkEffect value={selectedStock.Changep || 0}>
+                <div className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${
+                  Math.abs(selectedStock.Changep || 0) < 0.01 
+                    ? 'text-gray-600 bg-gray-100 dark:bg-gray-500/10 dark:text-gray-400'
+                    : selectedStock.Changep >= 0 
+                      ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' 
+                      : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'
+                }`}>
+                  {Math.abs(selectedStock.Changep || 0) < 0.01 
+                    ? '0.00' 
+                    : (selectedStock.Changep >= 0 ? '+' : '') + (selectedStock.Changep || 0).toFixed(2)
+                  }%
+                </div>
+              </BlinkEffect>
             </div>
             <div className="mt-1 z-10">
               <p className="font-medium text-gray-800 truncate text-xs dark:text-gray-200" title={getCompanyName(selectedStock)}>
@@ -209,13 +264,15 @@ export const StockList = ({
               </p>
             </div>
             <div className="mt-2 z-10">
-              <p className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</p>
-              <p className="text-base font-bold text-gray-900 dark:text-white">
-                {formatPrice(selectedStock.LastTradedPrice)} ₮
-              </p>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
+              <div className="text-base font-bold text-gray-900 dark:text-white">
+                <BlinkEffect value={selectedStock.LastTradedPrice || 0}>
+                  {formatPrice(selectedStock.LastTradedPrice)} ₮
+                </BlinkEffect>
+              </div>
             </div>
             <MiniChart 
-              data={[]} 
+              historicalData={historicalData[selectedStock.Symbol] || []} 
               isPositive={selectedStock.Changep >= 0} 
               changePercent={selectedStock.Changep}
               width={50} 
@@ -268,9 +325,20 @@ export const StockList = ({
                           <h3 className="flex items-center justify-center font-semibold text-xs text-white rounded-full h-8 w-8 bg-bdsec dark:bg-indigo-500">
                             {stock.Symbol.split('-')[0]}
                           </h3>
-                          <div className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${isPositive ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'}`}>
-                            {isPositive ? '+' : ''}{(stock.Changep || 0).toFixed(2)}%
-                          </div>
+                          <BlinkEffect value={stock.Changep || 0}>
+                            <div className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${
+                              Math.abs(stock.Changep || 0) < 0.01 
+                                ? 'text-gray-600 bg-gray-100 dark:bg-gray-500/10 dark:text-gray-400'
+                                : isPositive 
+                                  ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' 
+                                  : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'
+                            }`}>
+                              {Math.abs(stock.Changep || 0) < 0.01 
+                                ? '0.00' 
+                                : (isPositive ? '+' : '') + (stock.Changep || 0).toFixed(2)
+                              }%
+                            </div>
+                          </BlinkEffect>
                         </div>
                         <div className="mt-1 z-10">
                           <p className="font-medium text-gray-800 truncate text-xs dark:text-gray-200" title={getCompanyName(stock)}>
@@ -278,13 +346,15 @@ export const StockList = ({
                           </p>
                         </div>
                         <div className="mt-2 z-10">
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</p>
-                          <p className="text-base font-bold text-gray-900 dark:text-white">
-                            {formatPrice(stock.LastTradedPrice)} ₮
-                          </p>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
+                          <div className="text-base font-bold text-gray-900 dark:text-white">
+                            <BlinkEffect value={stock.LastTradedPrice || 0}>
+                              {formatPrice(stock.LastTradedPrice)} ₮
+                            </BlinkEffect>
+                          </div>
                         </div>
                         <MiniChart 
-                          data={[]} 
+                          historicalData={historicalData[stock.Symbol] || []} 
                           isPositive={isPositive} 
                           changePercent={stock.Changep}
                           width={50} 

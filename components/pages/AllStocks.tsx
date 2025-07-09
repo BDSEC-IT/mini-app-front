@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight, Wifi, WifiOff } from 'lucide-react'
 import { fetchAllStocks, type StockData } from '@/lib/api'
+import realTimeService from '@/lib/socket'
+import { BlinkEffect } from '@/components/ui/BlinkEffect'
 
 // Define stock categories
 interface Category {
@@ -37,6 +39,10 @@ const AllStocks = () => {
     key: keyof StockData | null;
     direction: 'asc' | 'desc';
   }>({ key: null, direction: 'asc' })
+  const [isSocketConnected, setIsSocketConnected] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const socketRef = useRef<any>(null)
+  const [previousStockValues, setPreviousStockValues] = useState<{ [symbol: string]: { price: number; change: number } }>({})
 
   // Stock categories
   const categories: Category[] = useMemo(() => [
@@ -182,6 +188,131 @@ const AllStocks = () => {
     setFilteredStocks(filtered)
   }, [allStocks, searchTerm, activeTab, selectedCategory])
 
+  // Initialize real-time connection and updates
+  useEffect(() => {
+    // Only start real-time updates after initial data is loaded
+    if (allStocks.length > 0) {
+      // Connect to real-time service
+      socketRef.current = realTimeService.connect()
+      
+      if (socketRef.current) {
+        // Join trading room
+        realTimeService.joinTradingRoom()
+        
+        // Listen for trading data updates
+        realTimeService.onTradingDataUpdate((data: any) => {
+          console.log('🎯 AllStocks: Real-time trading data received:', data.length, 'stocks')
+          console.log('📈 Sample stock data:', data[0] ? {
+            Symbol: data[0].Symbol,
+            LastTradedPrice: data[0].LastTradedPrice,
+            Changep: data[0].Changep,
+            Volume: data[0].Volume
+          } : 'no data')
+          setLastUpdate(new Date())
+          
+          // Update stocks with real-time data
+          if (data && Array.isArray(data)) {
+            setAllStocks(prevStocks => {
+              const updatedStocks = [...prevStocks]
+              
+              data.forEach((update: any) => {
+                const stockIndex = updatedStocks.findIndex(
+                  stock => stock.Symbol === update.Symbol || stock.Symbol.split('-')[0] === update.Symbol.split('-')[0]
+                )
+                
+                if (stockIndex !== -1) {
+                  const oldStock = updatedStocks[stockIndex]
+                  
+                  // Store previous values for blink effect
+                  setPreviousStockValues(prev => ({
+                    ...prev,
+                    [oldStock.Symbol]: {
+                      price: oldStock.LastTradedPrice || oldStock.ClosingPrice || 0,
+                      change: oldStock.Changep || 0
+                    }
+                  }))
+                  
+                  // Update stock data with real-time information
+                  updatedStocks[stockIndex] = {
+                    ...oldStock,
+                    ...update,
+                    // Preserve existing fields that might not be in the update
+                    mnName: oldStock.mnName,
+                    enName: oldStock.enName,
+                    MarketSegmentID: oldStock.MarketSegmentID,
+                    // Preserve the cleaned symbol (don't overwrite with full symbol from update)
+                    Symbol: oldStock.Symbol,
+                  }
+                }
+              })
+              
+              return updatedStocks
+            })
+          }
+        })
+        
+        // Listen for stock updates
+        realTimeService.onStockUpdate((data: any) => {
+          console.log('Real-time stock update received:', data)
+          setLastUpdate(new Date())
+          
+          // Update specific stock
+          if (data && data.Symbol) {
+            setAllStocks(prevStocks => {
+              const updatedStocks = [...prevStocks]
+              const stockIndex = updatedStocks.findIndex(
+                stock => stock.Symbol === data.Symbol || stock.Symbol.split('-')[0] === data.Symbol.split('-')[0]
+              )
+              
+              if (stockIndex !== -1) {
+                const oldStock = updatedStocks[stockIndex]
+                
+                // Store previous values for blink effect
+                setPreviousStockValues(prev => ({
+                  ...prev,
+                  [oldStock.Symbol]: {
+                    price: oldStock.LastTradedPrice || oldStock.ClosingPrice || 0,
+                    change: oldStock.Changep || 0
+                  }
+                }))
+                
+                updatedStocks[stockIndex] = {
+                  ...oldStock,
+                  ...data,
+                  // Preserve existing fields
+                  mnName: oldStock.mnName,
+                  enName: oldStock.enName,
+                  MarketSegmentID: oldStock.MarketSegmentID,
+                  // Preserve the cleaned symbol (don't overwrite with full symbol from update)
+                  Symbol: oldStock.Symbol,
+                }
+              }
+              
+              return updatedStocks
+            })
+          }
+        })
+        
+        // Update connection status
+        setIsSocketConnected(realTimeService.getConnectionStatus())
+        
+        // Listen for connection status changes
+        socketRef.current.on('connect', () => {
+          setIsSocketConnected(true)
+        })
+        
+        socketRef.current.on('disconnect', () => {
+          setIsSocketConnected(false)
+        })
+      }
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      realTimeService.disconnect()
+    }
+  }, [allStocks.length]) // Only run when allStocks length changes (after initial load)
+
   // Fetch data on component mount
   useEffect(() => {
     fetchStocksData()
@@ -235,11 +366,16 @@ const getCategorySummary = (category: string) => {
 
   // Render table rows for a category
   const renderCategoryStocks = (stocks: StockData[]) => {
-    return stocks.map((stock, index) => (
-      <tr 
-        key={`${stock.Symbol}-${index}`} 
-        className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-      >
+    return stocks.map((stock, index) => {
+      const previousValues = previousStockValues[stock.Symbol]
+      const currentPrice = stock.LastTradedPrice || stock.ClosingPrice || 0
+      const currentChange = stock.Changep || 0
+      
+      return (
+        <tr 
+          key={`${stock.Symbol}-${index}`} 
+          className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+        >
         <td className="px-2 py-3">
           <div>
             <div className="font-medium">{stock.Symbol}</div>
@@ -265,20 +401,46 @@ const getCategorySummary = (category: string) => {
           {formatPrice(stock.LowPrice  )}
         </td>
             <td className="px-2 py-3 text-right">
-          {formatPrice(stock.LastTradedPrice )}
-        </td>
+              <BlinkEffect 
+                value={currentPrice}
+                previousValue={previousValues?.price}
+                duration={1000}
+              >
+                <div className="px-2 py-1 rounded">
+                  {formatPrice(stock.LastTradedPrice)}
+                </div>
+              </BlinkEffect>
+            </td>
             <td className="px-2 py-3 text-right">
           {formatPrice(stock.ClosingPrice)}
         </td>
            <td className={`px-2 py-3 text-right ${stock.Changes >= 0 ? 'text-green-500' : 'text-red-500'}`}>
         {formatPrice(stock.Changes)}
         </td>
-            <td className={`px-2 py-3 text-right ${stock.Changep >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-          <div className="flex items-center justify-end">
-            {stock.Changep >= 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
-            <span>{stock.Changep?.toFixed(2)}%</span>
-          </div>
-        </td>
+            <td className={`px-2 py-3 text-right ${
+              Math.abs(stock.Changep || 0) < 0.01 
+                ? 'text-gray-500' 
+                : stock.Changep >= 0 
+                  ? 'text-green-500' 
+                  : 'text-red-500'
+            }`}>
+              <BlinkEffect 
+                value={currentChange}
+                previousValue={previousValues?.change}
+                duration={1000}
+              >
+                <div className="flex items-center justify-end px-2 py-1 rounded">
+                  {Math.abs(stock.Changep || 0) < 0.01 ? (
+                    <span>0.00%</span>
+                  ) : (
+                    <>
+                      {stock.Changep >= 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
+                      <span>{stock.Changep?.toFixed(2)}%</span>
+                    </>
+                  )}
+                </div>
+              </BlinkEffect>
+            </td>
         <td className="px-2 py-3 text-right">
           {Number(stock.sizemd) > 0 ? Number(stock.sizemd).toLocaleString() : '-'}
         </td>
@@ -292,8 +454,9 @@ const getCategorySummary = (category: string) => {
           {Number(stock.sizemd2) > 0 ? Number(stock.sizemd2).toLocaleString() : '-'}
         </td>
            
-      </tr>
-    ))
+        </tr>
+      )
+    })
   }
 
   return (
@@ -308,9 +471,31 @@ const getCategorySummary = (category: string) => {
               <ChevronRight className="transform rotate-180" size={18} />
             </a>
             <h1 className="text-xl font-bold">{t('allStocks.title')}</h1>
+            {/* Real-time status indicator */}
+            <div className="flex items-center gap-2">
+              {isSocketConnected ? (
+                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                  <Wifi size={16} />
+                  <span className="text-xs">Live</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-gray-500">
+                  <WifiOff size={16} />
+                  <span className="text-xs">Offline</span>
+                </div>
+              )}
+            </div>
           </div>
           <div className="text-sm text-gray-500">
-            {t('allStocks.lastUpdated')}: {new Date().toLocaleTimeString()}
+            {lastUpdate ? (
+              <span>
+                {t('allStocks.lastUpdated')}: {lastUpdate.toLocaleTimeString()}
+              </span>
+            ) : (
+              <span>
+                {t('allStocks.lastUpdated')}: {new Date().toLocaleTimeString()}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex justify-between items-center mb-4">

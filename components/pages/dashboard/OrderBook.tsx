@@ -1,4 +1,4 @@
-import { Activity, ArrowDown, ArrowUp } from 'lucide-react'
+import { Activity, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { OrderBookEntry } from '@/lib/api'
 
@@ -10,13 +10,15 @@ interface OrderBookProps {
     buy: OrderBookEntry[]
     sell: OrderBookEntry[]
   }
+  onRefresh?: () => void
 }
 
 export const OrderBook = ({
   selectedSymbol,
   loading,
   lastUpdated,
-  processedOrderBook
+  processedOrderBook,
+  onRefresh
 }: OrderBookProps) => {
   const { t } = useTranslation()
   const date = new Date(lastUpdated);
@@ -34,10 +36,22 @@ export const OrderBook = ({
           <Activity size={16} className="mr-2 text-bdsec dark:text-indigo-400" />
           {t('dashboard.orderBook')} - {selectedSymbol.split('-')[0]}
         </h2>
-        <div className="text-xs text-right text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
-          <div className="hidden sm:block">{t('dashboard.lastUpdated')}</div>
-          <div className="text-xs">{formattedDate}</div>
-          <div className="text-xs">{formattedTime}</div>
+        <div className="flex items-center gap-2">
+          <div className="text-xs text-right text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
+            <div className="hidden sm:block">{t('dashboard.lastUpdated')}</div>
+            <div className="text-xs">{formattedDate}</div>
+            <div className="text-xs">{formattedTime}</div>
+          </div>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              disabled={loading}
+              className="p-2 text-gray-500 hover:text-bdsec dark:hover:text-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title="Refresh order book"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            </button>
+          )}
         </div>
       </div>
 

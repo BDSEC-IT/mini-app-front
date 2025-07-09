@@ -324,7 +324,7 @@ function createMockStock(symbol: string): StockData {
     Changes: change,
     Changep: changePercent,
     VWAP: basePrice * (0.99 + Math.random() * 0.02),
-    MDEntryTime: "14:00:00",
+    MDEntryTime: new Date().toISOString(),
     trades: Math.floor(Math.random() * 100),
     HighPrice: basePrice * 1.02,
     LowPrice: basePrice * 0.98,

@@ -9,7 +9,6 @@ interface TradingViewChartProps {
   theme?: string
   period?: string
   onPriceHover?: (price: number | null, change?: number, changePercent?: number) => void
-  onLatestTimeUpdate?: (latestTime: string) => void
 }
 
 interface Point {
@@ -26,8 +25,7 @@ export function TradingViewChart({
   symbol = 'BDS-O-0000', 
   theme = 'light', 
   period = 'ALL',
-  onPriceHover,
-  onLatestTimeUpdate
+  onPriceHover
 }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -111,9 +109,7 @@ export function TradingViewChart({
         if (filteredData.length > 0) {
           const latest = filteredData[filteredData.length - 1]
           latestPriceRef.current = latest.ClosingPrice
-          if (onLatestTimeUpdate) {
-            onLatestTimeUpdate(latest.MDEntryTime)
-          }
+          // Don't call onLatestTimeUpdate here - let the Dashboard use its own MDEntryTime from stock data
         }
       } else {
         setError('No data available')

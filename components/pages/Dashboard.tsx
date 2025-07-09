@@ -8,6 +8,8 @@ import { StockHeader } from './dashboard/StockHeader'
 import { OrderBook } from './dashboard/OrderBook'
 import { StockDetails } from './dashboard/StockDetails'
 import { StockList } from './dashboard/StockList'
+import realTimeService from '@/lib/socket'
+import { Wifi, WifiOff } from 'lucide-react'
 
 // Client-only wrapper component
 function ClientOnly({ children }: { children: React.ReactNode }) {
@@ -39,8 +41,10 @@ const DashboardContent = () => {
   const [hoveredChangePercent, setHoveredChangePercent] = useState<number | null>(null)
   const [selectedStockData, setSelectedStockData] = useState<StockData | null>(null)
   const [chartRefreshKey, setChartRefreshKey] = useState<number>(0)
-  const [latestEntryTime, setLatestEntryTime] = useState<string>('')
   const [chartLoading, setChartLoading] = useState(true)
+  const [isSocketConnected, setIsSocketConnected] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const socketRef = useRef<any>(null)
 
   // Derive selectedCard robustly
   // Use the same logic as search: match by base symbol
@@ -109,6 +113,109 @@ const DashboardContent = () => {
       setLoading(false)
     }
   }, [selectedSymbol, selectedCard, selectedStockData])
+
+  // Initialize real-time connection and updates
+  useEffect(() => {
+    // Only start real-time updates after initial data is loaded
+    if (allStocks.length > 0) {
+      // Connect to real-time service
+      socketRef.current = realTimeService.connect()
+      
+      if (socketRef.current) {
+        // Join trading room
+        realTimeService.joinTradingRoom()
+        
+        // Listen for trading data updates
+        realTimeService.onTradingDataUpdate((data: any) => {
+          console.log('🎯 Dashboard: Real-time trading data received:', data.length, 'stocks')
+          console.log('📈 Sample stock data:', data[0] ? {
+            Symbol: data[0].Symbol,
+            LastTradedPrice: data[0].LastTradedPrice,
+            Changep: data[0].Changep,
+            Volume: data[0].Volume
+          } : 'no data')
+          setLastUpdate(new Date())
+          
+          // Update stocks with real-time data
+          if (data && Array.isArray(data)) {
+            setAllStocks(prevStocks => {
+              const updatedStocks = [...prevStocks]
+              
+              data.forEach((update: any) => {
+                const stockIndex = updatedStocks.findIndex(
+                  stock => stock.Symbol === update.Symbol || stock.Symbol.split('-')[0] === update.Symbol.split('-')[0]
+                )
+                
+                if (stockIndex !== -1) {
+                  const oldStock = updatedStocks[stockIndex]
+                  
+                  // Update stock data with real-time information
+                  updatedStocks[stockIndex] = {
+                    ...oldStock,
+                    ...update,
+                    // Preserve existing fields that might not be in the update
+                    mnName: oldStock.mnName,
+                    enName: oldStock.enName,
+                    MarketSegmentID: oldStock.MarketSegmentID,
+                  }
+                }
+              })
+              
+              return updatedStocks
+            })
+          }
+        })
+        
+        // Listen for stock updates
+        realTimeService.onStockUpdate((data: any) => {
+          console.log('Dashboard: Real-time stock update received:', data)
+          setLastUpdate(new Date())
+          
+          // Update specific stock
+          if (data && data.Symbol) {
+            setAllStocks(prevStocks => {
+              const updatedStocks = [...prevStocks]
+              const stockIndex = updatedStocks.findIndex(
+                stock => stock.Symbol === data.Symbol || stock.Symbol.split('-')[0] === data.Symbol.split('-')[0]
+              )
+              
+              if (stockIndex !== -1) {
+                const oldStock = updatedStocks[stockIndex]
+                
+                updatedStocks[stockIndex] = {
+                  ...oldStock,
+                  ...data,
+                  // Preserve existing fields
+                  mnName: oldStock.mnName,
+                  enName: oldStock.enName,
+                  MarketSegmentID: oldStock.MarketSegmentID,
+                }
+              }
+              
+              return updatedStocks
+            })
+          }
+        })
+        
+        // Update connection status
+        setIsSocketConnected(realTimeService.getConnectionStatus())
+        
+        // Listen for connection status changes
+        socketRef.current.on('connect', () => {
+          setIsSocketConnected(true)
+        })
+        
+        socketRef.current.on('disconnect', () => {
+          setIsSocketConnected(false)
+        })
+      }
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      realTimeService.disconnect()
+    }
+  }, [allStocks.length, selectedStockData]) // Only run when allStocks length changes (after initial load)
 
   // Fetch data when component mounts or selectedSymbol changes
   useEffect(() => {
@@ -274,19 +381,24 @@ const DashboardContent = () => {
     setHoveredChangePercent(changePercent ?? null)
   }
 
-  const handleLatestTimeUpdate = (latestTime: string) => {
-    // Use MDEntryTime from the selected stock data if available, otherwise use the chart time
-    const timeToUse = selectedStockData?.MDEntryTime || latestTime
-    setLatestEntryTime(timeToUse)
-  }
+
+
+  // Update orderbook lastUpdated time when selectedStockData changes
+  useEffect(() => {
+    if (selectedStockData?.MDEntryTime) {
+      setLastUpdated(selectedStockData.MDEntryTime)
+    }
+  }, [selectedStockData])
 
   useEffect(() => {
-    if (latestEntryTime) setChartLoading(false)
-  }, [latestEntryTime])
+    if (selectedStockData?.MDEntryTime) {
+      setChartLoading(false)
+    }
+  }, [selectedStockData])
 
+  // Set chart loading when selectedSymbol changes
   useEffect(() => {
     setChartLoading(true)
-    setLatestEntryTime('')
   }, [selectedSymbol])
 
   return (
@@ -308,7 +420,8 @@ const DashboardContent = () => {
             searchTerm={searchTerm}
             searchResults={searchResults}
             chartLoading={chartLoading}
-            latestEntryTime={latestEntryTime}
+            isSocketConnected={isSocketConnected}
+            lastUpdate={lastUpdate}
             onSearchClick={handleSearchClick}
             onSearchClose={handleSearchClose}
             onSearchChange={handleSearchChange}
@@ -325,7 +438,6 @@ const DashboardContent = () => {
                     theme={theme}
                     period="ALL"
                     onPriceHover={handlePriceHover}
-                    onLatestTimeUpdate={handleLatestTimeUpdate}
                   />
                 )}
               </div>
@@ -341,6 +453,7 @@ const DashboardContent = () => {
             loading={loading}
             lastUpdated={lastUpdated}
             processedOrderBook={processedOrderBook}
+            onRefresh={fetchOrderBookData}
           />
 
           <StockDetails

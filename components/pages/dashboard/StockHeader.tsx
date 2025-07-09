@@ -1,8 +1,9 @@
-import { Search, ChevronDown, X } from 'lucide-react'
+import { Search, ChevronDown, X, Wifi, WifiOff } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { formatDateTime } from '@/lib/utils'
 import type { StockData } from '@/lib/api'
 import { useEffect, useRef } from 'react';
+import { BlinkEffect } from '@/components/ui/BlinkEffect'
 
 interface StockHeaderProps {
   selectedSymbol: string
@@ -11,7 +12,8 @@ interface StockHeaderProps {
   searchTerm: string
   searchResults: StockData[]
   chartLoading: boolean
-  latestEntryTime: string
+  isSocketConnected?: boolean
+  lastUpdate?: Date | null
   onSearchClick: () => void
   onSearchClose: () => void
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -30,7 +32,8 @@ export const StockHeader = ({
   searchTerm,
   searchResults,
   chartLoading,
-  latestEntryTime,
+  isSocketConnected,
+  lastUpdate,
   onSearchClick,
   onSearchClose,
   onSearchChange,
@@ -78,15 +81,41 @@ export const StockHeader = ({
         
         <div className="mt-2">
           <div className="flex flex-col items-start mb-2 px-2 sm:px-4">
-            <div className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-              {selectedStockData ? formatPrice(selectedStockData.LastTradedPrice || selectedStockData.ClosingPrice) : '-'} ₮
-            </div>
-            <div className="text-xs text-gray-500 mt-1 min-h-[20px] flex items-center">
-              {chartLoading && !latestEntryTime ? (
+            <BlinkEffect value={selectedStockData?.LastTradedPrice || selectedStockData?.ClosingPrice || 0}>
+              <div className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+                {selectedStockData ? formatPrice(selectedStockData.LastTradedPrice || selectedStockData.ClosingPrice) : '-'} ₮
+              </div>
+            </BlinkEffect>
+            <div className="text-xs text-gray-500 mt-1 min-h-[20px] flex items-center gap-2">
+              {chartLoading && !selectedStockData?.MDEntryTime ? (
                 <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-bdsec dark:border-t-white rounded-full animate-spin mr-2"></span>
-              ) : latestEntryTime ? (
-                formatDateTime(latestEntryTime)
+              ) : selectedStockData?.MDEntryTime ? (
+                formatDateTime(selectedStockData.MDEntryTime)
               ) : null}
+              
+              {/* Real-time status indicator */}
+              {isSocketConnected !== undefined && (
+                <div className="flex items-center gap-1">
+                  {isSocketConnected ? (
+                    <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                      <Wifi size={12} />
+                      <span className="text-xs">Live</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-gray-500">
+                      <WifiOff size={12} />
+                      <span className="text-xs">Offline</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Last update time */}
+              {lastUpdate && (
+                <span className="text-xs text-gray-400">
+                  Updated: {lastUpdate.toLocaleTimeString()}
+                </span>
+              )}
             </div>
           </div>
         </div>
