@@ -1,8 +1,8 @@
 import { AccountSetupFormData, mongolianBanks } from './schemas';
 
 // API base URL
-export const BASE_URL = 'https://miniapp.bdsec.mn/apitest';
-
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
+export const BDSEC_MAIN =  'https://new.bdsec.mn'
 interface StockData {
   pkId: number;
   id: number;
@@ -119,6 +119,31 @@ interface AllStocksResponse {
 interface BondsResponse {
   success: boolean;
   data: BondData[];
+}
+
+interface CompanyData {
+  id: number;
+  mnTitle: string;
+  enTitle: string;
+  ruTitle: string | null;
+  jpTitle: string | null;
+  companycode: number;
+  symbol: string;
+  logo: string | null;
+  issued_shares: string;
+  outstanding_shares: string;
+  MarketSegmentID: string;
+  segments: number;
+  state_own: number;
+  state_own_date: string | null;
+  ISIN: string;
+  changedate: string;
+  adjustmentcoef: number;
+}
+
+interface CompaniesResponse {
+  success: boolean;
+  data: CompanyData[];
 }
 
 interface WeekHighLowResponse {
@@ -299,7 +324,7 @@ function createMockStock(symbol: string): StockData {
     Changes: change,
     Changep: changePercent,
     VWAP: basePrice * (0.99 + Math.random() * 0.02),
-    MDEntryTime: "14:00:00",
+    MDEntryTime: new Date().toISOString(),
     trades: Math.floor(Math.random() * 100),
     HighPrice: basePrice * 1.02,
     LowPrice: basePrice * 0.98,
@@ -449,26 +474,135 @@ const logDev = (message: string) => {
 };
 
 export const fetchStockData = async (symbol?: string): Promise<ApiResponse<StockData[]>> => {
-  const url = symbol 
-    ? `${BASE_URL}/securities/trading-status/${symbol}`
-    : `${BASE_URL}/securities/trading-status`;
+  // Always fetch all stocks from the API, then filter if symbol is provided
+  const url = `${BASE_URL}/securities/trading-status`;
+  
+  console.log('=== TRADING STATUS API DEBUG ===');
+  console.log('Original symbol:', symbol);
+  console.log('Trading status URL:', url);
   
   try {
     const response = await fetchWithTimeout(url)
     
     if (!response.ok) {
-      logDev(`Using mock stock data (${response.status})`);
+      logDev(`API call failed with status ${response.status}`);
+      console.error('API call failed:', response.status, response.statusText);
+      // For debugging, let's see what the error response is
+      try {
+        const errorText = await response.text();
+        console.error('Error response body:', errorText);
+      } catch (e) {
+        console.error('Could not read error response');
+      }
+      
       // Return mock data instead of throwing
       const mockData = generateMockStockData(symbol)
+      console.log('Using mock data:', mockData);
       return {
         success: true,
         message: 'Mock data',
         data: mockData
       }
     }
-    return response.json()
+    
+    const responseData = await response.json();
+    console.log('fetchStockData real data:', responseData);
+    
+    // If a specific symbol is requested, filter the results
+    if (symbol && responseData.success && responseData.data) {
+      const tradingSymbol = symbol.toLowerCase();
+      const filteredData = responseData.data.filter((stock: StockData) => 
+        stock.Symbol.toLowerCase().includes(tradingSymbol)
+      );
+      
+      console.log(`Filtered data for symbol ${symbol}:`, filteredData.length, 'stocks found');
+      return {
+        ...responseData,
+        data: filteredData
+      };
+    }
+    
+    return responseData;
   } catch (error) {
     logDev('Using fallback mock stock data');
+    console.error('fetchStockData error:', error);
+    
+    // Return mock data as fallback
+    const mockData = generateMockStockData(symbol)
+    console.log('Using fallback mock data:', mockData);
+    
+    return {
+      success: true,
+      message: 'Mock data',
+      data: mockData
+    }
+  }
+};
+
+// Enhanced version of fetchStockData that includes company information
+export const fetchStockDataWithCompanyInfo = async (symbol?: string): Promise<ApiResponse<StockData[]>> => {
+  try {
+    console.log('=== fetchStockDataWithCompanyInfo START ===');
+    console.log('Symbol:', symbol);
+    
+    // Fetch trading data first
+    const tradingResponse = await fetchStockData(symbol);
+    console.log('Trading response:', tradingResponse.success, tradingResponse.data ? 'has data' : 'no data');
+
+    if (!tradingResponse.success || !tradingResponse.data) {
+      console.log('Trading data failed, using mock data');
+      const mockData = generateMockStockData(symbol)
+      return {
+        success: true,
+        message: 'Mock data',
+        data: mockData
+      };
+    }
+
+    // Fetch company data for the specific symbol (use original case for companies API)
+    const companiesResponse = await fetchCompanies(1, 5000, symbol);
+    console.log('Companies response:', companiesResponse.success, companiesResponse.data ? companiesResponse.data.length : 0, 'companies');
+
+    let stocksData = tradingResponse.data;
+    let companiesData: CompanyData[] = [];
+
+    if (companiesResponse.success && companiesResponse.data) {
+      companiesData = companiesResponse.data;
+    }
+
+    // Get company info (should be only one company for the specific symbol)
+    const companyInfo = companiesData.length > 0 ? companiesData[0] : null;
+    console.log('Company info found:', companyInfo?.mnTitle, companyInfo?.enTitle);
+
+    // Handle single stock object vs array
+    const stocksArray = Array.isArray(stocksData) ? stocksData : [stocksData];
+    console.log('Stocks data type:', Array.isArray(stocksData) ? 'array' : 'object', 'length:', stocksArray.length);
+
+    // Merge trading data with company information
+    const enrichedStocks = stocksArray.map(stock => {
+      const baseSymbol = stock.Symbol.split('-')[0];
+      
+      const enrichedStock = {
+        ...stock,
+        mnName: companyInfo?.mnTitle || stock.mnName || `${baseSymbol} Компани`,
+        enName: companyInfo?.enTitle || stock.enName || `${baseSymbol} Company`
+      };
+      
+      console.log(`Enriched ${stock.Symbol}:`, enrichedStock.mnName, enrichedStock.enName);
+      return enrichedStock;
+    });
+
+    console.log('=== fetchStockDataWithCompanyInfo SUCCESS ===');
+    return {
+      success: true,
+      message: tradingResponse.message,
+      data: enrichedStocks
+    };
+
+  } catch (error) {
+    console.error('=== fetchStockDataWithCompanyInfo ERROR ===');
+    console.error('Error details:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
     // Return mock data as fallback
     const mockData = generateMockStockData(symbol)
@@ -481,8 +615,11 @@ export const fetchStockData = async (symbol?: string): Promise<ApiResponse<Stock
   }
 };
 
+
 export const fetchOrderBook = async (symbol: string): Promise<OrderBookResponse> => {
-  const url = `${BASE_URL}/securities/order-book/${symbol}`;
+  // Use lowercase symbol for order book endpoint
+  const tradingSymbol = symbol.toLowerCase();
+  const url = `${BASE_URL}/securities/order-book/${tradingSymbol}`;
   
   try {
     const response = await fetchWithTimeout(url)
@@ -509,6 +646,7 @@ export const fetchOrderBook = async (symbol: string): Promise<OrderBookResponse>
   }
 };
 
+// Fetch all stocks with enriched data
 export const fetchAllStocks = async (): Promise<AllStocksResponse> => {
   const url = `${BASE_URL}/securities/trading-status`;
   
@@ -534,6 +672,189 @@ export const fetchAllStocks = async (): Promise<AllStocksResponse> => {
       success: true,
       data: mockData
     }
+  }
+};
+
+// Enhanced function that merges stock trading data with company information
+export const fetchAllStocksWithCompanyInfo = async (): Promise<AllStocksResponse> => {
+  try {
+    const [tradingResponse, companiesResponse] = await Promise.all([
+      fetchAllStocks(),
+      fetchCompanies()
+    ]);
+
+    if (!tradingResponse.success || !tradingResponse.data) {
+      logDev('Failed to fetch trading data, using mock data');
+      return { success: true, data: generateMockStockData() };
+    }
+
+    let stocksData = tradingResponse.data;
+    let companiesData: CompanyData[] = companiesResponse.success && companiesResponse.data ? companiesResponse.data : [];
+
+    // Create a map of company data by both base symbol and full symbol (uppercase)
+    const companyMap = new Map<string, CompanyData>();
+    companiesData.forEach(company => {
+      if (company.symbol && company.symbol.endsWith('-O-0000')) {
+        const baseSymbol = company.symbol.split('-')[0].toUpperCase();
+        companyMap.set(baseSymbol, company);
+        companyMap.set(company.symbol.toUpperCase(), company); // Add full symbol as key
+      }
+    });
+
+    // Merge trading data with company information
+    const enrichedStocks: StockData[] = [];
+    const seen = new Set<string>();
+
+    for (const stock of stocksData) {
+      const baseSymbol = stock.Symbol.split('-')[0].toUpperCase();
+      if (seen.has(baseSymbol)) continue; // Skip duplicates
+      seen.add(baseSymbol);
+
+      // Try full symbol first, then base symbol
+      const companyInfo = companyMap.get(stock.Symbol.toUpperCase()) || companyMap.get(baseSymbol);
+
+      enrichedStocks.push({
+        ...stock,
+        mnName: companyInfo?.mnTitle || stock.mnName || `${baseSymbol} Компани`,
+        enName: companyInfo?.enTitle || stock.enName || `${baseSymbol} Company`
+      });
+    }
+
+    logDev(`Enriched ${enrichedStocks.length} stocks with company data from ${companiesData.length} companies`);
+
+    return { success: true, data: enrichedStocks };
+
+  } catch (error) {
+    logDev('Error in fetchAllStocksWithCompanyInfo, using fallback mock data');
+    return { success: true, data: generateMockStockData() };
+  }
+};
+
+export const fetchFAQ = async () => {
+  const url = `https://new.bdsec.mn/api/v1/faq`;
+  type FAQType = {
+  id: number;
+  mnName: string;
+  enName: string;
+};
+
+type FAQ = {
+  id: number;
+  type_id: number;
+  mnQuestion: string;
+  enQuestion: string;
+  mnAnswer: string;
+  enAnswer: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+  FAQType: FAQType;
+};
+
+  // Mock FAQ data based on the API response you provided
+  const mockFAQData: FAQ[] = [
+    {
+      id: 1,
+      type_id: 1,
+      mnQuestion: "Хувьцаа гэж юу вэ?",
+      enQuestion: "What is share?",
+      mnAnswer: "Хувьцаа гэдэг нь хувь хүн, хуулийн этгээд тодорхой нэг компанид хөрөнгө оруулалт хийснийг баталгаажуулсан үнэт цаас юм. Хувьцаа эзэмшигч нь тухайн компанийн ашиг орлогоос ногдол ашиг авах, мөн хөрөнгийн зах зээл дээр хувьцаагаа арилжих замаар ханшийн зөрүүнээс ашиг олох боломжтой.",
+      enAnswer: "A Share is a type of security that certifies an individual or legal legal entity's investment in a specific company. A shareholder is entitled to receive dividends from the company's profits and may also gain returns by selling the shares on the capital market based on price fluctuations.",
+      createdAt: null,
+      updatedAt: null,
+      FAQType: { id: 1, mnName: "Хувьцаа", enName: "Stock" }
+    },
+    {
+      id: 2,
+      type_id: 1,
+      mnQuestion: "Хувьцааны ханшийг хэрхэн харах вэ ?",
+      enQuestion: "How to check share prices?",
+      mnAnswer: "Та BDSec апп-ын нүүр хуудас болон Монголын хөрөнгийн биржийн mse.mn вэб сайтаас компанийн хувьцаа бүрийн ханшийн мэдээллийг хугацааны үечлэлээр харах боломжтой.",
+      enAnswer: "You can view the share price information of each listed company over different time periods through the homepage of the BDSec mobile application or the official website of the Mongolian Stock Exchange at www.mse.mn",
+      createdAt: null,
+      updatedAt: null,
+      FAQType: { id: 1, mnName: "Хувьцаа", enName: "Stock" }
+    },
+    {
+      id: 3,
+      type_id: 2,
+      mnQuestion: "Бонд гэж юу вэ?",
+      enQuestion: "What is a bond?",
+      mnAnswer: "Бонд гэдэг нь тогтмол орлоготой, эрсдэл багатай үнэт цаас юм. Компанийн болон засгийн газрын бондод хөрөнгө оруулж байгаа нь тухайн компани болон засгийн газарт мөнгө зээлж байна гэсэн ба тодорхой хугацааны дараа үндсэн мөнгө болон хүүг эргэн төлөлтийн хуваарийн дагуу буцаан авдаг.",
+      enAnswer: "A bond is a fixed-income, low-risk security. Investing in corporate or government bonds means lending money to a company or the government. In return, the investor receives periodic interest payments and is repaid the principal amount at the end of the specified term, according to the repayment schedule.",
+      createdAt: null,
+      updatedAt: null,
+      FAQType: { id: 2, mnName: "Бонд", enName: "Bond" }
+    },
+    {
+      id: 4,
+      type_id: 3,
+      mnQuestion: "Хэрхэн арилжаанд орж захиалга өгөх вэ?",
+      enQuestion: "How to Participate in Trading and Place an Order?",
+      mnAnswer: "Та үнэт цаасны арилжаанд оролцохын тулд заавал үнэт цаасны данстай байх шаардлагатай бөгөөд хэрэв та данстай бол \"Арилжаа\" цэс рүү хандаж, тухайн хувьцааг авах эсвэл зарах захиалга өгөх боломжтой",
+      enAnswer: "To participate in securities trading, you must first have a securities account. If you already have an account, you can go to the \"Trading\" section and place a buy or sell order for the desired stock.",
+      createdAt: null,
+      updatedAt: null,
+      FAQType: { id: 3, mnName: "Арилжаанд оролцох", enName: "Trading" }
+    },
+    {
+      id: 5,
+      type_id: 4,
+      mnQuestion: "Хэрхэн онлайн данс нээх вэ ?",
+      enQuestion: "How to Open an Account?",
+      mnAnswer: "Онлайнаар данс нээх : Хэрэв та үнэт цаасны дансгүй бол BDSec апп руу нэвтрэх үед танд Нүүр цэсний дээд талд \"Данс нээх\" харагдах бөгөөд та шаардлагатай мэдээллийг бүрэн бөглөж, дансны хураамж төлснөөр данс нээгдэнэ.",
+      enAnswer: "Opening an Account Online: If you do not have a securities account, when you log into the BDSec app, you will see the \"Open Account\" option at the top of the homepage. By providing the required information and paying the account opening fee, your account will be successfully opened.",
+      createdAt: null,
+      updatedAt: null,
+      FAQType: { id: 4, mnName: "Данс нээх", enName: "Opening account" }
+    }
+  ];
+
+  try {
+  const response = await fetchWithTimeout(url)
+    const responseData = await response.json();
+    
+    // Check if the response is successful and has data
+    if (responseData && responseData.success && responseData.data) {
+      return responseData.data as FAQ[]
+    } else {
+      return mockFAQData
+    }
+  } catch (error) {
+    return mockFAQData
+  }
+};
+
+export const fetchFAQType = async () => {
+  const url = `https://new.bdsec.mn/api/v1/faq/types`;
+  type FAQType = {
+  id: number;
+  mnName: string;
+  enName: string;
+  createdAt: string |null;
+  updatedAt: string | null;
+};
+
+  // Mock FAQ types data based on the API response you provided
+  const mockFAQTypesData: FAQType[] = [
+    { id: 1, mnName: "Хувьцаа", enName: "Stock", createdAt: null, updatedAt: null },
+    { id: 2, mnName: "Бонд", enName: "Bond", createdAt: null, updatedAt: null },
+    { id: 3, mnName: "Арилжаанд оролцох", enName: "Trading", createdAt: null, updatedAt: null },
+    { id: 4, mnName: "Данс нээх", enName: "Opening account", createdAt: null, updatedAt: null },
+    { id: 5, mnName: "1072 хувьцаа", enName: "1072 stock", createdAt: null, updatedAt: null }
+  ];
+
+  try {
+  const response = await fetchWithTimeout(url)
+    const responseData = await response.json();
+    
+    // Check if the response is successful and has data
+    if (responseData && responseData.success && responseData.data) {
+      return responseData.data as FAQType[]
+    } else {
+      return mockFAQTypesData
+    }
+  } catch (error) {
+      return mockFAQTypesData
   }
 };
 
@@ -667,34 +988,54 @@ export const fetchTradingHistory = async (symbol: string, page: number = 1, limi
 
 export const fetchBonds = async (page: number = 1, limit: number = 5000): Promise<BondsResponse> => {
   const url = `${BASE_URL}/securities/bonds?page=${page}&limit=${limit}&sortField`;
-  
+  logDev(`Fetching bonds from: ${url}`);
   try {
-    const response = await fetchWithTimeout(url)
-    
+    const response = await fetchWithTimeout(url);
     if (!response.ok) {
       logDev(`Using mock bonds data (${response.status})`);
-      // Return mock data instead of throwing
-      return {
-        success: true,
-        data: generateMockBonds(page, limit)
-      }
+      return { success: false, data: [] };
     }
-    return response.json()
+    return response.json();
   } catch (error) {
     logDev('Using fallback mock bonds data');
+    return { success: false, data: [] };
+  }
+};
+
+export const fetchCompanies = async (page: number = 1, limit: number = 5000, symbol?: string): Promise<CompaniesResponse> => {
+  const url = symbol 
+    ? `${BASE_URL}/securities/companies?page=${page}&limit=${limit}&sortField&symbol=${symbol}`
+    : `${BASE_URL}/securities/companies?page=${page}&limit=${limit}&sortField`;
     
-    // Return mock data as fallback
-    const mockData = generateMockBonds(page, limit)
+  console.log('=== COMPANIES API DEBUG ===');
+  console.log('fetchCompanies URL:', url);
+  console.log('Symbol filter:', symbol);
+  
+  try {
+    const response = await fetchWithTimeout(url);
+    console.log('Companies response status:', response.status);
+    console.log('Companies response statusText:', response.statusText);
     
-    return {
-      success: true,
-      data: mockData
+    if (!response.ok) {
+      console.error(`Error fetching companies: ${response.status} ${response.statusText}`);
+      logDev(`Error fetching companies: ${response.statusText}`);
+      return { success: false, data: [] };
     }
+    
+    const data = await response.json();
+    console.log('Companies response data:', data);
+    return data;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Companies API exception:', error);
+    logDev(`Exception in fetchCompanies: ${errorMessage}`);
+    return { success: false, data: [] };
   }
 };
 
 export const fetch52WeekHighLow = async (): Promise<WeekHighLowResponse> => {
   const url = `${BASE_URL}/securities/52-week-high-low`;
+  logDev('Fetching 52-week high-low data...');
   
   try {
     const response = await fetchWithTimeout(url)
@@ -792,7 +1133,7 @@ export const digipayLogin = async (userIdKhan: string) => {
         success: true,
         message: 'Using mock token for development',
         data: {
-          token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDYyOTR9.y4IGXd76fqQcHQlve00vADg_sfuOvL3PKrH0W-05Y4E",
+          token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDg4MjN9.CP4XJIAlErOi8fwrQ-vmBA4XT_wzdvIXw2lZ1wFbBII",
           user: {
             userId: 3
           }
@@ -815,7 +1156,7 @@ export const digipayLogin = async (userIdKhan: string) => {
       success: true,
       message: 'Using mock token for development',
       data: {
-        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDYyOTR9.y4IGXd76fqQcHQlve00vADg_sfuOvL3PKrH0W-05Y4E",
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDg4MjN9.CP4XJIAlErOi8fwrQ-vmBA4XT_wzdvIXw2lZ1wFbBII",
         user: {
           userId: 3
         }
@@ -825,16 +1166,16 @@ export const digipayLogin = async (userIdKhan: string) => {
 };
 
 // Update the sendRegistrationNumber function to handle all error cases
-export const sendRegistrationNumber = async (registrationNumber: string, nationality: string, token?: string): Promise<RegistrationResponse> => {
+export const sendRegistrationNumber = async (registrationNumber: string, token: string): Promise<RegistrationResponse> => {
   const url = `${BASE_URL}/user/send-registration-number`;
   
   try {
     const response = await fetchWithTimeout(url, {
       method: 'POST',
-      body: JSON.stringify({ registrationNumber, nationality }),
+      body: JSON.stringify({ registrationNumber }),
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        'Authorization': `Bearer ${token}`
       }
     });
     
@@ -940,8 +1281,20 @@ interface KhanUser {
   register: string;
   cif: string | null;
   userId: number;
-  registrationFee: number | null;
+  registrationFee: RegistrationFee | null;
   MCSDStateRequest: string | null;
+}
+interface RegistrationFee{
+  id: number,
+  digiId: string,
+  khanUserId: 2,
+  createdAt: Date,
+  updatedAt: Date,
+  status: "PENDING" | "COMPLETED" | "ERROR",
+  mcsdError: string | null,
+  message?: string,
+  register: string,
+  expiresAt: Date
 }
 
 interface UserAccountResponse {
@@ -1000,7 +1353,6 @@ export const getUserProfile = async (token?: string): Promise<UserProfileRespons
     
     // For development purposes, return mock profile data
     console.log('Using mock profile data for development');
-    
     return {
       success: true,
       message: 'Using mock profile data',
@@ -1077,6 +1429,42 @@ export const getUserAccountInformation = async (token?: string): Promise<UserAcc
         }
       }
     }
+  }
+}
+
+export const getUpdateMCSDStatus=async(token:string)=>{
+  const url = `${BASE_URL}/user/get-update-mcsd-status`;
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok) {
+        return{ ...data.data,success:true }as {
+          success: boolean,
+          accountOpened: boolean,
+          message: string,
+        };
+    } else {
+      return {
+        success: false,
+        message: data.message || 'Failed to fetch MCSD request status',
+        accountOpened: false,
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching MCSD request status:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch MCSD request status',
+      errorCode: 'UNKNOWN_ERROR'
+    };
   }
 }
 
@@ -1176,7 +1564,19 @@ export const sendAccountStatusRequest = async (data: any, token: string) => {
     };
   }
 };
-
+//get acc from mcsd
+export const getAccountRequest=async(token:string)=>{
+  const url = `${BASE_URL}/user/get-account-request`;
+  const response = await fetchWithTimeout(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  const data = await response.json();
+  return data;
+}
 // Get account status request
 export const getAccountStatusRequest = async (token: string) => {
   try {
@@ -1277,6 +1677,7 @@ export const createOrRenewInvoice = async (token: string) => {
     };
   }
 };
+
 
 // Check invoice status
 export const checkInvoiceStatus = async (token: string) => {
@@ -1444,5 +1845,7 @@ export type {
   UserAccountResponse,
   AccountSetupResponse,
   NewsData,
-  NewsResponse
+  NewsResponse,
+  CompanyData,
+  CompaniesResponse
 };

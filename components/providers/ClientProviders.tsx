@@ -6,6 +6,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext'
 import { I18nextProvider } from 'react-i18next'
 import i18n from '@/lib/i18n'
 import TokenProvider from './TokenProvider'
+import RegistrationGuard from './RegistrationGuard'
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
@@ -23,7 +24,9 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <LanguageProvider>
           <TokenProvider>
-            {children}
+            <RegistrationGuard>
+              {children}
+            </RegistrationGuard>
           </TokenProvider>
         </LanguageProvider>
       </ThemeProvider>

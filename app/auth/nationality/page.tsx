@@ -3,21 +3,41 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
-import { Search, ChevronRight } from 'lucide-react'
-import { digipayLogin, getRegistrationNumber, BASE_URL } from '@/lib/api'
-import Cookies from 'js-cookie'
+import { Loader2 } from 'lucide-react'
+import { BASE_URL } from '@/lib/api'
 
 export default function NationalityPage() {
   const { t, i18n } = useTranslation()
   const router = useRouter()
   const [countries, setCountries] = useState<{ countryCode: string, countryName: string }[]>([])
   const [selected, setSelected] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
   const currentLanguage = i18n.language
   
   useEffect(() => {
+    setIsLoading(true)
     fetch(`${BASE_URL}/helper/countries`)
       .then(res => res.json())
-      .then(data => setCountries(data.data || []))
+      .then(data => {
+        const countriesData = data.data || []
+        setCountries(countriesData)
+        
+        // Find and select Mongolia
+        const mongolia = countriesData.find(
+          (c: any) => c.countryCode === "496" || 
+          c.countryName === "Монгол" || 
+          c.countryNameEn === "Mongolia"
+        )
+        if (mongolia) {
+          setSelected(mongolia.countryCode)
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching countries:', error)
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -26,6 +46,19 @@ export default function NationalityPage() {
       // Redirect to register page with selected countryCode as query param
       router.push(`/auth/register?nationality=${selected}`)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-bdsec mx-auto" />
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {t('common.loading', 'Уншиж байна...')}
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (

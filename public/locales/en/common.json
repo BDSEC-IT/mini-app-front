@@ -43,6 +43,9 @@
   },
 
   "profile": {
+    "mcsdMessage": "MCSD Message",
+    "update": "Update",
+    "accountProcess" :"Account Process",
     "name": "Bold Erdene",
     "kyc": "KYC Verification",
     "general": "General Information",
@@ -173,13 +176,27 @@
     "brokerAccountWithMcsd": "Your broker account will be created with your MCSD account",
     "backToProfile": "Back to Profile",
     "completed": "Completed",
-    "payAccountOpeningFee": "Pay account opening fee (8000₮)"
+    "payAccountOpeningFee": "Pay account opening fee (8000₮)",
+    "accountOpeningProcess": "Account Opening Process",
+    "waitingSubmission": "Waiting for MCSD Submission",
+    "waitingSubmissionDesc": "Your registration fee has been paid. Your information will be submitted to MCSD within 72 hours. Please check back later.",
+    "waitingApproval": "Waiting for MCSD Approval",
+    "waitingApprovalDesc": "Your information has been submitted to MCSD and is currently under review. Please check back later for updates.",
+    "accountOpeningError": "Account Opening Error",
+    "waitingApprovalError": "MCSD Account Error",
+    "accountOpeningSuccess": "Account Opening Successful",
+    "accountOpeningSuccessDesc": "Your trading account has been successfully opened. You can now start trading!",
+    "processingTime": "Processing time: Up to 72 hours",
+    "underReview": "Under review by MCSD",
+    "updateInformation": "Update Registration Number",
+    "goToDashboard": "Go to Dashboard",
+    "mongolian": "Mongolian"
   },
   "menu": {
-    "about": "ABOUT US",
-    "faq": "FREQUENTLY ASKED QUESTIONS",
-    "news": "NEWS & INFORMATION",
-    "withdraw": "WITHDRAW MONEY"
+    "about": "About Us",
+    "faq": "Frequently Asked Questions",
+    "news": "News",
+    "withdraw": "Withdraw Money"
   },
   "chart": {
     "1d": "1D",
@@ -197,8 +214,8 @@
     "change": "Change",
     "marketCap": "Market Cap",
     "volume": "Volume",
-    "popularStocks": "Popular Stocks",
-    "viewAll": "View All",
+    "popularStocks": "Trading",
+    "viewAll": "View Detailed",
     "mostActive": "Most Active",
     "gainers": "Gainers",
     "losers": "Losers",
@@ -224,6 +241,7 @@
     "quantity": "Quantity",
     "orders": "Orders",
     "lastUpdated": "Last Updated",
+
     "loading": "Loading...",
     "refreshData": "Refresh Data",
     "turnover": "Turnover",
@@ -233,7 +251,10 @@
     "close": "Close",
     "previousClose": "Previous Close",
     "bid": "Bid",
-    "ask": "Ask"
+    "ask": "Ask",
+    "selectedStock": "Selected Stock",
+      "company_search" : "Search : BDS/BDSec",
+    "searchByCompanyOrSymbol": "Company/symbol"
   },
   "about": {
     "title": "About Us",
@@ -244,10 +265,12 @@
     "investment": "Investment Advisory",
     "consulting": "Financial Consulting",
     "exchange": "Exchange Member",
-    "years": "years",
+    "years": "with a history of years",
     "billion": "billion",
     "deals": "deals",
     "yearsExperience": "Years of experience",
+    "customers_too" : "with over a thousand clients",
+     "salbar" :"branches",
     "billionAssets": "Billion MNT in assets",
     "ipoDeals": "IPO deals",
     "address": "Address",
@@ -257,7 +280,7 @@
   },
   "allStocks": {
     "title": "All Stocks",
-    "active": "Active",
+    "active": "Today",
     "all": "All",
     "symbol": "Symbol",
     "price": "Price",
@@ -284,6 +307,15 @@
     "categoryII": "Category II",
     "categoryIII": "Category III",
     "timeFilter": "Time Period"
+ 
+  },
+    "StockAver": {
+    "company_name" : "Company name", 
+    "52data":"52-7 Data", 
+     "close_price":"Closing price",
+     "close_date":"Closing date", 
+      "see_data":"View 52/7 average",
+      "52/7average":"52/7 average"
   },
   "bonds": {
     "title": "Bonds",

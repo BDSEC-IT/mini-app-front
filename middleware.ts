@@ -6,7 +6,8 @@ const publicPaths = [
   '/auth/nationality',
   '/auth/register',
   '/api/user/digipay-login',
-  '/api/user/send-registration-number'
+  '/api/user/send-registration-number',
+  '/api/user/get-registration-number'
 ]
 
 export function middleware(request: NextRequest) {
@@ -17,16 +18,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Check for authentication token
-  const token = request.cookies.get('auth_token')?.value
-  
-  // If no token, redirect to nationality selection
-  if (!token) {
-    const url = new URL('/auth/nationality', request.url)
-    return NextResponse.redirect(url)
-  }
-
-  // Continue with the request
+  // Always allow the request to continue
+  // The registration check will be handled in the components/pages
+  // using the TokenProvider which sets a default token if none exists
   return NextResponse.next()
 }
 
