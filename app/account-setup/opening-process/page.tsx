@@ -223,23 +223,23 @@ export default function AccountOpeningProcess() {
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                   {!mcsdIsError &&t('profile.waitingApprovalDesc', 'ҮЦТХТ таны мэдээллийг шалгаж байна. Энэ хугацаанд та түр хүлээнэ үү.')}
                 </p>
-                {accountData?.MCSDAccount?.ErrorMessage && (
-                  <div className='mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600'>
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0">
-                        <Clock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('profile.mcsdMessage', 'ҮЦТХТ мэдэгдэл')}</h4>
-                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                          {accountData?.MCSDAccount?.ErrorMessage}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
+            {accountData?.MCSDAccount?.ErrorMessage && (
+              <div className='p-4 w-full bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600'>
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <Clock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('profile.mcsdMessage', 'ҮЦТХТ мэдэгдэл')}</h4>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      {accountData?.MCSDAccount?.ErrorMessage}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="flex justify-center">
               <div className="flex items-center space-x-2 text-sm text-gray-500">
                 <div className={`w-3 h-3 ${mcsdIsError ? 'bg-red-500' : 'bg-blue-500'} rounded-full`} />

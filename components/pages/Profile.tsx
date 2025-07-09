@@ -104,7 +104,7 @@ const Profile = () => {
 
   const { khanUser, MCSDAccount } = accountInfo;
   const hasMcsdAccount = MCSDAccount !== null;
-  const hasActiveMcsdAccount = MCSDAccount?.DGOrder === 'COMPLETED';
+  const hasActiveMcsdAccount = MCSDAccount?.DGStatus === 'COMPLETED';
 
   // Simplified completion checks - only use backend API data
   const isGeneralInfoComplete = () => {

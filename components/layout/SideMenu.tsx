@@ -37,7 +37,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   const { theme, setTheme } = useTheme()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [accountInfo, setAccountInfo] = useState<UserAccountResponse['data'] | null>(null)
-  
+    console.log("accountInfopls",accountInfo)
   const [isGeneralInfoComplete, setIsGeneralInfoComplete] = useState<boolean | null>(null);
   const [feeInfoCompleted, setFeeInfoCompleted] = useState<boolean | null>(null);
   const [hasExistingMcsdAccount, setHasExistingMcsdAccount] = useState(false);
@@ -188,7 +188,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
               </li>
             )}
             
-            {isLoggedIn &&  accountInfo?.MCSDAccount?.DGOrder !== "COMPLETED" && (
+            {isLoggedIn &&  accountInfo?.MCSDAccount?.DGStatus !== "COMPLETED" && (
               <li className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                 <div className="mb-2 px-2">
                   <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('profile.accountSetup')}</h3>

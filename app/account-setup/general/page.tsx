@@ -19,6 +19,7 @@ import FormField from '@/components/ui/FormField'
 import { ArrowLeft, ArrowRight, Check, AlertCircle, CreditCard, Edit, CheckCircle } from 'lucide-react'
 import Cookies from 'js-cookie'
 import { getAccountStatusRequest, sendAccountStatusRequest, createOrRenewInvoice, getUserAccountInformation, getRegistrationNumber, sendRegistrationNumber, BASE_URL, checkInvoiceStatus } from '@/lib/api'
+import Link from 'next/link'
 
 export default function GeneralInfoPage() {
   const { t } = useTranslation()
@@ -348,7 +349,7 @@ export default function GeneralInfoPage() {
     )
   }
 
-  const SummaryView = ({ summaryData, onEdit, onPay }: { summaryData: any, onEdit: () => void, onPay: () => Promise<void> }) => {
+  const SummaryView = ({ summaryData, onEdit, onPay }: { summaryData: any, onEdit: () => void, onPay: () => Promise<void>, }) => {
       // Reduced debug logging to improve performance
       // console.log('SummaryView received summaryData:', summaryData);
       // console.log('SummaryView data type:', typeof summaryData);
@@ -414,6 +415,14 @@ export default function GeneralInfoPage() {
                           </h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                               Таны данс нээх хүсэлтийг хянаж байна.
+                              <div className="flex justify-end mt-2">
+                  <Link
+                  href="/account-setup/opening-process"
+                    className="text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded"
+                  >
+                    Данс нээх үйл явцийг харах
+                  </Link>
+                </div>
                           </p>
                       </div>  
                   ) : (
@@ -448,6 +457,13 @@ export default function GeneralInfoPage() {
             getRegistrationNumber(existingToken),
             getUserAccountInformation(existingToken)
           ]);
+          if(accountRes.data?.MCSDAccount?.DGStatus==="COMPLETED"){
+            alert(
+              "Та аль хэдийн ҮЦТХТ-д данстай байна. Бүртгэл үүсгэх шаардлагагүй"
+              )
+              router.push('/')
+              return
+          }
           
           console.log('[DEBUG] API calls completed');
           console.log('[DEBUG] regRes:', regRes);
@@ -546,6 +562,16 @@ export default function GeneralInfoPage() {
               countryCode: existingData.Country || existingData.countryCode || nationality
             };
             setFormData(mappedData);
+            existingData.data.invoiceStatus=accountRes.data?.khanUser?.registrationFee?.status==="COMPLETED"?"PAID":"PENDING"
+            if(accountRes.data?.MCSDAccount?.DGStatus==="COMPLETED"){
+            alert(
+            "Та аль хэдийн ҮЦТХТ-д данстай байна. Бүртгэл үүсгэх шаардлагагүй"
+            )
+            router.push('/')
+            return
+            }
+              existingData.data.isMCSDUsed=accountRes.data?.MCSDAccount?.DGStatus==="COMPLETED"
+          
             setSummaryData(existingData);
             setViewMode('summary');
           } else if (hasSubmittedData && !isDataComplete) {
@@ -669,13 +695,13 @@ export default function GeneralInfoPage() {
     }
 
     try {
-        console.log('=== FORM SUBMISSION DEBUG ===');
-        console.log('Form data:', formData);
-        console.log('Step data:', data);
-        console.log('Combined data:', combinedData);
-        console.log('Nationality:', nationality);
-        console.log('Mapped data being sent:', mappedData);
-        console.log('=== END DEBUG ===');
+        // console.log('=== FORM SUBMISSION DEBUG ===');
+        // console.log('Form data:', formData);
+        // console.log('Step data:', data);
+        // console.log('Combined data:', combinedData);
+        // console.log('Nationality:', nationality);
+        // console.log('Mapped data being sent:', mappedData);
+        // console.log('=== END DEBUG ===');
         // Ensure bank account number contains only digits and is at least 6 digits long
         mappedData.bankAccountNumber = mappedData.bankAccountNumber.replace(/[^0-9]/g, '');
         if(mappedData.bankAccountNumber.length < 6){
@@ -793,10 +819,10 @@ export default function GeneralInfoPage() {
   }
   
   const renderContent = () => {
-    console.log('[DEBUG] renderContent formData:', formData);
-    console.log('[DEBUG] renderContent viewMode:', viewMode);
-    console.log('[DEBUG] renderContent step:', step);
-    console.log('[DEBUG] renderContent formData.isAdult:', formData.isAdult);
+    // console.log('[DEBUG] renderContent formData:', formData);
+    // console.log('[DEBUG] renderContent viewMode:', viewMode);
+    // console.log('[DEBUG] renderContent step:', step);
+    // console.log('[DEBUG] renderContent formData.isAdult:', formData.isAdult);
     // Reduced debug logging to improve performance
     // console.log('renderContent called with viewMode:', viewMode);
     // console.log('renderContent summaryData:', summaryData);
