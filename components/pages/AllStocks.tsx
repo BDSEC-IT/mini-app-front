@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight } from 'lucide-react'
 import { fetchAllStocks, type StockData } from '@/lib/api'
+import StockAverageModal from '../pages/StockAverageModal'
+
 
 // Define stock categories
 interface Category {
@@ -11,16 +13,14 @@ interface Category {
   name: string;
   mnName: string;
 }
-
 const AllStocks = () => {
   const { t, i18n } = useTranslation()
   const currentLanguage = i18n.language || 'mn';
-  
   // Helper function to get company name based on current language
   const getCompanyName = (stock: StockData) => {
     return currentLanguage === 'mn' ? stock.mnName : stock.enName;
   };
-
+   const [isModalOpen, setIsModalOpen] = useState(false)
   const [allStocks, setAllStocks] = useState<StockData[]>([])
   const [filteredStocks, setFilteredStocks] = useState<StockData[]>([])
   const [loading, setLoading] = useState(true)
@@ -379,28 +379,42 @@ const getCategorySummary = (category: string) => {
         )}
         
         {/* Filter Tabs */}
-        <div className="flex mb-4 border-b overflow-x-auto">
-          {[
-              { id: 'all', label: t('allStocks.all') },
-            { id: 'active', label: t('allStocks.active') },
-            { id: 'gainers', label: t('dashboard.gainers') },
-            { id: 'losers', label: t('dashboard.losers') },
-          
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              className={`px-4 py-2 text-sm whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
-                  : 'text-gray-500'
-              }`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+   <div className="flex mb-4 border-b overflow-x-auto justify-between items-center">
+  <div className="flex">
+    {[
+      { id: 'all', label: t('allStocks.all') },
+      { id: 'active', label: t('allStocks.active') },
+      { id: 'gainers', label: t('dashboard.gainers') },
+      { id: 'losers', label: t('dashboard.losers') },
+    ].map((tab) => (
+      <button
+        key={tab.id}
+        className={`px-4 py-2 text-sm whitespace-nowrap ${
+          activeTab === tab.id
+            ? 'bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
+            : 'text-gray-500'
+        }`}
+        onClick={() => setActiveTab(tab.id)}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
 
+  <div className="px-4 py-2 text-sm whitespace-nowrap">
+    <button
+        onClick={() => setIsModalOpen(true)}
+        className="bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
+            : 'text-gray-500'"
+      >
+        52/7 дундаж харах
+      </button>
+
+      <StockAverageModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+       </div>
+     </div>
+
+          
         {/* Stocks Table with Category Groups */}
         {loading ? (
           <div className="flex justify-center items-center py-12">
