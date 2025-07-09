@@ -174,11 +174,11 @@ export const StockList = ({
       </div>
 
       {/* Selected card pinned to the left, outside the scrollable carousel */}
-      <div className="flex items-stretch gap-2 mt-4 py-2">
+      <div className="flex items-stretch gap-2 mt-4 py-4">
         
         {selectedStock && (
           <div
-            className={`shrink-0 ${getBasisClass()} border-bdsec border-[2px] dark:border-indigo-400 bg-gradient-to-br from-bdsec/5 to-bdsec/10 dark:from-indigo-500/10 dark:to-indigo-500/5 rounded-xl  p-2 sm:p-3 flex flex-col justify-between transition-all duration-300 relative overflow-hidden z-10`}
+            className={`shrink-0 ${getBasisClass()} border-bdsec border-[2px]  dark:border-indigo-400  dark:from-indigo-500/10 dark:to-indigo-500/5 rounded-xl  p-2 my-2 sm:p-3 flex flex-col justify-between transition-all duration-300 relative overflow-hidden z-10`}
             style={{ minWidth: 150, maxWidth: 150 }}
           >
             {/* SVG Illumination Effect */}
@@ -236,7 +236,7 @@ export const StockList = ({
             className="w-full"
             setApi={setApi}
           >
-            <CarouselContent className="flex pl-8">
+            <CarouselContent className="flex pl-8 py-2">
               {otherStocks.length > 0 ? (
                 otherStocks.map((stock, index) => {
                   const isPositive = (stock.Changep || 0) >= 0;
