@@ -30,36 +30,37 @@ export default function RegistrationGuard({ children }: RegistrationGuardProps) 
 
     const checkRegistration = async () => {
       try {
-        // Get token from cookies
-        const token = Cookies.get('token')
-        
+        const token = Cookies.get('token');
+
         if (!token) {
-          console.log('No token found, redirecting to nationality selection')
-          router.push('/auth/nationality')
-          return
+          // No token found, allow user to browse the site (testing/guest mode)
+          console.log('No token found, allowing access for guest/testing.');
+          setHasRegistration(true);
+          setIsChecking(false);
+          return;
         }
 
-        // Check registration status
-        const response = await getRegistrationNumber(token)
-        console.log('Registration check response:', response)
+        // Token found, check for registration number
+        const response = await getRegistrationNumber(token);
+        console.log('Registration check response:', response);
 
         if (response.success && response.registerNumber) {
-          // User has registration
-          console.log('User has registration:', response.registerNumber)
-          setHasRegistration(true)
+          // User is registered
+          console.log('User has registration:', response.registerNumber);
+          setHasRegistration(true);
         } else {
-          // User has no registration, redirect to nationality selection
-          console.log('User has no registration, redirecting to nationality selection')
-          router.push('/auth/nationality')
-          return
+          // User is not registered, redirect to complete registration
+          console.log('User has no registration, redirecting to nationality selection');
+          router.push('/auth/nationality');
+          return;
         }
       } catch (error) {
-        console.error('Error checking registration:', error)
-        // On error, redirect to nationality selection
-        router.push('/auth/nationality')
-        return
+        console.error('Error checking registration:', error);
+        // On error (e.g., invalid token), redirect to registration
+        router.push('/auth/nationality');
+        return;
       } finally {
-        setIsChecking(false)
+        setIsChecking(false);
       }
     }
 
