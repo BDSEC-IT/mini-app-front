@@ -21,9 +21,41 @@ export default function RegisterPage() {
     message: string | null;
     details?: string | null;
   }>({ type: null, message: null })
+  const [countries, setCountries] = useState<{ countryCode: string, countryName: string }[]>([])
+  const [selectedCountry, setSelectedCountry] = useState<{ countryCode: string, countryName: string } | null>(null)
   
   // Get token on component mount if it doesn't exist
 
+  // Fetch countries data
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const response = await fetch('https://miniapp.bdsec.mn/apitest/helper/countries')
+        const data = await response.json()
+        const countriesData = data.data || []
+        setCountries(countriesData)
+        
+        // Find the selected country
+        const country = countriesData.find((c: any) => c.countryCode === nationality)
+        setSelectedCountry(country || null)
+      } catch (error) {
+        console.error('Error fetching countries:', error)
+      }
+    }
+    
+    fetchCountries()
+  }, [nationality])
+
+  // Function to get appropriate placeholder based on nationality
+  const getPlaceholder = () => {
+    if (nationality === '496') {
+      // Mongolia - use Mongolian registration number format
+      return 'ӨӨ000000'
+    } else {
+      // Other countries - use descriptive text
+      return t('auth.enterRegisterNumber', 'Enter your register number')
+    }
+  }
   
   // Handle registration number input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -210,7 +242,7 @@ export default function RegisterPage() {
         </h1>
         
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          {t('auth.registerHelpText', { country: nationality })}
+          {t('auth.registerHelpText', { country: selectedCountry?.countryName || nationality })}
         </p>
         
         {renderStatusMessage()}
@@ -228,7 +260,7 @@ export default function RegisterPage() {
               className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${
                 error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec dark:focus:ring-indigo-500'
               }`}
-              placeholder="ӨӨ000000"
+              placeholder={getPlaceholder()}
               disabled={isLoading || responseStatus.type === 'success'}
             />
             {error && (

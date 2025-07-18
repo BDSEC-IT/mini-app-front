@@ -311,6 +311,65 @@ export function TradingViewChart({
       
       svg.appendChild(circle)
     })
+
+    // Add x-axis labels (dates) - show more values
+    const labelCount = isMobile ? 6 : 8 // More labels to show more date values
+    const step = Math.max(1, Math.floor(points.length / labelCount))
+    
+    for (let i = 0; i < points.length; i += step) {
+      if (i < points.length) {
+        const point = points[i]
+        const date = point.date
+        
+        // Create text element for date
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+        text.setAttribute('x', point.x.toString())
+        text.setAttribute('y', (height + 20).toString())
+        text.setAttribute('text-anchor', 'middle')
+        text.setAttribute('font-size', isMobile ? '9px' : '11px') // Slightly smaller font to fit more labels
+        text.setAttribute('fill', theme === 'dark' ? '#9ca3af' : '#6b7280')
+        text.setAttribute('font-family', 'system-ui, -apple-system, sans-serif')
+        
+        // Format date to show actual date values more clearly
+        let dateText = ''
+        if (isMobile) {
+          // Mobile: show day/month for shorter periods, month/year for longer
+          if (activePeriod === '1M') {
+            dateText = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+          } else if (activePeriod === '3M') {
+            dateText = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+          } else if (activePeriod === '1Y') {
+            dateText = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+          } else {
+            dateText = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+          }
+        } else {
+          // Desktop: show more detailed date format
+          if (activePeriod === '1M') {
+            dateText = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+          } else if (activePeriod === '3M') {
+            dateText = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+          } else if (activePeriod === '1Y') {
+            dateText = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+          } else {
+            dateText = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+          }
+        }
+        
+        text.textContent = dateText
+        svg.appendChild(text)
+        
+        // Add small tick mark
+        const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+        tick.setAttribute('x1', point.x.toString())
+        tick.setAttribute('y1', height.toString())
+        tick.setAttribute('x2', point.x.toString())
+        tick.setAttribute('y2', (height + 5).toString())
+        tick.setAttribute('stroke', theme === 'dark' ? '#374151' : '#e5e7eb')
+        tick.setAttribute('stroke-width', '1')
+        svg.appendChild(tick)
+      }
+    }
     
   }, [chartData, theme, mounted, containerSize])
 
@@ -369,7 +428,7 @@ export function TradingViewChart({
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div ref={containerRef} className="w-full h-[calc(100%-50px)] relative">
+      <div ref={containerRef} className="w-full h-[calc(100%-80px)] relative">
         <svg 
           ref={svgRef} 
           className="w-full h-full"

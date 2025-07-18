@@ -165,7 +165,7 @@ export default function GeneralInfoPage() {
           <FormField 
             name="registerNumber" 
             label={t('profile.registerNumber')} 
-            placeholder="AA00112233" 
+            placeholder={nationality === '496' ? 'ӨӨ000000' : t('profile.enterRegisterNumber', 'Enter your register number')} 
             required 
             disabled={!!registerNumber} 
           />
@@ -285,8 +285,8 @@ export default function GeneralInfoPage() {
     return (
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onNext)} className="space-y-6">
-          <FormField name="childRegisterNumber" label={t('profile.childRegisterNumber')} placeholder="AA00112233" required disabled={!!registerNumber} />
-          <FormField name="parentRegisterNumber" label={t('profile.parentRegisterNumber')} placeholder="AA00112233" required />
+          <FormField name="childRegisterNumber" label={t('profile.childRegisterNumber')} placeholder={nationality === '496' ? 'ӨӨ000000' : t('profile.enterRegisterNumber', 'Enter your register number')} required disabled={!!registerNumber} />
+          <FormField name="parentRegisterNumber" label={t('profile.parentRegisterNumber')} placeholder={nationality === '496' ? 'ӨӨ000000' : t('profile.enterRegisterNumber', 'Enter your register number')} required />
           <FormField name="lastName" label={t('profile.lastName')} placeholder={t('profile.enterLastName')} required />
           <FormField name="firstName" label={t('profile.firstName')} placeholder={t('profile.enterFirstName')} required />
           <div className="mb-4">
@@ -867,7 +867,7 @@ export default function GeneralInfoPage() {
             <input
               id="registerNumber"
               type="text"
-              placeholder="AA00112233"
+              placeholder={nationality === '496' ? 'ӨӨ000000' : t('profile.enterRegisterNumber', 'Enter your register number')}
               required
               value={registerInput}
               onChange={e => setRegisterInput(e.target.value)}

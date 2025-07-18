@@ -318,7 +318,7 @@ const DashboardContent = () => {
       {/* Chart section: full-bleed, outside the padded container */}
       {!isBond && (
         <div className="relative w-full max-w-full overflow-hidden">
-          <div className="h-[350px] sm:h-[380px] md:h-[400px] lg:h-[420px] mt-4 mb-8 sm:mb-12 rounded-lg bg-transparent">
+          <div className="h-[370px] sm:h-[400px] md:h-[420px] lg:h-[440px] mt-4 mb-8 sm:mb-12 rounded-lg bg-transparent">
             <div className="relative w-full h-full overflow-hidden">
               {selectedCard && (
                 <TradingViewChart 
