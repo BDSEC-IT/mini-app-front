@@ -116,7 +116,7 @@
     "requestTimeout": "Request timed out. Please check your connection and try again.",
     "networkError": "Network error. Please check your internet connection and try again.",
     "registrationFeeInfo": "A registration fee is required to create an MCSD account. Please create an invoice and complete the payment.",
-    "bankInfoExplanation": "Bank information will be used for future deposits and withdrawals from your MCSD account. This information is not related to the registration fee.",
+    "bankInfoExplanation": "Bank information will be used for withdrawing and depositing money from your CSD and Nominal accounts.",
     "bankInfoSubmitted": "Bank information has been successfully submitted. Please proceed to pay the registration fee.",
     "accountSetupGeneral": "Account Setup - General Information",
     "basicInfo": "Basic Information",

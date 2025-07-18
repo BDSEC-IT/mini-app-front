@@ -59,7 +59,7 @@ export default function RegisterPage() {
   
   // Handle registration number input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRegisterNumber(e.target.value)
+    setRegisterNumber(e.target.value.toUpperCase())
     setError(null)
     setResponseStatus({ type: null, message: null })
   }

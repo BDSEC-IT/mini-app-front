@@ -220,7 +220,7 @@ export default function GeneralInfoPage() {
           <FormField name="homeAddress" label={t('profile.homeAddress')} placeholder={t('profile.enterHomeAddress')} required />
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">{t('profile.bankInfo')}</h3>
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-6 text-xs text-blue-700 dark:text-blue-300">Банкны мэдээлэл нь ирээдүйд ҮЦТХТ дансаасаа мөнгө татах, оруулахад ашиглагдана.</div>
+                              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-6 text-xs text-blue-700 dark:text-blue-300">{t('profile.bankInfoExplanation')}</div>
             <div className="mb-4">
               <label htmlFor="bankCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.selectBank')} <span className="text-red-500">*</span></label>
               <select id="bankCode" {...methods.register('bankCode')} className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${methods.formState.errors.bankCode ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}>
@@ -325,7 +325,7 @@ export default function GeneralInfoPage() {
           <FormField name="homeAddress" label={t('profile.homeAddress')} placeholder={t('profile.enterHomeAddress')} required />
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">{t('profile.bankInfo')}</h3>
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-6 text-xs text-blue-700 dark:text-blue-300">Банкны мэдээлэл нь ирээдүйд ҮЦТХТ дансаасаа мөнгө татах, оруулахад ашиглагдана.</div>
+                              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg mb-6 text-xs text-blue-700 dark:text-blue-300">{t('profile.bankInfoExplanation')}</div>
             <div className="mb-4">
               <label htmlFor="bankCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('profile.selectBank')} <span className="text-red-500">*</span></label>
               <select id="bankCode" {...methods.register('bankCode')} className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${methods.formState.errors.bankCode ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec'} bg-white dark:bg-gray-800 text-gray-900 dark:text-white`}>
