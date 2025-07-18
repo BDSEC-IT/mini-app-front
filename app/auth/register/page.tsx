@@ -118,6 +118,8 @@ export default function RegisterPage() {
         
         // Wait for 2 seconds before redirecting to profile page
         setTimeout(() => {
+            window.location.href = '/profile';
+            return;
           router.push('/profile')
         }, 2000)
       } else {

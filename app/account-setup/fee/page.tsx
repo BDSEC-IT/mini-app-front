@@ -181,11 +181,16 @@ export default function FeePaymentPage() {
       }
       const userData=await checkInvoiceStatus(token)
       console.log("userData",userData)
-      if(userData.message==="MCSD Account found"){
-        alert("Таны дансны мэдээлэл амжилттай ҮЦТХТ рүү илгээгдсэн байна")
-        router.push('/account-setup/opening-process');
+      if (userData.message === "MCSD Account found") {
+        window.location.href = '/account-setup/opening-process';
         return;
       }
+      
+      // if(userData.message==="MCSD Account found"){
+      //   alert("Таны дансны мэдээлэл амжилттай ҮЦТХТ рүү илгээгдсэн байна")
+      //   router.push('/account-setup/opening-process');
+      //   return;
+      // }
       if(userData&& userData.data?.data?.registrationFee?.status){
         console.log("ISPAID red",userData.data.data.registrationFee?.status === 'COMPLETED')
       console.log("userData",userData)
