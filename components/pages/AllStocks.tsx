@@ -17,10 +17,12 @@ interface Category {
 const AllStocks = () => {
   const { t, i18n } = useTranslation()
   const currentLanguage = i18n.language || 'mn';
+  
   // Helper function to get company name based on current language
-  const getCompanyName = (stock: StockData) => {
+  const getCompanyName = useCallback((stock: StockData) => {
     return currentLanguage === 'mn' ? stock.mnName : stock.enName;
-  };
+  }, [currentLanguage]);
+
    const [isModalOpen, setIsModalOpen] = useState(false)
   const [allStocks, setAllStocks] = useState<StockData[]>([])
   const [filteredStocks, setFilteredStocks] = useState<StockData[]>([])
@@ -32,7 +34,9 @@ const AllStocks = () => {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     'I': true,
     'II': true,
-    'III': true
+    'III': true,
+    'FUND': true,
+    'BOND': true
   })
   const [sortConfig, setSortConfig] = useState<{
     key: keyof StockData | null;
@@ -47,24 +51,35 @@ const AllStocks = () => {
     { id: 'all', name: t('allStocks.all'), mnName: t('allStocks.all') },
     { id: 'I', name: t('allStocks.categoryI'), mnName: t('allStocks.categoryI') },
     { id: 'II', name: t('allStocks.categoryII'), mnName: t('allStocks.categoryII') },
-    { id: 'III', name: t('allStocks.categoryIII'), mnName: t('allStocks.categoryIII') }
+    { id: 'III', name: t('allStocks.categoryIII'), mnName: t('allStocks.categoryIII') },
+    { id: 'FUND', name: 'Хөрөнгө оруулалтын сан', mnName: 'Хөрөнгө оруулалтын сан' },
+    { id: 'BOND', name: 'Компанийн бонд', mnName: 'Компанийн бонд' }
   ], [t]);
 
   // Fetch all stocks data
   const fetchStocksData = useCallback(async () => {
-    try {
-      setLoading(true)
+      try {
+        setLoading(true)
       const response = await fetchAllStocks()
       if (response.success && response.data) {
         const uniqueStocks = filterUniqueStocks(response.data)
+        
+        // Debug: Log the MarketSegmentID values
+        const segmentCounts: Record<string, number> = {};
+        uniqueStocks.forEach(stock => {
+          const segmentId = stock.MarketSegmentID || 'undefined';
+          segmentCounts[segmentId] = (segmentCounts[segmentId] || 0) + 1;
+        });
+        console.log('MarketSegmentID distribution:', segmentCounts);
+        
         setAllStocks(uniqueStocks)
         setFilteredStocks(uniqueStocks)
       }
-    } catch (err) {
+      } catch (err) {
       console.error('Error fetching stocks:', err)
-    } finally {
-      setLoading(false)
-    }
+      } finally {
+        setLoading(false)
+      }
   }, [])
 
   // Filter unique stocks (removing duplicates with -O-0000 suffix)
@@ -152,17 +167,30 @@ const isToday = (dateString: string): boolean => {
 };
 
 const getStockCategory = (stock: StockData): string => {
-  if (!stock.MarketSegmentID || !stock.MDEntryTime) return '';
+  if (!stock.MarketSegmentID) return '';
 
-  // Filter by today's date
-  if (!isToday(stock.MDEntryTime)) return '';
-
-  // Handle both English and Mongolian formats
-  const match = stock.MarketSegmentID.match(/^(I{1,3})\s*(classification|ангилал)/i);
-  const cat = match?.[1] || '';
-
-  // Only allow 'I', 'II', or 'III'
-  return ['I', 'II', 'III'].includes(cat) ? cat : '';
+  // Case-insensitive check with string comparison
+  const segment = stock.MarketSegmentID.toString().trim().toUpperCase();
+  
+  // Check various patterns
+  if (segment === 'I' || segment === 'I CLASSIFICATION' || segment === 'I АНГИЛАЛ' || segment.startsWith('I ')) {
+    return 'I';
+  } 
+  else if (segment === 'II' || segment === 'II CLASSIFICATION' || segment === 'II АНГИЛАЛ' || segment.startsWith('II ')) {
+    return 'II';
+  }
+  else if (segment === 'III' || segment === 'III CLASSIFICATION' || segment === 'III АНГИЛАЛ' || segment.startsWith('III ')) {
+    return 'III';
+  }
+  else if (segment === 'FUND' || segment.includes('FUND') || segment.includes('САН')) {
+    return 'FUND';
+  }
+  else if (segment === '1' || segment === 'BOND' || segment.includes('БОНД') || segment.includes('BOND')) {
+    return 'BOND';
+  }
+  
+  console.log('Unknown MarketSegmentID:', segment);
+  return '';
 };
 
 
@@ -175,23 +203,21 @@ const getStockCategory = (stock: StockData): string => {
     if (searchTerm) {
       filtered = filtered.filter(stock => 
         stock.Symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (stock.mnName && stock.mnName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (stock.enName && stock.enName.toLowerCase().includes(searchTerm.toLowerCase()))
+        (getCompanyName(stock) || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
     
     // Apply tab filter
-    switch (activeTab) {
-      case 'active':
-        // Show stocks with recent activity
-        filtered = filtered.filter(stock => stock.Volume && stock.Volume > 0)
-        break
-      case 'gainers':
-        filtered = filtered.filter(stock => stock.Changep > 0)
-        break
-      case 'losers':
-        filtered = filtered.filter(stock => stock.Changep < 0)
-        break
+    if (activeTab === 'active') {
+      // Filter stocks that have had some trading activity today
+      filtered = filtered.filter(stock => {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        return stock.MDEntryTime && stock.MDEntryTime.slice(0, 10) === todayStr;
+      });
+    } else if (activeTab === 'gainers') {
+      filtered = filtered.filter(stock => stock.Changes > 0)
+    } else if (activeTab === 'losers') {
+      filtered = filtered.filter(stock => stock.Changes < 0)
     }
     
     // Apply category filter
@@ -200,275 +226,302 @@ const getStockCategory = (stock: StockData): string => {
     }
     
     setFilteredStocks(filtered)
-  }, [allStocks, searchTerm, activeTab, selectedCategory])
-
-  // Initialize real-time connection and updates
-  useEffect(() => {
-    // Only start real-time updates after initial data is loaded
-    if (allStocks.length > 0) {
-      // Connect to real-time service
-      socketRef.current = realTimeService.connect()
-      
-      if (socketRef.current) {
-        // Join trading room
-        realTimeService.joinTradingRoom()
-        
-        // Listen for trading data updates
-        realTimeService.onTradingDataUpdate((data: any) => {
-          console.log('🎯 AllStocks: Real-time trading data received:', data.length, 'stocks')
-          console.log('📈 Sample stock data:', data[0] ? {
-            Symbol: data[0].Symbol,
-            LastTradedPrice: data[0].LastTradedPrice,
-            Changep: data[0].Changep,
-            Volume: data[0].Volume
-          } : 'no data')
-          setLastUpdate(new Date())
-          
-          // Update stocks with real-time data
-          if (data && Array.isArray(data)) {
-            setAllStocks(prevStocks => {
-              const updatedStocks = [...prevStocks]
-              
-              data.forEach((update: any) => {
-                const stockIndex = updatedStocks.findIndex(
-                  stock => stock.Symbol === update.Symbol || stock.Symbol.split('-')[0] === update.Symbol.split('-')[0]
-                )
-                
-                if (stockIndex !== -1) {
-                  const oldStock = updatedStocks[stockIndex]
-                  
-                  // Store previous values for blink effect
-                  setPreviousStockValues(prev => ({
-                    ...prev,
-                    [oldStock.Symbol]: {
-                      price: oldStock.LastTradedPrice || oldStock.ClosingPrice || 0,
-                      change: oldStock.Changep || 0
-                    }
-                  }))
-                  
-                  // Update stock data with real-time information
-                  updatedStocks[stockIndex] = {
-                    ...oldStock,
-                    ...update,
-                    // Preserve existing fields that might not be in the update
-                    mnName: oldStock.mnName,
-                    enName: oldStock.enName,
-                    MarketSegmentID: oldStock.MarketSegmentID,
-                    // Preserve the cleaned symbol (don't overwrite with full symbol from update)
-                    Symbol: oldStock.Symbol,
-                  }
-                }
-              })
-              
-              return updatedStocks
-            })
-          }
-        })
-        
-        // Listen for stock updates
-        realTimeService.onStockUpdate((data: any) => {
-          console.log('Real-time stock update received:', data)
-          setLastUpdate(new Date())
-          
-          // Update specific stock
-          if (data && data.Symbol) {
-            setAllStocks(prevStocks => {
-              const updatedStocks = [...prevStocks]
-              const stockIndex = updatedStocks.findIndex(
-                stock => stock.Symbol === data.Symbol || stock.Symbol.split('-')[0] === data.Symbol.split('-')[0]
-              )
-              
-              if (stockIndex !== -1) {
-                const oldStock = updatedStocks[stockIndex]
-                
-                // Store previous values for blink effect
-                setPreviousStockValues(prev => ({
-                  ...prev,
-                  [oldStock.Symbol]: {
-                    price: oldStock.LastTradedPrice || oldStock.ClosingPrice || 0,
-                    change: oldStock.Changep || 0
-                  }
-                }))
-                
-                updatedStocks[stockIndex] = {
-                  ...oldStock,
-                  ...data,
-                  // Preserve existing fields
-                  mnName: oldStock.mnName,
-                  enName: oldStock.enName,
-                  MarketSegmentID: oldStock.MarketSegmentID,
-                  // Preserve the cleaned symbol (don't overwrite with full symbol from update)
-                  Symbol: oldStock.Symbol,
-                }
-              }
-              
-              return updatedStocks
-            })
-          }
-        })
-      }
-    }
-    
-    // Cleanup on unmount
-    return () => {
-      realTimeService.disconnect()
-    }
-  }, [allStocks.length]) // Only run when allStocks length changes (after initial load)
-
-  // Fetch data on component mount
-  useEffect(() => {
-    fetchStocksData()
-  }, [fetchStocksData])
-
-  // Format price with commas
-  const formatPrice = (price: number | undefined) => {
-    if (!price) return '-'
-    return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  }
-
+  }, [allStocks, searchTerm, activeTab, selectedCategory, getCompanyName])
+  
   // Group stocks by category
   const stocksByCategory = useMemo(() => {
-    const sorted = sortedStocks()
-    const grouped: Record<string, StockData[]> = {
-      'I': [],
-      'II': [],
-      'III': []
-    }
-    
-    sorted.forEach(stock => {
-      const category = getStockCategory(stock)
-      if (grouped[category]) {
-        grouped[category].push(stock)
+    return sortedStocks().reduce((acc, stock) => {
+      const category = getStockCategory(stock);
+      if (category) {
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(stock);
       }
-    })
+      return acc;
+    }, {} as Record<string, StockData[]>);
+  }, [sortedStocks]);
+
+
+  // Initialize real-time service
+  useEffect(() => {
+    fetchStocksData();
     
-    return grouped
-  }, [sortedStocks])
+    // Connect to the real-time service
+    realTimeService.connect();
+    realTimeService.joinTradingRoom();
 
-  // Calculate summary for a category (only stocks with trades today, sizemd > 0, using allStocks)
-const getCategorySummary = (category: string) => {
-  const stocks = allStocks.filter(stock => {
-    const cat = getStockCategory(stock);
-   return (
-  cat === category &&
-  (Number(stock.sizemd) > 0 || Number(stock.sizemd2) > 0)
-);
+    // Listen for trading data updates
+    realTimeService.onTradingDataUpdate((data: StockData[]) => {
+      setAllStocks(prevStocks => {
+        const updatedStocks = [...prevStocks];
+        data.forEach(update => {
+          const stockIndex = updatedStocks.findIndex(s => s.Symbol === update.Symbol);
+          if (stockIndex !== -1) {
+            setPreviousStockValues(prev => ({
+              ...prev,
+              [update.Symbol]: { 
+                price: updatedStocks[stockIndex].LastTradedPrice, 
+                change: updatedStocks[stockIndex].Changep || 0 
+              }
+            }));
+            updatedStocks[stockIndex] = {
+              ...updatedStocks[stockIndex],
+              ...update
+            };
+          }
+        });
+        return updatedStocks;
+      });
+      setLastUpdate(new Date());
+    });
 
-  });
+    return () => {
+      realTimeService.disconnect();
+    };
+  }, [fetchStocksData]);
 
-  return {
-    count: stocks.length,
-    totalTurnover: stocks.reduce(
-      (sum, s) => sum + (Number(s.Turnover) || 0),
-      0
-    ),
-    totalVolume: stocks.reduce(
-      (sum, s) => sum + (Number(s.Volume) || 0),
-      0
-    ),
+  // Format price with appropriate transformation for bonds
+  const formatPrice = (price: number | undefined, isBond: boolean = false) => {
+    if (price === undefined || price === null) return '-';
+    // For bonds, multiply the price by 1000
+    const transformedPrice = isBond ? price * 1000 : price;
+    return transformedPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
-};
+  
+  // Get summary for a category
+  const getCategorySummary = (category: string) => {
+    const categoryStocks = stocksByCategory[category] || []
+    
+    return {
+      count: categoryStocks.length,
+      totalVolume: categoryStocks.reduce((sum, s) => sum + (s.Volume || 0), 0),
+      totalTurnover: categoryStocks.reduce((sum, s) => sum + (s.Turnover || 0), 0),
+    }
+  }
 
-
-  // Render table rows for a category
+  // Render stocks for a specific category
   const renderCategoryStocks = (stocks: StockData[]) => {
-    return stocks.map((stock, index) => {
-      const previousValues = previousStockValues[stock.Symbol]
-      const currentPrice = stock.LastTradedPrice || stock.ClosingPrice || 0
-      const currentChange = stock.Changep || 0
+    // Check if we're rendering bonds
+    const isBondCategory = stocks.length > 0 && getStockCategory(stocks[0]) === 'BOND';
+    
+    return stocks.map((stock) => {
+      const previousValues = previousStockValues[stock.Symbol] || { price: 0, change: 0 };
       
       return (
         <tr 
-          key={`${stock.Symbol}-${index}`} 
-          className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+          key={stock.Symbol} 
+          className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
         >
-        <td className="px-2 py-3">
-          <div>
-            <div className="font-medium">{stock.Symbol}</div>
-            <div className="text-xs text-gray-500">{getCompanyName(stock)}</div>
-          </div>
-        </td>
-        <td className="px-2 py-3 text-right">
-          {Number(stock.Volume)}
-        </td>
-        <td className="px-2 py-3 text-right">
-          {formatPrice(stock.Turnover)}
-        </td>
-        <td className="px-2 py-3 text-right">
-          {(() => {
-            const isBond = stock.Symbol.toUpperCase().includes('-BD');
-            const displayValue = isBond ? stock.LastTradedPrice : stock.PreviousClose;
-            console.log(`Stock ${stock.Symbol}: isBond=${isBond}, LastTradedPrice=${stock.LastTradedPrice}, PreviousClose=${stock.PreviousClose}, displayValue=${displayValue}`);
-            return formatPrice(displayValue);
-          })()}
-        </td>
-        <td className="px-2 py-3 text-right">
-          {formatPrice(stock.OpeningPrice )}
-        </td>
-        <td className="px-2 py-3 text-right">
-          {formatPrice(stock.HighPrice )}
-        </td>
-           <td className="px-2 py-3 text-right">
-          {formatPrice(stock.LowPrice  )}
-        </td>
-            <td className="px-2 py-3 text-right">
-              <BlinkEffect 
-                value={currentPrice}
-                previousValue={previousValues?.price}
-                duration={1000}
-              >
-                <div className="px-2 py-1 rounded">
-                  {formatPrice(stock.LastTradedPrice)}
-                </div>
-              </BlinkEffect>
-            </td>
-            <td className="px-2 py-3 text-right">
-          {formatPrice(stock.ClosingPrice)}
-        </td>
-           <td className={`px-2 py-3 text-right ${stock.Changes >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-        {formatPrice(stock.Changes)}
-        </td>
-            <td className={`px-2 py-3 text-right ${
-              Math.abs(stock.Changep || 0) < 0.01 
-                ? 'text-gray-500' 
-                : stock.Changep >= 0 
-                  ? 'text-green-500' 
-                  : 'text-red-500'
-            }`}>
-              <BlinkEffect 
-                value={currentChange}
-                previousValue={previousValues?.change}
-                duration={1000}
-              >
-                <div className="flex items-center justify-end px-2 py-1 rounded">
-                  {Math.abs(stock.Changep || 0) < 0.01 ? (
-                    <span>0.00%</span>
-                  ) : (
-                    <>
-                      {stock.Changep >= 0 ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
-                      <span>{stock.Changep?.toFixed(2)}%</span>
-                    </>
-                  )}
-                </div>
-              </BlinkEffect>
-            </td>
-        <td className="px-2 py-3 text-right">
-          {Number(stock.sizemd) > 0 ? Number(stock.sizemd).toLocaleString() : '-'}
-        </td>
-              <td className="px-2 py-3 text-right">
-          {formatPrice(stock.MDEntryPx)}
-        </td>
-         <td className="px-2 py-3 text-right">
-          {formatPrice(stock.MDEntryPx2)}
-        </td>
+          <td className="px-2 py-3 whitespace-nowrap">
+            <a href={`/stocks/${stock.Symbol}`} className="flex flex-col">
+              <span className="font-medium">{stock.Symbol}</span>
+              <span className="text-xs text-gray-500">{getCompanyName(stock)}</span>
+            </a>
+          </td>
           <td className="px-2 py-3 text-right">
-          {Number(stock.sizemd2) > 0 ? Number(stock.sizemd2).toLocaleString() : '-'}
-        </td>
-           
+            {stock.Volume?.toLocaleString() || '-'}
+          </td>
+          <td className="px-2 py-3 text-right">
+            {stock.Turnover?.toLocaleString() || '-'}
+          </td>
+          <td className="px-2 py-3 text-right">
+            {formatPrice(stock.PreviousClose, isBondCategory)}
+          </td>
+          <td className="px-2 py-3 text-right">
+            {formatPrice(stock.OpeningPrice, isBondCategory)}
+          </td>
+          <td className="px-2 py-3 text-right">
+            {formatPrice(stock.HighPrice, isBondCategory)}
+          </td>
+          <td className="px-2 py-3 text-right">
+            {formatPrice(stock.LowPrice, isBondCategory)}
+          </td>
+          <td className="px-2 py-3 text-right">
+            {formatPrice(stock.LastTradedPrice, isBondCategory)}
+          </td>
+          <td className="px-2 py-3 text-right">
+            {formatPrice(stock.ClosingPrice, isBondCategory)}
+          </td>
+          <td className="px-2 py-3 text-right">
+            <span className={
+              stock.Changes > 0 
+                ? 'text-green-500' 
+                : stock.Changes < 0 
+                  ? 'text-red-500' 
+                  : ''
+            }>
+              {stock.Changes > 0 ? '+' : ''}{stock.Changes?.toFixed(2) || '-'}
+                    </span>
+          </td>
+          <td className="px-2 py-3 text-right">
+            <BlinkEffect
+              value={stock.Changep || 0}
+              previousValue={previousValues.change}
+            >
+              <div className="flex items-center justify-end">
+                {stock.Changep !== null && stock.Changep !== undefined ? (
+                  <>
+                    <span className={
+                      stock.Changep > 0 
+                        ? 'text-green-500' 
+                        : stock.Changep < 0 
+                          ? 'text-red-500' 
+                          : ''
+                    }>
+                      {stock.Changep > 0 ? '+' : ''}{stock.Changep.toFixed(2)}%
+                    </span>
+                    {stock.Changep !== 0 && (
+                      <span className="ml-1">
+                        {stock.Changep > 0 ? <ArrowUp size={12} className="text-green-500" /> : <ArrowDown size={12} className="text-red-500" />}
+                    </span>
+                    )}
+                  </>
+                ) : '-'}
+              </div>
+            </BlinkEffect>
+          </td>
+          <td className="px-2 py-3 text-right">
+            {stock.sizemd?.toLocaleString() || '-'}
+          </td>
+          <td className="px-2 py-3 text-right">
+            {formatPrice(stock.MDEntryPx, isBondCategory)}
+          </td>
+          <td className="px-2 py-3 text-right">
+            {formatPrice(stock.MDEntryPx2, isBondCategory)}
+          </td>
+          <td className="px-2 py-3 text-right">
+            {stock.sizemd2?.toLocaleString() || '-'}
+          </td>
         </tr>
-      )
-    })
-  }
+      );
+    });
+  };
+
+  // Function to render a category section with table
+  const renderCategorySection = (categoryId: string, title: string, bgColorClass: string, textColorClass: string) => {
+    const stocks = stocksByCategory[categoryId] || [];
+    if (stocks.length === 0) return null;
+    
+    const summary = getCategorySummary(categoryId);
+    
+    return (
+      <div className="bg-white dark:bg-gray-900 rounded-lg shadow mb-6">
+        {/* Category Header with summary */}
+        <div 
+          className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 ${bgColorClass} rounded-t-lg cursor-pointer gap-2`}
+          onClick={() => toggleCategory(categoryId)}
+        >
+          <div className="flex items-center">
+            <span className={`transform transition-transform ${expandedCategories[categoryId] ? 'rotate-90' : ''}`}>
+              <ChevronRight size={20} />
+            </span>
+            <h3 className={`font-medium ml-2 ${textColorClass}`}>
+              {title}
+            </h3>
+                </div>
+          {/* Summary info */}
+          <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
+            <span>Компани: <span className="font-semibold text-bdsec dark:text-indigo-400">{summary.count}</span></span>
+            <span>Үнийн дүн: <span className="font-semibold">{summary.totalTurnover.toLocaleString()}₮</span></span>
+            <span>Тоо ширхэг: <span className="font-semibold">{summary.totalVolume.toLocaleString()}</span></span>
+          </div>
+        </div>
+
+        {expandedCategories[categoryId] && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-100 dark:bg-gray-800">
+                  <th className="px-2 py-3 text-left">
+                    <div className="flex items-center cursor-pointer" onClick={() => handleSort('Symbol')}>
+                      {t('allStocks.symbol')}
+                      {sortConfig.key === 'Symbol' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
+                      {t('allStocks.volume')}
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Turnover')}>
+                      Үнийн дүн 
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('PreviousClose')}>
+                      Өмнөх хаалт
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('OpeningPrice')}>
+                      Нээлт
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('HighPrice')}>
+                      Дээд үнэ
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LowPrice')}>
+                      Доод үнэ
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LastTradedPrice')}>
+                      Сүүлийн ханш
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('ClosingPrice')}>
+                      Хаалт
+          </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
+                      Өөрчлөлт
+        </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
+                      %
+          </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd')}>
+                      Авах тоо
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx')}>
+                      Авах үнэ
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx2')}>
+                      Зарах үнэ
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd2')}>
+                      Зарах тоо
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {renderCategoryStocks([...stocks].sort((a, b) => b.Turnover - a.Turnover))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24 px-2">
@@ -616,383 +669,11 @@ const getCategorySummary = (category: string) => {
           </div>
         ) : sortedStocks().length > 0 ? (
           <div className="space-y-6">
-            {/* Category I */}
-            {stocksByCategory['I'] && stocksByCategory['I'].length > 0 && (
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow">
-                {/* Category I Header with summary */}
-                <div 
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-t-lg cursor-pointer gap-2"
-                  onClick={() => toggleCategory('I')}
-                >
-                  <div className="flex items-center">
-                    <span className={`transform transition-transform ${expandedCategories['I'] ? 'rotate-90' : ''}`}>
-                      <ChevronRight size={20} />
-                    </span>
-                    <h3 className="font-medium ml-2 text-blue-800 dark:text-blue-300">
-                      {t('allStocks.categoryI')}
-                    </h3>
-                  </div>
-                  {/* Summary info for I */}
-                  {(() => {
-                    const summary = getCategorySummary('I');
-                    return (
-                      <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
-                        <span>Компани: <span className="font-semibold text-bdsec dark:text-indigo-400">{summary.count}</span></span>
-                        <span>Үнийн дүн: <span className="font-semibold">{summary.totalTurnover.toLocaleString()}₮</span></span>
-                        <span>Тоо ширхэг: <span className="font-semibold">{summary.totalVolume.toLocaleString()}</span></span>
-                      </div>
-                    );
-                  })()}
-                </div>
-                
-                {expandedCategories['I'] && (
-                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-gray-100 dark:bg-gray-800">
-                          <th className="px-2 py-3 text-left">
-                            <div className="flex items-center cursor-pointer" onClick={() => handleSort('Symbol')}>
-                              {t('allStocks.symbol')}
-                              {sortConfig.key === 'Symbol' && (
-                                sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
-                              )}
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
-                              {t('allStocks.volume')}
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Turnover')}>
-                              Үнийн дүн 
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('PreviousClose')}>
-                              Өмнөх хаалт
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('OpeningPrice')}>
-                              Нээлт
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('HighPrice')}>
-                              Дээд үнэ
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LowPrice')}>
-                          Доод үнэ
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LastTradedPrice')}>
-                             Сүүлийн ханш
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('ClosingPrice')}>
-                             Хаалт
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
-                             Өөрчлөлт (24цаг)
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
-                             Өөрчлөлтийн хувь (24цаг)
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd')}>
-                             Авах тоо
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx')}>
-                             Авах үнэ
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx2')}>
-                             Зарах үнэ
-                            </div>
-                          </th>
-                            <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd2')}>
-                             Зарах тоо
-                            </div>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {stocksByCategory['I'] &&
-                                renderCategoryStocks(
-                                [...stocksByCategory['I']].sort((a, b) => b.Turnover - a.Turnover)
-                                  )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {/* Category II */}
-            {stocksByCategory['II'] && stocksByCategory['II'].length > 0 && (
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow">
-                {/* Category II Header with summary */}
-                <div 
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-t-lg cursor-pointer gap-2"
-                  onClick={() => toggleCategory('II')}
-                >
-                  <div className="flex items-center">
-                    <span className={`transform transition-transform ${expandedCategories['II'] ? 'rotate-90' : ''}`}>
-                      <ChevronRight size={20} />
-                    </span>
-                    <h3 className="font-medium ml-2 text-purple-800 dark:text-purple-300">
-                      {t('allStocks.categoryII')}
-                    </h3>
-                  </div>
-                  {/* Summary info for II */}
-                  {(() => {
-                    const summary = getCategorySummary('II');
-                    return (
-                      <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
-                        <span>Компани: <span className="font-semibold text-bdsec dark:text-indigo-400">{summary.count}</span></span>
-                        <span>Үнийн дүн: <span className="font-semibold">{summary.totalTurnover.toLocaleString()}₮</span></span>
-                        <span>Тоо ширхэг: <span className="font-semibold">{summary.totalVolume.toLocaleString()}</span></span>
-                      </div>
-                    );
-                  })()}
-                </div>
-                
-                {expandedCategories['II'] && (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-gray-100 dark:bg-gray-800">
-                          <th className="px-2 py-3 text-left">
-                            <div className="flex items-center cursor-pointer" onClick={() => handleSort('Symbol')}>
-                              {t('allStocks.symbol')}
-                              {sortConfig.key === 'Symbol' && (
-                                sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
-                              )}
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
-                              {t('allStocks.volume')}
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Turnover')}>
-                              Үнийн дүн 
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('PreviousClose')}>
-                              Өмнөх хаалт
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('OpeningPrice')}>
-                              Нээлт
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('HighPrice')}>
-                              Дээд үнэ
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LowPrice')}>
-                          Доод үнэ
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LastTradedPrice')}>
-                             Сүүлийн ханш
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('ClosingPrice')}>
-                             Хаалт
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
-                             Өөрчлөлт
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
-                             %
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd')}>
-                             Авах тоо
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx')}>
-                             Авах үнэ
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx2')}>
-                             Зарах үнэ
-                            </div>
-                          </th>
-                            <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd2')}>
-                             Зарах тоо
-                            </div>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                         {stocksByCategory['II'] &&
-                               renderCategoryStocks(
-                                    [...stocksByCategory['II']].sort((a, b) => b.Turnover - a.Turnover)
-                           )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {/* Category III */}
-            {stocksByCategory['III'] && stocksByCategory['III'].length > 0 && (
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow">
-                {/* Category III Header with summary */}
-                <div 
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-t-lg cursor-pointer gap-2"
-                  onClick={() => toggleCategory('III')}
-                >
-                  <div className="flex items-center">
-                    <span className={`transform transition-transform ${expandedCategories['III'] ? 'rotate-90' : ''}`}>
-                      <ChevronRight size={20} />
-                    </span>
-                    <h3 className="font-medium ml-2 text-gray-800 dark:text-gray-300">
-                      {t('allStocks.categoryIII')}
-                    </h3>
-                  </div>
-                  {/* Summary info for III */}
-                  {(() => {
-                    const summary = getCategorySummary('III');
-                    return (
-                      <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
-                        <span>Компани: <span className="font-semibold text-bdsec dark:text-indigo-400">{summary.count}</span></span>
-                        <span>Үнийн дүн: <span className="font-semibold">{summary.totalTurnover.toLocaleString()}₮</span></span>
-                        <span>Тоо ширхэг: <span className="font-semibold">{summary.totalVolume.toLocaleString()}</span></span>
-                      </div>
-                    );
-                  })()}
-                </div>
-                
-                {expandedCategories['III'] && (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-gray-100 dark:bg-gray-800">
-                          <th className="px-2 py-3 text-left">
-                            <div className="flex items-center cursor-pointer" onClick={() => handleSort('Symbol')}>
-                              {t('allStocks.symbol')}
-                              {sortConfig.key === 'Symbol' && (
-                                sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
-                              )}
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
-                              {t('allStocks.volume')}
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Turnover')}>
-                              Үнийн дүн 
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('PreviousClose')}>
-                              Өмнөх хаалт
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('OpeningPrice')}>
-                              Нээлт
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('HighPrice')}>
-                              Дээд үнэ
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LowPrice')}>
-                          Доод үнэ
-                            </div>
-                          </th>
-                          <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LastTradedPrice')}>
-                             Сүүлийн ханш
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('ClosingPrice')}>
-                             Хаалт
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
-                             Өөрчлөлт
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
-                             %
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd')}>
-                             Авах тоо
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx')}>
-                             Авах үнэ
-                            </div>
-                          </th>
-                             <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx2')}>
-                             Зарах үнэ
-                            </div>
-                          </th>
-                            <th className="px-2 py-3 text-right">
-                            <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd2')}>
-                             Зарах тоо
-                            </div>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {stocksByCategory['III'] &&
-                               renderCategoryStocks(
-                           [...stocksByCategory['III']].sort((a, b) => b.Turnover - a.Turnover)
-                           )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
+            {renderCategorySection('I', t('allStocks.categoryI'), 'bg-blue-50 dark:bg-blue-900/30', 'text-blue-800 dark:text-blue-200')}
+            {renderCategorySection('II', t('allStocks.categoryII'), 'bg-purple-50 dark:bg-purple-900/30', 'text-purple-800 dark:text-purple-200')}
+            {renderCategorySection('III', t('allStocks.categoryIII'), 'bg-gray-50 dark:bg-gray-800/60', 'text-gray-800 dark:text-gray-200')}
+            {renderCategorySection('FUND', 'Хөрөнгө оруулалтын сан', 'bg-green-50 dark:bg-green-900/30', 'text-green-800 dark:text-green-200')}
+            {renderCategorySection('BOND', 'Компанийн бонд', 'bg-orange-50 dark:bg-orange-900/30', 'text-orange-800 dark:text-orange-200')}
           </div>
         ) : (
           <div className="text-center py-12">

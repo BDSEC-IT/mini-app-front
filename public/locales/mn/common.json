@@ -29,7 +29,8 @@
     "back": "Буцах",
     "searchPlaceholder": "Хувьцаа хайх...",
     "noResultsFound": "Илэрц олдсонгүй",
-    "stocks": "Хувьцаа",
+    "stocks": "үнэт цаас",
+    "securities": "үнэт цаас",
     "bonds": "Бонд",
     "highLow": "Өндөр/Намуу",
     "aboutUs": "Бидний тухай",
@@ -276,7 +277,8 @@
     "ask": "Зарах үнэ",
     "selectedStock": "Сонгосон хувьцаа",
     "company_search" : "Хайх : BDS/БиДиСЕК",
-    "searchByCompanyOrSymbol": "Компани/симбол"
+    "searchByCompanyOrSymbol": "Компани/симбол",
+    "bonds": "Бонд"
   },
   "about": {
     "title": "Бидний тухай",
@@ -302,7 +304,7 @@
     "contact": "Холбоо барих"
   },
   "allStocks": {
-    "title": "Хувьцааны жагсаалт",
+    "title": "Үнэт цаасны жагсаалт",
     "active": "Өнөөдөр",
     "all": "Бүгд",
     "symbol": "Симбол",

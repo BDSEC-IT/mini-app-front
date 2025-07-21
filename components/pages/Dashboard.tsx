@@ -199,6 +199,9 @@ const DashboardContent = () => {
           .filter(stock => stock.Changep < 0)
           .sort((a, b) => a.Changep - b.Changep)
         break
+      case 'bonds':
+        filtered = filtered.filter(stock => stock.MarketSegmentID && (stock.MarketSegmentID.toUpperCase().includes('BOND') || stock.MarketSegmentID === '1' || stock.Symbol.toUpperCase().includes('-BD')))
+        break
     }
     
     setFilteredStocks(filtered.slice(0, 20))
@@ -329,6 +332,26 @@ const DashboardContent = () => {
                   onPriceHover={handlePriceHover}
                 />
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Bond info section */}
+      {isBond && selectedStockData && (
+        <div className="relative w-full max-w-full overflow-hidden mt-4">
+          <div className="rounded-lg bg-orange-50 dark:bg-orange-900/30 p-6 shadow">
+            <h2 className="text-lg font-bold text-orange-800 dark:text-orange-200 mb-2">Бондын дэлгэрэнгүй</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div><span className="font-semibold">Символ:</span> {selectedStockData.Symbol}</div>
+              <div><span className="font-semibold">Компани:</span> {selectedStockData.mnName || selectedStockData.enName}</div>
+              <div><span className="font-semibold">Сүүлийн ханш:</span> {selectedStockData.LastTradedPrice ? (selectedStockData.LastTradedPrice * 1000).toLocaleString() : '-'} ₮</div>
+              <div><span className="font-semibold">Өмнөх хаалт:</span> {selectedStockData.PreviousClose ? (selectedStockData.PreviousClose * 1000).toLocaleString() : '-'} ₮</div>
+              <div><span className="font-semibold">Үнийн дүн:</span> {selectedStockData.Turnover ? selectedStockData.Turnover.toLocaleString() : '-'}</div>
+              <div><span className="font-semibold">Тоо ширхэг:</span> {selectedStockData.Volume ? selectedStockData.Volume.toLocaleString() : '-'}</div>
+              <div><span className="font-semibold">MarketSegmentID:</span> {selectedStockData.MarketSegmentID}</div>
+              <div><span className="font-semibold">ISIN:</span> {getStockDetails.isin}</div>
+              <div><span className="font-semibold">Company Code:</span> {getStockDetails.companyCode}</div>
+              <div><span className="font-semibold">Listing Date:</span> {getStockDetails.listingDate}</div>
             </div>
           </div>
         </div>

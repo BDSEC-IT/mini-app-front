@@ -29,7 +29,8 @@
     "searchForCountry": "Search for a country...",
     "searchPlaceholder": "Search stocks...",
     "noResultsFound": "No results found",
-    "stocks": "Stocks",
+    "stocks": "Securities",
+    "securities": "Securities",
     "bonds": "Bonds",
     "highLow": "High/Low",
     "aboutUs": "About Us",
@@ -257,7 +258,8 @@
     "ask": "Ask",
     "selectedStock": "Selected Stock",
       "company_search" : "Search : BDS/BDSec",
-    "searchByCompanyOrSymbol": "Company/symbol"
+    "searchByCompanyOrSymbol": "Company/symbol",
+    "bonds": "Bonds"
   },
   "about": {
     "title": "About Us",

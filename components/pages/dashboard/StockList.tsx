@@ -104,9 +104,11 @@ interface StockListProps {
   selectedCard?: StockData
 }
 
-const formatPrice = (price: number | undefined) => {
-  if (price === undefined || price === null) return '-'
-  return price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+const formatPrice = (price: number | undefined, isBond: boolean = false) => {
+  if (price === undefined || price === null) return '-';
+  const transformedPrice = isBond ? price * 1000 : price;
+  if (isBond && (!transformedPrice || transformedPrice === 0)) return '-';
+  return transformedPrice.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
 export const StockList = ({
@@ -154,14 +156,20 @@ export const StockList = ({
     { id: 'trending', label: t('dashboard.trending'), icon: TrendingUp },
     { id: 'mostActive', label: t('dashboard.mostActive'), icon: Activity },
     { id: 'gainers', label: t('dashboard.gainers'), icon: ArrowUp },
-    { id: 'losers', label: t('dashboard.losers'), icon: ArrowDown }
+    { id: 'losers', label: t('dashboard.losers'), icon: ArrowDown },
+    { id: 'bonds', label: t('dashboard.bonds'), icon: BarChart3 }, // New Bonds tab
   ]
+
+  // Filter stocks for bonds tab
+  const filteredForBonds = activeFilter === 'bonds'
+    ? filteredStocks.filter(stock => stock.MarketSegmentID && (stock.MarketSegmentID.toUpperCase().includes('BOND') || stock.MarketSegmentID === '1' || stock.Symbol.toUpperCase().includes('-BD')))
+    : filteredStocks;
 
   // Prepare cards: selected card first, then the rest
   const selectedStock = selectedCard;
   const otherStocks = selectedStock
-    ? filteredStocks.filter(stock => stock.Symbol.split('-')[0] !== selectedStock.Symbol.split('-')[0])
-    : filteredStocks;
+    ? filteredForBonds.filter(stock => stock.Symbol.split('-')[0] !== selectedStock.Symbol.split('-')[0])
+    : filteredForBonds;
 
   // Responsive basis for carousel items
   const getBasisClass = () => {
@@ -265,7 +273,7 @@ export const StockList = ({
             <div className="mt-2 z-10">
               <div className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
               <div className="text-base font-bold text-gray-900 dark:text-white">
-                {formatPrice(selectedStock.LastTradedPrice)} ₮
+                {formatPrice(selectedStock.LastTradedPrice, activeFilter === 'bonds' || selectedStock.Symbol.toUpperCase().includes('-BD'))} ₮
               </div>
             </div>
             <MiniChart 
@@ -343,7 +351,7 @@ export const StockList = ({
                         <div className="mt-2 z-10">
                           <div className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
                           <div className="text-base font-bold text-gray-900 dark:text-white">
-                            {formatPrice(stock.LastTradedPrice)} ₮
+                            {formatPrice(stock.LastTradedPrice, activeFilter === 'bonds' || stock.Symbol.toUpperCase().includes('-BD'))} ₮
                           </div>
                         </div>
                         <MiniChart 

@@ -54,7 +54,7 @@ const BottomNavigation = () => {
   }
 
   const basicNavItems = [
-    { name: 'stocks', href: '/stocks', icon: BarChart3, label: t('common.stocks') },
+    { name: 'securities', href: '/stocks', icon: BarChart3, label: t('common.securities') },
     { name: 'bonds', href: '/bonds', icon: Landmark, label: t('common.bonds') },
     { name: 'news', href: '/news', icon: Newspaper, label: t('menu.news') },
   ];

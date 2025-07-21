@@ -65,7 +65,7 @@ const Bonds = () => {
         (currentLanguage === 'mn' ? bond.Issuer?.toLowerCase() : bond.IssuerEn?.toLowerCase() || '').includes(searchTerm.toLowerCase())
       )
     }
-    console.log(filteredBonds, "filteredBonds")
+    
     // Apply sorting
     if (sortConfig.key) {
       filtered.sort((a, b) => {
@@ -94,7 +94,7 @@ const Bonds = () => {
     }
     
     setFilteredBonds(filtered)
-  }, [bonds, searchTerm, sortConfig])
+  }, [bonds, searchTerm, sortConfig, currentLanguage])
 
   // Fetch data on component mount
   useEffect(() => {
@@ -113,7 +113,9 @@ const Bonds = () => {
   // Format nominal value with safe handling of null/undefined
   const formatNominalValue = (value: number | null | undefined, isdollar: string | null) => {
     if (value === null || value === undefined || isNaN(value)) return '-'
-    return value.toLocaleString() + (isdollar === null || isdollar === "-" ? ' ₮' : ' $')
+    // This is the critical change: multiply the value by 1000 for bonds
+    const transformedValue = value * 1000;
+    return transformedValue.toLocaleString() + (isdollar === null || isdollar === "-" ? ' ₮' : ' $')
   }
 
   // Format symbol to show only the first part before "-"
@@ -294,7 +296,9 @@ const Bonds = () => {
   )
 }
 function formatPercentage(percentageStr: string): string {
+  if (!percentageStr) return '-';
   const num = parseFloat(percentageStr.replace('%', ''));
+  if (isNaN(num)) return '-';
   return `${Number(num.toFixed(2))}%`;
 }
 
