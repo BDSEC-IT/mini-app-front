@@ -39,7 +39,10 @@
     "dark": "Dark",
     "payRegistrationFee": "Pay Registration Fee",
     "start": "Start",
-    "locked": "Locked"
+    "locked": "Locked",
+    "securitiesAccountRequired": "You must have a securities account to trade",
+    "comingSoon": "Coming soon",
+    "openAccount": "Open Account"
   },
 
   "profile": {

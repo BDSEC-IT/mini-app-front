@@ -318,7 +318,7 @@ const DashboardContent = () => {
       {/* Chart section: full-bleed, outside the padded container */}
       {!isBond && (
         <div className="relative w-full max-w-full overflow-hidden">
-          <div className="h-[370px] sm:h-[400px] md:h-[420px] lg:h-[440px] mt-4 mb-8 sm:mb-12 rounded-lg bg-transparent">
+          <div className="h-[370px] sm:h-[400px] md:h-[420px] lg:h-[440px] mt-4  rounded-lg bg-transparent">
             <div className="relative w-full h-full overflow-hidden">
               {selectedCard && (
                 <TradingViewChart 
@@ -333,7 +333,7 @@ const DashboardContent = () => {
           </div>
         </div>
       )}
-      <div className="max-w-4xl mx-auto px-2 sm:px-4 flex flex-col gap-4 sm:gap-6 mt-10 sm:mt-12">
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 flex flex-col gap-4 sm:gap-6 ">
         <OrderBook
           selectedSymbol={selectedSymbol}
           loading={loading}

@@ -38,7 +38,10 @@
     "light": "Цайвар",
     "dark": "Бараан",
     "start": "Эхлэх",
-    "locked": "Түгжээтэй"
+    "locked": "Түгжээтэй",
+    "securitiesAccountRequired": "Та арилжаанд оролцохын тулд үнэт цаасны данстай байх шаардлагатай",
+    "comingSoon": "Тун удахгүй",
+    "openAccount": "Данс нээх"
   },
   "header": {
     "notifications": "Мэдэгдэл",

@@ -129,7 +129,14 @@ const BottomNavigation = () => {
               </button>
               {showTooltip === 'exchange' && (
                 <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-50">
-                  {!isLoggedIn ? 'Эхлээд нэвтэрнэ үү' : !accountOpened ? 'Та эхлээд ҮЦТХТ данс нээлгэнэ үү?' : 'тун удахгүй'}
+                  {!isLoggedIn ? t('auth.login') : !accountOpened ? (
+                    <div className="flex flex-col items-center">
+                      <span>{t('common.securitiesAccountRequired')}</span>
+                      <Link href="/account-setup/general" className="mt-2 px-3 py-1 bg-indigo-500 text-white rounded">
+                        {t('common.openAccount')}
+                      </Link>
+                    </div>
+                  ) : t('common.comingSoon')}
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
                 </div>
               )}
