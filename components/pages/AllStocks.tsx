@@ -140,8 +140,22 @@ const AllStocks = () => {
   }, [filteredStocks, sortConfig])
 
   // Get stock category from MarketSegmentID
- const getStockCategory = (stock: StockData): string => {
-  if (!stock.MarketSegmentID) return '';
+const isToday = (dateString: string): boolean => {
+  const entryDate = new Date(dateString);
+  const today = new Date();
+
+  return (
+    entryDate.getFullYear() === today.getFullYear() &&
+    entryDate.getMonth() === today.getMonth() &&
+    entryDate.getDate() === today.getDate()
+  );
+};
+
+const getStockCategory = (stock: StockData): string => {
+  if (!stock.MarketSegmentID || !stock.MDEntryTime) return '';
+
+  // Filter by today's date
+  if (!isToday(stock.MDEntryTime)) return '';
 
   // Handle both English and Mongolian formats
   const match = stock.MarketSegmentID.match(/^(I{1,3})\s*(classification|ангилал)/i);
@@ -150,6 +164,7 @@ const AllStocks = () => {
   // Only allow 'I', 'II', or 'III'
   return ['I', 'II', 'III'].includes(cat) ? cat : '';
 };
+
 
 
   // Filter stocks based on search, active tab and category
@@ -685,12 +700,12 @@ const getCategorySummary = (category: string) => {
                           </th>
                              <th className="px-2 py-3 text-right">
                             <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
-                             Өөрчлөлт
+                             Өөрчлөлт (24цаг)
                             </div>
                           </th>
                              <th className="px-2 py-3 text-right">
                             <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
-                             %
+                             Өөрчлөлтийн хувь (24цаг)
                             </div>
                           </th>
                              <th className="px-2 py-3 text-right">
