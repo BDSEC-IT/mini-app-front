@@ -216,7 +216,7 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
       const error = new Error('Request timed out')
       error.name = 'TimeoutError'
       reject(error)
-    }, 10000) // 10 second timeout
+    }, 30000) // 30 second timeout
     
     // Add an abort listener to clear the timeout if aborted elsewhere
     signal.addEventListener('abort', () => clearTimeout(id))

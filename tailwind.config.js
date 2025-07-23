@@ -13,12 +13,12 @@ module.exports = {
   ],
   theme: {
     container: {
-      center: 'true',
+      center: true,
       padding: {
-        DEFAULT: '0.5rem',  // 8px for smallest screens
-        sm: '1rem',         // 16px for small screens
-        md: '1.5rem',       // 24px for medium screens
-        lg: '2rem',         // 32px for large screens
+        DEFAULT: '0.5rem',
+        sm: '1rem',
+        md: '1.5rem',
+        lg: '2rem',
       },
       screens: {
         '2xl': '1400px'
@@ -50,35 +50,33 @@ module.exports = {
         '2xl': '32px',
       },
       colors: {
-        // BDSEC Brand Colors
-        'bdsec': {
+        bdsec: {
           DEFAULT: '#21214f',
-          dark: '#6366f1' // Indigo-500 for dark mode
+          dark: '#6366f1'
         },
-        'soft': {
+        soft: {
           DEFAULT: '#585E72',
           dark: '#6B7280'
         },
-        'green': {
-          DEFAULT: '#2E8B57', // Darker sea green
-          light: '#4ECCA3',   // Original color
-          dark: '#2D8659'     // Dark mode variant
+        green: {
+          DEFAULT: '#2E8B57',
+          light: '#4ECCA3',
+          dark: '#2D8659'
         },
-        'red': {
-          DEFAULT: '#CF3A47', // Darker red
-          light: '#E63946',   // Original color
-          dark: '#BF2F3C'     // Dark mode variant
+        red: {
+          DEFAULT: '#CF3A47',
+          light: '#E63946',
+          dark: '#BF2F3C'
         },
-        'label': {
+        label: {
           DEFAULT: '#4A4A4A',
           dark: '#D1D5DB'
         },
-        'placeholder': {
+        placeholder: {
           DEFAULT: '#A0A0A0',
           dark: '#9CA3AF'
         },
-        // Indigo colors for dark mode
-        'indigo': {
+        indigo: {
           50: '#eef2ff',
           100: '#e0e7ff',
           200: '#c7d2fe',
@@ -91,16 +89,16 @@ module.exports = {
           900: '#312e81',
           950: '#1e1b4b',
         },
-        // Dark theme colors
-        'dark': {
-          'bg': '#0F172A',
+        dark: {
+          bg: '#0F172A',
           'bg-secondary': '#1E293B',
           'bg-tertiary': '#334155',
-          'text': '#F8FAFC',
+          text: '#F8FAFC',
           'text-secondary': '#CBD5E1',
-          'border': '#475569'
+          border: '#475569'
         },
-        border: 'hsl(var(--border))',
+        'brand-primary': '#21214f',
+        border: "hsl(var(--border))",
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
@@ -151,20 +149,12 @@ module.exports = {
       },
       keyframes: {
         'accordion-down': {
-          from: {
-            height: '0'
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)'
-          }
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' }
         },
         'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)'
-          },
-          to: {
-            height: '0'
-          }
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' }
         }
       },
       animation: {

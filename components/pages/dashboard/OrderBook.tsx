@@ -21,16 +21,12 @@ export const OrderBook = ({
   onRefresh
 }: OrderBookProps) => {
   const { t } = useTranslation()
-  const date = new Date(lastUpdated);
+  console.log("OrderBook received lastUpdated:", lastUpdated);
+  // Split the lastUpdated string into date and time parts directly
+  const [datePart, timePart] = lastUpdated.split(' ');
 
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  const seconds = date.getSeconds().toString().padStart(2, '0');
-  
-  const formattedTime = `${hours}:${minutes}:${seconds}`;
-  const formattedDate = date.toLocaleDateString();
   return (
-    <div className="mt-8 p-4">
+    <div className="sm:mt-8 sm:p-4 mt-4 p-2">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-base sm:text-lg font-medium flex items-center">
           <Activity size={16} className="mr-2 text-bdsec dark:text-indigo-400" />
@@ -39,8 +35,8 @@ export const OrderBook = ({
         <div className="flex items-center gap-2">
           <div className="text-xs text-right text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
             <div className="hidden sm:block">{t('dashboard.lastUpdated')}</div>
-            <div className="text-xs">{formattedDate}</div>
-            <div className="text-xs">{formattedTime}</div>
+            <div className="text-xs">{datePart}</div>
+            <div className="text-xs">{timePart}</div>
           </div>
           {onRefresh && (
             <button
@@ -55,7 +51,7 @@ export const OrderBook = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-6 mt-3 min-h-[200px]">
+      <div className="grid grid-cols-2 gap-3 sm:gap-6 mt-3">
         {/* Sell Orders */}
         <div className="overflow-hidden">
           <div className="px-2 sm:px-4 py-2 bg-red-50 dark:bg-red-900/10">
@@ -70,15 +66,9 @@ export const OrderBook = ({
 
           <div className="p-2 sm:p-3">
             {loading ? (
-              Array(5).fill(0).map((_, index) => (
-                <div
-                  key={`sell-loading-${index}`}
-                  className="grid grid-cols-2 text-right text-xs sm:text-sm py-2 animate-pulse"
-                >
-                  <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded justify-self-end"></div>
-                  <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded justify-self-end"></div>
-                </div>
-              ))
+              <div className="text-center text-gray-400 text-sm py-6">
+                {t('dashboard.loading')}
+              </div>
             ) : processedOrderBook.sell.length > 0 ? (
               processedOrderBook.sell.map((order, index) => (
                 <div
@@ -115,15 +105,9 @@ export const OrderBook = ({
 
           <div className="p-2 sm:p-3">
             {loading ? (
-              Array(5).fill(0).map((_, index) => (
-                <div
-                  key={`buy-loading-${index}`}
-                  className="grid grid-cols-2 text-right text-xs sm:text-sm py-2 animate-pulse"
-                >
-                  <div className="h-3 w-16 sm:w-20 bg-gray-200 dark:bg-gray-700 rounded justify-self-end"></div>
-                  <div className="h-3 w-12 sm:w-16 bg-gray-200 dark:bg-gray-700 rounded justify-self-end"></div>
-                </div>
-              ))
+              <div className="text-center text-gray-400 text-sm py-6">
+                {t('dashboard.loading')}
+              </div>
             ) : processedOrderBook.buy.length > 0 ? (
               processedOrderBook.buy.map((order, index) => (
                 <div

@@ -125,9 +125,9 @@ const Bonds = () => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24 px-2">
-      <div className="py-6">
-        <h1 className="text-xl font-bold mb-4">{t('bonds.title', 'Bonds')}</h1>
+    <div className="container mx-auto p-4">
+      <div className="bg-white dark:bg-gray-800 sm:text-[8px] ">
+        <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">{t('bonds.title')}</h1>
         
         {/* Search bar */}
         <div className="relative mb-4">
@@ -152,7 +152,7 @@ const Bonds = () => {
         </div>
         
         {/* Bonds table */}
-        <div className="overflow-x-auto -mx-2 md:mx-0">
+        <div className="overflow-x-auto">
           {loading ? (
             <div className="flex justify-center items-center py-20">
               <div className="animate-spin h-8 w-8 border-4 border-bdsec dark:border-indigo-500 border-t-transparent rounded-full"></div>

@@ -10,9 +10,7 @@
     --background-start-rgb: 249, 250, 251;
     --background-end-rgb: 255, 255, 255;
     
-    /* BDSec Custom colors */
-    --primary: 33, 33, 79; /* #21214f */
-    --primary-dark: 28, 28, 67;
+    /* BDSec Custom colors - now handled via Tailwind config */
     --secondary: 88, 94, 114; /* #585E72 */
     --secondary-light: 88, 94, 114; /* #585E72 with opacity */
     --success-green: 34, 197, 94;
@@ -117,14 +115,6 @@ body {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
   
-  .bg-primary {
-    background-color: rgb(var(--primary));
-  }
-  
-  .bg-primary-dark {
-    background-color: rgb(var(--primary-dark));
-  }
-  
   .bg-secondary {
     background-color: rgb(var(--secondary));
   }
@@ -133,16 +123,8 @@ body {
     background-color: rgba(var(--secondary-light), 0.5);
   }
   
-  .text-primary {
-    color: rgb(var(--primary));
-  }
-  
   .text-secondary {
     color: rgb(var(--secondary));
-  }
-  
-  .border-primary {
-    border-color: rgb(var(--primary));
   }
   
   /* Line clamp utilities */
@@ -277,9 +259,9 @@ a:focus-visible {
 
 /* Selection styles */
 ::selection {
-  background-color: rgba(var(--primary), 0.2);
+  background-color: rgba(33, 33, 79, 0.2); /* Using #21214f with opacity */
   color: rgb(15, 23, 42);
-} 
+}
 
 .no-scrollbar {
   scrollbar-width: none; /* Firefox */

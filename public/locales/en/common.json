@@ -210,7 +210,11 @@
     "1y": "1Y",
     "all": "ALL",
     "noData": "No data available for selected period",
-    "tryAnother": "Try selecting a different time period or stock symbol"
+    "tryAnother": "Try selecting a different time period or stock symbol",
+    "line": "Line",
+    "candlestick": "Candlestick",
+    "chartType": "Chart Type",
+    "color": "Color"
   },
   "dashboard": {
     "price": "Stock Price",
@@ -259,7 +263,14 @@
     "selectedStock": "Selected Stock",
       "company_search" : "Search : BDS/BDSec",
     "searchByCompanyOrSymbol": "Company/symbol",
-    "bonds": "Bonds"
+    "bonds": "Bonds",
+    "tooltip": {
+      "trending": "Stocks sorted by their trading volume in descending order. Data reflects the latest available trading information, updated during trading hours (9 AM - 1 PM MNT).",
+      "mostActive": "Displays securities with the highest number of active order book orders. If multiple securities have the same number of orders, the most recently updated (freshest) order book is shown first.",
+      "gainers": "Stocks with positive percentage change, sorted by change percentage in descending order. Data reflects the latest available trading information, updated during trading hours (9 AM - 1 PM MNT).",
+      "losers": "Stocks with negative percentage change, sorted by change percentage in ascending order. Data reflects the latest available trading information, updated during trading information,  updated during trading hours (9 AM - 1 PM MNT).",
+      "bonds": "Displays all bond instruments."
+    }
   },
   "about": {
     "title": "About Us",
@@ -311,8 +322,23 @@
     "categoryI": "Category I",
     "categoryII": "Category II",
     "categoryIII": "Category III",
-    "timeFilter": "Time Period"
- 
+    
+    "timeFilter": "Time Period",
+    "lastTradedPrice": "Last Price",
+    "changePercentage": "% Change",
+    "changes": "Change",
+    "previousClose": "Previous Close",
+    "openingPrice": "Open",
+    "highPrice": "High",
+    "lowPrice": "Low",
+    "closingPrice": "Close",
+    "bidVolume": "Bid Volume",
+    "bidPrice": "Bid Price",
+    "askPrice": "Ask Price",
+    "askVolume": "Ask Volume",
+    "turnover": "Turnover",
+    "fullTableTitle": "Full Stock Table",
+    "seeFullTable": "See Full Table"
   },
     "StockAver": {
     "company_name" : "Company name", 

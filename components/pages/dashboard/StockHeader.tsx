@@ -12,18 +12,15 @@ interface StockHeaderProps {
   searchTerm: string
   searchResults: StockData[]
   chartLoading: boolean
-  isBond?: boolean
   onSearchClick: () => void
   onSearchClose: () => void
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onStockSelect: (symbol: string) => void
 }
 
-const formatPrice = (price: number | undefined, isBond: boolean = false) => {
+const formatPrice = (price: number | undefined) => {
   if (price === undefined || price === null) return '-';
-  const transformedPrice = isBond ? price * 1000 : price;
-  if (isBond && (!transformedPrice || transformedPrice === 0)) return '-';
-  return transformedPrice.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  return price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
 export const StockHeader = ({
@@ -33,7 +30,6 @@ export const StockHeader = ({
   searchTerm,
   searchResults,
   chartLoading,
-  isBond,
   onSearchClick,
   onSearchClose,
   onSearchChange,
@@ -86,18 +82,28 @@ export const StockHeader = ({
         
         <div className="mt-2">
           <div className="flex flex-col items-start mb-2 px-2">
-            <BlinkEffect 
-              value={selectedStockData?.LastTradedPrice || selectedStockData?.ClosingPrice || 0}
-            >
-              <div className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-                {selectedStockData ? formatPrice(selectedStockData.LastTradedPrice || selectedStockData.ClosingPrice, isBond) : '-'} ₮
-              </div>
-            </BlinkEffect>
+            {selectedStockData ? (
+              <BlinkEffect 
+                value={selectedStockData?.LastTradedPrice || selectedStockData?.ClosingPrice || 0}
+              >
+                <div className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+                  {formatPrice(selectedStockData.LastTradedPrice || selectedStockData.ClosingPrice)} ₮
+                </div>
+              </BlinkEffect>
+            ) : (
+              <div className="animate-pulse bg-gray-300 dark:bg-gray-700 rounded-md w-32 h-10"></div>
+            )}
             <div className="text-xs text-gray-500 mt-1 min-h-[20px] flex items-center gap-2">
-              {!isBond && chartLoading && !selectedStockData?.MDEntryTime ? (
+              {chartLoading && !selectedStockData?.MDEntryTime ? (
                 <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-bdsec dark:border-t-white rounded-full animate-spin mr-2"></span>
               ) : selectedStockData?.MDEntryTime ? (
-                formatDateTime(selectedStockData.MDEntryTime)
+                // Directly extract date and time parts from the ISO string
+                (() => {
+                  const isoString = selectedStockData.MDEntryTime;
+                  const [datePart, timePartWithZ] = isoString.split('T');
+                  const timePart = timePartWithZ.split('.')[0]; // Removes .000Z
+                  return `${datePart} ${timePart}`;
+                })()
               ) : null}
               
 

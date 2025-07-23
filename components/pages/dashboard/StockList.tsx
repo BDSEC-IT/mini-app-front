@@ -15,6 +15,18 @@ import type { StockData, TradingHistoryData } from '@/lib/api'
 import { fetchTradingHistory } from '@/lib/api'
 import { BlinkEffect } from '@/components/ui/BlinkEffect'
 
+// Helper function to determine if a stock is a bond (duplicated for now, could be refactored to a shared utility if needed)
+const isStockABond = (stock: StockData | undefined | null): boolean => {
+  if (!stock) return false;
+  const isSymbolBond = stock.Symbol.toUpperCase().includes('-BD');
+
+  let isMarketSegmentBond = false;
+  if (stock.MarketSegmentID) { // Ensure MarketSegmentID is not null or empty string
+    isMarketSegmentBond = stock.MarketSegmentID.toUpperCase().includes('BOND') || stock.MarketSegmentID === '1';
+  }
+  return isSymbolBond || isMarketSegmentBond;
+};
+
 // Mini Chart Component
 const MiniChart = ({ historicalData, isPositive, changePercent = 0, width = 60, height = 30 }: { 
   historicalData: TradingHistoryData[], 
@@ -194,7 +206,7 @@ export const StockList = ({
   }, [filteredStocks, selectedCard, fetchStockHistoricalData]);
 
   return (
-    <div className="w-full px-2 sm:px-4">
+    <div className="w-full px-2 sm:px-6 pb-6">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base sm:text-lg font-medium flex items-center">
           <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
@@ -209,25 +221,31 @@ export const StockList = ({
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 mt-5 pb-4 overflow-x-auto flex-nowrap sm:flex-wrap no-scrollbar">
+      <div className="flex gap-2 sm:mt-5 mt-0  sm:pb-2 pb-0 flex-wrap sm:flex-wrap no-scrollbar">
         {filters.map((filter) => (
-          <button
-            key={filter.id}
-            className={`px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm rounded-full whitespace-nowrap flex items-center ${
-              activeFilter === filter.id
-                ? 'bg-bdsec dark:bg-bdsec-dark text-white'
-                : 'border dark:border-indigo-500 text-gray-500'
-            }`}
-            onClick={() => onFilterChange(filter.id)}
-          >
-            <filter.icon size={12} className="mr-1" />
-            {filter.label}
-          </button>
+          <div key={filter.id} className="relative group">
+            <button
+              className={`px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm rounded-full whitespace-nowrap flex items-center ${
+                activeFilter === filter.id
+                  ? 'bg-bdsec dark:bg-bdsec-dark text-white'
+                  : 'border dark:border-indigo-500 text-gray-500'
+              }`}
+              onClick={() => onFilterChange(filter.id)}
+            >
+              <filter.icon size={12} className="mr-1" />
+              {filter.label}
+            </button>
+          </div>
         ))}
       </div>
 
+      {/* Display active filter explanation below the buttons */}
+      {/* <div className="mt-0 px-2 sm:px-0 text-xs text-gray-400 dark:text-gray-500">
+        {activeFilter && t(`dashboard.tooltip.${activeFilter}`)}
+      </div> */}
+
       {/* Selected card pinned to the left, outside the scrollable carousel */}
-      <div className="flex items-stretch gap-2 mt-4 py-4">
+      <div className="flex items-stretch gap-2 mt-0 py-0 sm:py-4 sm:mt-4">
         
         {selectedStock && (
           <div
@@ -248,11 +266,11 @@ export const StockList = ({
                 transform="translate(100 100)"
               />
             </svg>
-            <div className="flex items-start justify-between mb-2 z-10">
-              <h3 className="flex items-center justify-center font-semibold text-xs text-white rounded-full h-8 w-8 bg-bdsec dark:bg-indigo-400   ">
+            <div className="flex items-start justify-between mb-1 z-10">
+              <h3 className="flex items-center justify-center font-semibold text-xs text-white rounded-full h-7 w-7 bg-bdsec dark:bg-indigo-400">
                 {selectedStock.Symbol.toUpperCase().includes('-BD') ? selectedStock.Symbol : selectedStock.Symbol.split('-')[0]}
               </h3>
-              <div className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${
+              <div className={`text-xs font-semibold px-1 py-0.5 rounded-md ${
                 Math.abs(selectedStock.Changep || 0) < 0.01 
                   ? 'text-gray-600 bg-gray-100 dark:bg-gray-500/10 dark:text-gray-400'
                   : selectedStock.Changep >= 0 
@@ -270,10 +288,11 @@ export const StockList = ({
                 {getCompanyName(selectedStock)}
               </p>
             </div>
-            <div className="mt-2 z-10">
+            <div className="mt-1 z-10">
               <div className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
-              <div className="text-base font-bold text-gray-900 dark:text-white">
-                {formatPrice(selectedStock.LastTradedPrice, activeFilter === 'bonds' || selectedStock.Symbol.toUpperCase().includes('-BD'))} ₮
+              <div className="text-sm font-bold text-gray-900 dark:text-white">
+                {formatPrice(selectedStock.LastTradedPrice, isStockABond(selectedStock))} 
+                {formatPrice(selectedStock.LastTradedPrice, isStockABond(selectedStock)) !== '-' ? '₮' : ''}
               </div>
             </div>
             <MiniChart 
@@ -326,11 +345,11 @@ export const StockList = ({
                             transform="translate(100 100)"
                           />
                         </svg>
-                        <div className="flex items-start justify-between mb-2 z-10">
-                          <h3 className="flex items-center justify-center font-semibold text-xs text-white rounded-full h-8 w-8 bg-bdsec dark:bg-indigo-500">
+                        <div className="flex items-start justify-between mb-1 z-10">
+                          <h3 className="flex items-center justify-center font-semibold text-xs text-white rounded-full h-7 w-7 bg-bdsec dark:bg-indigo-500">
                             {stock.Symbol.toUpperCase().includes('-BD') ? stock.Symbol : stock.Symbol.split('-')[0]}
                           </h3>
-                          <div className={`text-xs font-semibold px-1.5 py-0.5 rounded-md ${
+                          <div className={`text-xs font-semibold px-1 py-0.5 rounded-md ${
                             Math.abs(stock.Changep || 0) < 0.01 
                               ? 'text-gray-600 bg-gray-100 dark:bg-gray-500/10 dark:text-gray-400'
                               : isPositive 
@@ -348,10 +367,11 @@ export const StockList = ({
                             {getCompanyName(stock)}
                           </p>
                         </div>
-                        <div className="mt-2 z-10">
+                        <div className="mt-1 z-10">
                           <div className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
-                          <div className="text-base font-bold text-gray-900 dark:text-white">
-                            {formatPrice(stock.LastTradedPrice, activeFilter === 'bonds' || stock.Symbol.toUpperCase().includes('-BD'))} ₮
+                          <div className="text-sm font-bold text-gray-900 dark:text-white">
+                            {formatPrice(stock.LastTradedPrice, isStockABond(stock))}
+                            {formatPrice(stock.LastTradedPrice, isStockABond(stock)) !== '-' ? '₮' : ''}
                           </div>
                         </div>
                         <MiniChart 
@@ -375,6 +395,9 @@ export const StockList = ({
             </CarouselContent>
           </Carousel>
         </div>
+      </div>
+         <div className="mt-0 px-2 sm:px-0 text-[8px] text-gray-400 dark:text-gray-500">
+        {activeFilter && t(`dashboard.tooltip.${activeFilter}`)}
       </div>
     </div>
   )

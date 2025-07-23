@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight } from 'lucide-react'
 import { fetchAllStocks, type StockData } from '@/lib/api'
 import realTimeService from '@/lib/socket'
-import { BlinkEffect } from '@/components/ui/BlinkEffect'
 import StockAverageModal from '../pages/StockAverageModal'
+import FullStockTableModal from './FullStockTableModal';
 
 // Define stock categories
 interface Category {
@@ -45,6 +45,8 @@ const AllStocks = () => {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const socketRef = useRef<any>(null)
   const [previousStockValues, setPreviousStockValues] = useState<{ [symbol: string]: { price: number; change: number } }>({})
+  const [blinkingRows, setBlinkingRows] = useState<Map<string, 'gain' | 'loss'>>(new Map());
+  const [isFullTableModalOpen, setIsFullTableModalOpen] = useState(false);
 
   // Stock categories
   const categories: Category[] = useMemo(() => [
@@ -255,22 +257,57 @@ const getStockCategory = (stock: StockData): string => {
     realTimeService.onTradingDataUpdate((data: StockData[]) => {
       setAllStocks(prevStocks => {
         const updatedStocks = [...prevStocks];
+        const newBlinkingRows = new Map<string, 'gain' | 'loss'>();
+
         data.forEach(update => {
           const stockIndex = updatedStocks.findIndex(s => s.Symbol === update.Symbol);
           if (stockIndex !== -1) {
+            const oldPrice = updatedStocks[stockIndex].LastTradedPrice || 0;
+            const newPrice = update.LastTradedPrice || 0;
+            const oldChange = updatedStocks[stockIndex].Changep || 0;
+            const newChange = update.Changep || 0;
+
+            // Store previous values for price and change
             setPreviousStockValues(prev => ({
               ...prev,
-              [update.Symbol]: { 
-                price: updatedStocks[stockIndex].LastTradedPrice, 
-                change: updatedStocks[stockIndex].Changep || 0 
+              [update.Symbol]: {
+                price: oldPrice,
+                change: oldChange
               }
             }));
+
+            // Determine if price or change percentage has changed significantly
+            if (newPrice > oldPrice) {
+              newBlinkingRows.set(update.Symbol, 'gain');
+            } else if (newPrice < oldPrice) {
+              newBlinkingRows.set(update.Symbol, 'loss');
+            }
+
             updatedStocks[stockIndex] = {
               ...updatedStocks[stockIndex],
               ...update
             };
           }
         });
+
+        // Apply blinking rows and set timeouts to remove them
+        if (newBlinkingRows.size > 0) {
+          setBlinkingRows(prev => {
+            const nextMap = new Map(prev);
+            newBlinkingRows.forEach((value, key) => nextMap.set(key, value));
+            return nextMap;
+          });
+          newBlinkingRows.forEach((_, symbol) => {
+            setTimeout(() => {
+              setBlinkingRows(prev => {
+                const nextMap = new Map(prev);
+                nextMap.delete(symbol);
+                return nextMap;
+              });
+            }, 500); // Blink for 500ms
+          });
+        }
+
         return updatedStocks;
       });
       setLastUpdate(new Date());
@@ -307,43 +344,44 @@ const getStockCategory = (stock: StockData): string => {
     
     return stocks.map((stock) => {
       const previousValues = previousStockValues[stock.Symbol] || { price: 0, change: 0 };
-      
+      const blinkClass = blinkingRows.get(stock.Symbol);
+
       return (
         <tr 
           key={stock.Symbol} 
-          className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+          className={`border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 ${blinkClass === 'gain' ? 'bg-green-100 dark:bg-green-900/30' : blinkClass === 'loss' ? 'bg-red-100 dark:bg-red-900/30' : ''}`}
         >
-          <td className="px-2 py-3 whitespace-nowrap">
+          <td className="px-0.5 py-0.5 whitespace-nowrap">
             <a href={`/stocks/${stock.Symbol}`} className="flex flex-col">
-              <span className="font-medium">{stock.Symbol}</span>
-              <span className="text-xs text-gray-500">{getCompanyName(stock)}</span>
+              <span className="font-medium text-xs">{stock.Symbol}</span>
+              <span className="text-[10px] text-gray-500">{getCompanyName(stock)}</span>
             </a>
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             {stock.Volume?.toLocaleString() || '-'}
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             {stock.Turnover?.toLocaleString() || '-'}
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             {formatPrice(stock.PreviousClose, isBondCategory)}
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             {formatPrice(stock.OpeningPrice, isBondCategory)}
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             {formatPrice(stock.HighPrice, isBondCategory)}
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             {formatPrice(stock.LowPrice, isBondCategory)}
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             {formatPrice(stock.LastTradedPrice, isBondCategory)}
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             {formatPrice(stock.ClosingPrice, isBondCategory)}
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             <span className={
               stock.Changes > 0 
                 ? 'text-green-500' 
@@ -354,11 +392,7 @@ const getStockCategory = (stock: StockData): string => {
               {stock.Changes > 0 ? '+' : ''}{stock.Changes?.toFixed(2) || '-'}
                     </span>
           </td>
-          <td className="px-2 py-3 text-right">
-            <BlinkEffect
-              value={stock.Changep || 0}
-              previousValue={previousValues.change}
-            >
+          <td className="px-0.5 py-0.5 text-right">
               <div className="flex items-center justify-end">
                 {stock.Changep !== null && stock.Changep !== undefined ? (
                   <>
@@ -372,25 +406,24 @@ const getStockCategory = (stock: StockData): string => {
                       {stock.Changep > 0 ? '+' : ''}{stock.Changep.toFixed(2)}%
                     </span>
                     {stock.Changep !== 0 && (
-                      <span className="ml-1">
-                        {stock.Changep > 0 ? <ArrowUp size={12} className="text-green-500" /> : <ArrowDown size={12} className="text-red-500" />}
+                      <span className="ml-0.5">
+                        {stock.Changep > 0 ? <ArrowUp size={8} className="text-green-500" /> : <ArrowDown size={8} className="text-red-500" />}
                     </span>
                     )}
                   </>
                 ) : '-'}
               </div>
-            </BlinkEffect>
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             {stock.sizemd?.toLocaleString() || '-'}
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             {formatPrice(stock.MDEntryPx, isBondCategory)}
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             {formatPrice(stock.MDEntryPx2, isBondCategory)}
           </td>
-          <td className="px-2 py-3 text-right">
+          <td className="px-0.5 py-0.5 text-right">
             {stock.sizemd2?.toLocaleString() || '-'}
           </td>
         </tr>
@@ -448,7 +481,7 @@ const getStockCategory = (stock: StockData): string => {
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Turnover')}>
-                      Үнийн дүн 
+                      {t('allStocks.turnover')}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
@@ -478,7 +511,7 @@ const getStockCategory = (stock: StockData): string => {
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('ClosingPrice')}>
-                      Хаалт
+                      {t('allStocks.closingPrice')}
           </div>
                   </th>
                   <th className="px-2 py-3 text-right">
@@ -524,175 +557,198 @@ const getStockCategory = (stock: StockData): string => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24 px-2">
-      <div className="py-6">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-3">
-            <a 
-              href="/" 
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
-            >
-              <ChevronRight className="transform rotate-180" size={18} />
-            </a>
-            <h1 className="text-xl font-bold">{t('allStocks.title')}</h1>
-          </div>
-          <div className="text-sm text-gray-500">
-            {lastUpdate ? (
-              <span>
-                {t('allStocks.lastUpdated')}: {lastUpdate.toLocaleTimeString()}
-              </span>
-            ) : (
-              <span>
-                {t('allStocks.lastUpdated')}: {new Date().toLocaleTimeString()}
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="flex justify-between items-center mb-4">
-          <button 
-            onClick={toggleFilters}
-            className="flex items-center gap-1 text-sm text-bdsec dark:text-indigo-400"
-          >
-            <SlidersHorizontal size={16} />
-            {t('allStocks.filter')}
-          </button>
-        </div>
-        
-        {/* Search Bar */}
-        <div className="mb-4 relative">
-          <div className="flex items-center border rounded-md px-3 py-2 bg-gray-100 dark:bg-gray-800">
-            <Search size={20} className="text-gray-500 mr-2" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={handleSearch}
-              className="bg-transparent outline-none w-full text-sm"
-              placeholder={t('common.search')}
-            />
-            {searchTerm && (
-              <button onClick={clearSearch} className="ml-2">
-                <X size={20} className="text-gray-500" />
-              </button>
-            )}
-          </div>
-        </div>
-        
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <h3 className="font-medium mb-2">{t('allStocks.categories')}</h3>
-            <div className="flex flex-wrap gap-2">
-              {categories.map(category => (
-                <button
-                  key={category.id}
-                  className={`px-3 py-1 text-sm rounded-full ${
-                    selectedCategory === category.id
-                      ? 'bg-bdsec dark:bg-indigo-500 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                  }`}
-                  onClick={() => setSelectedCategory(category.id)}
-                >
-                  {category.mnName}
-                </button>
-              ))}
+    <div className="container mx-auto p-4">
+      <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
+        <div className="py-2">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-3">
+              <a 
+                href="/" 
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+              >
+                <ChevronRight className="transform rotate-180" size={18} />
+              </a>
+              <h1 className="text-base font-bold">{t('allStocks.title')}</h1>
             </div>
-            
-            <div className="mt-3">
-              <h3 className="font-medium mb-2">{t('allStocks.timeFilter')}</h3>
+            <div className="text-[10px] text-right text-gray-500">
+              {lastUpdate ? (
+                <span>
+                  {t('allStocks.lastUpdated')}: {lastUpdate.toLocaleTimeString()}
+                </span>
+              ) : (
+                <span>
+                  {t('allStocks.lastUpdated')}: {new Date().toLocaleTimeString()}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-between items-center mb-4">
+            <button 
+              onClick={toggleFilters}
+              className="flex items-center gap-1 text-sm text-bdsec dark:text-indigo-400"
+            >
+              <SlidersHorizontal size={16} />
+              {t('allStocks.filter')}
+            </button>
+            <button
+              onClick={() => setIsFullTableModalOpen(true)}
+              className="flex items-center gap-1 text-sm text-bdsec dark:text-indigo-400"
+            >
+              {t('allStocks.seeFullTable')}
+            </button>
+          </div>
+          
+          {/* Search Bar */}
+          <div className="mb-4 relative">
+            <div className="flex items-center border rounded-md px-3 py-2 bg-gray-100 dark:bg-gray-800">
+              <Search size={20} className="text-gray-500 mr-2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearch}
+                className="bg-transparent outline-none w-full text-sm"
+                placeholder={t('common.search')}
+              />
+              {searchTerm && (
+                <button onClick={clearSearch} className="ml-2">
+                  <X size={20} className="text-gray-500" />
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Filters Panel */}
+          {showFilters && (
+            <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <h3 className="font-medium mb-2">{t('allStocks.categories')}</h3>
               <div className="flex flex-wrap gap-2">
-                {['today', 'yesterday', 'thisWeek', 'thisMonth'].map(period => (
+                {categories.map(category => (
                   <button
-                    key={period}
-                    className="px-3 py-1 text-sm rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                    key={category.id}
+                    className={`px-3 py-1 text-sm rounded-full ${
+                      selectedCategory === category.id
+                        ? 'bg-bdsec dark:bg-indigo-500 text-white'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                    }`}
+                    onClick={() => setSelectedCategory(category.id)}
                   >
-                    {t(`allStocks.${period}`)}
+                    {category.mnName}
                   </button>
                 ))}
               </div>
+              
+              <div className="mt-3">
+                <h3 className="font-medium mb-2">{t('allStocks.timeFilter')}</h3>
+                <div className="flex flex-wrap gap-2">
+                  {['today', 'yesterday', 'thisWeek', 'thisMonth'].map(period => (
+                    <button
+                      key={period}
+                      className="px-3 py-1 text-sm rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                    >
+                      {t(`allStocks.${period}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Filter Tabs */}
+          <div className="flex mb-4 border-b overflow-x-auto justify-between items-center">
+            <div className="flex">
+              {[
+                { id: 'all', label: t('allStocks.all') },
+                { id: 'active', label: t('allStocks.active') },
+                { id: 'gainers', label: t('dashboard.gainers') },
+                { id: 'losers', label: t('dashboard.losers') },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  className={`px-4 py-2 text-sm whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
+                      : 'text-gray-500'
+                  }`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* 52/7 Button */}
+            <div className="px-4 py-2 text-sm whitespace-nowrap">
+              <button
+                onClick={() => {
+                  setIsModalOpen(true);    // Open modal
+                }}
+                className={`px-4 py-2 text-sm whitespace-nowrap ${
+                  activeTab === 'average'
+                    ? 'bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
+                    : 'text-gray-500'
+                }`}
+              >
+             {t('StockAver.see_data') }
+              </button>
+
+              <StockAverageModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+              />
             </div>
           </div>
-        )}
-        
-        {/* Filter Tabs */}
- <div className="flex mb-4 border-b overflow-x-auto justify-between items-center">
-  <div className="flex">
-    {[
-      { id: 'all', label: t('allStocks.all') },
-      { id: 'active', label: t('allStocks.active') },
-      { id: 'gainers', label: t('dashboard.gainers') },
-      { id: 'losers', label: t('dashboard.losers') },
-    ].map((tab) => (
-      <button
-        key={tab.id}
-        className={`px-4 py-2 text-sm whitespace-nowrap ${
-          activeTab === tab.id
-            ? 'bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
-            : 'text-gray-500'
-        }`}
-        onClick={() => setActiveTab(tab.id)}
-      >
-        {tab.label}
-      </button>
-    ))}
-  </div>
-
-  {/* 52/7 Button */}
-  <div className="px-4 py-2 text-sm whitespace-nowrap">
-    <button
-      onClick={() => {
-        setActiveTab('average'); // Set this as the active tab
-        setIsModalOpen(true);    // Also open modal
-      }}
-      className={`px-4 py-2 text-sm whitespace-nowrap ${
-        activeTab === 'average'
-          ? 'bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
-          : 'text-gray-500'
-      }`}
-    >
-   {t('StockAver.see_data') }
-    </button>
-
-    <StockAverageModal
-      isOpen={isModalOpen}
-      onClose={() => setIsModalOpen(false)}
-    />
-  </div>
-</div>
 
 
+            
+          {/* Stocks Table with Category Groups */}
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-bdsec dark:border-indigo-500 mb-2"></div>
+              <p className="text-gray-500 text-sm ml-3">{t('common.loading')}</p>
+            </div>
+          ) : sortedStocks().length > 0 ? (
+            <div className="space-y-6">
+              {renderCategorySection('I', t('allStocks.categoryI'), 'bg-blue-50 dark:bg-blue-900/30', 'text-blue-800 dark:text-blue-200')}
+              {renderCategorySection('II', t('allStocks.categoryII'), 'bg-purple-50 dark:bg-purple-900/30', 'text-purple-800 dark:text-purple-200')}
+              {renderCategorySection('III', t('allStocks.categoryIII'), 'bg-gray-50 dark:bg-gray-800/60', 'text-gray-800 dark:text-gray-200')}
+              {renderCategorySection('FUND', 'Хөрөнгө оруулалтын сан', 'bg-green-50 dark:bg-green-900/30', 'text-green-800 dark:text-green-200')}
+              {renderCategorySection('BOND', 'Компанийн бонд', 'bg-orange-50 dark:bg-orange-900/30', 'text-orange-800 dark:text-orange-200')}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-gray-500">{t('common.noResults')}</p>
+            </div>
+          )}
           
-        {/* Stocks Table with Category Groups */}
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-bdsec dark:border-indigo-500 mb-2"></div>
-            <p className="text-gray-500 text-sm ml-3">{t('common.loading')}</p>
+          {/* Summary Section */}
+          <div className="mt-6 text-xs text-gray-500 flex justify-between items-center">
+            <div>{t('allStocks.showing', { count: sortedStocks().length, total: allStocks.length })}</div>
+            <div>{t('allStocks.lastUpdated')}: {new Date().toLocaleString()}</div>
           </div>
-        ) : sortedStocks().length > 0 ? (
-          <div className="space-y-6">
-            {renderCategorySection('I', t('allStocks.categoryI'), 'bg-blue-50 dark:bg-blue-900/30', 'text-blue-800 dark:text-blue-200')}
-            {renderCategorySection('II', t('allStocks.categoryII'), 'bg-purple-50 dark:bg-purple-900/30', 'text-purple-800 dark:text-purple-200')}
-            {renderCategorySection('III', t('allStocks.categoryIII'), 'bg-gray-50 dark:bg-gray-800/60', 'text-gray-800 dark:text-gray-200')}
-            {renderCategorySection('FUND', 'Хөрөнгө оруулалтын сан', 'bg-green-50 dark:bg-green-900/30', 'text-green-800 dark:text-green-200')}
-            {renderCategorySection('BOND', 'Компанийн бонд', 'bg-orange-50 dark:bg-orange-900/30', 'text-orange-800 dark:text-orange-200')}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-500">{t('common.noResults')}</p>
-          </div>
-        )}
-        
-        {/* Summary Section */}
-        <div className="mt-6 text-xs text-gray-500 flex justify-between items-center">
-          <div>{t('allStocks.showing', { count: sortedStocks().length, total: allStocks.length })}</div>
-          <div>{t('allStocks.lastUpdated')}: {new Date().toLocaleString()}</div>
         </div>
+        
+        {/* Stock Average Modal */}
+        <StockAverageModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+        />
+
+        {/* Full Stock Table Modal */}
+        {isFullTableModalOpen && (
+          <FullStockTableModal
+            isOpen={isFullTableModalOpen}
+            onClose={() => setIsFullTableModalOpen(false)}
+            filteredStocks={filteredStocks}
+            sortConfig={sortConfig}
+            blinkingRows={blinkingRows}
+            previousStockValues={previousStockValues}
+            getCompanyName={getCompanyName}
+            formatPrice={formatPrice}
+            getStockCategory={getStockCategory}
+            handleSort={handleSort}
+          />
+        )}
       </div>
-      
-      {/* Stock Average Modal */}
-      <StockAverageModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-      />
     </div>
   )
 }

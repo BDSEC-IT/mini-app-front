@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fetchTradingHistory, type TradingHistoryData } from '@/lib/api'
+import { ChevronDown } from 'lucide-react'
 
 interface TradingViewChartProps {
   symbol?: string
@@ -19,7 +20,27 @@ interface Point {
   change: number
   changePercent: number
   entryTime: string
+  open: number
+  high: number
+  low: number
+  close: number
 }
+
+type ChartType = 'line' | 'candlestick';
+
+const colorThemes = {
+  modern: { up: '#3b82f6', down: '#6b7280' }, // blue/gray
+  classic: { up: '#22c55e', down: '#ef4444' }, // green/red
+  sunrise: { up: '#f97316', down: '#6d28d9' }, // orange/purple
+};
+
+const ringColorMap: Record<ColorTheme, string> = {
+  modern: 'ring-blue-500',
+  classic: 'ring-green-500',
+  sunrise: 'ring-orange-500',
+};
+
+type ColorTheme = keyof typeof colorThemes;
 
 export function TradingViewChart({ 
   symbol = 'BDS-O-0000', 
@@ -41,6 +62,9 @@ export function TradingViewChart({
   const { t } = useTranslation()
   const [isMobile, setIsMobile] = useState(false)
   const [activePeriod, setActivePeriod] = useState(period)
+  const [chartType, setChartType] = useState<ChartType>('line');
+  const [colorTheme, setColorTheme] = useState<ColorTheme>('modern');
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
 
   // Check if mobile
   useEffect(() => {
@@ -92,6 +116,43 @@ export function TradingViewChart({
     return () => resizeObserver.disconnect()
   }, [allChartData]) // Rerun on data change
 
+  const drawCandlestickChart = useCallback((svg: SVGSVGElement, points: Point[], options: any) => {
+    const { width, height, padding, minPrice, maxPrice, theme, colorTheme } = options;
+    const chartHeight = height - padding.top - padding.bottom;
+    const bandwidth = (width - padding.left - padding.right) / points.length;
+    const candleWidth = Math.max(2, bandwidth * 0.7);
+
+    points.forEach(p => {
+      const x = p.x;
+      const openY = padding.top + chartHeight - ((p.open - minPrice) / (maxPrice - minPrice)) * chartHeight;
+      const highY = padding.top + chartHeight - ((p.high - minPrice) / (maxPrice - minPrice)) * chartHeight;
+      const lowY = padding.top + chartHeight - ((p.low - minPrice) / (maxPrice - minPrice)) * chartHeight;
+      const closeY = padding.top + chartHeight - ((p.close - minPrice) / (maxPrice - minPrice)) * chartHeight;
+
+      const isBullish = p.close >= p.open;
+      const color = isBullish ? colorTheme.up : colorTheme.down;
+
+      // Wick
+      const wick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      wick.setAttribute('x1', x.toString());
+      wick.setAttribute('y1', highY.toString());
+      wick.setAttribute('x2', x.toString());
+      wick.setAttribute('y2', lowY.toString());
+      wick.setAttribute('stroke', color);
+      wick.setAttribute('stroke-width', '1');
+      svg.appendChild(wick);
+
+      // Candle body
+      const body = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      body.setAttribute('x', (x - candleWidth / 2).toString());
+      body.setAttribute('y', Math.min(openY, closeY).toString());
+      body.setAttribute('width', candleWidth.toString());
+      body.setAttribute('height', Math.abs(openY - closeY).toString());
+      body.setAttribute('fill', color);
+      svg.appendChild(body);
+    });
+  }, []);
+
   // Draw chart using SVG
   useEffect(() => {
     if (!mounted || !svgRef.current || allChartData.length === 0 || containerSize.width === 0) return
@@ -118,6 +179,8 @@ export function TradingViewChart({
     const chartHeight = height - padding.top - padding.bottom;
     
     svg.innerHTML = ''
+
+    const selectedColor = colorThemes[colorTheme].up;
     
     const prices = filteredData.map(d => d.ClosingPrice)
     const minPrice = Math.min(...prices)
@@ -128,7 +191,18 @@ export function TradingViewChart({
       const y = padding.top + chartHeight - ((d.ClosingPrice - minPrice) / (maxPrice - minPrice)) * chartHeight;
       const change = i > 0 ? d.ClosingPrice - filteredData[i - 1].ClosingPrice : 0
       const changePercent = i > 0 && filteredData[i - 1].ClosingPrice !== 0 ? (change / filteredData[i - 1].ClosingPrice) * 100 : 0
-      return { x, y, date: new Date(d.dates), value: d.ClosingPrice, change, changePercent, entryTime: d.MDEntryTime }
+      return { 
+        x, y, 
+        date: new Date(d.dates), 
+        value: d.ClosingPrice, 
+        change, 
+        changePercent, 
+        entryTime: d.MDEntryTime,
+        open: d.OpeningPrice,
+        high: d.HighPrice,
+        low: d.LowPrice,
+        close: d.ClosingPrice
+      }
     })
     
     const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs')
@@ -140,11 +214,11 @@ export function TradingViewChart({
     gradient.setAttribute('y2', '100%')
     const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop')
     stop1.setAttribute('offset', '0%')
-    stop1.setAttribute('stop-color', theme === 'dark' ? '#818cf8' : '#4f46e5')
+    stop1.setAttribute('stop-color', selectedColor)
     stop1.setAttribute('stop-opacity', '0.4')
     const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop')
     stop2.setAttribute('offset', '100%')
-    stop2.setAttribute('stop-color', theme === 'dark' ? '#818cf8' : '#4f46e5')
+    stop2.setAttribute('stop-color', selectedColor)
     stop2.setAttribute('stop-opacity', '0')
     gradient.appendChild(stop1)
     gradient.appendChild(stop2)
@@ -152,7 +226,7 @@ export function TradingViewChart({
     svg.appendChild(defs)
 
     const points = pointsRef.current
-    if (points.length > 1) {
+    if (chartType === 'line' && points.length > 1) {
       const areaPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
       let pathData = `M ${points[0].x} ${points[0].y}`
       for (let i = 1; i < points.length; i++) pathData += ` L ${points[i].x} ${points[i].y}`
@@ -165,10 +239,12 @@ export function TradingViewChart({
       pathData = `M ${points[0].x} ${points[0].y}`
       for (let i = 1; i < points.length; i++) pathData += ` L ${points[i].x} ${points[i].y}`
       linePath.setAttribute('d', pathData)
-      linePath.setAttribute('stroke', theme === 'dark' ? '#818cf8' : '#4f46e5')
+      linePath.setAttribute('stroke', selectedColor)
       linePath.setAttribute('stroke-width', '2')
       linePath.setAttribute('fill', 'none')
       svg.appendChild(linePath)
+    } else if (chartType === 'candlestick') {
+      drawCandlestickChart(svg, points, { width, height, padding, minPrice, maxPrice, theme, colorTheme: colorThemes[colorTheme] });
     }
     
     const crosshair = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -219,7 +295,7 @@ export function TradingViewChart({
         svg.appendChild(text);
     }
     
-  }, [allChartData, activePeriod, theme, mounted, containerSize])
+  }, [mounted, svgRef, allChartData, containerSize, theme, activePeriod, chartType, drawCandlestickChart, colorTheme]);
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -324,6 +400,50 @@ export function TradingViewChart({
 
   return (
     <div className="w-full h-full flex flex-col">
+      <div className="h-[30px] flex justify-between items-center px-2 bg-white dark:bg-gray-900 rounded-t-lg">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 dark:text-gray-400">{t('chart.chartType')}</span>
+          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-md p-0.5">
+            <button 
+              onClick={() => setChartType('line')}
+              className={`px-2 py-0.5 text-xs rounded-md ${chartType === 'line' ? 'bg-brand-primary dark:bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-300'}`}
+            >
+              {t('chart.line')}
+            </button>
+            <button 
+              onClick={() => setChartType('candlestick')}
+              className={`px-2 py-0.5 text-xs rounded-md ${chartType === 'candlestick' ? 'bg-brand-primary dark:bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-300'}`}
+            >
+              {t('chart.candlestick')}
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 dark:text-gray-400">{t('chart.color')}</span>
+          <div className="flex items-center gap-2">
+            {chartType === 'line' ? (
+              Object.keys(colorThemes).map((themeKey) => (
+                <button 
+                  key={themeKey}
+                  onClick={() => setColorTheme(themeKey as ColorTheme)}
+                  className={`w-4 h-4 rounded-full ${colorTheme === themeKey ? `ring-2 ring-offset-1 ${ringColorMap[themeKey as ColorTheme]}` : ''}`}
+                  style={{ backgroundColor: colorThemes[themeKey as ColorTheme].up }}
+                />
+              ))
+            ) : (
+              Object.keys(colorThemes).map((themeKey) => (
+                <button 
+                  key={themeKey}
+                  onClick={() => setColorTheme(themeKey as ColorTheme)}
+                className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs ${colorTheme === themeKey ? 'bg-brand-primary dark:bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: colorThemes[themeKey as ColorTheme].up }}></div>
+                  <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: colorThemes[themeKey as ColorTheme].down }}></div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
       <div ref={containerRef} className="w-full h-[calc(100%-80px)] relative">
         <svg 
           ref={svgRef} 
@@ -344,19 +464,19 @@ export function TradingViewChart({
         />
       </div>
       <div className="h-[50px] flex justify-center items-center border-t border-soft border-opacity-50 pt-2 pb-2 bg-white dark:bg-gray-900 rounded-b-lg">
-        <div className="flex justify-center items-center gap-1 sm:gap-2">
+        <div className="flex justify-center items-center gap-2 sm:gap-2">
           {[
             { id: '1M', label: '1M' },
             { id: '3M', label: '3M' },
-            { id: '1Y', label: '1Y' },
+            { id: '1Y', 'label': '1Y' },
             { id: 'ALL', label: 'ALL' }
           ].map((periodOption) => (
             <button
               key={periodOption.id}
-              className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+              className={`px-5 sm:px-4 py-0.5 text-[10px]  sm:text-sm font-medium rounded-md transition-colors ${
                 activePeriod === periodOption.id 
-                  ? 'bg-indigo-900 text-white border border-soft border-opacity-50' 
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 border border-soft border-opacity-30'
+                  ? ' bg-brand-primary text-white border border-soft border-opacity-50' 
+                  : ' dark:bg-gray-800 font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 border border-soft border-opacity-30'
               }`}
               onClick={() => setActivePeriod(periodOption.id)}
             >

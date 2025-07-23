@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { TradingViewChart } from '../ui/TradingViewChart'
 import { useTheme } from '@/contexts/ThemeContext'
-import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, type OrderBookEntry, type StockData } from '@/lib/api'
+import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, type OrderBookEntry, type StockData, BASE_URL } from '@/lib/api'
 import { StockHeader } from './dashboard/StockHeader'
 import { OrderBook } from './dashboard/OrderBook'
 import { StockDetails } from './dashboard/StockDetails'
@@ -23,7 +23,10 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+import { useTranslation } from 'react-i18next';
+
 const DashboardContent = () => {
+  const { t } = useTranslation();
   const [selectedSymbol, setSelectedSymbol] = useState('BDS'); // Default to BDS
   const { theme } = useTheme()
   const [activeFilter, setActiveFilter] = useState('trending')
@@ -42,6 +45,7 @@ const DashboardContent = () => {
   const [selectedStockData, setSelectedStockData] = useState<StockData | null>(null)
   const [chartRefreshKey, setChartRefreshKey] = useState<number>(0)
   const [chartLoading, setChartLoading] = useState(true)
+  const [companyDetails, setCompanyDetails] = useState<any>(null)
 
 
 
@@ -92,6 +96,19 @@ const DashboardContent = () => {
     console.log('=== Dashboard: fetchSelectedStockData END ===');
   }, [selectedSymbol])
 
+  const fetchCompanyDetails = useCallback(async () => {
+    if (!selectedCard) return;
+    try {
+      const response = await fetch(`${BASE_URL}/securities/companies?page=1&limit=1&sortField&symbol=${selectedCard.Symbol}`);
+      const data = await response.json();
+      if (data.success && data.data.length > 0) {
+        setCompanyDetails(data.data[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching company details:', error);
+    }
+  }, [selectedCard]);
+
   // Fetch order book data
   const fetchOrderBookData = useCallback(async () => {
     try {
@@ -103,9 +120,21 @@ const DashboardContent = () => {
         
         // Use MDEntryTime from the selected stock data if available
         if (selectedStockData?.MDEntryTime) {
-          setLastUpdated(selectedStockData.MDEntryTime)
+          // Extract date and time parts directly from the ISO string
+          const isoString = selectedStockData.MDEntryTime;
+          const [datePart, timePartWithZ] = isoString.split('T');
+          const timePart = timePartWithZ.split('.')[0]; // Removes .000Z
+          setLastUpdated(`${datePart} ${timePart}`);
         } else {
-          setLastUpdated(new Date().toLocaleString())
+          // Fallback to current time, formatted similarly without timezone conversion
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = (now.getMonth() + 1).toString().padStart(2, '0');
+          const day = now.getDate().toString().padStart(2, '0');
+          const hours = now.getHours().toString().padStart(2, '0');
+          const minutes = now.getMinutes().toString().padStart(2, '0');
+          const seconds = now.getSeconds().toString().padStart(2, '0');
+          setLastUpdated(`${year}-${month}-${day} ${hours}:${minutes}:${seconds}`);
         }
       }
     } catch (err) {
@@ -142,7 +171,8 @@ const DashboardContent = () => {
   // Fetch order book when selectedSymbol changes
   useEffect(() => {
     fetchOrderBookData()
-  }, [fetchOrderBookData])
+    fetchCompanyDetails()
+  }, [fetchOrderBookData, fetchCompanyDetails])
 
   // Process order book data
   const processedOrderBook = useMemo(() => {
@@ -163,18 +193,7 @@ const DashboardContent = () => {
     return { buy: buyOrders, sell: sellOrders }
   }, [orderBookData])
 
-  // Mock data for stock details
-  const getStockDetails = useMemo(() => {
-    const selectedStockData = allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol.split('-')[0])
-    return {
-      isin: `MN00SBM${selectedStockData?.id || '05643'}`,
-      companyCode: selectedStockData?.id?.toString() || '564',
-      totalShares: (Math.floor(Math.random() * 50000000) + 1000000).toString(),
-      listedShares: (Math.floor(Math.random() * 30000000) + 1000000).toString(),
-      marketCap: selectedStockData ? (selectedStockData.LastTradedPrice * 1000000).toFixed(2) : '234132.32',
-      listingDate: '2016-07-25'
-    }
-  }, [selectedSymbol, allStocks])
+  
 
   // Filter stocks based on activeFilter
   useEffect(() => {
@@ -187,7 +206,11 @@ const DashboardContent = () => {
         filtered = filtered.sort((a, b) => (b.Volume || 0) - (a.Volume || 0))
         break
       case 'mostActive':
-        filtered = filtered.sort((a, b) => (b.Turnover || 0) - (a.Turnover || 0))
+        filtered = filtered.sort((a, b) => {
+          const dateA = a.MDEntryTime ? new Date(a.MDEntryTime).getTime() : 0;
+          const dateB = b.MDEntryTime ? new Date(b.MDEntryTime).getTime() : 0;
+          return dateB - dateA;
+        });
         break
       case 'gainers':
         filtered = filtered
@@ -200,12 +223,12 @@ const DashboardContent = () => {
           .sort((a, b) => a.Changep - b.Changep)
         break
       case 'bonds':
-        filtered = filtered.filter(stock => stock.MarketSegmentID && (stock.MarketSegmentID.toUpperCase().includes('BOND') || stock.MarketSegmentID === '1' || stock.Symbol.toUpperCase().includes('-BD')))
+        filtered = filtered.filter(stock => stock.Symbol.toUpperCase().includes('-BD') && (stock.LastTradedPrice || 0) > 0)
         break
     }
     
-    setFilteredStocks(filtered.slice(0, 20))
-  }, [allStocks, activeFilter])
+    setFilteredStocks(filtered.slice(0, 20));
+  }, [allStocks, activeFilter]);
 
   // Search results
   const searchResults = useMemo(() => {
@@ -271,7 +294,41 @@ const DashboardContent = () => {
     setHoveredChangePercent(changePercent ?? null)
   }
 
+  const handleFilterChange = useCallback((filter: string) => {
+    setActiveFilter(filter);
 
+    let filtered = [...allStocks];
+
+    switch (filter) {
+      case 'trending':
+        filtered = filtered.sort((a, b) => (b.Volume || 0) - (a.Volume || 0));
+        break;
+      case 'mostActive':
+        filtered = filtered.sort((a, b) => {
+          const dateA = a.MDEntryTime ? new Date(a.MDEntryTime).getTime() : 0;
+          const dateB = b.MDEntryTime ? new Date(b.MDEntryTime).getTime() : 0;
+          return dateB - dateA;
+        });
+        break;
+      case 'gainers':
+        filtered = filtered
+          .filter(stock => stock.Changep > 0)
+          .sort((a, b) => b.Changep - a.Changep);
+        break;
+      case 'losers':
+        filtered = filtered
+          .filter(stock => stock.Changep < 0)
+          .sort((a, b) => a.Changep - b.Changep);
+        break;
+      case 'bonds':
+        filtered = filtered.filter(stock => stock.Symbol.toUpperCase().includes('-BD') && (stock.LastTradedPrice || 0) > 0);
+        break;
+    }
+
+    if (filtered.length > 0) {
+      setSelectedSymbol(filtered[0].Symbol.split('-')[0]);
+    }
+  }, [allStocks]);
 
   // Update orderbook lastUpdated time when selectedStockData changes
   useEffect(() => {
@@ -293,16 +350,16 @@ const DashboardContent = () => {
 
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
-      <div className="max-w-4xl mx-auto py-8 px-2">
+      <div className="max-w-4xl mx-auto py-4 px-2">
         <StockList
           loading={loading}
           activeFilter={activeFilter}
           filteredStocks={filteredStocks}
-          onFilterChange={setActiveFilter}
+          onFilterChange={handleFilterChange}
           onStockSelect={handleStockSelect}
           selectedCard={selectedCard}
         />
-        <div className="px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 relative">
+        <div className="px-2 sm:px-4 md:px-6 lg:px-8  sm:py-3 relative">
           <StockHeader
             selectedSymbol={selectedSymbol}
             selectedStockData={selectedStockData}
@@ -310,7 +367,6 @@ const DashboardContent = () => {
             searchTerm={searchTerm}
             searchResults={searchResults}
             chartLoading={chartLoading}
-            isBond={isBond}
             onSearchClick={handleSearchClick}
             onSearchClose={handleSearchClose}
             onSearchChange={handleSearchChange}
@@ -321,7 +377,7 @@ const DashboardContent = () => {
       {/* Chart section: full-bleed, outside the padded container */}
       {!isBond && (
         <div className="relative w-full max-w-full overflow-hidden">
-          <div className="h-[370px] sm:h-[400px] md:h-[420px] lg:h-[440px] mt-4  rounded-lg bg-transparent">
+          <div className="h-[370px] sm:h-[400px] md:h-[420px] lg:h-[440px] rounded-lg bg-transparent">
             <div className="relative w-full h-full overflow-hidden">
               {selectedCard && (
                 <TradingViewChart 
@@ -338,25 +394,25 @@ const DashboardContent = () => {
       )}
       {/* Bond info section */}
       {isBond && selectedStockData && (
-        <div className="relative w-full max-w-full overflow-hidden mt-4">
-          <div className="rounded-lg bg-orange-50 dark:bg-orange-900/30 p-6 shadow">
-            <h2 className="text-lg font-bold text-orange-800 dark:text-orange-200 mb-2">Бондын дэлгэрэнгүй</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div><span className="font-semibold">Символ:</span> {selectedStockData.Symbol}</div>
-              <div><span className="font-semibold">Компани:</span> {selectedStockData.mnName || selectedStockData.enName}</div>
-              <div><span className="font-semibold">Сүүлийн ханш:</span> {selectedStockData.LastTradedPrice ? (selectedStockData.LastTradedPrice * 1000).toLocaleString() : '-'} ₮</div>
-              <div><span className="font-semibold">Өмнөх хаалт:</span> {selectedStockData.PreviousClose ? (selectedStockData.PreviousClose * 1000).toLocaleString() : '-'} ₮</div>
-              <div><span className="font-semibold">Үнийн дүн:</span> {selectedStockData.Turnover ? selectedStockData.Turnover.toLocaleString() : '-'}</div>
-              <div><span className="font-semibold">Тоо ширхэг:</span> {selectedStockData.Volume ? selectedStockData.Volume.toLocaleString() : '-'}</div>
+        <div className="relative w-full max-w-full overflow-hidden mt-1">
+          <div className="rounded-lg bg-orange-50 dark:bg-orange-900/30 p-2">
+            <h2 className="text-base font-bold text-orange-800 dark:text-orange-200 mb-1">Бондын дэлгэрэнгүй</h2>
+            <div className="grid grid-cols-2 gap-1 text-xs">
+              <div><span className="font-semibold">{t('dashboard.symbol')}:</span> {selectedStockData.Symbol}</div>
+              <div><span className="font-semibold">{t('dashboard.company')}:</span> {selectedStockData.mnName || selectedStockData.enName}</div>
+              <div><span className="font-semibold">{t('dashboard.lastPrice')}:</span> {selectedStockData.LastTradedPrice ? (selectedStockData.LastTradedPrice * 1000).toLocaleString() : '-'} ₮</div>
+              <div><span className="font-semibold">{t('dashboard.previousClose')}:</span> {selectedStockData.PreviousClose ? (selectedStockData.PreviousClose * 1000).toLocaleString() : '-'} ₮</div>
+              <div><span className="font-semibold">{t('dashboard.turnover')}:</span> {selectedStockData.Turnover ? selectedStockData.Turnover.toLocaleString() : '-'}</div>
+              <div><span className="font-semibold">{t('dashboard.volume')}:</span> {selectedStockData.Volume ? selectedStockData.Volume.toLocaleString() : '-'}</div>
               <div><span className="font-semibold">MarketSegmentID:</span> {selectedStockData.MarketSegmentID}</div>
-              <div><span className="font-semibold">ISIN:</span> {getStockDetails.isin}</div>
-              <div><span className="font-semibold">Company Code:</span> {getStockDetails.companyCode}</div>
-              <div><span className="font-semibold">Listing Date:</span> {getStockDetails.listingDate}</div>
+              <div><span className="font-semibold">ISIN:</span> {companyDetails?.ISIN}</div>
+              <div><span className="font-semibold">Company Code:</span> {companyDetails?.companycode}</div>
+              <div><span className="font-semibold">Listing Date:</span> {companyDetails?.changedate}</div>
             </div>
           </div>
         </div>
       )}
-      <div className="max-w-4xl mx-auto px-2 sm:px-4 flex flex-col gap-4 sm:gap-6 ">
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 flex flex-col gap-2 sm:gap-3 ">
         <OrderBook
           selectedSymbol={selectedSymbol}
           loading={loading}
@@ -366,7 +422,7 @@ const DashboardContent = () => {
         />
         <StockDetails
           selectedSymbol={selectedSymbol}
-          details={getStockDetails}
+          details={companyDetails}
           infoLabel={isBond ? 'Bond Info' : 'Stock Info'}
         />
       </div>
