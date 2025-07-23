@@ -89,14 +89,15 @@ function is52WeekKey(key: string): key is "52high" | "52low" {
 interface OrderBookEntry {
   id: number;
   Symbol: string;
-  MDSubOrderBookType: string;
-  MDEntryType: string; // "0" for buy, "1" for sell
-  MDEntryPositionNo: number;
-  MDEntryID: string;
-  MDEntryPx: number;
-  MDEntrySize: number;
-  NumberOfOrders: number | null;
-  MDPriceLevel: string;
+  MDSubOrderBookType?: string;
+  MDEntryType?: string; // "0" for buy, "1" for sell
+  MDEntryPositionNo?: number;
+  MDEntryID?: string;
+  MDEntryPx?: number;
+  MDEntrySize?: number;
+  NumberOfOrders?: number | null;
+  MDPriceLevel?: string;
+  bondInfo?: BondData; // Add bond info for bond securities
 }
 
 interface ApiResponse<T> {
@@ -354,48 +355,6 @@ function createMockStock(symbol: string): StockData {
   }
 }
 
-// Generate mock order book data
-function generateMockOrderBook(symbol: string): OrderBookEntry[] {
-  const mockOrderBook: OrderBookEntry[] = []
-  const basePrice = 10000 + Math.random() * 5000 // Base price between 10,000 and 15,000
-  
-  // Generate buy orders (lower prices)
-  for (let i = 0; i < 10; i++) {
-    const priceOffset = i * 50 // Each order is 50₮ apart
-    mockOrderBook.push({
-      id: 1000 + i,
-      Symbol: symbol,
-      MDSubOrderBookType: "0",
-      MDEntryType: "0", // Buy order
-      MDEntryPositionNo: i + 1,
-      MDEntryID: `B${1000 + i}`,
-      MDEntryPx: basePrice - priceOffset,
-      MDEntrySize: Math.floor(Math.random() * 1000) + 100,
-      NumberOfOrders: Math.floor(Math.random() * 5) + 1,
-      MDPriceLevel: `${i + 1}`
-    })
-  }
-  
-  // Generate sell orders (higher prices)
-  for (let i = 0; i < 10; i++) {
-    const priceOffset = i * 50 // Each order is 50₮ apart
-    mockOrderBook.push({
-      id: 2000 + i,
-      Symbol: symbol,
-      MDSubOrderBookType: "0",
-      MDEntryType: "1", // Sell order
-      MDEntryPositionNo: i + 1,
-      MDEntryID: `S${2000 + i}`,
-      MDEntryPx: basePrice + priceOffset + 50, // Start a bit higher than base price
-      MDEntrySize: Math.floor(Math.random() * 1000) + 100,
-      NumberOfOrders: Math.floor(Math.random() * 5) + 1,
-      MDPriceLevel: `${i + 1}`
-    })
-  }
-  
-  return mockOrderBook
-}
-
 // Generate mock bonds data
 function generateMockBonds(page: number = 1, limit: number = 5000): BondData[] {
   const mockBonds: BondData[] = []
@@ -617,32 +576,56 @@ export const fetchStockDataWithCompanyInfo = async (symbol?: string): Promise<Ap
 
 
 export const fetchOrderBook = async (symbol: string): Promise<OrderBookResponse> => {
-  // Use lowercase symbol for order book endpoint
   const tradingSymbol = symbol.toLowerCase();
-  const url = `${BASE_URL}/securities/order-book/${tradingSymbol}`;
   
-  try {
-    const response = await fetchWithTimeout(url)
-    
-    if (!response.ok) {
-      logDev(`Using mock order book data (${response.status})`);
-      // Return mock data instead of throwing
+  // Check if it's a bond symbol
+  const isBond = tradingSymbol.includes('-bd') || tradingSymbol.includes('ombs') || tradingSymbol.includes('moni');
+  
+  if (isBond) {
+    // For bonds, fetch from bonds endpoint
+    try {
+      const response = await fetchWithTimeout(`${BASE_URL}/securities/bonds?page=1&limit=5000&sortField`)
+      if (!response.ok) {
+        return { status: false, data: [] }
+      }
+      const bondsData = await response.json();
+      if (!bondsData.success) {
+        return { status: false, data: [] }
+      }
+      // Return the specific bond data that matches our symbol
+      const bondInfo = bondsData.data.find((bond: BondData) => 
+        bond.Symbol.toLowerCase() === tradingSymbol
+      );
+      if (!bondInfo) {
+        return { status: false, data: [] }
+      }
+      // Return bond info in a format compatible with order book display
       return {
         status: true,
-        data: generateMockOrderBook(symbol)
+        data: [{
+          id: bondInfo.pkId,
+          Symbol: bondInfo.Symbol,
+          bondInfo: bondInfo // Additional bond-specific information
+        }]
       }
+    } catch (error) {
+      logDev('Error fetching bond data');
+      return { status: false, data: [] }
+    }
+  }
+
+  // For non-bond securities, fetch order book as usual
+  const url = `${BASE_URL}/securities/order-book/${tradingSymbol}`;
+  try {
+    const response = await fetchWithTimeout(url)
+    if (!response.ok) {
+      logDev(`Failed to fetch order book data (${response.status})`);
+      return { status: false, data: [] }
     }
     return response.json()
   } catch (error) {
-    logDev('Using fallback mock order book data');
-    
-    // Return mock data as fallback
-    const mockData = generateMockOrderBook(symbol)
-    
-    return {
-      status: true,
-      data: mockData
-    }
+    logDev('Error fetching order book data');
+    return { status: false, data: [] }
   }
 };
 

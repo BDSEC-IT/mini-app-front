@@ -245,7 +245,7 @@ export const StockList = ({
       </div> */}
 
       {/* Selected card pinned to the left, outside the scrollable carousel */}
-      <div className="flex items-stretch gap-2 mt-0 py-0 sm:py-4 sm:mt-4">
+      <div className="flex items-stretch gap-2 mt-0 py-0 sm:pt-4 sm:mt-4">
         
         {selectedStock && (
           <div
@@ -396,7 +396,7 @@ export const StockList = ({
           </Carousel>
         </div>
       </div>
-         <div className="mt-0 px-2 sm:px-0 text-[8px] text-gray-400 dark:text-gray-500">
+         <div className="mt-0 px-2 sm:px-0 text-[8px] sm:text-xs text-gray-400 dark:text-gray-500">
         {activeFilter && t(`dashboard.tooltip.${activeFilter}`)}
       </div>
     </div>

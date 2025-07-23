@@ -179,15 +179,25 @@ const DashboardContent = () => {
     if (!orderBookData || orderBookData.length === 0) {
       return { buy: [], sell: [] }
     }
+
+    // Check if this is bond data
+    if (orderBookData[0]?.bondInfo) {
+      // For bonds, return the bond info in the buy array (we'll use it to display bond details)
+      return { 
+        buy: orderBookData,
+        sell: []
+      }
+    }
     
+    // For regular order book data
     const buyOrders = orderBookData
       .filter(entry => entry.MDEntryType === '0')
-      .sort((a, b) => b.MDEntryPx - a.MDEntryPx)
+      .sort((a, b) => (b.MDEntryPx || 0) - (a.MDEntryPx || 0))
       .slice(0, 5)
       
     const sellOrders = orderBookData
       .filter(entry => entry.MDEntryType === '1')
-      .sort((a, b) => a.MDEntryPx - b.MDEntryPx)
+      .sort((a, b) => (a.MDEntryPx || 0) - (b.MDEntryPx || 0))
       .slice(0, 5)
       
     return { buy: buyOrders, sell: sellOrders }
@@ -394,32 +404,84 @@ const DashboardContent = () => {
       )}
       {/* Bond info section */}
       {isBond && selectedStockData && (
-        <div className="relative w-full max-w-full overflow-hidden mt-1">
-          <div className="rounded-lg bg-orange-50 dark:bg-orange-900/30 p-2">
-            <h2 className="text-base font-bold text-orange-800 dark:text-orange-200 mb-1">Бондын дэлгэрэнгүй</h2>
-            <div className="grid grid-cols-2 gap-1 text-xs">
-              <div><span className="font-semibold">{t('dashboard.symbol')}:</span> {selectedStockData.Symbol}</div>
-              <div><span className="font-semibold">{t('dashboard.company')}:</span> {selectedStockData.mnName || selectedStockData.enName}</div>
-              <div><span className="font-semibold">{t('dashboard.lastPrice')}:</span> {selectedStockData.LastTradedPrice ? (selectedStockData.LastTradedPrice * 1000).toLocaleString() : '-'} ₮</div>
-              <div><span className="font-semibold">{t('dashboard.previousClose')}:</span> {selectedStockData.PreviousClose ? (selectedStockData.PreviousClose * 1000).toLocaleString() : '-'} ₮</div>
-              <div><span className="font-semibold">{t('dashboard.turnover')}:</span> {selectedStockData.Turnover ? selectedStockData.Turnover.toLocaleString() : '-'}</div>
-              <div><span className="font-semibold">{t('dashboard.volume')}:</span> {selectedStockData.Volume ? selectedStockData.Volume.toLocaleString() : '-'}</div>
-              <div><span className="font-semibold">MarketSegmentID:</span> {selectedStockData.MarketSegmentID}</div>
-              <div><span className="font-semibold">ISIN:</span> {companyDetails?.ISIN}</div>
-              <div><span className="font-semibold">Company Code:</span> {companyDetails?.companycode}</div>
-              <div><span className="font-semibold">Listing Date:</span> {companyDetails?.changedate}</div>
+        <div className="max-w-4xl mx-auto px-2 sm:px-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="border-b border-gray-100 dark:border-gray-700 p-4">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                <span className="h-6 w-1 bg-bdsec dark:bg-indigo-500 rounded-full"></span>
+                {t('dashboard.bondDetails')}
+              </h2>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Basic Info Section */}
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.symbol')}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">{selectedStockData.Symbol}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.company')}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">{selectedStockData.mnName || selectedStockData.enName}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.lastPrice')}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                      {selectedStockData.LastTradedPrice ? (selectedStockData.LastTradedPrice * 1000).toLocaleString() : '-'} ₮
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.previousClose')}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                      {selectedStockData.PreviousClose ? (selectedStockData.PreviousClose * 1000).toLocaleString() : '-'} ₮
+                    </div>
+                  </div>
+                </div>
+                {/* Trading Info Section */}
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.turnover')}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                      {selectedStockData.Turnover ? selectedStockData.Turnover.toLocaleString() : '-'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.volume')}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                      {selectedStockData.Volume ? selectedStockData.Volume.toLocaleString() : '-'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">ISIN</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                      {companyDetails?.ISIN || '-'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.listingDate')}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+                      {companyDetails?.changedate || '-'}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
       <div className="max-w-4xl mx-auto px-2 sm:px-4 flex flex-col gap-2 sm:gap-3 ">
-        <OrderBook
+      { isBond ? 
+      <></> 
+       
+       :
+       <OrderBook
           selectedSymbol={selectedSymbol}
           loading={loading}
           lastUpdated={lastUpdated}
           processedOrderBook={processedOrderBook}
           onRefresh={fetchOrderBookData}
         />
+      }
         <StockDetails
           selectedSymbol={selectedSymbol}
           details={companyDetails}

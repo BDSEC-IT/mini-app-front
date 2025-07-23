@@ -21,10 +21,21 @@ export const OrderBook = ({
   onRefresh
 }: OrderBookProps) => {
   const { t } = useTranslation()
-  console.log("OrderBook received lastUpdated:", lastUpdated);
-  // Split the lastUpdated string into date and time parts directly
+  
+  // Check if this is a bond symbol
+  const isBond = selectedSymbol.toLowerCase().includes('-bd') || 
+                 selectedSymbol.toLowerCase().includes('ombs') || 
+                 selectedSymbol.toLowerCase().includes('moni');
+
+  // Don't show anything for bonds
+  if (isBond) {
+    return null;
+  }
+
+  // Split the lastUpdated string into date and time parts
   const [datePart, timePart] = lastUpdated.split(' ');
 
+  // Regular order book display for non-bond securities
   return (
     <div className="sm:mt-8 sm:p-4 mt-4 p-2">
       <div className="flex justify-between items-center mb-4">
@@ -76,10 +87,10 @@ export const OrderBook = ({
                   className="grid grid-cols-2 text-right text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
                   <span className="text-red-500 font-medium justify-self-end">
-                    {order.MDEntryPx.toLocaleString()} ₮
+                    {(order.MDEntryPx || 0).toLocaleString()} ₮
                   </span>
                   <span className="bg-red-50 dark:bg-red-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
-                    {order.MDEntrySize.toLocaleString()}
+                    {(order.MDEntrySize || 0).toLocaleString()}
                   </span>
                 </div>
               ))
@@ -115,10 +126,10 @@ export const OrderBook = ({
                   className="grid grid-cols-2 text-right text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
                   <span className="text-green-500 font-medium justify-self-end">
-                    {order.MDEntryPx.toLocaleString()} ₮
+                    {(order.MDEntryPx || 0).toLocaleString()} ₮
                   </span>
                   <span className="bg-green-50 dark:bg-green-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
-                    {order.MDEntrySize.toLocaleString()}
+                    {(order.MDEntrySize || 0).toLocaleString()}
                   </span>
                 </div>
               ))
