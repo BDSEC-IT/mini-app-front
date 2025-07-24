@@ -116,7 +116,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
 
   const menuItems = [
     { href: '/', icon: LayoutDashboard, label: 'bottomNav.dashboard' },
-    { href: '/stocks', icon: TrendingUp, label: 'bottomNav.securities' },
+    { href: '/stocks', icon: TrendingUp, label: 'common.securities' },
     { href: '/bonds', icon: Landmark, label: 'bottomNav.bonds' },
     { href: '/news', icon: Newspaper, label: 'menu.news' },
     { href: '/about', icon: Info, label: 'bottomNav.about' },

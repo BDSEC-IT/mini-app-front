@@ -30,7 +30,7 @@
     "searchPlaceholder": "Хувьцаа хайх...",
     "noResultsFound": "Илэрц олдсонгүй",
     "stocks": "үнэт цаас",
-    "securities": "үнэт цаас",
+    "securities": "Үнэт цаас",
     "bonds": "Бонд",
     "highLow": "Өндөр/Намуу",
     "aboutUs": "Бидний тухай",
@@ -328,6 +328,7 @@
   },
   "allStocks": {
     "title": "Үнэт цаасны жагсаалт",
+     "turnover": "Эргэлт",
     "active": "Өнөөдөр",
     "all": "Бүгд",
     "symbol": "Симбол",

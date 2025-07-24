@@ -18,9 +18,11 @@ interface StockHeaderProps {
   onStockSelect: (symbol: string) => void
 }
 
-const formatPrice = (price: number | undefined) => {
+const formatPrice = (price: number | undefined, symbol?: string) => {
   if (price === undefined || price === null) return '-';
-  return price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  const isBond = symbol?.toUpperCase().includes('-BD');
+  const finalPrice = isBond ? price * 1000 : price;
+  return finalPrice.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
 export const StockHeader = ({
@@ -87,7 +89,7 @@ export const StockHeader = ({
                 value={selectedStockData?.LastTradedPrice || selectedStockData?.ClosingPrice || 0}
               >
                 <div className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-                  {formatPrice(selectedStockData.LastTradedPrice || selectedStockData.ClosingPrice)} ₮
+                  {formatPrice(selectedStockData.LastTradedPrice || selectedStockData.ClosingPrice, selectedStockData.Symbol)} ₮
                 </div>
               </BlinkEffect>
             ) : (

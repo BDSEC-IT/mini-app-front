@@ -2,6 +2,20 @@ import { Activity, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { OrderBookEntry } from '@/lib/api'
 
+const formatOrderPrice = (price: number | undefined, symbol: string) => {
+  if (price === undefined || price === null) return '-';
+  const isBond = symbol.toUpperCase().includes('-BD');
+  const finalPrice = isBond ? price * 1000 : price;
+  return finalPrice.toLocaleString();
+};
+
+// Custom date check function that considers strings that might be dates
+const isValidDate = (dateStr: any): boolean => {
+  if (!dateStr) return false;
+  const date = new Date(dateStr);
+  return date instanceof Date && !isNaN(date.getTime());
+};
+
 interface OrderBookProps {
   selectedSymbol: string
   loading: boolean
@@ -22,6 +36,21 @@ export const OrderBook = ({
 }: OrderBookProps) => {
   const { t } = useTranslation()
   
+  // Sort orders by price
+  const sortOrders = (orders: OrderBookEntry[], isSell: boolean) => {
+    return [...orders].sort((a, b) => {
+      const priceA = a.MDEntryPx || 0;
+      const priceB = b.MDEntryPx || 0;
+      // For sell orders, show lowest price first
+      // For buy orders, show highest price first
+      return isSell ? priceA - priceB : priceB - priceA;
+    });
+  };
+
+  // Process buy and sell orders
+  const sortedBuyOrders = sortOrders(processedOrderBook.buy, false);
+  const sortedSellOrders = sortOrders(processedOrderBook.sell, true);
+
   // Split the lastUpdated string into date and time parts
   const [datePart, timePart] = lastUpdated.split(' ');
 
@@ -70,14 +99,14 @@ export const OrderBook = ({
               <div className="text-center text-gray-400 text-sm py-6">
                 {t('dashboard.loading')}
               </div>
-            ) : processedOrderBook.sell.length > 0 ? (
-              processedOrderBook.sell.map((order, index) => (
+            ) : sortedSellOrders.length > 0 ? (
+              sortedSellOrders.map((order, index) => (
                 <div
                   key={`sell-${order.id}-${index}`}
                   className="grid grid-cols-2 text-right text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
                   <span className="text-red-500 font-medium justify-self-end">
-                    {(order.MDEntryPx || 0).toLocaleString()} ₮
+                    {formatOrderPrice(order.MDEntryPx, selectedSymbol)} ₮
                   </span>
                   <span className="bg-red-50 dark:bg-red-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
                     {(order.MDEntrySize || 0).toLocaleString()}
@@ -109,14 +138,14 @@ export const OrderBook = ({
               <div className="text-center text-gray-400 text-sm py-6">
                 {t('dashboard.loading')}
               </div>
-            ) : processedOrderBook.buy.length > 0 ? (
-              processedOrderBook.buy.map((order, index) => (
+            ) : sortedBuyOrders.length > 0 ? (
+              sortedBuyOrders.map((order, index) => (
                 <div
                   key={`buy-${order.id}-${index}`}
                   className="grid grid-cols-2 text-right text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
                   <span className="text-green-500 font-medium justify-self-end">
-                    {(order.MDEntryPx || 0).toLocaleString()} ₮
+                    {formatOrderPrice(order.MDEntryPx, selectedSymbol)} ₮
                   </span>
                   <span className="bg-green-50 dark:bg-green-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
                     {(order.MDEntrySize || 0).toLocaleString()}
