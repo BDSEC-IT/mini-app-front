@@ -470,10 +470,7 @@ const DashboardContent = () => {
         </div>
       )}
       <div className="max-w-4xl mx-auto px-2 sm:px-4 flex flex-col gap-2 sm:gap-3 ">
-      { isBond ? 
-      <></> 
-       
-       :
+   
        <OrderBook
           selectedSymbol={selectedSymbol}
           loading={loading}
@@ -481,7 +478,7 @@ const DashboardContent = () => {
           processedOrderBook={processedOrderBook}
           onRefresh={fetchOrderBookData}
         />
-      }
+      
         <StockDetails
           selectedSymbol={selectedSymbol}
           details={companyDetails}
