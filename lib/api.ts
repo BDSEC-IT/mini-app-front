@@ -581,38 +581,38 @@ export const fetchOrderBook = async (symbol: string): Promise<OrderBookResponse>
   // Check if it's a bond symbol
   const isBond = tradingSymbol.includes('-bd') || tradingSymbol.includes('ombs') || tradingSymbol.includes('moni');
   
-  if (isBond) {
-    // For bonds, fetch from bonds endpoint
-    try {
-      const response = await fetchWithTimeout(`${BASE_URL}/securities/bonds?page=1&limit=5000&sortField`)
-      if (!response.ok) {
-        return { status: false, data: [] }
-      }
-      const bondsData = await response.json();
-      if (!bondsData.success) {
-        return { status: false, data: [] }
-      }
-      // Return the specific bond data that matches our symbol
-      const bondInfo = bondsData.data.find((bond: BondData) => 
-        bond.Symbol.toLowerCase() === tradingSymbol
-      );
-      if (!bondInfo) {
-        return { status: false, data: [] }
-      }
-      // Return bond info in a format compatible with order book display
-      return {
-        status: true,
-        data: [{
-          id: bondInfo.pkId,
-          Symbol: bondInfo.Symbol,
-          bondInfo: bondInfo // Additional bond-specific information
-        }]
-      }
-    } catch (error) {
-      logDev('Error fetching bond data');
-      return { status: false, data: [] }
-    }
-  }
+  // if (isBond) {
+  //   // For bonds, fetch from bonds endpoint
+  //   try {
+  //     const response = await fetchWithTimeout(`${BASE_URL}/securities/bonds?page=1&limit=5000&sortField`)
+  //     if (!response.ok) {
+  //       return { status: false, data: [] }
+  //     }
+  //     const bondsData = await response.json();
+  //     if (!bondsData.success) {
+  //       return { status: false, data: [] }
+  //     }
+  //     // Return the specific bond data that matches our symbol
+  //     const bondInfo = bondsData.data.find((bond: BondData) => 
+  //       bond.Symbol.toLowerCase() === tradingSymbol
+  //     );
+  //     if (!bondInfo) {
+  //       return { status: false, data: [] }
+  //     }
+  //     // Return bond info in a format compatible with order book display
+  //     return {
+  //       status: true,
+  //       data: [{
+  //         id: bondInfo.pkId,
+  //         Symbol: bondInfo.Symbol,
+  //         bondInfo: bondInfo // Additional bond-specific information
+  //       }]
+  //     }
+  //   } catch (error) {
+  //     logDev('Error fetching bond data');
+  //     return { status: false, data: [] }
+  //   }
+  // }
 
   // For non-bond securities, fetch order book as usual
   const url = `${BASE_URL}/securities/order-book?symbol=${tradingSymbol}`;

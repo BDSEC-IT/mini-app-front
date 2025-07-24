@@ -143,7 +143,7 @@ const DashboardContent = () => {
     } finally {
       setLoading(false)
     }
-  }, [selectedSymbol, selectedCard, selectedStockData])
+  }, [selectedSymbol, selectedCard, selectedStockData, isBond])
 
 
 
@@ -179,17 +179,8 @@ const DashboardContent = () => {
     if (!orderBookData || orderBookData.length === 0) {
       return { buy: [], sell: [] }
     }
-
-    // Check if this is bond data
-    if (orderBookData[0]?.bondInfo) {
-      // For bonds, return the bond info in the buy array (we'll use it to display bond details)
-      return { 
-        buy: orderBookData,
-        sell: []
-      }
-    }
     
-    // For regular order book data
+    // Process all securities (both bonds and equities) the same way
     const buyOrders = orderBookData
       .filter(entry => entry.MDEntryType === '0')
       .sort((a, b) => (b.MDEntryPx || 0) - (a.MDEntryPx || 0))

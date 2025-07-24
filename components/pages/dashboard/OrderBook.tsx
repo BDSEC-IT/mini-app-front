@@ -22,16 +22,6 @@ export const OrderBook = ({
 }: OrderBookProps) => {
   const { t } = useTranslation()
   
-  // Check if this is a bond symbol
-  const isBond = selectedSymbol.toLowerCase().includes('-bd') || 
-                 selectedSymbol.toLowerCase().includes('ombs') || 
-                 selectedSymbol.toLowerCase().includes('moni');
-
-  // Don't show anything for bonds
-  if (isBond) {
-    return null;
-  }
-
   // Split the lastUpdated string into date and time parts
   const [datePart, timePart] = lastUpdated.split(' ');
 
