@@ -615,7 +615,7 @@ export const fetchOrderBook = async (symbol: string): Promise<OrderBookResponse>
   }
 
   // For non-bond securities, fetch order book as usual
-  const url = `${BASE_URL}/securities/order-book?symbol${tradingSymbol}`;
+  const url = `${BASE_URL}/securities/order-book?symbol=${tradingSymbol}`;
   try {
     const response = await fetchWithTimeout(url)
     if (!response.ok) {
