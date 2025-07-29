@@ -498,27 +498,27 @@ const getStockCategory = (stock: StockData): string => {
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('PreviousClose')}>
-                      Өмнөх хаалт
+                      {t("dashboard.previousClose")}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('OpeningPrice')}>
-                      Нээлт
+                      {t("allStocks.openingPrice")}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('HighPrice')}>
-                      Дээд үнэ
+                       {t("allStocks.highPrice")}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LowPrice')}>
-                      Доод үнэ
+                      {t("allStocks.lowPrice")}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LastTradedPrice')}>
-                      Сүүлийн ханш
+                     {t("allStocks.lastTradedPrice")}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
@@ -528,7 +528,7 @@ const getStockCategory = (stock: StockData): string => {
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
-                      Өөрчлөлт
+                    {t('dashboard.change')}
         </div>
                   </th>
                   <th className="px-2 py-3 text-right">
@@ -538,22 +538,22 @@ const getStockCategory = (stock: StockData): string => {
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd')}>
-                      Авах тоо
+                   {t('allStocks.bidVolume')}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx')}>
-                      Авах үнэ
+                   {t('allStocks.bidPrice')}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx2')}>
-                      Зарах үнэ
+                    {t('allStocks.askPrice')}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd2')}>
-                      Зарах тоо
+                      {t('allStocks.askVolume')}
                     </div>
                   </th>
                 </tr>

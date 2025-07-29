@@ -372,7 +372,12 @@
     "tradedDate": "Traded Date",
     "refundDate": "Refund Date",
     "details": "Details",
-    "viewMore": "View"
+    "viewMore": "View",
+    "period": "Period",
+    "yield": "Yield",
+   "conditions": "Conditions", 
+   "price":"Price"
+
   },
   "highLow": {
     "title": "52-Week High/Low",
