@@ -213,7 +213,7 @@ export const StockList = ({
           {t('dashboard.popularStocks')}
         </h2>
         <Link 
-          href="/stocks" 
+          href={`/stocks?filter=${activeFilter}`} 
           className="flex items-center text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-1.5 bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 rounded-md hover:bg-bdsec/20 dark:hover:bg-indigo-500/30 transition-colors"
         >
           {t('dashboard.viewAll')} <ChevronRight size={16} className="ml-1" />

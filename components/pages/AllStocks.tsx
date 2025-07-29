@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'next/navigation'
 import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight } from 'lucide-react'
 import { fetchAllStocks, type StockData } from '@/lib/api'
 import realTimeService from '@/lib/socket'
@@ -17,6 +18,36 @@ interface Category {
 const AllStocks = () => {
   const { t, i18n } = useTranslation()
   const currentLanguage = i18n.language || 'mn';
+  const searchParams = useSearchParams()
+
+  // Digipay payment form state
+  const [paymentAmount, setPaymentAmount] = useState<number | ''>('');
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentInvoice, setPaymentInvoice] = useState<any>(null);
+
+  // Mock Digipay create payment function
+  const createDigipayPayment = async (amount: number) => {
+    setPaymentLoading(true);
+    setPaymentInvoice(null);
+    // Simulate API call delay
+    await new Promise(res => setTimeout(res, 1200));
+    // Simulate invoice result
+    setPaymentInvoice({
+      invoiceId: Math.floor(Math.random() * 1000000),
+      amount,
+      status: 'PENDING',
+      createdAt: new Date().toLocaleString(),
+      payUrl: 'https://digipay.mn/invoice/demo'
+    });
+    setPaymentLoading(false);
+  };
+
+  const handlePaymentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (typeof paymentAmount === 'number' && paymentAmount > 0) {
+      createDigipayPayment(paymentAmount);
+    }
+  };
   
   // Helper function to get company name based on current language
   const getCompanyName = useCallback((stock: StockData) => {
@@ -47,6 +78,14 @@ const AllStocks = () => {
   const [previousStockValues, setPreviousStockValues] = useState<{ [symbol: string]: { price: number; change: number } }>({})
   const [blinkingRows, setBlinkingRows] = useState<Map<string, 'gain' | 'loss'>>(new Map());
   const [isFullTableModalOpen, setIsFullTableModalOpen] = useState(false);
+
+  // Set active tab from URL query parameter on initial load
+  useEffect(() => {
+    const filter = searchParams.get('filter');
+    if (filter === 'gainers' || filter === 'losers') {
+      setActiveTab(filter);
+    }
+  }, [searchParams]);
 
   // Stock categories
   const categories: Category[] = useMemo(() => [
@@ -559,7 +598,40 @@ const getStockCategory = (stock: StockData): string => {
   return (
     <div className="container mx-auto p-4">
       <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
+        {/* Digipay Payment Form */}
         <div className="py-2">
+          <div className="mb-6 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 max-w-md mx-auto">
+            <h2 className="font-semibold mb-2 text-bdsec dark:text-indigo-400">Digipay Custom Payment</h2>
+            <form onSubmit={handlePaymentSubmit} className="flex flex-col gap-2">
+              <label className="text-xs text-gray-600 dark:text-gray-300">Amount (₮):</label>
+              <input
+                type="number"
+                min={1}
+                className="border rounded px-2 py-1 text-sm bg-white dark:bg-gray-900"
+                value={paymentAmount}
+                onChange={e => setPaymentAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder="Enter amount"
+                required
+              />
+              <button
+                type="submit"
+                className="mt-2 px-4 py-1 rounded bg-bdsec dark:bg-indigo-500 text-white disabled:opacity-60"
+                disabled={paymentLoading || !paymentAmount || Number(paymentAmount) <= 0}
+              >
+                {paymentLoading ? 'Processing...' : 'Create Payment'}
+              </button>
+            </form>
+            {paymentInvoice && (
+              <div className="mt-4 p-3 rounded bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700">
+                <div className="font-medium text-green-700 dark:text-green-300 mb-1">Invoice Created!</div>
+                <div className="text-xs text-gray-700 dark:text-gray-200">Invoice ID: <b>{paymentInvoice.invoiceId}</b></div>
+                <div className="text-xs text-gray-700 dark:text-gray-200">Amount: <b>{paymentInvoice.amount}₮</b></div>
+                <div className="text-xs text-gray-700 dark:text-gray-200">Status: <b>{paymentInvoice.status}</b></div>
+                <div className="text-xs text-gray-700 dark:text-gray-200">Created: {paymentInvoice.createdAt}</div>
+                <a href={paymentInvoice.payUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-2 px-3 py-1 bg-bdsec dark:bg-indigo-500 text-white rounded text-xs">Pay Now</a>
+              </div>
+            )}
+          </div>
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-3">
               <a 
