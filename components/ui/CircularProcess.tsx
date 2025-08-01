@@ -77,7 +77,7 @@ export default function CircularProgress({
         <>
           <div className="text-bdsec text-xl font-bold leading-tight mb-1">
             {label}
-            <span className="block text-[11px] font-normal text-gray-600">
+            <span className="block text-xs font-normal text-gray-600">
               {sublabel}
             </span>
           </div>
@@ -125,7 +125,7 @@ export default function CircularProgress({
           </svg>
 
           {bottomLabel && (
-            <div className="text-[11px] text-gray-600">{bottomLabel}</div>
+            <div className="text-xs text-gray-600">{bottomLabel}</div>
           )}
         </>
       )}

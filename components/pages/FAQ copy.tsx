@@ -304,13 +304,13 @@ const FAQ = () => {
         <div className="mb-8">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-              <Search size={20} className="text-gray-500" />
+              <Search size={16} className="text-gray-600 dark:text-gray-400" />
             </div>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-gray-100 dark:bg-gray-800 w-full pl-12 pr-4 py-3 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500 transition-all"
+              className="bg-gray-100 dark:bg-gray-800 w-full pl-12 pr-4 py-3 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500 transition-all text-gray-900 dark:text-gray-100 h-12"
               placeholder={t('faq.search')}
             />
           </div>

@@ -1,4 +1,5 @@
 import { Activity, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import type { OrderBookEntry } from '@/lib/api'
 
@@ -56,45 +57,51 @@ export const OrderBook = ({
 
   // Regular order book display for non-bond securities
   return (
-    <div className="sm:mt-8 sm:p-4 mt-4 p-2">
+    <div className="w-full rounded-lg backdrop-blur-2xl transition-all duration-300 my-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-base sm:text-lg font-medium flex items-center">
-          <Activity size={16} className="mr-2 text-bdsec dark:text-indigo-400" />
-          {t('dashboard.orderBook')} - {selectedSymbol.split('-')[0]}
-        </h2>
-        <div className="flex items-center gap-2">
-          <div className="text-xs text-right text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-lg">
-            <div className="hidden sm:block">{t('dashboard.lastUpdated')}</div>
-            <div className="text-xs">{datePart}</div>
-            <div className="text-xs">{timePart}</div>
+        <div>
+          <h2 className="text-lg font-semibold flex items-center">
+            <Activity size={16} className="mr-2 text-gray-600 dark:text-gray-400" />
+            {t('dashboard.orderBook')} - {selectedSymbol.split('-')[0]}
+          </h2>
+          <div className="flex items-center gap-2 mt-1">
+            <div className="hidden sm:block text-sm font-normal text-gray-600 dark:text-gray-400">
+              {t('dashboard.lastUpdated')}
+            </div>
+            <div className="flex gap-1">
+              <div className="text-xs text-gray-500 dark:text-gray-400">{datePart}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">{timePart}</div>
+            </div>
           </div>
-          {onRefresh && (
-            <button
-              onClick={onRefresh}
-              disabled={loading}
-              className="p-2 text-gray-500 hover:text-bdsec dark:hover:text-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              title="Refresh order book"
-            >
-              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            </button>
-          )}
         </div>
+        {onRefresh && (
+          <Button
+            onClick={onRefresh}
+            disabled={loading}
+            size="icon"
+            variant="outline"
+            className="h-10 w-10 rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:ring-indigo-500"
+            title="Refresh order book"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin text-gray-600 dark:text-gray-400' : 'text-gray-600 dark:text-gray-400'} />
+          </Button>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-6 mt-3">
+      <div className="grid grid-cols-2 gap-4 mt-4">
         {/* Sell Orders */}
         <div className="overflow-hidden">
-          <div className="px-2 sm:px-4 py-2 bg-red-50 dark:bg-red-900/10">
+          <div className="px-3 py-2 bg-red-50 dark:bg-red-900/10">
             <div className="grid grid-cols-2 text-right">
-              <h3 className="text-xs sm:text-sm text-red-500 font-medium flex items-center">
-                <ArrowDown size={12} className="mr-1" />
+              <h3 className="text-sm font-medium text-red-500 flex items-center">
+                <ArrowDown size={12} className="mr-1 text-red-500" />
                 {t('dashboard.sell')}
               </h3>
-              <h3 className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.quantity')}</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t('dashboard.quantity')}</h3>
             </div>
           </div>
 
-          <div className="p-2 sm:p-3">
+          <div className="p-3">
             {loading ? (
               <div className="text-center text-gray-400 text-sm py-6">
                 {t('dashboard.loading')}
@@ -103,12 +110,12 @@ export const OrderBook = ({
               sortedSellOrders.map((order, index) => (
                 <div
                   key={`sell-${order.id}-${index}`}
-                  className="grid grid-cols-2 text-right text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+                  className="grid grid-cols-2 text-right text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
                   <span className="text-red-500 font-medium justify-self-end">
                     {formatOrderPrice(order.MDEntryPx, selectedSymbol)} ₮
                   </span>
-                  <span className="bg-red-50 dark:bg-red-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
+                  <span className="bg-red-50 dark:bg-red-900/10 px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
                     {(order.MDEntrySize || 0).toLocaleString()}
                   </span>
                 </div>
@@ -123,17 +130,17 @@ export const OrderBook = ({
 
         {/* Buy Orders */}
         <div className="overflow-hidden">
-          <div className="px-2 sm:px-4 py-2 bg-green-50 dark:bg-green-900/10">
+          <div className="px-3 py-2 bg-green-50 dark:bg-green-900/10">
             <div className="grid grid-cols-2 text-right">
-              <h3 className="text-xs sm:text-sm text-green-500 font-medium flex items-center">
-                <ArrowUp size={12} className="mr-1" />
+              <h3 className="text-sm font-medium text-green-500 flex items-center">
+                <ArrowUp size={12} className="mr-1 text-green-500" />
                 {t('dashboard.buy')}
               </h3>
-              <h3 className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.quantity')}</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t('dashboard.quantity')}</h3>
             </div>
           </div>
 
-          <div className="p-2 sm:p-3">
+          <div className="p-3">
             {loading ? (
               <div className="text-center text-gray-400 text-sm py-6">
                 {t('dashboard.loading')}
@@ -142,12 +149,12 @@ export const OrderBook = ({
               sortedBuyOrders.map((order, index) => (
                 <div
                   key={`buy-${order.id}-${index}`}
-                  className="grid grid-cols-2 text-right text-xs sm:text-sm py-1.5 sm:py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+                  className="grid grid-cols-2 text-right text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
                   <span className="text-green-500 font-medium justify-self-end">
                     {formatOrderPrice(order.MDEntryPx, selectedSymbol)} ₮
                   </span>
-                  <span className="bg-green-50 dark:bg-green-900/10 px-1.5 sm:px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
+                  <span className="bg-green-50 dark:bg-green-900/10 px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
                     {(order.MDEntrySize || 0).toLocaleString()}
                   </span>
                 </div>

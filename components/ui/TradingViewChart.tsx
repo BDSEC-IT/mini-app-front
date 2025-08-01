@@ -28,19 +28,9 @@ interface Point {
 
 type ChartType = 'line' | 'candlestick';
 
-const colorThemes = {
-  modern: { up: '#3b82f6', down: '#6b7280' }, // blue/gray
-  classic: { up: '#22c55e', down: '#ef4444' }, // green/red
-  sunrise: { up: '#f97316', down: '#6d28d9' }, // orange/purple
-};
 
-const ringColorMap: Record<ColorTheme, string> = {
-  modern: 'ring-blue-500',
-  classic: 'ring-green-500',
-  sunrise: 'ring-orange-500',
-};
-
-type ColorTheme = keyof typeof colorThemes;
+// Fixed candle colors: green-500 for up, red-500 for down
+const candleColors = { up: '#22c55e', down: '#ef4444' }; // Tailwind green-500/red-500
 
 export function TradingViewChart({ 
   symbol = 'BDS-O-0000', 
@@ -63,7 +53,7 @@ export function TradingViewChart({
   const [isMobile, setIsMobile] = useState(false)
   const [activePeriod, setActivePeriod] = useState(period)
   const [chartType, setChartType] = useState<ChartType>('line');
-  const [colorTheme, setColorTheme] = useState<ColorTheme>('modern');
+  // Removed colorTheme state
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
 
   // Check if mobile
@@ -117,7 +107,7 @@ export function TradingViewChart({
   }, [allChartData]) // Rerun on data change
 
   const drawCandlestickChart = useCallback((svg: SVGSVGElement, points: Point[], options: any) => {
-    const { width, height, padding, minPrice, maxPrice, theme, colorTheme } = options;
+    const { width, height, padding, minPrice, maxPrice, theme } = options;
     const chartHeight = height - padding.top - padding.bottom;
     const bandwidth = (width - padding.left - padding.right) / points.length;
     const candleWidth = Math.max(2, bandwidth * 0.7);
@@ -130,7 +120,7 @@ export function TradingViewChart({
       const closeY = padding.top + chartHeight - ((p.close - minPrice) / (maxPrice - minPrice)) * chartHeight;
 
       const isBullish = p.close >= p.open;
-      const color = isBullish ? colorTheme.up : colorTheme.down;
+      const color = isBullish ? candleColors.up : candleColors.down;
 
       // Wick
       const wick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -180,7 +170,7 @@ export function TradingViewChart({
     
     svg.innerHTML = ''
 
-    const selectedColor = colorThemes[colorTheme].up;
+    const selectedColor = '#3b82f6'; // blue-500 for line chart (unchanged)
     
     const prices = filteredData.map(d => d.ClosingPrice)
     const minPrice = Math.min(...prices)
@@ -244,7 +234,7 @@ export function TradingViewChart({
       linePath.setAttribute('fill', 'none')
       svg.appendChild(linePath)
     } else if (chartType === 'candlestick') {
-      drawCandlestickChart(svg, points, { width, height, padding, minPrice, maxPrice, theme, colorTheme: colorThemes[colorTheme] });
+      drawCandlestickChart(svg, points, { width, height, padding, minPrice, maxPrice, theme });
     }
     
     const crosshair = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -295,7 +285,7 @@ export function TradingViewChart({
         svg.appendChild(text);
     }
     
-  }, [mounted, svgRef, allChartData, containerSize, theme, activePeriod, chartType, drawCandlestickChart, colorTheme]);
+  }, [mounted, svgRef, allChartData, containerSize, theme, activePeriod, chartType, drawCandlestickChart]);
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -310,12 +300,12 @@ export function TradingViewChart({
             const tooltip = tooltipRef.current;
             tooltip.style.display = 'block';
             tooltip.innerHTML = `
-                <div class="font-bold text-sm">${closestPoint.value.toLocaleString()} ₮</div>
+                <div class="font-semibold text-sm">${closestPoint.value.toLocaleString()} ₮</div>
                 <div class="flex items-center text-xs ${closestPoint.change >= 0 ? 'text-green-400' : 'text-red-400'}">
                     <span class="mr-1">${closestPoint.change >= 0 ? '▲' : '▼'}</span>
                     <span>${closestPoint.change.toFixed(2)} (${closestPoint.changePercent.toFixed(2)}%)</span>
                 </div>
-                <div class="text-gray-400 text-xs mt-1">${closestPoint.date.toLocaleDateString()}</div>
+                <div class="text-gray-400 text-xs font-normal mt-1">${closestPoint.date.toLocaleDateString()}</div>
             `;
 
             const tooltipWidth = tooltip.offsetWidth;
@@ -377,7 +367,7 @@ export function TradingViewChart({
     return (
       <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-md">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700 mx-auto"></div>
+          <div className="animate-spin rounded-md h-12 w-12 border-b-2 border-indigo-700 mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">{t('common.loading')}</p>
         </div>
       </div>
@@ -391,60 +381,41 @@ export function TradingViewChart({
           <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p className="mt-4 text-lg font-medium text-gray-700 dark:text-gray-200">{t('chart.noData')}</p>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t('chart.tryAnother')}</p>
+          <p className="mt-4 text-base font-medium text-gray-700 dark:text-gray-100">{t('chart.noData')}</p>
+          <p className="mt-2 text-sm font-normal text-gray-500 dark:text-gray-400">{t('chart.tryAnother')}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="h-[30px] flex justify-between items-center px-2 bg-white dark:bg-gray-900 rounded-t-lg">
+    <div className="w-full h-full flex flex-col  transition-all duration-300  mb-8 ">
+      {/* Header Bar */}
+      <div className="h-[38px] flex justify-between items-center md:px-4 rounded-lg mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400">{t('chart.chartType')}</span>
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-md p-0.5">
-            <button 
-              onClick={() => setChartType('line')}
-              className={`px-2 py-0.5 text-xs rounded-md ${chartType === 'line' ? 'bg-brand-primary dark:bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-300'}`}
-            >
-              {t('chart.line')}
-            </button>
-            <button 
-              onClick={() => setChartType('candlestick')}
-              className={`px-2 py-0.5 text-xs rounded-md ${chartType === 'candlestick' ? 'bg-brand-primary dark:bg-indigo-600 text-white' : 'text-gray-600 dark:text-gray-300'}`}
-            >
-              {t('chart.candlestick')}
-            </button>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400">{t('chart.color')}</span>
-          <div className="flex items-center gap-2">
-            {chartType === 'line' ? (
-              Object.keys(colorThemes).map((themeKey) => (
-                <button 
-                  key={themeKey}
-                  onClick={() => setColorTheme(themeKey as ColorTheme)}
-                  className={`w-4 h-4 rounded-full ${colorTheme === themeKey ? `ring-2 ring-offset-1 ${ringColorMap[themeKey as ColorTheme]}` : ''}`}
-                  style={{ backgroundColor: colorThemes[themeKey as ColorTheme].up }}
-                />
-              ))
-            ) : (
-              Object.keys(colorThemes).map((themeKey) => (
-                <button 
-                  key={themeKey}
-                  onClick={() => setColorTheme(themeKey as ColorTheme)}
-                className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs ${colorTheme === themeKey ? 'bg-brand-primary dark:bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: colorThemes[themeKey as ColorTheme].up }}></div>
-                  <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: colorThemes[themeKey as ColorTheme].down }}></div>
-                </button>
-              ))
-            )}
-          </div>
+          <button 
+            onClick={() => setChartType('line')}
+            className={` text-center text-sm font-medium px-4 py-2 rounded-full transition-colors  ${
+              chartType === 'line' 
+                ? 'bg-bdsec dark:bg-indigo-500 text-white' 
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            {t('chart.line')}
+          </button>
+          <button 
+            onClick={() => setChartType('candlestick')}
+            className={` text-sm font-medium px-4 py-2 rounded-full transition-colors  ${
+              chartType === 'candlestick' 
+                ? 'bg-bdsec dark:bg-indigo-500 text-white' 
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            {t('chart.candlestick')}
+          </button>
         </div>
       </div>
-      <div ref={containerRef} className="w-full h-[calc(100%-80px)] relative">
+      <div ref={containerRef} className="w-full  h-[calc(100%-80px)] relative mb-2">
         <svg 
           ref={svgRef} 
           className="w-full h-full"
@@ -453,7 +424,7 @@ export function TradingViewChart({
           preserveAspectRatio="xMidYMid meet"
         />
         {isFallbackData && (
-          <div className="absolute top-2 left-2 bg-yellow-100 text-yellow-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300 z-20">
+          <div className="absolute top-2 left-2 bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md dark:bg-yellow-900 dark:text-yellow-300 z-20">
             No data for this period. Showing most recent data.
           </div>
         )}
@@ -463,20 +434,20 @@ export function TradingViewChart({
           style={{ display: 'none' }}
         />
       </div>
-      <div className="h-[50px] flex justify-center items-center border-t border-soft border-opacity-50 pt-2 pb-2 bg-white dark:bg-gray-900 rounded-b-lg">
+      <div className="h-[50px] flex justify-center items-center border-t border-gray-200 dark:border-gray-700 border-opacity-70 pt-2 pb-2 rounded-md mt-2">
         <div className="flex justify-center items-center gap-2 sm:gap-2">
           {[
             { id: '1M', label: '1M' },
             { id: '3M', label: '3M' },
-            { id: '1Y', 'label': '1Y' },
+            { id: '1Y', label: '1Y' },
             { id: 'ALL', label: 'ALL' }
           ].map((periodOption) => (
             <button
               key={periodOption.id}
-              className={`px-5 sm:px-4 py-0.5 text-[10px]  sm:text-sm font-medium rounded-md transition-colors ${
+              className={` text-xs font-medium px-5 py-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
                 activePeriod === periodOption.id 
-                  ? ' bg-brand-primary text-white border border-soft border-opacity-50' 
-                  : ' dark:bg-gray-800 font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 border border-soft border-opacity-30'
+                  ? 'bg-bdsec dark:bg-indigo-500 text-white   ' 
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700  '
               }`}
               onClick={() => setActivePeriod(periodOption.id)}
             >

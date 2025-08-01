@@ -73,73 +73,74 @@ const FullStockTableModal: React.FC<FullStockTableModalProps> = ({
             blinkClass === 'gain' ? 'bg-green-100 dark:bg-green-900/30' : blinkClass === 'loss' ? 'bg-red-100 dark:bg-red-900/30' : ''
           }`}
         >
-          <td className="px-0.5 py-0.5 whitespace-nowrap w-10 flex">
+          <td className="px-2 py-2 whitespace-nowrap w-10 flex">
             <a href={`/stocks/${stock.Symbol}`} className="flex flex-col">
-              <span className="font-medium text-[9px]">{stock.Symbol}</span>
-              <span className="text-[8px] flex flex-wrap text-wrap text-gray-500">{truncateCompanyName(getCompanyName(stock))}</span>
+              <span className="font-medium text-xs text-gray-900 dark:text-gray-100">{stock.Symbol}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{truncateCompanyName(getCompanyName(stock))}</span>
             </a>
           </td>
-          {/* Reordered columns */}
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm font-normal">
             {formatPrice(stock.LastTradedPrice, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm">
             <div className="flex items-center justify-end">
               {stock.Changep !== null && stock.Changep !== undefined ? (
                 <>
-                  <span className={`
-                    ${stock.Changep > 0 ? 'text-green-500' : stock.Changep < 0 ? 'text-red-500' : ''}
-                  `}>
+                  <span className={`font-medium ${
+                    stock.Changep > 0 ? 'text-green-500' : stock.Changep < 0 ? 'text-red-500' : 'text-gray-500'
+                  }`}>
                     {stock.Changep > 0 ? '+' : ''}{stock.Changep.toFixed(2)}%
                   </span>
                   {stock.Changep !== 0 && (
-                    <span className="ml-0.5">
-                      {stock.Changep > 0 ? <ArrowUp size={8} className="text-green-500" /> : <ArrowDown size={8} className="text-red-500" />}
+                    <span className="ml-1">
+                      {stock.Changep > 0 ? 
+                        <ArrowUp size={12} className="text-green-500" /> : 
+                        <ArrowDown size={12} className="text-red-500" />
+                      }
                     </span>
                   )}
                 </>
               ) : '-'}
             </div>
           </td>
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
-            <span className={`
-              ${stock.Changes > 0 ? 'text-green-500' : stock.Changes < 0 ? 'text-red-500' : ''}
-            `}>
+          <td className="px-2 py-2 text-right text-sm">
+            <span className={`font-medium ${
+              stock.Changes > 0 ? 'text-green-500' : stock.Changes < 0 ? 'text-red-500' : 'text-gray-500'
+            }`}>
               {stock.Changes > 0 ? '+' : ''}{stock.Changes?.toFixed(2) || '-'}
             </span>
           </td>
-          {/* Original columns continue */}
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm font-normal">
             {stock.Volume?.toLocaleString() || '-'}
           </td>
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm font-normal">
             {stock.Turnover?.toLocaleString() || '-'}
           </td>
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm font-normal">
             {formatPrice(stock.PreviousClose, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm font-normal">
             {formatPrice(stock.OpeningPrice, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm font-normal">
             {formatPrice(stock.HighPrice, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm font-normal">
             {formatPrice(stock.LowPrice, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm font-normal">
             {formatPrice(stock.ClosingPrice, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm font-normal">
             {stock.sizemd?.toLocaleString() || '-'}
           </td>
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm font-normal">
             {formatPrice(stock.MDEntryPx, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm font-normal">
             {formatPrice(stock.MDEntryPx2, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right text-[8px]">
+          <td className="px-2 py-2 text-right text-sm font-normal">
             {stock.sizemd2?.toLocaleString() || '-'}
           </td>
         </tr>
@@ -148,94 +149,97 @@ const FullStockTableModal: React.FC<FullStockTableModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-1">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full h-full max-w-full max-h-[98vh] overflow-hidden flex flex-col">
-        <div className="flex justify-end items-center p-2 border-b border-gray-200 dark:border-gray-700">
-          {/* <h2 className="text-base font-bold text-gray-900 dark:text-white">{t('allStocks.fullTableTitle')}</h2> */}
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-            <X size={18} />
+        <div className="flex justify-end items-center p-4 border-b border-gray-200 dark:border-gray-700">
+          <button 
+            onClick={onClose} 
+            className="h-8 w-8 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <X size={16} className="text-gray-600 dark:text-gray-400" />
           </button>
         </div>
-        <div className="flex-grow overflow-auto"> {/* This will handle scrolling */}
-          <table className="w-full text-[8px] min-w-max"><thead>
+        <div className="flex-grow overflow-auto">
+          <table className="w-full text-xs min-w-max">
+            <thead>
               <tr className="bg-gray-100 dark:bg-gray-800 sticky top-0 z-10">
-                <th className="px-0.5 py-1 text-left w-10">
-                  <div className="flex items-center cursor-pointer" onClick={() => handleSort('Symbol')}>
+                <th className="px-2 py-3 text-left w-10">
+                  <div className="flex items-center cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('Symbol')}>
                     {t('allStocks.symbol')}
                     {sortConfig.key === 'Symbol' && (
-                      sortConfig.direction === 'asc' ? <ChevronDown size={8} /> : <ChevronDown size={8} className="transform rotate-180" />
+                      sortConfig.direction === 'asc' ? 
+                        <ChevronDown size={12} className="ml-1 text-gray-600 dark:text-gray-400" /> : 
+                        <ChevronDown size={12} className="ml-1 transform rotate-180 text-gray-600 dark:text-gray-400" />
                     )}
                   </div>
                 </th>
-                {/* Reordered headers */}
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LastTradedPrice')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('LastTradedPrice')}>
                     {t('allStocks.lastTradedPrice')}
                   </div>
                 </th>
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('Changep')}>
                     {t('allStocks.changePercentage')}
                   </div>
                 </th>
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('Changes')}>
                     {t('allStocks.changes')}
                   </div>
                 </th>
-                {/* Original headers continue */}
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('Volume')}>
                     {t('allStocks.volume')}
                   </div>
                 </th>
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Turnover')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('Turnover')}>
                     {t('allStocks.turnover')}
                   </div>
                 </th>
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('PreviousClose')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('PreviousClose')}>
                     {t('allStocks.previousClose')}
                   </div>
                 </th>
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('OpeningPrice')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('OpeningPrice')}>
                     {t('allStocks.openingPrice')}
                   </div>
                 </th>
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('HighPrice')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('HighPrice')}>
                     {t('allStocks.highPrice')}
                   </div>
                 </th>
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LowPrice')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('LowPrice')}>
                     {t('allStocks.lowPrice')}
                   </div>
                 </th>
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('ClosingPrice')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('ClosingPrice')}>
                     {t('allStocks.closingPrice')}
                   </div>
                 </th>
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('sizemd')}>
                     {t('allStocks.bidVolume')}
                   </div>
                 </th>
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('MDEntryPx')}>
                     {t('allStocks.bidPrice')}
                   </div>
                 </th>
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx2')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('MDEntryPx2')}>
                     {t('allStocks.askPrice')}
                   </div>
                 </th>
-                <th className="px-0.5 py-1 text-right">
-                  <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd2')}>
+                <th className="px-2 py-3 text-right">
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('sizemd2')}>
                     {t('allStocks.askVolume')}
                   </div>
                 </th>

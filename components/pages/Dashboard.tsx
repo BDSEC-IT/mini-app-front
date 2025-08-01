@@ -350,8 +350,8 @@ const DashboardContent = () => {
   }, [selectedSymbol])
 
   return (
-    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
-      <div className="max-w-4xl mx-auto py-4 px-2">
+    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24 p-4 flex flex-col gap-y-4">
+    
         <StockList
           loading={loading}
           activeFilter={activeFilter}
@@ -360,7 +360,8 @@ const DashboardContent = () => {
           onStockSelect={handleStockSelect}
           selectedCard={selectedCard}
         />
-        <div className="px-2 sm:px-4 md:px-6 lg:px-8  sm:py-3 relative">
+
+      
           <StockHeader
             selectedSymbol={selectedSymbol}
             selectedStockData={selectedStockData}
@@ -373,13 +374,11 @@ const DashboardContent = () => {
             onSearchChange={handleSearchChange}
             onStockSelect={handleStockSelect}
           />
-        </div>
-      </div>
-      {/* Chart section: full-bleed, outside the padded container */}
+          {/* Chart section: full-bleed, outside the padded container */}
       {!isBond && (
-        <div className="relative w-full max-w-full overflow-hidden">
-          <div className="h-[370px] sm:h-[400px] md:h-[420px] lg:h-[440px] rounded-lg bg-transparent">
-            <div className="relative w-full h-full overflow-hidden">
+        <div className="relative w-full max-w-full ">
+          <div className="h-[400px] sm:h-[400px] md:h-[420px] lg:h-[440px] rounded-md bg-transparent">
+            <div className="relative w-full h-full  ">
               {selectedCard && (
                 <TradingViewChart 
                   key={`${selectedSymbol}-${chartRefreshKey}`}
@@ -395,11 +394,11 @@ const DashboardContent = () => {
       )}
       {/* Bond info section */}
       {isBond && selectedStockData && (
-        <div className="max-w-4xl mx-auto px-2 sm:px-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="border-b border-gray-100 dark:border-gray-700 p-4">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                <span className="h-6 w-1 bg-bdsec dark:bg-indigo-500 rounded-full"></span>
+    
+          <div className="bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="border-b border-gray-100 dark:border-gray-700 p-4 rounded-md">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <span className="h-6 w-1 bg-bdsec dark:bg-indigo-500 rounded-md"></span>
                 {t('dashboard.bondDetails')}
               </h2>
             </div>
@@ -408,21 +407,21 @@ const DashboardContent = () => {
                 {/* Basic Info Section */}
                 <div className="space-y-3">
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.symbol')}</div>
+                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.symbol')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">{selectedStockData.Symbol}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.company')}</div>
+                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.company')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">{selectedStockData.mnName || selectedStockData.enName}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.lastPrice')}</div>
+                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.lastPrice')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
                       {selectedStockData.LastTradedPrice ? (selectedStockData.LastTradedPrice * 1000).toLocaleString() : '-'} ₮
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.previousClose')}</div>
+                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.previousClose')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
                       {selectedStockData.PreviousClose ? (selectedStockData.PreviousClose * 1000).toLocaleString() : '-'} ₮
                     </div>
@@ -431,25 +430,25 @@ const DashboardContent = () => {
                 {/* Trading Info Section */}
                 <div className="space-y-3">
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.turnover')}</div>
+                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.turnover')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
                       {selectedStockData.Turnover ? selectedStockData.Turnover.toLocaleString() : '-'}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.volume')}</div>
+                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.volume')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
                       {selectedStockData.Volume ? selectedStockData.Volume.toLocaleString() : '-'}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">ISIN</div>
+                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">ISIN</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
                       {companyDetails?.ISIN || '-'}
                     </div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('dashboard.listingDate')}</div>
+                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.listingDate')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
                       {companyDetails?.changedate || '-'}
                     </div>
@@ -458,10 +457,9 @@ const DashboardContent = () => {
               </div>
             </div>
           </div>
-        </div>
+      
       )}
-      <div className="max-w-4xl mx-auto px-2 sm:px-4 flex flex-col gap-2 sm:gap-3 ">
-   
+    
        <OrderBook
           selectedSymbol={selectedSymbol}
           loading={loading}
@@ -475,7 +473,7 @@ const DashboardContent = () => {
           details={companyDetails}
           infoLabel={isBond ? 'Bond Info' : 'Stock Info'}
         />
-      </div>
+      
     </div>
   )
 }

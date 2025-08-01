@@ -612,35 +612,35 @@ const getStockCategory = (stock: StockData): string => {
           
           {/* Search Bar */}
           <div className="mb-4 relative">
-            <div className="flex items-center border rounded-md px-3 py-2 bg-gray-100 dark:bg-gray-800">
-              <Search size={20} className="text-gray-500 mr-2" />
+            <div className="flex items-center border rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800 h-10">
+              <Search size={16} className="text-gray-600 dark:text-gray-400 mr-2" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={handleSearch}
-                className="bg-transparent outline-none w-full text-sm"
+                className="bg-transparent outline-none w-full text-sm text-gray-900 dark:text-gray-100"
                 placeholder={t('common.search')}
               />
               {searchTerm && (
-                <button onClick={clearSearch} className="ml-2">
-                  <X size={20} className="text-gray-500" />
+                <button onClick={clearSearch} className="ml-2 h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                  <X size={16} className="text-gray-600 dark:text-gray-400" />
                 </button>
               )}
             </div>
           </div>
           
-          {/* Filters Panel */}
+              {/* Filters Panel */}
           {showFilters && (
             <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <h3 className="font-medium mb-2">{t('allStocks.categories')}</h3>
+              <h3 className="text-sm font-medium mb-3 text-gray-900 dark:text-gray-100">{t('allStocks.categories')}</h3>
               <div className="flex flex-wrap gap-2">
                 {categories.map(category => (
                   <button
                     key={category.id}
-                    className={`px-3 py-1 text-sm rounded-full ${
+                    className={`px-3 py-2 text-sm rounded-lg transition-colors h-8 ${
                       selectedCategory === category.id
-                        ? 'bg-bdsec dark:bg-indigo-500 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                        ? 'bg-bdsec dark:bg-indigo-500 text-white font-medium'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                     onClick={() => setSelectedCategory(category.id)}
                   >

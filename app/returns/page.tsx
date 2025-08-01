@@ -10,7 +10,7 @@ export default function ReturnsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
       <div className="max-w-md mx-auto">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-md shadow-lg p-8 text-center">
           <div className="mb-6">
             <div className="mx-auto w-16 h-16 bg-bdsec/10 dark:bg-indigo-500/10 rounded-full flex items-center justify-center mb-4">
               <TrendingUp className="w-8 h-8 text-bdsec dark:text-indigo-400" />
@@ -32,7 +32,7 @@ export default function ReturnsPage() {
               href="https://dbx.bdsec.mn/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center w-full px-6 py-3 bg-bdsec hover:bg-bdsec/90 text-white font-medium rounded-lg transition-colors"
+              className="inline-flex items-center justify-center w-full px-6 py-3 bg-bdsec hover:bg-bdsec/90 text-white font-medium rounded-md transition-colors"
             >
               BDSEC онлайн систем рүү очих
               <ExternalLink className="ml-2 h-4 w-4" />
@@ -40,7 +40,7 @@ export default function ReturnsPage() {
             
             <Link
               href="/"
-              className="inline-flex items-center justify-center w-full px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="inline-flex items-center justify-center w-full px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Буцах
             </Link>

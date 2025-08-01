@@ -1,5 +1,11 @@
 import { useRef, useEffect, useState, useLayoutEffect, useCallback } from 'react'
-import { BarChart3, ChevronRight, TrendingUp, Activity, ArrowUp, ArrowDown } from 'lucide-react'
+import { BarChart3, ChevronRight, ChevronDown, TrendingUp, Activity, ArrowUp, ArrowDown } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu'
 import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
 import {
@@ -206,37 +212,50 @@ export const StockList = ({
   }, [filteredStocks, selectedCard, fetchStockHistoricalData]);
 
   return (
-    <div className="w-full px-2 sm:px-6 pb-6">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-base sm:text-lg font-medium flex items-center">
-          <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
+    <div className="w-full transition-all duration-300 my-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold flex items-center text-gray-900 dark:text-white">
           {t('dashboard.popularStocks')}
         </h2>
         <Link 
           href={`/stocks?filter=${activeFilter}`} 
-          className="flex items-center text-xs px-2 py-1 sm:text-sm sm:px-3 sm:py-1.5 bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 rounded-md hover:bg-bdsec/20 dark:hover:bg-indigo-500/30 transition-colors"
+          className="flex items-center text-sm font-normal text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           {t('dashboard.viewAll')} <ChevronRight size={16} className="ml-1" />
         </Link>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex gap-2 sm:mt-5 mt-0  sm:pb-2 pb-0 flex-wrap sm:flex-wrap no-scrollbar">
-        {filters.map((filter) => (
-          <div key={filter.id} className="relative group">
+      {/* Filter Dropdown */}
+      <div className="mb-4 flex justify-start">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <button
-              className={`px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm rounded-full whitespace-nowrap flex items-center ${
-                activeFilter === filter.id
-                  ? 'bg-bdsec dark:bg-bdsec-dark text-white'
-                  : 'border dark:border-indigo-500 text-gray-500'
-              }`}
-              onClick={() => onFilterChange(filter.id)}
+              className="flex items-center gap-2 text-bdsec  dark:bg-gray-800 px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700  dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors"
+              aria-label={t('dashboard.filter')}
+              type="button"
             >
-              <filter.icon size={12} className="mr-1" />
-              {filter.label}
+              {filters.find(f => f.id === activeFilter)?.label}
+              <ChevronDown size={16} className="text-bdsec dark:text-gray-400" />
             </button>
-          </div>
-        ))}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[160px] p-1">
+            {filters.map((filter) => (
+              <DropdownMenuItem
+                key={filter.id}
+                onSelect={() => onFilterChange(filter.id)}
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-normal rounded-md cursor-pointer transition-colors ${
+                  activeFilter === filter.id
+                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-medium'
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                }`}
+                aria-selected={activeFilter === filter.id}
+              >
+                {filter.icon && <filter.icon size={16} className="mr-1" />}
+                {filter.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Display active filter explanation below the buttons */}
@@ -249,8 +268,8 @@ export const StockList = ({
         
         {selectedStock && (
           <div
-            className={`shrink-0 ${getBasisClass()} border-bdsec border-[2px]  dark:border-indigo-400  dark:from-indigo-500/10 dark:to-indigo-500/5 rounded-xl  p-2 my-2 sm:p-3 flex flex-col justify-between transition-all duration-300 relative overflow-hidden z-10`}
-            style={{ minWidth: 150, maxWidth: 150 }}
+            className={`shrink-0 ${getBasisClass()} border-bdsec border-[2px]  dark:border-indigo-400  dark:from-indigo-500/10 dark:to-indigo-500/5 rounded-xl  p-3 my-2 sm:p-3 flex flex-col justify-between transition-all duration-300 relative overflow-hidden z-10`}
+            style={{ minWidth: 160, maxWidth: 160, minHeight: 140, height: 140 }}
           >
             {/* SVG Illumination Effect */}
             <svg
@@ -267,7 +286,7 @@ export const StockList = ({
               />
             </svg>
             <div className="flex items-start justify-between mb-1 z-10">
-              <h3 className="flex items-center justify-center font-semibold text-xs text-white rounded-full h-7 w-7 bg-bdsec dark:bg-indigo-400">
+              <h3 className="flex items-center justify-center font-medium text-xs text-white rounded-full h-7 w-7 bg-bdsec dark:bg-indigo-400">
                 {selectedStock.Symbol.toUpperCase().includes('-BD') ? selectedStock.Symbol : selectedStock.Symbol.split('-')[0]}
               </h3>
               <div className={`text-xs font-semibold px-1 py-0.5 rounded-md ${
@@ -284,13 +303,13 @@ export const StockList = ({
               </div>
             </div>
             <div className="mt-1 z-10">
-              <p className="font-medium text-gray-800 truncate text-xs dark:text-gray-200" title={getCompanyName(selectedStock)}>
+              <p className="font-normal text-gray-800 truncate text-xs dark:text-gray-200" title={getCompanyName(selectedStock)}>
                 {getCompanyName(selectedStock)}
               </p>
             </div>
             <div className="mt-1 z-10">
-              <div className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
-              <div className="text-sm font-bold text-gray-900 dark:text-white">
+              <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">
                 {formatPrice(selectedStock.LastTradedPrice, isStockABond(selectedStock))} 
                 {formatPrice(selectedStock.LastTradedPrice, isStockABond(selectedStock)) !== '-' ? '₮' : ''}
               </div>
@@ -305,7 +324,7 @@ export const StockList = ({
           </div>
         )}
         {/* Scrollable carousel for other cards */}
-        <div className="flex-1 overflow-x-auto no-scrollbar">
+        <div className="flex-1 overflow-x-auto no-scrollbar relative">
           <Carousel
             opts={{
               align: "start",
@@ -324,8 +343,8 @@ export const StockList = ({
                   return (
                     <CarouselItem key={`stock-${stock.Symbol}-${index}`} className={`pl-6  md:pl-4 ${getBasisClass()}`} >
                       <div
-                        className="relative w-full p-2 sm:p-3 overflow-hidden transition-all duration-300 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between"
-                        style={{ minWidth: 150, maxWidth: 150 }}
+                        className="relative w-full p-3 sm:p-3 overflow-hidden transition-all duration-300 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between"
+                        style={{ minWidth: 160, maxWidth: 160, minHeight: 140, height: 140  }}
                         onClick={() => {
                           onStockSelect(stock.Symbol);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -346,7 +365,7 @@ export const StockList = ({
                           />
                         </svg>
                         <div className="flex items-start justify-between mb-1 z-10">
-                          <h3 className="flex items-center justify-center font-semibold text-xs text-white rounded-full h-7 w-7 bg-bdsec dark:bg-indigo-500">
+                          <h3 className="flex items-center justify-center font-medium text-xs text-white rounded-full h-7 w-7 bg-bdsec dark:bg-indigo-500">
                             {stock.Symbol.toUpperCase().includes('-BD') ? stock.Symbol : stock.Symbol.split('-')[0]}
                           </h3>
                           <div className={`text-xs font-semibold px-1 py-0.5 rounded-md ${
@@ -363,13 +382,13 @@ export const StockList = ({
                           </div>
                         </div>
                         <div className="mt-1 z-10">
-                          <p className="font-medium text-gray-800 truncate text-xs dark:text-gray-200" title={getCompanyName(stock)}>
+                          <p className="font-normal text-gray-800 truncate text-xs dark:text-gray-200" title={getCompanyName(stock)}>
                             {getCompanyName(stock)}
                           </p>
                         </div>
                         <div className="mt-1 z-10">
-                          <div className="text-xs text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
-                          <div className="text-sm font-bold text-gray-900 dark:text-white">
+                          <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
+                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
                             {formatPrice(stock.LastTradedPrice, isStockABond(stock))}
                             {formatPrice(stock.LastTradedPrice, isStockABond(stock)) !== '-' ? '₮' : ''}
                           </div>
@@ -388,15 +407,19 @@ export const StockList = ({
               ) : (
                 <CarouselItem className={`pl-2 md:pl-4 ${getBasisClass()}`} >
                   <div className="h-20 flex items-center justify-center">
-                    <p className="text-gray-500">{loading ? t('dashboard.loadingStocks') : t('common.noResults')}</p>
+                    <p className="text-sm font-normal text-gray-500">{loading ? t('dashboard.loadingStocks') : t('common.noResults')}</p>
                   </div>
                 </CarouselItem>
               )}
             </CarouselContent>
+            
+            {/* Navigation Buttons */}
+            <CarouselPrevious className="absolute  left-0 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 text-bdsec font-bold dark:text-bdsec-dark hover:text-gray-900 dark:hover:text-white transition-all duration-200 z-10" />
+            <CarouselNext className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 text-bdsec  font-bold dark:text-bdsec-dark hover:text-gray-900 dark:hover:text-white transition-all duration-200 z-10" />
           </Carousel>
         </div>
       </div>
-         <div className="mt-0 px-2 sm:px-0 text-[8px] sm:text-xs text-gray-400 dark:text-gray-500">
+         <div className="mt-0 px-1 sm:px-0 text-xs font-normal text-gray-400 dark:text-gray-500">
         {activeFilter && t(`dashboard.tooltip.${activeFilter}`)}
       </div>
     </div>
