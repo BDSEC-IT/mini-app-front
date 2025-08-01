@@ -21,6 +21,32 @@ import type { StockData, TradingHistoryData } from '@/lib/api'
 import { fetchTradingHistory } from '@/lib/api'
 import { BlinkEffect } from '@/components/ui/BlinkEffect'
 
+// Custom hook for intersection observer
+const useInView = (threshold = 0.1) => {
+  const [inView, setInView] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true)
+          observer.disconnect() // Only trigger once
+        }
+      },
+      { threshold }
+    )
+
+    if (ref.current) {
+      observer.observe(ref.current)
+    }
+
+    return () => observer.disconnect()
+  }, [threshold])
+
+  return { ref, inView }
+}
+
 // Helper function to determine if a stock is a bond (duplicated for now, could be refactored to a shared utility if needed)
 const isStockABond = (stock: StockData | undefined | null): boolean => {
   if (!stock) return false;
@@ -32,6 +58,50 @@ const isStockABond = (stock: StockData | undefined | null): boolean => {
   }
   return isSymbolBond || isMarketSegmentBond;
 };
+
+// Loading Skeleton Component with scroll animations
+const LoadingSkeleton = ({ delay = 0, fromRight = false, inView = false }: { delay?: number, fromRight?: boolean, inView?: boolean }) => {
+  return (
+    <div 
+      className={`transition-all duration-700 ${
+        inView 
+          ? `opacity-100 ${fromRight ? 'translate-x-0' : 'translate-x-0'}` 
+          : `opacity-0 ${fromRight ? 'translate-x-8' : '-translate-x-8'}`
+      }`}
+      style={{ 
+        minWidth: 160, 
+        maxWidth: 160, 
+        minHeight: 140, 
+        height: 140,
+        transitionDelay: `${delay}ms`
+      }}
+    >
+      <div className="relative w-full p-3 overflow-hidden border rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 flex flex-col justify-between">
+        {/* Header skeleton */}
+        <div className="flex items-start justify-between mb-1">
+          <div className="w-7 h-7 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
+          <div className="w-12 h-5 bg-gray-300 dark:bg-gray-600 rounded-md animate-pulse"></div>
+        </div>
+        
+        {/* Company name skeleton */}
+        <div className="mt-1">
+          <div className="w-24 h-3 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+        </div>
+        
+        {/* Price section skeleton */}
+        <div className="mt-1">
+          <div className="w-16 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1"></div>
+          <div className="w-20 h-4 bg-gray-300 dark:bg-gray-600 rounded animate-pulse"></div>
+        </div>
+        
+        {/* Mini chart skeleton */}
+        <div className="absolute bottom-2 right-2">
+          <div className="w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // Mini Chart Component
 const MiniChart = ({ historicalData, isPositive, changePercent = 0, width = 60, height = 30 }: { 
@@ -142,6 +212,9 @@ export const StockList = ({
   const [api, setApi] = useState<CarouselApi>()
   const [historicalData, setHistoricalData] = useState<{ [symbol: string]: TradingHistoryData[] }>({})
   const [loadingHistorical, setLoadingHistorical] = useState<{ [symbol: string]: boolean }>({})
+  
+  // Add intersection observer for scroll animations
+  const { ref: stockListRef, inView: stockListInView } = useInView(0.1)
 
   // Helper function to get company name based on current language
   const getCompanyName = (stock: StockData) => {
@@ -212,8 +285,10 @@ export const StockList = ({
   }, [filteredStocks, selectedCard, fetchStockHistoricalData]);
 
   return (
-    <div className="w-full transition-all duration-300 my-4">
-      <div className="flex justify-between items-center mb-4">
+    <div ref={stockListRef} className="w-full transition-all duration-300 my-4">
+      <div className={`flex justify-between items-center mb-4 transition-all duration-1000 ${
+        stockListInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}>
         <h2 className="text-lg font-semibold flex items-center text-gray-900 dark:text-white">
           {t('dashboard.popularStocks')}
         </h2>
@@ -226,7 +301,9 @@ export const StockList = ({
       </div>
 
       {/* Filter Dropdown */}
-      <div className="mb-4 flex justify-start">
+      <div className={`mb-4 flex justify-start transition-all duration-1000 delay-200 ${
+        stockListInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -258,13 +335,10 @@ export const StockList = ({
         </DropdownMenu>
       </div>
 
-      {/* Display active filter explanation below the buttons */}
-      {/* <div className="mt-0 px-2 sm:px-0 text-xs text-gray-400 dark:text-gray-500">
-        {activeFilter && t(`dashboard.tooltip.${activeFilter}`)}
-      </div> */}
-
       {/* Selected card pinned to the left, outside the scrollable carousel */}
-      <div className="flex items-stretch gap-2 mt-0 py-0 sm:pt-4 sm:mt-4">
+      <div className={`flex items-stretch gap-2 mt-0 py-0 sm:pt-4 sm:mt-4 transition-all duration-1000 delay-400 ${
+        stockListInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}>
         
         {selectedStock && (
           <div
@@ -337,14 +411,35 @@ export const StockList = ({
             setApi={setApi}
           >
             <CarouselContent className="flex pl-8 py-2">
-              {otherStocks.length > 0 ? (
+              {loading ? (
+                // Cool loading skeletons with staggered animations from left and right
+                Array.from({ length: 6 }).map((_, index) => (
+                  <CarouselItem key={`skeleton-${index}`} className={`pl-6 md:pl-4 ${getBasisClass()}`}>
+                    <LoadingSkeleton 
+                      delay={index * 100} 
+                      fromRight={index % 2 === 1} 
+                      inView={stockListInView}
+                    />
+                  </CarouselItem>
+                ))
+              ) : otherStocks.length > 0 ? (
                 otherStocks.map((stock, index) => {
                   const isPositive = (stock.Changep || 0) >= 0;
                   return (
                     <CarouselItem key={`stock-${stock.Symbol}-${index}`} className={`pl-6  md:pl-4 ${getBasisClass()}`} >
                       <div
-                        className="relative w-full p-3 sm:p-3 overflow-hidden transition-all duration-300 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between"
-                        style={{ minWidth: 160, maxWidth: 160, minHeight: 140, height: 140  }}
+                        className={`relative w-full p-3 sm:p-3 overflow-hidden transition-all duration-700 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between ${
+                          stockListInView 
+                            ? `opacity-100 ${index % 2 === 0 ? 'translate-x-0' : 'translate-x-0'}` 
+                            : `opacity-0 ${index % 2 === 0 ? '-translate-x-8' : 'translate-x-8'}`
+                        }`}
+                        style={{ 
+                          minWidth: 160, 
+                          maxWidth: 160, 
+                          minHeight: 140, 
+                          height: 140,
+                          transitionDelay: `${600 + index * 100}ms`
+                        }}
                         onClick={() => {
                           onStockSelect(stock.Symbol);
                           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -419,9 +514,11 @@ export const StockList = ({
           </Carousel>
         </div>
       </div>
-         <div className="mt-0 px-1 sm:px-0 text-xs font-normal text-gray-400 dark:text-gray-500">
+      <div className={`mt-0 px-1 sm:px-0 text-xs font-normal text-gray-400 dark:text-gray-500 transition-all duration-1000 delay-800 ${
+        stockListInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}>
         {activeFilter && t(`dashboard.tooltip.${activeFilter}`)}
       </div>
     </div>
   )
-} 
+}

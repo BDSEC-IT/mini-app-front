@@ -1,7 +1,34 @@
 import { Activity, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
+import { useRef, useEffect, useState } from 'react'
 import type { OrderBookEntry } from '@/lib/api'
+
+// Custom hook for intersection observer
+const useInView = (threshold = 0.1) => {
+  const [inView, setInView] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true)
+          observer.disconnect() // Only trigger once
+        }
+      },
+      { threshold }
+    )
+
+    if (ref.current) {
+      observer.observe(ref.current)
+    }
+
+    return () => observer.disconnect()
+  }, [threshold])
+
+  return { ref, inView }
+}
 
 const formatOrderPrice = (price: number | undefined, symbol: string) => {
   if (price === undefined || price === null) return '-';
@@ -36,6 +63,7 @@ export const OrderBook = ({
   onRefresh
 }: OrderBookProps) => {
   const { t } = useTranslation()
+  const { ref: orderBookRef, inView: orderBookInView } = useInView(0.1)
   
   // Sort orders by price
   const sortOrders = (orders: OrderBookEntry[], isSell: boolean) => {
@@ -57,8 +85,15 @@ export const OrderBook = ({
 
   // Regular order book display for non-bond securities
   return (
-    <div className="w-full rounded-lg backdrop-blur-2xl transition-all duration-300 my-4">
-      <div className="flex justify-between items-center mb-4">
+    <div 
+      ref={orderBookRef}
+      className={`w-full rounded-lg backdrop-blur-2xl transition-all duration-1000 my-4 ${
+        orderBookInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+    >
+      <div className={`flex justify-between items-center mb-4 transition-all duration-1000 delay-200 ${
+        orderBookInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}>
         <div>
           <h2 className="text-lg font-semibold flex items-center">
             <Activity size={16} className="mr-2 text-gray-600 dark:text-gray-400" />
@@ -88,9 +123,13 @@ export const OrderBook = ({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mt-4">
+      <div className={`grid grid-cols-2 gap-4 mt-4 transition-all duration-1000 delay-400 ${
+        orderBookInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}>
         {/* Sell Orders */}
-        <div className="overflow-hidden">
+        <div className={`overflow-hidden transition-all duration-700 delay-500 ${
+          orderBookInView ? 'opacity-100 -translate-x-0' : 'opacity-0 -translate-x-8'
+        }`}>
           <div className="px-3 py-2 bg-red-50 dark:bg-red-900/10">
             <div className="grid grid-cols-2 text-right">
               <h3 className="text-sm font-medium text-red-500 flex items-center">
@@ -129,7 +168,9 @@ export const OrderBook = ({
         </div>
 
         {/* Buy Orders */}
-        <div className="overflow-hidden">
+        <div className={`overflow-hidden transition-all duration-700 delay-600 ${
+          orderBookInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
+        }`}>
           <div className="px-3 py-2 bg-green-50 dark:bg-green-900/10">
             <div className="grid grid-cols-2 text-right">
               <h3 className="text-sm font-medium text-green-500 flex items-center">

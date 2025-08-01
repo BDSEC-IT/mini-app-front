@@ -21,111 +21,232 @@ export default function CircularProgress({
   const circumference = 2 * Math.PI * normalizedRadius
   const strokeDashoffset = circumference - (value / 100) * circumference
 
+  // Color scheme based on variant and progress value
+  const getProgressColor = () => {
+    if (variant === 'underwriter') {
+      // Different colors for different performance levels
+      if (value >= 70) return 'url(#gradient-high)' // Green gradient for high performance
+      if (value >= 40) return 'url(#gradient-medium)' // Blue gradient for medium performance
+      return 'url(#gradient-low)' // Orange gradient for lower performance
+    } else {
+      // Broker variant - use brand colors
+      return 'url(#gradient-brand)'
+    }
+  }
+
+  const getGlowEffect = () => {
+    if (variant === 'underwriter') {
+      if (value >= 70) return '#10b981' // green
+      if (value >= 40) return '#3b82f6' // blue
+      return '#f59e0b' // orange
+    }
+    return '#1C1C4A' // brand color
+  }
+
   return (
     <div className="flex flex-col items-center text-xs">
-      {/* Underwriter: circle дотор otherValue, хажууд хувь хэмжээ */}
+      {/* Underwriter: Enhanced design with gradients */}
       {variant === 'underwriter' && (
         <div className="flex items-center space-x-2 mb-1">
-          <svg height="100" width="100">
-            <circle
-              stroke="#d1d5db"
-              fill="transparent"
-              strokeWidth={stroke}
-              r={normalizedRadius}
-              cx="50"
-              cy="50"
+          <div className="relative">
+            <svg height="100" width="100" className="drop-shadow-lg">
+              <defs>
+                {/* Gradient definitions */}
+                <linearGradient id="gradient-high" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#10b981" />
+                  <stop offset="100%" stopColor="#059669" />
+                </linearGradient>
+                <linearGradient id="gradient-medium" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#1d4ed8" />
+                </linearGradient>
+                <linearGradient id="gradient-low" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#f59e0b" />
+                  <stop offset="100%" stopColor="#d97706" />
+                </linearGradient>
+                
+                {/* Glow effect filter */}
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                  <feMerge> 
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              
+              {/* Background circle with subtle gradient */}
+              <circle
+                stroke="#e5e7eb"
+                fill="transparent"
+                strokeWidth={stroke}
+                r={normalizedRadius}
+                cx="50"
+                cy="50"
+                className="dark:stroke-gray-600"
+              />
+              
+              {/* Progress circle with gradient and glow */}
+              <circle
+                stroke={getProgressColor()}
+                fill="transparent"
+                strokeWidth={stroke}
+                strokeDasharray={`${circumference} ${circumference}`}
+                style={{ 
+                  strokeDashoffset,
+                  filter: 'url(#glow)',
+                  transition: 'stroke-dashoffset 1s ease-in-out'
+                }}
+                strokeLinecap="round"
+                r={normalizedRadius}
+                cx="50"
+                cy="50"
+                transform="rotate(-90 50 50)"
+              />
+              
+              {/* Center content with better styling */}
+              <text
+                x="50"
+                y="48"
+                textAnchor="middle"
+                fill="currentColor"
+                fontSize="16"
+                fontWeight="bold"
+                className="text-gray-900 dark:text-white"
+              >
+                {otherValue}
+              </text>
+              <text
+                x="50"
+                y="62"
+                textAnchor="middle"
+                fill="currentColor"
+                fontSize="9"
+                className="text-gray-600 dark:text-gray-400"
+              >
+                {sublabel}
+              </text>
+            </svg>
+            
+            {/* Animated pulse effect */}
+            <div 
+              className="absolute inset-0 rounded-full opacity-20 animate-ping"
+              style={{ 
+                background: `radial-gradient(circle, ${getGlowEffect()}20 0%, transparent 70%)`,
+                animationDuration: '3s'
+              }}
             />
-            <circle
-              stroke="#1C1C4A"
-              fill="transparent"
-              strokeWidth={stroke}
-              strokeDasharray={`${circumference} ${circumference}`}
-              style={{ strokeDashoffset }}
-              strokeLinecap="round"
-              r={normalizedRadius}
-              cx="50"
-              cy="50"
-              transform="rotate(-90 50 50)"
-            />
-            <text
-              x="50"
-              y="55"
-              textAnchor="middle"
-              fill="#1C1C4A"
-              fontSize="14"
-              fontWeight="bold"
-            >
-              {otherValue}
-            </text>
-            <text
-              x="50"
-              y="70"
-              textAnchor="middle"
-              fill="#6b7280"
-              fontSize="10"
-            >
-              {sublabel}
-            </text>
-          </svg>
-          {/* Хувь хэмжээг баруун талд текстээр харуулах */}
-        
+          </div>
         </div>
       )}
 
-      {/* Broker: одоогийн загвараар хэвээр */}
+      {/* Broker: Enhanced design */}
       {variant === 'broker' && (
         <>
-          <div className="text-bdsec text-xl font-bold leading-tight mb-1">
-            {label}
-            <span className="block text-xs font-normal text-gray-600">
+          <div className="text-center mb-2">
+            <div className="text-bdsec dark:text-indigo-400 text-xl font-bold leading-tight">
+              {label}
+            </div>
+            <span className="block text-xs font-medium text-gray-600 dark:text-gray-400">
               {sublabel}
             </span>
           </div>
 
-          <svg height="100" width="100" className="my-1">
-            <circle
-              stroke="#d1d5db"
-              fill="transparent"
-              strokeWidth={stroke}
-              r={normalizedRadius}
-              cx="50"
-              cy="50"
+          <div className="relative">
+            <svg height="100" width="100" className="drop-shadow-lg">
+              <defs>
+                {/* Brand gradient */}
+                <linearGradient id="gradient-brand" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#1C1C4A" />
+                  <stop offset="50%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#6366f1" />
+                </linearGradient>
+                
+                {/* Dark mode gradient */}
+                <linearGradient id="gradient-brand-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#6366f1" />
+                  <stop offset="50%" stopColor="#8b5cf6" />
+                  <stop offset="100%" stopColor="#a855f7" />
+                </linearGradient>
+                
+                {/* Glow effect */}
+                <filter id="glow-broker">
+                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                  <feMerge> 
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              
+              {/* Background circle */}
+              <circle
+                stroke="#e5e7eb"
+                fill="transparent"
+                strokeWidth={stroke}
+                r={normalizedRadius}
+                cx="50"
+                cy="50"
+                className="dark:stroke-gray-600"
+              />
+              
+              {/* Progress circle */}
+              <circle
+                stroke="url(#gradient-brand)"
+                fill="transparent"
+                strokeWidth={stroke}
+                strokeDasharray={`${circumference} ${circumference}`}
+                style={{ 
+                  strokeDashoffset,
+                  filter: 'url(#glow-broker)',
+                  transition: 'stroke-dashoffset 1s ease-in-out'
+                }}
+                strokeLinecap="round"
+                r={normalizedRadius}
+                cx="50"
+                cy="50"
+                transform="rotate(-90 50 50)"
+                className="dark:stroke-[url(#gradient-brand-dark)]"
+              />
+              
+              {/* Center text */}
+              <text
+                x="50"
+                y="48"
+                textAnchor="middle"
+                fill="currentColor"
+                fontSize="12"
+                fontWeight="bold"
+                className="text-gray-900 dark:text-white"
+              >
+                {otherValue}
+              </text>
+              <text
+                x="50"
+                y="60"
+                textAnchor="middle"
+                fill="currentColor"
+                fontSize="8"
+                className="text-gray-600 dark:text-gray-400"
+              >
+                {sublabel}
+              </text>
+            </svg>
+            
+            {/* Subtle animation effect */}
+            <div 
+              className="absolute inset-0 rounded-full opacity-10 animate-pulse"
+              style={{ 
+                background: `radial-gradient(circle, #1C1C4A20 0%, transparent 70%)`,
+                animationDuration: '2s'
+              }}
             />
-            <circle
-              stroke="#1C1C4A"
-              fill="transparent"
-              strokeWidth={stroke}
-              strokeDasharray={`${circumference} ${circumference}`}
-              style={{ strokeDashoffset }}
-              strokeLinecap="round"
-              r={normalizedRadius}
-              cx="50"
-              cy="50"
-              transform="rotate(-90 50 50)"
-            />
-            <text
-              x="50"
-              y="48"
-              textAnchor="middle"
-              fill="#1C1C4A"
-              fontSize="10"
-              fontWeight="bold"
-            >
-              {otherValue}
-            </text>
-            <text
-              x="50"
-              y="60"
-              textAnchor="middle"
-              fill="#6b7280"
-              fontSize="8"
-            >
-              {sublabel}
-            </text>
-          </svg>
+          </div>
 
           {bottomLabel && (
-            <div className="text-xs text-gray-600">{bottomLabel}</div>
+            <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-2 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-md">
+              {bottomLabel}
+            </div>
           )}
         </>
       )}

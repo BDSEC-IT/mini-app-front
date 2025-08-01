@@ -9,6 +9,32 @@ import { OrderBook } from './dashboard/OrderBook'
 import { StockDetails } from './dashboard/StockDetails'
 import { StockList } from './dashboard/StockList'
 
+// Custom hook for intersection observer
+const useInView = (threshold = 0.1) => {
+  const [inView, setInView] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true)
+          observer.disconnect() // Only trigger once
+        }
+      },
+      { threshold }
+    )
+
+    if (ref.current) {
+      observer.observe(ref.current)
+    }
+
+    return () => observer.disconnect()
+  }, [threshold])
+
+  return { ref, inView }
+}
+
 
 
 // Client-only wrapper component
@@ -46,6 +72,13 @@ const DashboardContent = () => {
   const [chartRefreshKey, setChartRefreshKey] = useState<number>(0)
   const [chartLoading, setChartLoading] = useState(true)
   const [companyDetails, setCompanyDetails] = useState<any>(null)
+
+  // Add intersection observers for scroll animations
+  const { ref: headerRef, inView: headerInView } = useInView(0.1)
+  const { ref: chartRef, inView: chartInView } = useInView(0.1)
+  const { ref: bondRef, inView: bondInView } = useInView(0.1)
+  const { ref: orderBookRef, inView: orderBookInView } = useInView(0.1)
+  const { ref: detailsRef, inView: detailsInView } = useInView(0.1)
 
 
 
@@ -362,21 +395,33 @@ const DashboardContent = () => {
         />
 
       
-          <StockHeader
-            selectedSymbol={selectedSymbol}
-            selectedStockData={selectedStockData}
-            isSearchOpen={isSearchOpen}
-            searchTerm={searchTerm}
-            searchResults={searchResults}
-            chartLoading={chartLoading}
-            onSearchClick={handleSearchClick}
-            onSearchClose={handleSearchClose}
-            onSearchChange={handleSearchChange}
-            onStockSelect={handleStockSelect}
-          />
+          <div 
+            ref={headerRef}
+            className={`transition-all duration-1000 ${
+              headerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            <StockHeader
+              selectedSymbol={selectedSymbol}
+              selectedStockData={selectedStockData}
+              isSearchOpen={isSearchOpen}
+              searchTerm={searchTerm}
+              searchResults={searchResults}
+              chartLoading={chartLoading}
+              onSearchClick={handleSearchClick}
+              onSearchClose={handleSearchClose}
+              onSearchChange={handleSearchChange}
+              onStockSelect={handleStockSelect}
+            />
+          </div>
           {/* Chart section: full-bleed, outside the padded container */}
       {!isBond && (
-        <div className="relative w-full max-w-full ">
+        <div 
+          ref={chartRef}
+          className={`relative w-full max-w-full transition-all duration-1000 delay-200 ${
+            chartInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
           <div className="h-[400px] sm:h-[400px] md:h-[420px] lg:h-[440px] rounded-md bg-transparent">
             <div className="relative w-full h-full  ">
               {selectedCard && (
@@ -394,14 +439,18 @@ const DashboardContent = () => {
       )}
       {/* Bond info section */}
       {isBond && selectedStockData && (
-    
-          <div className="bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="border-b border-gray-100 dark:border-gray-700 p-4 rounded-md">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <span className="h-6 w-1 bg-bdsec dark:bg-indigo-500 rounded-md"></span>
-                {t('dashboard.bondDetails')}
-              </h2>
-            </div>
+        <div 
+          ref={bondRef}
+          className={`bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-1000 delay-200 ${
+            bondInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        >
+          <div className="border-b border-gray-100 dark:border-gray-700 p-4 rounded-md">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <span className="h-6 w-1 bg-bdsec dark:bg-indigo-500 rounded-md"></span>
+              {t('dashboard.bondDetails')}
+            </h2>
+          </div>
             <div className="p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Basic Info Section */}
@@ -460,19 +509,33 @@ const DashboardContent = () => {
       
       )}
     
-       <OrderBook
+       <div 
+        ref={orderBookRef}
+        className={`transition-all duration-1000 delay-400 ${
+          orderBookInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
+        <OrderBook
           selectedSymbol={selectedSymbol}
           loading={loading}
           lastUpdated={lastUpdated}
           processedOrderBook={processedOrderBook}
           onRefresh={fetchOrderBookData}
         />
+      </div>
       
+      <div 
+        ref={detailsRef}
+        className={`transition-all duration-1000 delay-600 ${
+          detailsInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
         <StockDetails
           selectedSymbol={selectedSymbol}
           details={companyDetails}
           infoLabel={isBond ? 'Bond Info' : 'Stock Info'}
         />
+      </div>
       
     </div>
   )

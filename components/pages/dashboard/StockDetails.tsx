@@ -15,7 +15,7 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
   }
 
   return (
-    <div className="w-full  backdrop-blur-2xl  transition-all duration-300  my-3">
+    <div className="w-full backdrop-blur-2xl my-3">
       <h2 className="text-base sm:text-lg font-medium mb-4 flex items-center">
         <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
         {infoLabel || t('dashboard.stockDetails')} - {selectedSymbol.split('-')[0]}
@@ -54,4 +54,4 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
       </div>
     </div>
   )
-} 
+}
