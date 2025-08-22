@@ -55,9 +55,9 @@ export const ProfitLossChart = ({
   const hasData = totalValue > 0
 
   // Prepare chart data
-  const chartLabels = []
-  const chartValues = []
-  const chartColors = []
+  const chartLabels: string[] = []
+  const chartValues: number[] = []
+  const chartColors: string[] = []
 
   if (profitLossData.profitable > 0) {
     chartLabels.push('Profitable')
