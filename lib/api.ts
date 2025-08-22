@@ -2,9 +2,6 @@ import { AccountSetupFormData, mongolianBanks } from './schemas';
 
 // API base URL
 export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
-// Dedicated iStock base (kept separate so we don't interfere with existing BASE_URL usage)
-const ISTOCK_BASE = process.env.NEXT_PUBLIC_ISTOCK_API_URL || BASE_URL;
-
 export const BDSEC_MAIN =  'https://new.bdsec.mn'
 interface StockData {
   pkId: number;
@@ -1852,7 +1849,7 @@ interface PortfolioTotalResponse {
 
 // Fetch partner(s) by partial or full register number
 export const fetchPartnersByRegisterNumber = async (registerNumber: string, token: string): Promise<{ success: boolean; data: IStockPartner[]; message?: string; statusCode?: number; errorCode?: string; }> => {
-  const url = `${ISTOCK_BASE}apitest/istock/partner/list?registerNumber=${encodeURIComponent(registerNumber)}`;
+  const url = `${BASE_URL}apitest/istock/partner/list?registerNumber=${encodeURIComponent(registerNumber)}`;
   try {
     const response = await fetchWithTimeout(url, {
       headers: {
@@ -1873,7 +1870,7 @@ export const fetchPartnersByRegisterNumber = async (registerNumber: string, toke
 
 // Fetch accounts for a partner
 export const fetchAccountsByPartnerId = async (partnerId: number, token: string, pageSize: number = 10, currentPage: number = 0): Promise<{ success: boolean; data: IStockAccount[]; message?: string; statusCode?: number; errorCode?: string; }> => {
-  const url = `${ISTOCK_BASE}apitest/istock/accounts?partnerId=${partnerId}&pageSize=${pageSize}&currentPage=${currentPage}`;
+  const url = `${BASE_URL}apitest/istock/accounts?partnerId=${partnerId}&pageSize=${pageSize}&currentPage=${currentPage}`;
   try {
     const response = await fetchWithTimeout(url, {
       headers: {
@@ -1894,7 +1891,7 @@ export const fetchAccountsByPartnerId = async (partnerId: number, token: string,
 
 // Fetch portfolio total for an account
 export const fetchPortfolioTotal = async (body: PortfolioTotalRequest, token: string): Promise<PortfolioTotalResponse> => {
-  const url = `${ISTOCK_BASE}apitest/istock/portfolio-total`;
+  const url = `${BASE_URL}apitest/istock/portfolio-total`;
   try {
     const response = await fetchWithTimeout(url, {
       method: 'POST',
@@ -1945,6 +1942,31 @@ export const fetchFirstPortfolioTotalByRegister = async (registerNumber: string,
 };
 
 // ...existing code...
+// Types used by portfolio charts and utilities
+interface AssetBalance {
+  // symbol/string identifier for the asset (e.g. 'BDS')
+  symbol?: string
+  // raw balance units (quantity)
+  balance: number
+  // market value of the balance in local currency
+  marketValue?: number
+  // optional additional properties returned by the API
+  [key: string]: any
+}
+
+interface YieldAnalysis {
+  // asset symbol used across UI
+  symbol: string
+  // current total value of the asset in portfolio (market value)
+  totalNow: number
+  // profit (can be negative)
+  profit: number
+  // optional fields commonly used in calculations
+  quantity?: number
+  avgPrice?: number
+  totalCost?: number
+  [key: string]: any
+}
 
 export type { 
   StockData, 
@@ -1971,4 +1993,5 @@ export type {
   IStockAccount,
   PortfolioTotalRequest,
   PortfolioTotalResponse
+  , AssetBalance, YieldAnalysis
 };
