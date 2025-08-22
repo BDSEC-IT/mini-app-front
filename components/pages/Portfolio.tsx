@@ -4,18 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { Eye, EyeOff, TrendingUp, TrendingDown, Wallet, PieChart, History, RefreshCw, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { BASE_URL } from '@/lib/api';
+import type { AssetBalance, YieldAnalysis } from '@/lib/api'
 import { useTheme } from '@/contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { GlowCard } from '@/components/ui/GlowCard';
 import { PortfolioCharts } from '@/components/charts/PortfolioCharts';
 
-interface AssetBalance {
-  exchangeId: number;
-  symbol: string;
-  quantity: number;
-  stockAccountId: number;
-  name: string;
-}
 
 interface NominalBalance {
   balance: number;
@@ -55,26 +49,6 @@ interface TransactionHistory {
   debitAmt: number;
 }
 
-interface YieldAnalysis {
-  symbol: string;
-  amount: number;
-  totalNow: number;
-  withdrawWaitingAmount: number;
-  holdQty: number;
-  fee: number;
-  depositWaitingAmount: number;
-  type: string;
-  profitPer: number;
-  offerTypeCode: string | null;
-  exchangeId: number;
-  accountId: number;
-  total: number;
-  rate: number;
-  firstTotal: number;
-  exchangeName: string;
-  closePrice: number;
-  profit: number;
-}
 
 interface PortfolioData {
   assetBalances: AssetBalance[];
