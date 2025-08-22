@@ -40,7 +40,8 @@ const AllStocks = () => {
     'II': true,
     'III': true,
     'FUND': true,
-    'BOND': true
+    'BOND': true,
+    'IABS': true
   })
   const [sortConfig, setSortConfig] = useState<{
     key: keyof StockData | null;
@@ -67,7 +68,8 @@ const AllStocks = () => {
     { id: 'II', name: t('allStocks.categoryII'), mnName: t('allStocks.categoryII') },
     { id: 'III', name: t('allStocks.categoryIII'), mnName: t('allStocks.categoryIII') },
     { id: 'FUND', name: 'Хөрөнгө оруулалтын сан', mnName: 'Хөрөнгө оруулалтын сан' },
-    { id: 'BOND', name: 'Компанийн бонд', mnName: 'Компанийн бонд' }
+    { id: 'BOND', name: 'Компанийн бонд', mnName: 'Компанийн бонд' },
+    { id: 'IABS', name: 'Хөрөнгөөр баталгаажсан үнэт цаас', mnName: 'Хөрөнгөөр баталгаажсан үнэт цаас' }
   ], [t]);
 
   // Fetch all stocks data
@@ -77,14 +79,6 @@ const AllStocks = () => {
       const response = await fetchAllStocks()
       if (response.success && response.data) {
         const uniqueStocks = filterUniqueStocks(response.data)
-        
-        // Debug: Log the MarketSegmentID values
-        const segmentCounts: Record<string, number> = {};
-        uniqueStocks.forEach(stock => {
-          const segmentId = stock.MarketSegmentID || 'undefined';
-          segmentCounts[segmentId] = (segmentCounts[segmentId] || 0) + 1;
-        });
-        console.log('MarketSegmentID distribution:', segmentCounts);
         
         setAllStocks(uniqueStocks)
         setFilteredStocks(uniqueStocks)
@@ -102,7 +96,10 @@ const AllStocks = () => {
     
     stocks.forEach(stock => {
       const baseSymbol = stock.Symbol.split('-')[0]
-      if (!uniqueSymbols.has(baseSymbol)) {
+      const currentStock = uniqueSymbols.get(baseSymbol)
+      
+      // If we don't have this symbol yet, or if this stock has a more recent MDEntryTime
+      if (!currentStock || (new Date(stock.MDEntryTime) > new Date(currentStock.MDEntryTime))) {
         // Store with clean symbol
         const cleanStock = {...stock}
         cleanStock.Symbol = baseSymbol
@@ -181,6 +178,11 @@ const isToday = (dateString: string): boolean => {
 };
 
 const getStockCategory = (stock: StockData): string => {
+  // First check for IABS security type
+  if (stock.securityType === 'IABS') {
+    return 'IABS';
+  }
+
   if (!stock.MarketSegmentID) return '';
 
   // Case-insensitive check with string comparison
@@ -724,6 +726,7 @@ const getStockCategory = (stock: StockData): string => {
               {renderCategorySection('II', t('allStocks.categoryII'), 'bg-purple-50 dark:bg-purple-900/30', 'text-purple-800 dark:text-purple-200')}
               {renderCategorySection('III', t('allStocks.categoryIII'), 'bg-gray-50 dark:bg-gray-800/60', 'text-gray-800 dark:text-gray-200')}
               {renderCategorySection('FUND', 'Хөрөнгө оруулалтын сан', 'bg-green-50 dark:bg-green-900/30', 'text-green-800 dark:text-green-200')}
+              {renderCategorySection('IABS', 'Хөрөнгөөр баталгаажсан үнэт цаас', 'bg-teal-50 dark:bg-teal-900/30', 'text-teal-800 dark:text-teal-200')}
               {renderCategorySection('BOND', 'Компанийн бонд', 'bg-orange-50 dark:bg-orange-900/30', 'text-orange-800 dark:text-orange-200')}
             </div>
           ) : (
