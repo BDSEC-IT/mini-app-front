@@ -17,7 +17,7 @@ const BottomNavigation = () => {
   
   const [accountInfo, setAccountInfo] = useState<UserAccountResponse['data'] | null>(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [showTooltip, setShowTooltip] = useState<'balance' | 'returns' | 'ipo' | 'exchange' | null>(null)
+  const [showTooltip, setShowTooltip] = useState<'balance' | 'portfolio' | 'ipo' | 'exchange' | null>(null)
   
   useEffect(() => {
     const checkAccountStatus = async () => {
@@ -39,7 +39,7 @@ const BottomNavigation = () => {
   
   const accountOpened = accountInfo?.MCSDAccount && accountInfo.MCSDAccount.DGStatus === 'COMPLETED';
 
-  const handleMenuClick = (e: React.MouseEvent, type: 'balance' | 'returns' | 'ipo' | 'exchange') => {
+  const handleMenuClick = (e: React.MouseEvent, type: 'balance' | 'portfolio' | 'ipo' | 'exchange') => {
     if (!isLoggedIn || !accountOpened) {
       e.preventDefault()
       setShowTooltip(type)
@@ -61,7 +61,7 @@ const BottomNavigation = () => {
 
   const advancedNavItems = [
     { name: 'balance', href: '/balance', icon: Wallet, label: t('nav.balance') },
-    { name: 'returns', href: '/returns', icon: TrendingUp, label: 'өгөөж' },
+    { name: 'portfolio', href: '/portfolio', icon: TrendingUp, label: 'өгөөж' },
     { name: 'ipo', href: '/ipo', icon: Building, label: 'IPO' }
   ];
 

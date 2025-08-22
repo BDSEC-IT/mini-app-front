@@ -2,6 +2,9 @@ import { AccountSetupFormData, mongolianBanks } from './schemas';
 
 // API base URL
 export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
+// Dedicated iStock base (kept separate so we don't interfere with existing BASE_URL usage)
+const ISTOCK_BASE = process.env.NEXT_PUBLIC_ISTOCK_API_URL || BASE_URL;
+
 export const BDSEC_MAIN =  'https://new.bdsec.mn'
 interface StockData {
   pkId: number;
@@ -1139,7 +1142,7 @@ export const digipayLogin = async (userIdKhan: string) => {
       success: true,
       message: 'Using mock token for development',
       data: {
-        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDg4MjN9.CP4XJIAlErOi8fwrQ-vmBA4XT_wzdvIXw2lZ1wFbBII",
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mywicm9zZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDg4MjN9.CP4XJIAlErOi8fwrQ-vmBA4XT_wzdvIXw2lZ1wFbBII",
         user: {
           userId: 3
         }
@@ -1810,6 +1813,139 @@ export const getRegistrationNumber = async (token?: string) => {
   }
 };
 
+// ================= iStock Partner / Accounts / Portfolio =================
+// Types (kept intentionally broad to accommodate evolving backend)
+interface IStockPartner {
+  partnerId: number;
+  registerNumber?: string;
+  name?: string;
+  [key: string]: any;
+}
+
+interface IStockAccount {
+  accountId: number;
+  partnerId?: number;
+  accountNo?: string;
+  currency?: string;
+  [key: string]: any;
+}
+
+interface PortfolioTotalRequest {
+  accountId: number;
+  register: string;
+  currency: string; // e.g. 'MNT'
+  assetId: string;  // e.g. 'NEH'
+}
+
+interface PortfolioTotalResponse {
+  success: boolean;
+  data: {
+    totalAssetValue?: number;
+    totalMarketValue?: number;
+    totalProfitLoss?: number;
+    [key: string]: any;
+  } | null;
+  message?: string;
+  statusCode?: number;
+  errorCode?: string;
+}
+
+// Fetch partner(s) by partial or full register number
+export const fetchPartnersByRegisterNumber = async (registerNumber: string, token: string): Promise<{ success: boolean; data: IStockPartner[]; message?: string; statusCode?: number; errorCode?: string; }> => {
+  const url = `${ISTOCK_BASE}apitest/istock/partner/list?registerNumber=${encodeURIComponent(registerNumber)}`;
+  try {
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { success: false, data: [], message: json.message || 'Failed to fetch partners', statusCode: response.status, errorCode: 'API_ERROR' };
+    }
+    const partners: IStockPartner[] = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []);
+    return { success: true, data: partners, message: json.message, statusCode: response.status };
+  } catch (e) {
+    return { success: false, data: [], message: (e as Error).message, errorCode: 'NETWORK_ERROR' };
+  }
+};
+
+// Fetch accounts for a partner
+export const fetchAccountsByPartnerId = async (partnerId: number, token: string, pageSize: number = 10, currentPage: number = 0): Promise<{ success: boolean; data: IStockAccount[]; message?: string; statusCode?: number; errorCode?: string; }> => {
+  const url = `${ISTOCK_BASE}apitest/istock/accounts?partnerId=${partnerId}&pageSize=${pageSize}&currentPage=${currentPage}`;
+  try {
+    const response = await fetchWithTimeout(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { success: false, data: [], message: json.message || 'Failed to fetch accounts', statusCode: response.status, errorCode: 'API_ERROR' };
+    }
+    const accounts: IStockAccount[] = Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []);
+    return { success: true, data: accounts, message: json.message, statusCode: response.status };
+  } catch (e) {
+    return { success: false, data: [], message: (e as Error).message, errorCode: 'NETWORK_ERROR' };
+  }
+};
+
+// Fetch portfolio total for an account
+export const fetchPortfolioTotal = async (body: PortfolioTotalRequest, token: string): Promise<PortfolioTotalResponse> => {
+  const url = `${ISTOCK_BASE}apitest/istock/portfolio-total`;
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(body)
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.error('fetchPortfolioTotal error response:', json);
+      return { success: false, data: null, message: json.message || 'Failed to fetch portfolio total', statusCode: response.status, errorCode: 'API_ERROR' };
+    }
+    // Console log the important values as requested
+    if (json?.data) {
+      console.log('Portfolio Total:', json.data);
+    } else {
+      console.log('Portfolio Total raw response:', json);
+    }
+    return { success: true, data: json.data || json, message: json.message, statusCode: response.status };
+  } catch (e) {
+    console.error('fetchPortfolioTotal network error:', e);
+    return { success: false, data: null, message: (e as Error).message, errorCode: 'NETWORK_ERROR' };
+  }
+};
+
+// Convenience function: full flow using registerNumber -> first partner -> first account -> portfolio total
+export const fetchFirstPortfolioTotalByRegister = async (registerNumber: string, token: string, currency: string = 'MNT', assetId: string = 'NEH') => {
+  const partnersRes = await fetchPartnersByRegisterNumber(registerNumber, token);
+  if (!partnersRes.success || !partnersRes.data.length) {
+    console.warn('No partners found for registerNumber', registerNumber);
+    return null;
+  }
+  const partner = partnersRes.data[0];
+  const accountsRes = await fetchAccountsByPartnerId(partner.partnerId, token, 1, 0);
+  if (!accountsRes.success || !accountsRes.data.length) {
+    console.warn('No accounts found for partnerId', partner.partnerId);
+    return null;
+  }
+  const account = accountsRes.data[0];
+  const portfolioRes = await fetchPortfolioTotal({ accountId: account.accountId, register: registerNumber, currency, assetId }, token);
+  return {
+    partner,
+    account,
+    portfolio: portfolioRes
+  };
+};
+
+// ...existing code...
+
 export type { 
   StockData, 
   ApiResponse, 
@@ -1830,5 +1966,9 @@ export type {
   NewsData,
   NewsResponse,
   CompanyData,
-  CompaniesResponse
+  CompaniesResponse,
+  IStockPartner,
+  IStockAccount,
+  PortfolioTotalRequest,
+  PortfolioTotalResponse
 };
