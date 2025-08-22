@@ -228,7 +228,7 @@ export default function StockInfo({
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>{t('dashboard.totalShares')}</span>
-                <span className="font-semibold">{details.totalShares}</span>
+                <span className="font-semibold">{parseInt(details.totalShares, 10).toLocaleString('en-US')}</span>
               </div>
               <div className="flex justify-between">
                 <span>{t('dashboard.listedShares')}</span>

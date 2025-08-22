@@ -38,13 +38,17 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
         <div className="overflow-hidden">
           <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
             <div className="flex justify-between items-center p-3">
-              <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.totalShares')}:</span>
-              <span className="text-xs sm:text-sm font-medium">{details.issued_shares}</span>
+              <span className="text-xs sm:text-sm text-gray-500 font-medium">
+                {t('dashboard.totalShares')}:
+              </span>
+              <span className="text-xs sm:text-sm font-medium">
+                {parseInt(details.issued_shares, 10).toLocaleString('en-US')}
+              </span>
             </div>
-            <div className="flex justify-between items-center p-3">
+            {/* <div className="flex justify-between items-center p-3">
               <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.listedShares')}:</span>
               <span className="text-xs sm:text-sm font-medium">{details.outstanding_shares}</span>
-            </div>
+            </div> */}
             <div className="flex justify-between items-center p-3">
               <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.listingDate')}:</span>
               <span className="text-xs sm:text-sm font-medium">{details.changedate}</span>
