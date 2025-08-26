@@ -1941,31 +1941,87 @@ export const fetchFirstPortfolioTotalByRegister = async (registerNumber: string,
   };
 };
 
+// ================= iStockApp helper wrappers =================
+// Simple in-memory cache for CSD transactions to avoid repeated slow calls
+let _csdCache: { data: any; ts: number } | null = null
+const CSD_CACHE_TTL = 60 * 1000 // 60 seconds
+
+async function istockFetch(path: string, token?: string) {
+  const url = `${BASE_URL}/istockApp/${path}`
+  try {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    }
+    const res = await fetchWithTimeout(url, { method: 'GET', headers })
+    if (!res.ok) {
+      return { success: false, data: null }
+    }
+    const json = await res.json()
+    return json
+  } catch (e) {
+    return { success: false, data: null }
+  }
+}
+
+export const fetchIstockNominalBalance = async (token?: string) => {
+  return istockFetch('nominal-balance', token)
+}
+
+export const fetchIstockBalanceAsset = async (token?: string) => {
+  return istockFetch('balance-asset', token)
+}
+
+export const fetchIstockSecurityTransactions = async (token?: string) => {
+  return istockFetch('security-transaction-history', token)
+}
+
+export const fetchIstockYieldAnalysis = async (token?: string) => {
+  return istockFetch('yield-analysis', token)
+}
+
+export const fetchIstockCsdTransactions = async (token?: string, forceRefresh = false) => {
+  // Return cached copy if recent and not forced
+  if (!forceRefresh && _csdCache && (Date.now() - _csdCache.ts) < CSD_CACHE_TTL) {
+    return _csdCache.data
+  }
+
+  const result = await istockFetch('csd-transaction-history', token)
+  if (result && result.success) {
+    _csdCache = { data: result, ts: Date.now() }
+  }
+  return result
+}
+
 // ...existing code...
 // Types used by portfolio charts and utilities
 interface AssetBalance {
-  // symbol/string identifier for the asset (e.g. 'BDS')
-  symbol?: string
-  // raw balance units (quantity)
-  balance: number
-  // market value of the balance in local currency
-  marketValue?: number
-  // optional additional properties returned by the API
-  [key: string]: any
+  exchangeId: number;
+  symbol: string;
+  quantity: number;
+  stockAccountId: number;
+  name: string;
 }
 
 interface YieldAnalysis {
-  // asset symbol used across UI
-  symbol: string
-  // current total value of the asset in portfolio (market value)
-  totalNow: number
-  // profit (can be negative)
-  profit: number
-  // optional fields commonly used in calculations
-  quantity?: number
-  avgPrice?: number
-  totalCost?: number
-  [key: string]: any
+  symbol: string;
+  amount: number;
+  totalNow: number;
+  withdrawWaitingAmount: number;
+  holdQty: number;
+  fee: number;
+  depositWaitingAmount: number;
+  type: string;
+  profitPer: number;
+  offerTypeCode: string | null;
+  exchangeId: number;
+  accountId: number;
+  total: number;
+  rate: number;
+  firstTotal: number;
+  exchangeName: string;
+  closePrice: number;
+  profit: number;
 }
 
 export type { 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, ChartOptions } from 'chart.js'
 import { Doughnut } from 'react-chartjs-2'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -22,6 +23,7 @@ export const ProfitLossChart = ({
   showBalance,
   className = ''
 }: ProfitLossChartProps) => {
+  const { t } = useTranslation()
   const { theme } = useTheme()
   const chartRef = useRef<ChartJS<'doughnut'>>(null)
   const colors = getChartColors(theme)
@@ -60,19 +62,19 @@ export const ProfitLossChart = ({
   const chartColors: string[] = []
 
   if (profitLossData.profitable > 0) {
-    chartLabels.push('Profitable')
+    chartLabels.push(t('portfolio.profitable'))
     chartValues.push(showBalance ? profitLossData.profitable : 1)
     chartColors.push(colors.profitable)
   }
 
   if (profitLossData.unprofitable > 0) {
-    chartLabels.push('Unprofitable')
+    chartLabels.push(t('portfolio.unprofitable'))
     chartValues.push(showBalance ? profitLossData.unprofitable : 1)
     chartColors.push(colors.unprofitable)
   }
 
   if (profitLossData.neutral > 0) {
-    chartLabels.push('Neutral')
+    chartLabels.push(t('portfolio.neutral'))
     chartValues.push(showBalance ? profitLossData.neutral : 1)
     chartColors.push(colors.neutral)
   }
@@ -146,8 +148,8 @@ export const ProfitLossChart = ({
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
             <TrendingUp className="w-8 h-8 text-gray-400" />
           </div>
-          <p className="text-gray-500 dark:text-gray-400 font-medium">No profit/loss data</p>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Start trading to see your performance</p>
+          <p className="text-gray-500 dark:text-gray-400 font-medium">{t('portfolio.noProfitLossData')}</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">{t('portfolio.startTradingToSeePerformance')}</p>
         </div>
       </div>
     )
@@ -163,7 +165,7 @@ export const ProfitLossChart = ({
           {/* Center text */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Net P&L</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">{t('portfolio.netPL')}</div>
               <div className={`text-lg font-bold ${
                 (profitLossData.profitable - profitLossData.unprofitable) >= 0 
                   ? 'text-green-600 dark:text-green-400' 
@@ -189,10 +191,10 @@ export const ProfitLossChart = ({
                   </div>
                   <div>
                     <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                      Profitable Assets
+                      {t('portfolio.profitableAssets')}
                     </p>
                     <p className="text-xs text-green-600 dark:text-green-400">
-                      {profitLossData.profitableCount} assets • {showBalance ? calculatePercentage(profitLossData.profitable, totalValue).toFixed(1) : '***'}%
+                      {profitLossData.profitableCount} {t('portfolio.assets')} • {showBalance ? calculatePercentage(profitLossData.profitable, totalValue).toFixed(1) : '***'}%
                     </p>
                   </div>
                 </div>
@@ -212,10 +214,10 @@ export const ProfitLossChart = ({
                   </div>
                   <div>
                     <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                      Unprofitable Assets
+                      {t('portfolio.unprofitableAssets')}
                     </p>
                     <p className="text-xs text-red-600 dark:text-red-400">
-                      {profitLossData.unprofitableCount} assets • {showBalance ? calculatePercentage(profitLossData.unprofitable, totalValue).toFixed(1) : '***'}%
+                      {profitLossData.unprofitableCount} {t('portfolio.assets')} • {showBalance ? calculatePercentage(profitLossData.unprofitable, totalValue).toFixed(1) : '***'}%
                     </p>
                   </div>
                 </div>
@@ -235,10 +237,10 @@ export const ProfitLossChart = ({
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                      Neutral Assets
+                      {t('portfolio.neutralAssets')}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {profitLossData.neutralCount} assets • {showBalance ? calculatePercentage(profitLossData.neutral, totalValue).toFixed(1) : '***'}%
+                      {profitLossData.neutralCount} {t('portfolio.assets')} • {showBalance ? calculatePercentage(profitLossData.neutral, totalValue).toFixed(1) : '***'}%
                     </p>
                   </div>
                 </div>
