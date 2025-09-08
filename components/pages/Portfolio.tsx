@@ -390,7 +390,11 @@ export default function Portfolio() {
               <Wallet className="h-5 w-5 text-bdsec dark:text-indigo-400" />
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">{t('portfolio.cashAccount')}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{portfolioData!.nominalBalance.currencyFullName}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {portfolioData!.nominalBalance.currency === 'MNT'
+                    ? `${t('portfolio.mongolianTugrik')} (₮)`
+                    : portfolioData!.nominalBalance.currencyFullName}
+                </p>
               </div>
             </div>
             <div className="text-right">

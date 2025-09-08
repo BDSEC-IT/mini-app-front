@@ -4,10 +4,12 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { TradingViewChart } from '../ui/TradingViewChart'
 import { useTheme } from '@/contexts/ThemeContext'
 import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, type OrderBookEntry, type StockData, BASE_URL } from '@/lib/api'
+import socketIOService from '@/lib/socketio'
 import { StockHeader } from './dashboard/StockHeader'
 import { OrderBook } from './dashboard/OrderBook'
 import { StockDetails } from './dashboard/StockDetails'
 import { StockList } from './dashboard/StockList'
+import { getStockFilterDate, shouldDisplayStock, getDisplayPeriodDescription, isDuringTradingHours, filterTodaysFreshStocks, isTodaysFreshData } from '@/lib/trading-time-utils'
 
 // Custom hook for intersection observer
 const useInView = (threshold = 0.1) => {
@@ -72,6 +74,72 @@ const DashboardContent = () => {
   const [chartRefreshKey, setChartRefreshKey] = useState<number>(0)
   const [chartLoading, setChartLoading] = useState(true)
   const [companyDetails, setCompanyDetails] = useState<any>(null)
+  const [stockFilterDate, setStockFilterDate] = useState<string>('')
+  const [displayPeriodDescription, setDisplayPeriodDescription] = useState<string>('')
+  const [updateQueue, setUpdateQueue] = useState<StockData[]>([])
+  const throttleRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Throttled update function to reduce visual glitching
+  const processUpdateQueue = useCallback(() => {
+    if (updateQueue.length === 0) return
+
+    setAllStocks(prevStocks => {
+      const updatedStocks = [...prevStocks];
+      let updatedCount = 0;
+
+      updateQueue.forEach((update) => {
+        if (!update || !update.Symbol) return;
+        
+        const stockIndex = updatedStocks.findIndex(s => s.Symbol === update.Symbol);
+        if (stockIndex !== -1) {
+          // Only update if data actually changed to prevent unnecessary re-renders
+          const currentStock = updatedStocks[stockIndex];
+          const hasChanges = (
+            currentStock.PreviousClose !== update.PreviousClose ||
+            currentStock.Volume !== update.Volume ||
+            currentStock.Changep !== update.Changep ||
+            currentStock.MDEntryTime !== update.MDEntryTime
+          );
+          
+          if (hasChanges) {
+            updatedStocks[stockIndex] = {
+              ...currentStock,
+              ...update
+            };
+            updatedCount++;
+          }
+        }
+      });
+
+      if (updatedCount > 0) {
+        console.log(`🏠 Dashboard: Processed ${updatedCount} stock updates`);
+        setLastUpdated(new Date().toLocaleTimeString());
+      }
+
+      return updatedStocks;
+    });
+
+    setUpdateQueue([]);
+  }, [updateQueue])
+
+  // Process updates every 500ms to reduce glitching
+  useEffect(() => {
+    if (updateQueue.length > 0) {
+      if (throttleRef.current) {
+        clearTimeout(throttleRef.current);
+      }
+      
+      throttleRef.current = setTimeout(() => {
+        processUpdateQueue();
+      }, 800); // 800ms throttle - faster updates for real-time feel like bdsec.mn
+    }
+    
+    return () => {
+      if (throttleRef.current) {
+        clearTimeout(throttleRef.current);
+      }
+    };
+  }, [updateQueue, processUpdateQueue]);
 
   // Add intersection observers for scroll animations
   const { ref: headerRef, inView: headerInView } = useInView(0.1)
@@ -82,12 +150,17 @@ const DashboardContent = () => {
 
 
 
-  // Derive selectedCard robustly
-  // Use the same logic as search: match by base symbol
-  const selectedCard = allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol.split('-')[0]) || allStocks[0];
+  // selectedCard - simple approach that always works
+  const selectedCard = selectedStockData || allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol.split('-')[0]) || allStocks[0];
+
+  // selectedStockData for other components - show searched stock even if historical
+  const displayStockData = selectedStockData || allStocks.find(stock => stock.Symbol.split('-')[0] === selectedSymbol.split('-')[0]) || allStocks[0];
 
   // Detect if the selected symbol is a bond
   const isBond = selectedCard?.Symbol?.toUpperCase().includes('-BD');
+  
+  // Check if current data is fresh or historical  
+  const isDataFresh = displayStockData ? isTodaysFreshData(displayStockData.MDEntryTime) : false;
 
   // Fetch all stocks data with company information
   const fetchStocksData = useCallback(async () => {
@@ -113,8 +186,12 @@ const DashboardContent = () => {
     console.log('Selected symbol:', selectedSymbol);
     
     try {
+      // Construct the full symbol directly to avoid circular dependency
+      const baseSymbol = selectedSymbol.split('-')[0]; // Extract base symbol like 'BDS' from 'BDS-O-0000'
+      const fullSymbol = `${baseSymbol}-O-0000`;
+      console.log('Using full symbol for API call:', fullSymbol);
       console.log('Calling fetchStockDataWithCompanyInfo...');
-      const response = await fetchStockDataWithCompanyInfo(selectedSymbol)
+      const response = await fetchStockDataWithCompanyInfo(fullSymbol)
       console.log('Response received:', response.success, response.data ? 'has data' : 'no data');
       
       if (response.success && response.data) {
@@ -130,9 +207,9 @@ const DashboardContent = () => {
   }, [selectedSymbol])
 
   const fetchCompanyDetails = useCallback(async () => {
-    if (!selectedCard) return;
+    if (!displayStockData) return;
     try {
-      const response = await fetch(`${BASE_URL}/securities/companies?page=1&limit=1&sortField&symbol=${selectedCard.Symbol}`);
+      const response = await fetch(`${BASE_URL}/securities/companies?page=1&limit=1&sortField&symbol=${displayStockData.Symbol}`);
       const data = await response.json();
       if (data.success && data.data.length > 0) {
         setCompanyDetails(data.data[0]);
@@ -140,21 +217,23 @@ const DashboardContent = () => {
     } catch (error) {
       console.error('Error fetching company details:', error);
     }
-  }, [selectedCard]);
+  }, [displayStockData]);
 
   // Fetch order book data
   const fetchOrderBookData = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetchOrderBook(selectedCard?.Symbol || `${selectedSymbol}-O-0000`)
+      const baseSymbol = selectedSymbol.split('-')[0]; // Extract base symbol
+      const fullSymbol = `${baseSymbol}-O-0000`;
+      const response = await fetchOrderBook(fullSymbol)
       if (response.status && response.data) {
         setOrderBookData(response.data)
         
-        // Use MDEntryTime from the selected stock data if available
-        if (selectedStockData?.MDEntryTime) {
+        // Use MDEntryTime from the display stock data if available
+        if (displayStockData?.MDEntryTime) {
           // Extract date and time parts directly from the ISO string
-          const isoString = selectedStockData.MDEntryTime;
+          const isoString = displayStockData.MDEntryTime;
           const [datePart, timePartWithZ] = isoString.split('T');
           const timePart = timePartWithZ.split('.')[0]; // Removes .000Z
           setLastUpdated(`${datePart} ${timePart}`);
@@ -176,7 +255,7 @@ const DashboardContent = () => {
     } finally {
       setLoading(false)
     }
-  }, [selectedSymbol, selectedCard, selectedStockData, isBond])
+  }, [selectedSymbol, displayStockData])
 
 
 
@@ -189,6 +268,60 @@ const DashboardContent = () => {
     fetchStocksData()
     fetchSelectedStockData()
   }, [fetchStocksData, fetchSelectedStockData])
+
+  // Initialize Socket.IO for real-time updates
+  useEffect(() => {
+    const initializeSocketIO = async () => {
+      console.log('🏠 Dashboard: Initializing Socket.IO...');
+      
+      const connected = await socketIOService.connect();
+      if (connected) {
+        console.log('🏠 Dashboard: Socket.IO connected successfully');
+        socketIOService.joinTradingRoom();
+        
+        // Listen for real-time trading data updates
+        socketIOService.onTradingDataUpdate((data: StockData[]) => {
+          console.log('🏠 Dashboard: Real-time update received:', data?.length, 'stocks');
+          
+          // Queue updates instead of immediately applying them
+          const dataArray = Array.isArray(data) ? data : [data];
+          
+          setUpdateQueue(prevQueue => {
+            // Merge new updates with existing queue, avoiding duplicates
+            const newQueue = [...prevQueue];
+            
+            dataArray.forEach((update) => {
+              if (!update || !update.Symbol) return;
+              
+              // Remove existing update for the same symbol to avoid duplicates
+              const existingIndex = newQueue.findIndex(item => item.Symbol === update.Symbol);
+              if (existingIndex !== -1) {
+                newQueue[existingIndex] = update;
+              } else {
+                newQueue.push(update);
+              }
+            });
+            
+            return newQueue;
+          });
+        });
+      } else {
+        console.log('🏠 Dashboard: Socket.IO connection failed, using periodic refresh');
+        // Fallback to periodic refresh every 5 seconds
+        const interval = setInterval(() => {
+          fetchStocksData();
+        }, 5000);
+        
+        return () => clearInterval(interval);
+      }
+    };
+
+    initializeSocketIO();
+
+    return () => {
+      socketIOService.disconnect();
+    };
+  }, [])
 
   // Ensure selectedSymbol is always set on initial load. Default to 'BDS', but if not present in allStocks, set to the first available symbol after allStocks loads. This guarantees the selected card is always shown, even after refresh.
   useEffect(() => {
@@ -229,11 +362,33 @@ const DashboardContent = () => {
 
   
 
-  // Filter stocks based on activeFilter
+  // Update display description for real-time data
   useEffect(() => {
-    if (!allStocks.length) return
+    const updateDescription = () => {
+      const now = new Date();
+      const isTrading = isDuringTradingHours(now);
+      
+      if (isTrading) {
+        setDisplayPeriodDescription("Өнөөдрийн шууд арилжаа"); // Today's live trading
+      } else {
+        setDisplayPeriodDescription("Сүүлийн арилжааны өдрийн мэдээлэл"); // Last trading day data
+      }
+    };
     
-    let filtered = [...allStocks]
+    updateDescription();
+    
+    // Update every minute to handle trading hour transitions
+    const interval = setInterval(updateDescription, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Memoized filtered stocks calculation to prevent unnecessary re-computations
+  const filteredStocksMemo = useMemo(() => {
+    if (!allStocks.length) return []
+    
+    // Filter to show only today's fresh trading data (like bdsec.mn real-time table)
+    let filtered = filterTodaysFreshStocks(allStocks);
     
     switch (activeFilter) {
       case 'trending':
@@ -257,12 +412,18 @@ const DashboardContent = () => {
           .sort((a, b) => a.Changep - b.Changep)
         break
       case 'bonds':
-        filtered = filtered.filter(stock => stock.Symbol.toUpperCase().includes('-BD') && (stock.LastTradedPrice || 0) > 0)
+        // For bonds, don't apply time filter - show all bonds with prices
+        filtered = allStocks.filter(stock => stock.Symbol.toUpperCase().includes('-BD') && (stock.LastTradedPrice || 0) > 0)
         break
     }
     
-    setFilteredStocks(filtered.slice(0, 20));
+    return filtered.slice(0, 20);
   }, [allStocks, activeFilter]);
+
+  // Update filteredStocks only when memo changes
+  useEffect(() => {
+    setFilteredStocks(filteredStocksMemo);
+  }, [filteredStocksMemo]);
 
   // Search results
   const searchResults = useMemo(() => {
@@ -392,6 +553,7 @@ const DashboardContent = () => {
           onFilterChange={handleFilterChange}
           onStockSelect={handleStockSelect}
           selectedCard={selectedCard}
+          displayPeriodDescription={displayPeriodDescription}
         />
 
       
@@ -403,11 +565,12 @@ const DashboardContent = () => {
           >
             <StockHeader
               selectedSymbol={selectedSymbol}
-              selectedStockData={selectedStockData}
+              selectedStockData={displayStockData}
               isSearchOpen={isSearchOpen}
               searchTerm={searchTerm}
               searchResults={searchResults}
               chartLoading={chartLoading}
+              isDataFresh={isDataFresh}
               onSearchClick={handleSearchClick}
               onSearchClose={handleSearchClose}
               onSearchChange={handleSearchChange}
@@ -424,10 +587,10 @@ const DashboardContent = () => {
         >
           <div className="h-[400px] sm:h-[400px] md:h-[420px] lg:h-[440px] rounded-md bg-transparent">
             <div className="relative w-full h-full  ">
-              {selectedCard && (
+              {displayStockData && (
                 <TradingViewChart 
                   key={`${selectedSymbol}-${chartRefreshKey}`}
-                  symbol={selectedCard.Symbol}
+                  symbol={displayStockData.Symbol}
                   theme={theme}
                   period="ALL"
                   onPriceHover={handlePriceHover}
@@ -438,7 +601,7 @@ const DashboardContent = () => {
         </div>
       )}
       {/* Bond info section */}
-      {isBond && selectedStockData && (
+      {isBond && displayStockData && (
         <div 
           ref={bondRef}
           className={`bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-1000 delay-200 ${
@@ -457,22 +620,16 @@ const DashboardContent = () => {
                 <div className="space-y-3">
                   <div>
                     <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.symbol')}</div>
-                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">{selectedStockData.Symbol}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">{selectedCard.Symbol}</div>
                   </div>
                   <div>
                     <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.company')}</div>
-                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">{selectedStockData.mnName || selectedStockData.enName}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">{selectedCard.mnName || selectedCard.enName}</div>
                   </div>
                   <div>
-                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.lastPrice')}</div>
+                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">Өмнөх хаалтын үнэ</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
-                      {selectedStockData.LastTradedPrice ? (selectedStockData.LastTradedPrice * 1000).toLocaleString() : '-'} ₮
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.previousClose')}</div>
-                    <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
-                      {selectedStockData.PreviousClose ? (selectedStockData.PreviousClose * 1000).toLocaleString() : '-'} ₮
+                      {selectedCard.PreviousClose ? (selectedCard.PreviousClose * 1000).toLocaleString() : '-'} ₮
                     </div>
                   </div>
                 </div>
@@ -481,13 +638,13 @@ const DashboardContent = () => {
                   <div>
                     <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.turnover')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
-                      {selectedStockData.Turnover ? selectedStockData.Turnover.toLocaleString() : '-'}
+                      {selectedCard.Turnover ? selectedCard.Turnover.toLocaleString() : '-'}
                     </div>
                   </div>
                   <div>
                     <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.volume')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
-                      {selectedStockData.Volume ? selectedStockData.Volume.toLocaleString() : '-'}
+                      {selectedCard.Volume ? selectedCard.Volume.toLocaleString() : '-'}
                     </div>
                   </div>
                   <div>

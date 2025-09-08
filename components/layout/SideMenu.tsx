@@ -16,7 +16,8 @@ import {
   CircleCheck,
   CircleAlert,
   CircleDashed,
-  UserPlus
+  UserPlus,
+  ArrowUpDown
 } from 'lucide-react'
 import Cookies from 'js-cookie'
 import { useTranslation } from 'react-i18next'
@@ -123,6 +124,13 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
     { href: '/faq', icon: HelpCircle, label: 'bottomNav.faq' },
   ]
   
+  // Add Orders menu item for logged-in users with MCSD account
+  const accountOpened = accountInfo?.MCSDAccount && accountInfo.MCSDAccount.DGStatus === 'COMPLETED';
+  const advancedMenuItems = accountOpened ? [
+    { href: '/orders', icon: ArrowUpDown, label: 'nav.orders' },
+    ...menuItems
+  ] : menuItems;
+  
   const renderStatusIcon = (isComplete: boolean | null) => {
     if (isComplete === true) {
       return <CircleCheck size={18} className="text-green-500" />;
@@ -211,7 +219,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
             )}
             
             <li className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-              {menuItems.map((item) => (
+              {advancedMenuItems.map((item) => (
                 <Link href={item.href} onClick={onClose} key={item.href}>
                   <div className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === item.href ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
                     <item.icon size={18} className="mr-2.5" />

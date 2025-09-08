@@ -20,6 +20,7 @@ interface StockHeaderProps {
   searchTerm: string;
   searchResults: StockData[];
   chartLoading: boolean;
+  isDataFresh?: boolean;
   onSearchClick: () => void;
   onSearchClose: () => void;
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -50,6 +51,7 @@ export const StockHeader = ({
   searchTerm,
   searchResults,
   chartLoading,
+  isDataFresh = true,
   onSearchClick,
   onSearchClose,
   onSearchChange,
@@ -170,25 +172,80 @@ export const StockHeader = ({
         <div className="mt-2">
           <div className="flex flex-col items-start mb-2 px-2">
             {selectedStockData ? (
-              <BlinkEffect value={selectedStockData?.LastTradedPrice || selectedStockData?.ClosingPrice || 0}>
+              <BlinkEffect value={selectedStockData?.PreviousClose || 0}>
                 <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {formatPrice(selectedStockData.LastTradedPrice || selectedStockData.ClosingPrice, selectedStockData.Symbol)} ₮
+                  {formatPrice(selectedStockData.PreviousClose, selectedStockData.Symbol)} ₮
                 </div>
               </BlinkEffect>
             ) : (
               <div className="animate-pulse bg-gray-300 dark:bg-gray-700 rounded-md w-32 h-10"></div>
             )}
-            <div className="text-xs text-gray-500 mt-1 min-h-[20px] flex items-center gap-2">
+            
+            {/* Historical data indicator */}
+            {selectedStockData && !isDataFresh && (
+              <div className="text-xs px-2 py-1 bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-md border border-amber-200 dark:border-amber-800 mt-1">
+                Түүхэн дата
+              </div>
+            )}
+            
+            {/* Enhanced date/time display with clear visibility */}
+            <div className="mt-2 min-h-[32px] flex items-center gap-2">
               {chartLoading && !selectedStockData?.MDEntryTime ? (
-                <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-bdsec dark:border-t-white rounded-full animate-spin mr-2"></span>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-bdsec dark:border-t-white rounded-full animate-spin"></span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Мэдээлэл ачаалж байна...</span>
+                </div>
               ) : selectedStockData?.MDEntryTime ? (
                 (() => {
                   const isoString = selectedStockData.MDEntryTime;
                   const [datePart, timePartWithZ] = isoString.split('T');
                   const timePart = timePartWithZ.split('.')[0];
-                  return `${datePart} ${timePart}`;
+                  
+                  // Check if it's today's data
+                  const entryDate = new Date(isoString);
+                  const today = new Date();
+                  const isToday = (
+                    entryDate.getFullYear() === today.getFullYear() &&
+                    entryDate.getMonth() === today.getMonth() &&
+                    entryDate.getDate() === today.getDate()
+                  );
+                  
+                  return (
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${
+                      isToday 
+                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                        : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+                    }`}>
+                      <div className={`w-2 h-2 rounded-full ${
+                        isToday 
+                          ? 'bg-green-500 animate-pulse' 
+                          : 'bg-amber-500'
+                      }`}></div>
+                      <div className="flex flex-col">
+                        <span className={`text-sm font-medium ${
+                          isToday 
+                            ? 'text-green-700 dark:text-green-400' 
+                            : 'text-amber-700 dark:text-amber-400'
+                        }`}>
+                          {isToday ? 'Өнөөдрийн мэдээлэл' : 'Түүхэн мэдээлэл'}
+                        </span>
+                        <span className={`text-xs ${
+                          isToday 
+                            ? 'text-green-600 dark:text-green-500' 
+                            : 'text-amber-600 dark:text-amber-500'
+                        }`}>
+                          {datePart} {timePart}
+                        </span>
+                      </div>
+                    </div>
+                  );
                 })()
-              ) : null}
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                  <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Мэдээлэл байхгүй</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import React from 'react'
 import { Activity, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
@@ -55,7 +56,7 @@ interface OrderBookProps {
   onRefresh?: () => void
 }
 
-export const OrderBook = ({
+const OrderBookComponent = ({
   selectedSymbol,
   loading,
   lastUpdated,
@@ -210,4 +211,18 @@ export const OrderBook = ({
       </div>
     </div>
   )
-} 
+}
+
+// Memoize the OrderBook component to prevent unnecessary re-renders
+export const OrderBook = React.memo(OrderBookComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.selectedSymbol === nextProps.selectedSymbol &&
+    prevProps.loading === nextProps.loading &&
+    prevProps.lastUpdated === nextProps.lastUpdated &&
+    prevProps.processedOrderBook.buy.length === nextProps.processedOrderBook.buy.length &&
+    prevProps.processedOrderBook.sell.length === nextProps.processedOrderBook.sell.length &&
+    // Check if first few orders are the same (performance optimization)
+    JSON.stringify(prevProps.processedOrderBook.buy.slice(0, 3)) === JSON.stringify(nextProps.processedOrderBook.buy.slice(0, 3)) &&
+    JSON.stringify(prevProps.processedOrderBook.sell.slice(0, 3)) === JSON.stringify(nextProps.processedOrderBook.sell.slice(0, 3))
+  )
+}) 

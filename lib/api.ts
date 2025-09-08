@@ -432,6 +432,51 @@ const logDev = (message: string) => {
   }
 };
 
+// Fetch specific stock data using symbol-specific endpoint
+export const fetchSpecificStockData = async (symbol: string): Promise<ApiResponse<StockData>> => {
+  const url = `${BASE_URL}/securities/trading-status/${symbol}`;
+  
+  console.log('=== SPECIFIC TRADING STATUS API DEBUG ===');
+  console.log('Symbol:', symbol);
+  console.log('Specific trading status URL:', url);
+  
+  try {
+    const response = await fetchWithTimeout(url)
+    
+    if (!response.ok) {
+      logDev(`Specific API call failed with status ${response.status}`);
+      console.error('Specific API call failed:', response.status, response.statusText);
+      
+      // Return mock data instead of throwing
+      const mockData = createMockStock(symbol.split('-')[0])
+      console.log('Using mock data for specific stock:', mockData);
+      return {
+        success: true,
+        message: 'Mock data',
+        data: mockData
+      }
+    }
+    
+    const responseData = await response.json();
+    console.log('fetchSpecificStockData real data:', responseData);
+    
+    return responseData;
+  } catch (error) {
+    logDev('Using fallback mock specific stock data');
+    console.error('fetchSpecificStockData error:', error);
+    
+    // Return mock data as fallback
+    const mockData = createMockStock(symbol.split('-')[0])
+    console.log('Using fallback mock data for specific stock:', mockData);
+    
+    return {
+      success: true,
+      message: 'Mock data',
+      data: mockData
+    }
+  }
+};
+
 export const fetchStockData = async (symbol?: string): Promise<ApiResponse<StockData[]>> => {
   // Always fetch all stocks from the API, then filter if symbol is provided
   const url = `${BASE_URL}/securities/trading-status`;
@@ -504,9 +549,24 @@ export const fetchStockDataWithCompanyInfo = async (symbol?: string): Promise<Ap
     console.log('=== fetchStockDataWithCompanyInfo START ===');
     console.log('Symbol:', symbol);
     
-    // Fetch trading data first
-    const tradingResponse = await fetchStockData(symbol);
-    console.log('Trading response:', tradingResponse.success, tradingResponse.data ? 'has data' : 'no data');
+    let tradingResponse: ApiResponse<StockData[]>;
+    
+    // If symbol is provided, use the specific endpoint for more accurate data
+    if (symbol) {
+      console.log('Using specific trading status endpoint for symbol:', symbol);
+      const specificResponse = await fetchSpecificStockData(symbol);
+      console.log('Specific trading response:', specificResponse.success, specificResponse.data ? 'has data' : 'no data');
+      
+      // Convert single stock data to array format for consistency
+      tradingResponse = {
+        ...specificResponse,
+        data: specificResponse.data ? [specificResponse.data] : []
+      };
+    } else {
+      // Fetch all stocks using the general endpoint
+      tradingResponse = await fetchStockData(symbol);
+      console.log('General trading response:', tradingResponse.success, tradingResponse.data ? 'has data' : 'no data');
+    }
 
     if (!tradingResponse.success || !tradingResponse.data) {
       console.log('Trading data failed, using mock data');
@@ -2024,6 +2084,173 @@ interface YieldAnalysis {
   profit: number;
 }
 
+// ================= Order Management Types =================
+interface OrderData {
+  symbol: string;
+  orderType: string;
+  buySell: string;
+  quantity: number;
+  stockAccountId: number;
+  fee: number;
+  createdUsername: string;
+  cumQty: number;
+  leavesQty: number;
+  statusname: string;
+  buySellTxt: string;
+  feeAmt: number;
+  exchangeId: number;
+  total: number;
+  createdDate: string;
+  price: number;
+  name: string;
+  exchangeName: string;
+  id: number;
+  timeInForce: string;
+}
+
+interface OrderHistoryResponse {
+  success: boolean;
+  data: OrderData[];
+  message?: string;
+}
+
+interface PlaceOrderRequest {
+  accountId: number;
+  symbol: string;
+  orderType: 'MARKET' | 'CONDITIONAL';
+  timeForce: 'DAY' | 'GTT' | 'GTC' | 'GTD';
+  channel: 'WEB' | 'APP' | 'API' | 'ERP';
+  side: 'BUY' | 'SELL';
+  price: number;
+  quantity: number;
+  expireDate?: string;
+  exchangeId: number;
+}
+
+interface PlaceOrderResponse {
+  success: boolean;
+  data?: any;
+  message?: string;
+  errorCode?: string;
+}
+
+// ================= Order Management API Functions =================
+
+// Fetch order history for the authenticated user
+export const fetchOrderHistory = async (token: string): Promise<OrderHistoryResponse> => {
+  const url = `${BASE_URL}/istockApp/secondary-order`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        data: [],
+        message: responseData.message || `Failed to fetch order history: ${response.status}`
+      };
+    }
+    
+    return {
+      success: true,
+      data: responseData.data || [],
+      message: responseData.message
+    };
+  } catch (error) {
+    console.error('Error fetching order history:', error);
+    return {
+      success: false,
+      data: [],
+      message: error instanceof Error ? error.message : 'Failed to fetch order history'
+    };
+  }
+};
+
+// Place a new order
+export const placeOrder = async (orderData: PlaceOrderRequest, token: string): Promise<PlaceOrderResponse> => {
+  const url = `${BASE_URL}/istockApp/secondary-order/place`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(orderData)
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        message: responseData.message || `Failed to place order: ${response.status}`,
+        errorCode: responseData.errorCode || 'ORDER_PLACEMENT_FAILED'
+      };
+    }
+    
+    return {
+      success: true,
+      data: responseData.data,
+      message: responseData.message || 'Order placed successfully'
+    };
+  } catch (error) {
+    console.error('Error placing order:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to place order',
+      errorCode: 'NETWORK_ERROR'
+    };
+  }
+};
+
+// Cancel an order
+export const cancelOrder = async (orderId: number, token: string): Promise<PlaceOrderResponse> => {
+  const url = `${BASE_URL}/istockApp/secondary-order/cancel/${orderId}`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        message: responseData.message || `Failed to cancel order: ${response.status}`,
+        errorCode: responseData.errorCode || 'ORDER_CANCELLATION_FAILED'
+      };
+    }
+    
+    return {
+      success: true,
+      data: responseData.data,
+      message: responseData.message || 'Order cancelled successfully'
+    };
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to cancel order',
+      errorCode: 'NETWORK_ERROR'
+    };
+  }
+};
+
 export type { 
   StockData, 
   ApiResponse, 
@@ -2048,6 +2275,11 @@ export type {
   IStockPartner,
   IStockAccount,
   PortfolioTotalRequest,
-  PortfolioTotalResponse
-  , AssetBalance, YieldAnalysis
+  PortfolioTotalResponse,
+  AssetBalance, 
+  YieldAnalysis,
+  OrderData,
+  OrderHistoryResponse,
+  PlaceOrderRequest,
+  PlaceOrderResponse
 };

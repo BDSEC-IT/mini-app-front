@@ -1,11 +1,14 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'next/navigation'
 import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight } from 'lucide-react'
 import { fetchAllStocks, type StockData } from '@/lib/api'
-import realTimeService from '@/lib/socket'
+import socketIOService from '@/lib/socketio'
+// import { testBackendDevConfig } from '@/lib/simple-socket-test' // Disabled
+import realTimePollingService from '@/lib/realtime-polling'
+import { getStockFilterDate, shouldDisplayStock, getDisplayPeriodDescription } from '@/lib/trading-time-utils'
 import StockAverageModal from '../pages/StockAverageModal'
 import FullStockTableModal from './FullStockTableModal';
 
@@ -48,10 +51,11 @@ const AllStocks = () => {
     direction: 'asc' | 'desc';
   }>({ key: null, direction: 'asc' })
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
-  const socketRef = useRef<any>(null)
   const [previousStockValues, setPreviousStockValues] = useState<{ [symbol: string]: { price: number; change: number } }>({})
   const [blinkingRows, setBlinkingRows] = useState<Map<string, 'gain' | 'loss'>>(new Map());
   const [isFullTableModalOpen, setIsFullTableModalOpen] = useState(false);
+  const [stockFilterDate, setStockFilterDate] = useState<string>('');
+  const [displayPeriodDescription, setDisplayPeriodDescription] = useState<string>('');
 
   // Set active tab from URL query parameter on initial load
   useEffect(() => {
@@ -166,17 +170,6 @@ const AllStocks = () => {
   }, [filteredStocks, sortConfig])
 
   // Get stock category from MarketSegmentID
-const isToday = (dateString: string): boolean => {
-  const entryDate = new Date(dateString);
-  const today = new Date();
-
-  return (
-    entryDate.getFullYear() === today.getFullYear() &&
-    entryDate.getMonth() === today.getMonth() &&
-    entryDate.getDate() === today.getDate()
-  );
-};
-
 const getStockCategory = (stock: StockData): string => {
   // First check for IABS security type
   if (stock.securityType === 'IABS') {
@@ -204,14 +197,46 @@ const getStockCategory = (stock: StockData): string => {
   else if (segment === '1' || segment === 'BOND' || segment.includes('БОНД') || segment.includes('BOND')) {
     return 'BOND';
   }
+  else if (segment === 'BD' || segment === 'BONDS' || segment.startsWith('BD')) {
+    // BD is likely Bond/Debt securities
+    return 'BOND';
+  }
+  else if (segment === 'MAIN' || segment === 'MAIN MARKET' || segment.includes('MAIN')) {
+    // MAIN market segment - treat as category I by default
+    return 'I';
+  }
+  else if (segment === 'N/A' || segment === 'NA' || segment === '' || segment === 'NULL') {
+    // Unknown/undefined market segment - treat as category I by default
+    return 'I';
+  }
   
-  console.log('Unknown MarketSegmentID:', segment);
-  return '';
+  // Only log truly unknown segments to avoid spam
+  if (segment && segment !== 'MAIN' && segment !== 'N/A' && segment !== 'BD') {
+    console.log('Unknown MarketSegmentID:', segment);
+  }
+  return 'I'; // Default to category I instead of empty string
 };
 
 
 
-  // Filter stocks based on search, active tab and category
+  // Update stock filter date and description
+  useEffect(() => {
+    const updateFilterDate = () => {
+      const filterDate = getStockFilterDate();
+      const description = getDisplayPeriodDescription();
+      setStockFilterDate(filterDate);
+      setDisplayPeriodDescription(description);
+    };
+    
+    updateFilterDate();
+    
+    // Update every minute to handle trading hour transitions
+    const interval = setInterval(updateFilterDate, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Filter stocks based on search, active tab, category, and trading time
   useEffect(() => {
     let filtered = [...allStocks]
     
@@ -223,17 +248,16 @@ const getStockCategory = (stock: StockData): string => {
       )
     }
     
-    // Apply tab filter
-    if (activeTab === 'active') {
-      // Filter stocks that have had some trading activity today
+    // Apply trading time filter for 'active' tab (only for stocks, not bonds)
+    if (activeTab === 'active' && stockFilterDate) {
       filtered = filtered.filter(stock => {
-        const todayStr = new Date().toISOString().slice(0, 10);
-        return stock.MDEntryTime && stock.MDEntryTime.slice(0, 10) === todayStr;
+        const isBond = stock.Symbol?.toUpperCase().includes('-BD') || getStockCategory(stock) === 'BOND';
+        return shouldDisplayStock(stock.MDEntryTime, stockFilterDate, isBond);
       });
     } else if (activeTab === 'gainers') {
-      filtered = filtered.filter(stock => stock.Changes > 0)
+      filtered = filtered.filter(stock => Number(stock.Changes) > 0)
     } else if (activeTab === 'losers') {
-      filtered = filtered.filter(stock => stock.Changes < 0)
+      filtered = filtered.filter(stock => Number(stock.Changes) < 0)
     }
     
     // Apply category filter
@@ -242,7 +266,7 @@ const getStockCategory = (stock: StockData): string => {
     }
     
     setFilteredStocks(filtered)
-  }, [allStocks, searchTerm, activeTab, selectedCategory, getCompanyName])
+  }, [allStocks, searchTerm, activeTab, selectedCategory, stockFilterDate, getCompanyName])
   
   // Group stocks by category
   const stocksByCategory = useMemo(() => {
@@ -259,27 +283,251 @@ const getStockCategory = (stock: StockData): string => {
   }, [sortedStocks]);
 
 
-  // Initialize real-time service
+  // Initialize Socket.IO service
   useEffect(() => {
     fetchStocksData();
     
-    // Connect to the real-time service
-    realTimeService.connect();
-    realTimeService.joinTradingRoom();
+    // Try Socket.IO first, fallback to polling if it fails
+    const initRealTime = async () => {
+      // testBackendDevConfig(); // Disable duplicate test
+      
+      // Try Socket.IO with timeout
+      const socketIOPromise = socketIOService.connect();
+      const timeoutPromise = new Promise<boolean>(resolve => {
+        setTimeout(() => resolve(false), 8000); // 8 second timeout
+      });
+      
+      const socketIOResult = await Promise.race([socketIOPromise, timeoutPromise]);
+      
+      if (socketIOResult) {
+        socketIOService.joinTradingRoom();
+        
+        // Use Socket.IO for real-time updates
+        socketIOService.onTradingDataUpdate((data: StockData[]) => {
+          console.log('📊 Socket.IO: Processing real-time data:', data?.length, 'stocks')
+          
+          setAllStocks(prevStocks => {
+            const updatedStocks = [...prevStocks];
+            const newBlinkingRows = new Map<string, 'gain' | 'loss'>();
+            let updatedCount = 0;
+
+            // Ensure data is an array
+            const dataArray = Array.isArray(data) ? data : [data];
+
+            dataArray.forEach((update) => {
+              if (!update || !update.Symbol) return;
+              
+              const stockIndex = updatedStocks.findIndex(s => s.Symbol === update.Symbol);
+              if (stockIndex !== -1) {
+                const oldPrice = updatedStocks[stockIndex].LastTradedPrice || 0;
+                const newPrice = update.LastTradedPrice || 0;
+
+                // Store previous values for blinking comparison
+                setPreviousStockValues(prev => ({
+                  ...prev,
+                  [update.Symbol]: {
+                    price: oldPrice,
+                    change: updatedStocks[stockIndex].Changep || 0
+                  }
+                }));
+
+                // Determine flash color based on price change
+                if (newPrice > oldPrice) {
+                  newBlinkingRows.set(update.Symbol, 'gain');
+                  console.log(`📈 ${update.Symbol}: ${oldPrice} → ${newPrice} (GAIN)`)
+                } else if (newPrice < oldPrice) {
+                  newBlinkingRows.set(update.Symbol, 'loss');
+                  console.log(`📉 ${update.Symbol}: ${oldPrice} → ${newPrice} (LOSS)`)
+                } else {
+                  // Even if price didn't change, still flash to show it's updating
+                  newBlinkingRows.set(update.Symbol, 'gain');
+                  console.log(`🔄 ${update.Symbol}: Updated (no price change)`)
+                }
+
+                // Update the stock data
+                updatedStocks[stockIndex] = {
+                  ...updatedStocks[stockIndex],
+                  ...update
+                };
+                updatedCount++;
+              }
+            });
+
+            // Apply flashing effects to all updated rows
+            if (newBlinkingRows.size > 0) {
+              console.log('✨ Socket.IO: Flashing rows:', Array.from(newBlinkingRows.keys()))
+              
+              setBlinkingRows(prev => {
+                const nextMap = new Map(prev);
+                newBlinkingRows.forEach((value, key) => nextMap.set(key, value));
+                return nextMap;
+              });
+
+              // Remove flash effect after 800ms
+              newBlinkingRows.forEach((_, symbol) => {
+                setTimeout(() => {
+                  setBlinkingRows(prev => {
+                    const nextMap = new Map(prev);
+                    nextMap.delete(symbol);
+                    return nextMap;
+                  });
+                }, 800);
+              });
+            }
+
+            console.log(`🎯 Socket.IO: Updated ${updatedCount} stocks with real-time data`)
+            return updatedStocks;
+          });
+          
+          setLastUpdate(new Date());
+        });
+        
+      } else {
+        
+        // Use polling service as fallback
+        const pollingResult = await realTimePollingService.connect();
+        
+        if (pollingResult) {
+          console.log('✅ Polling service connected successfully!');
+          realTimePollingService.joinTradingRoom();
+          
+          // Use polling for real-time-like updates
+          realTimePollingService.onTradingDataUpdate((data: StockData[]) => {
+            console.log('📊 Polling data received:', data?.length || 0, 'stocks');
+            
+            setAllStocks(prevStocks => {
+              console.log('📊 Processing polled stock updates:')
+              console.log('  Previous stocks count:', prevStocks.length)
+              
+              const updatedStocks = [...prevStocks];
+              const newBlinkingRows = new Map<string, 'gain' | 'loss'>();
+              let updatedCount = 0;
+              let priceChangedCount = 0;
+
+              // Ensure data is an array
+              const dataArray = Array.isArray(data) ? data : [data];
+              console.log('  Processing array with', dataArray.length, 'items')
+
+              dataArray.forEach((update, index) => {
+                if (!update || !update.Symbol) return;
+                
+                const stockIndex = updatedStocks.findIndex(s => s.Symbol === update.Symbol);
+                if (stockIndex !== -1) {
+                  const oldPrice = updatedStocks[stockIndex].LastTradedPrice || 0;
+                  const newPrice = update.LastTradedPrice || 0;
+                  const oldChange = updatedStocks[stockIndex].Changep || 0;
+
+                  // Store previous values for price and change
+                  setPreviousStockValues(prev => ({
+                    ...prev,
+                    [update.Symbol]: {
+                      price: oldPrice,
+                      change: oldChange
+                    }
+                  }));
+
+                  // Determine if price changed significantly
+                  if (newPrice > oldPrice) {
+                    newBlinkingRows.set(update.Symbol, 'gain');
+                    priceChangedCount++;
+                    console.log(`  🟢 ${update.Symbol} GAIN: ${oldPrice} -> ${newPrice}`)
+                  } else if (newPrice < oldPrice) {
+                    newBlinkingRows.set(update.Symbol, 'loss');
+                    priceChangedCount++;
+                    console.log(`  🔴 ${update.Symbol} LOSS: ${oldPrice} -> ${newPrice}`)
+                  }
+
+                  updatedStocks[stockIndex] = {
+                    ...updatedStocks[stockIndex],
+                    ...update
+                  };
+                  updatedCount++;
+                }
+              });
+
+              // Apply blinking effects
+              if (newBlinkingRows.size > 0) {
+                console.log('✨ Applying blink effects to:', Array.from(newBlinkingRows.keys()))
+                setBlinkingRows(prev => {
+                  const nextMap = new Map(prev);
+                  newBlinkingRows.forEach((value, key) => nextMap.set(key, value));
+                  return nextMap;
+                });
+                newBlinkingRows.forEach((_, symbol) => {
+                  setTimeout(() => {
+                    setBlinkingRows(prev => {
+                      const nextMap = new Map(prev);
+                      nextMap.delete(symbol);
+                      return nextMap;
+                    });
+                  }, 500);
+                });
+              }
+
+              console.log('📈 Polling update summary:', updatedCount, 'updates,', priceChangedCount, 'price changes')
+              return updatedStocks;
+            });
+            
+            setLastUpdate(new Date());
+          });
+          
+        } else {
+          console.error('❌ Both Socket.IO and polling failed');
+        }
+      }
+    };
+
+    initRealTime();
+
+    // Listen for connection status changes
+    socketIOService.onConnectionStatusChange((connected) => {
+      console.log('📡 Socket.IO connection status changed:', connected);
+      if (connected) {
+        socketIOService.joinTradingRoom();
+      }
+    });
 
     // Listen for trading data updates
-    realTimeService.onTradingDataUpdate((data: StockData[]) => {
+    socketIOService.onTradingDataUpdate((data: StockData[]) => {
+      console.log('🏢 AllStocks received trading data update:')
+      console.log('  Raw data type:', typeof data)
+      console.log('  Is array:', Array.isArray(data))
+      console.log('  Data length/size:', Array.isArray(data) ? data.length : 'N/A')
+      console.log('  Full data:', data)
+      
       setAllStocks(prevStocks => {
+        console.log('📊 Processing stock updates:')
+        console.log('  Previous stocks count:', prevStocks.length)
+        
         const updatedStocks = [...prevStocks];
         const newBlinkingRows = new Map<string, 'gain' | 'loss'>();
+        let updatedCount = 0;
+        let priceChangedCount = 0;
 
-        data.forEach(update => {
+        // Ensure data is an array
+        const dataArray = Array.isArray(data) ? data : [data];
+        console.log('  Processing array with', dataArray.length, 'items')
+
+        dataArray.forEach((update, index) => {
+          console.log(`  [${index}] Processing update for:`, {
+            Symbol: update?.Symbol,
+            LastTradedPrice: update?.LastTradedPrice,
+            Changes: update?.Changes,
+            Changep: update?.Changep
+          })
+          
+          if (!update || !update.Symbol) {
+            console.log(`  [${index}] ⚠️ Skipping invalid update (no symbol)`)
+            return;
+          }
+          
           const stockIndex = updatedStocks.findIndex(s => s.Symbol === update.Symbol);
           if (stockIndex !== -1) {
             const oldPrice = updatedStocks[stockIndex].LastTradedPrice || 0;
             const newPrice = update.LastTradedPrice || 0;
             const oldChange = updatedStocks[stockIndex].Changep || 0;
-            const newChange = update.Changep || 0;
+
+            console.log(`  [${index}] ${update.Symbol}: ${oldPrice} -> ${newPrice}`)
 
             // Store previous values for price and change
             setPreviousStockValues(prev => ({
@@ -293,19 +541,34 @@ const getStockCategory = (stock: StockData): string => {
             // Determine if price or change percentage has changed significantly
             if (newPrice > oldPrice) {
               newBlinkingRows.set(update.Symbol, 'gain');
+              priceChangedCount++;
+              console.log(`  [${index}] 🟢 ${update.Symbol} GAIN: ${oldPrice} -> ${newPrice}`)
             } else if (newPrice < oldPrice) {
               newBlinkingRows.set(update.Symbol, 'loss');
+              priceChangedCount++;
+              console.log(`  [${index}] 🔴 ${update.Symbol} LOSS: ${oldPrice} -> ${newPrice}`)
+            } else if (oldPrice !== 0) {
+              console.log(`  [${index}] ⚪ ${update.Symbol} NO CHANGE: ${oldPrice}`)
             }
 
             updatedStocks[stockIndex] = {
               ...updatedStocks[stockIndex],
               ...update
             };
+            updatedCount++;
+          } else {
+            console.log(`  [${index}] ⚠️ Stock ${update.Symbol} not found in current list`)
           }
         });
 
+        console.log('📈 Update summary:')
+        console.log('  Total updates processed:', updatedCount)
+        console.log('  Price changes detected:', priceChangedCount)
+        console.log('  Blinking stocks:', Array.from(newBlinkingRows.keys()))
+
         // Apply blinking rows and set timeouts to remove them
         if (newBlinkingRows.size > 0) {
+          console.log('✨ Applying blink effects to:', Array.from(newBlinkingRows.keys()))
           setBlinkingRows(prev => {
             const nextMap = new Map(prev);
             newBlinkingRows.forEach((value, key) => nextMap.set(key, value));
@@ -322,13 +585,18 @@ const getStockCategory = (stock: StockData): string => {
           });
         }
 
+        console.log('✅ Stock update complete')
         return updatedStocks;
       });
+      
+      console.log('🕒 Setting last update time')
       setLastUpdate(new Date());
     });
 
     return () => {
-      realTimeService.disconnect();
+      console.log('🔌 Cleaning up real-time connections...');
+      socketIOService.disconnect();
+      realTimePollingService.disconnect();
     };
   }, [fetchStocksData]);
 
@@ -357,13 +625,17 @@ const getStockCategory = (stock: StockData): string => {
     const isBondCategory = stocks.length > 0 && getStockCategory(stocks[0]) === 'BOND';
     
     return stocks.map((stock) => {
-      const previousValues = previousStockValues[stock.Symbol] || { price: 0, change: 0 };
       const blinkClass = blinkingRows.get(stock.Symbol);
 
       return (
         <tr 
           key={stock.Symbol} 
-          className={`border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 ${blinkClass === 'gain' ? 'bg-green-100 dark:bg-green-900/30' : blinkClass === 'loss' ? 'bg-red-100 dark:bg-red-900/30' : ''}`}
+          className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+          style={blinkClass ? {
+            animation: blinkClass === 'gain' 
+              ? 'flash-green 800ms ease-out' 
+              : 'flash-red 800ms ease-out'
+          } : {}}
         >
           <td className="px-0.5 py-0.5 whitespace-nowrap">
             <a href={`/stocks/${stock.Symbol}`} className="flex flex-col">
@@ -397,13 +669,13 @@ const getStockCategory = (stock: StockData): string => {
           </td>
           <td className="px-0.5 py-0.5 text-right">
             <span className={
-              stock.Changes > 0 
+              Number(stock.Changes) > 0 
                 ? 'text-green-500' 
-                : stock.Changes < 0 
+                : Number(stock.Changes) < 0 
                   ? 'text-red-500' 
                   : ''
             }>
-              {stock.Changes > 0 ? '+' : ''}{stock.Changes?.toFixed(2) || '-'}
+              {Number(stock.Changes) > 0 ? '+' : ''}{Number(stock.Changes || 0).toFixed(2)}
                     </span>
           </td>
           <td className="px-0.5 py-0.5 text-right">
@@ -585,6 +857,11 @@ const getStockCategory = (stock: StockData): string => {
               <h1 className="text-base font-bold">{t('allStocks.title')}</h1>
             </div>
             <div className="text-[10px] text-right text-gray-500">
+              {activeTab === 'active' && displayPeriodDescription && (
+                <div className="mb-1 font-medium text-bdsec dark:text-indigo-400">
+                  {displayPeriodDescription}
+                </div>
+              )}
               {lastUpdate ? (
                 <span>
                   {t('allStocks.lastUpdated')}: {lastUpdate.toLocaleTimeString()}

@@ -99,7 +99,7 @@ export default function Balance() {
   const [loadingYield, setLoadingYield] = useState(true);
   // Transaction filters and date range for the transactions page
   const [transactionFilter, setTransactionFilter] = useState<'all' | 'income' | 'expense'>('all');
-  const [transactionType, setTransactionType] = useState<'all' | 'security' | 'dividend' | 'primary' | 'secondary'>('all');
+  const [transactionType, setTransactionType] = useState<'all' | 'security' | 'csd' | 'dividend' | 'primary' | 'secondary'>('all');
   const [dateRangeOption, setDateRangeOption] = useState<'all' | '7' | '30' | 'custom'>('all');
   const [customStart, setCustomStart] = useState<string>('');
   const [customEnd, setCustomEnd] = useState<string>('');
@@ -427,7 +427,8 @@ export default function Balance() {
                     setTransactionType('security');
                     setCurrentPage('transactions');
                   }}
-                   className="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-500">
+                  className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-sm rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                >
                   Хуулга
                 </button>
                   
@@ -598,6 +599,7 @@ export default function Balance() {
             >
               <option value="all">Бүгд</option>
               <option value="security">Үнэт цаасны гүйлгээ</option>
+              <option value="csd">ҮЦТХТ-ийн гүйлгээ</option>
               <option value="dividend">Ногдол ашиг</option>
               <option value="primary">Анхдагч арилжаа</option>
               <option value="secondary">Хоёрдогч арилжаа</option>
@@ -656,7 +658,7 @@ export default function Balance() {
         </div>
         
         <div className="space-y-4">
-          {loadingSecurityTransactions ? (
+          {transactionType !== 'csd' && (loadingSecurityTransactions ? (
             // Show skeleton while loading security transactions
             <>
               <SkeletonTransaction />
@@ -754,10 +756,10 @@ export default function Balance() {
                 </div>
               </div>
             )})
-          )}
+          ))}
           
-          {/* CSD Transactions for ҮЦТХТ - Show skeleton while loading */}
-          {balanceType === 'fund' && (
+          {/* CSD Transactions for ҮЦТХТ - Show when filter 'csd' selected or on fund tab */}
+          {(transactionType === 'csd' || balanceType === 'fund') && (
             loadingCsdTransactions ? (
               <>
                 <SkeletonTransaction />

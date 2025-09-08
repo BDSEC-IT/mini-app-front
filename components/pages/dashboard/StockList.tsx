@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useLayoutEffect, useCallback } from 'react'
+import React, { useRef, useEffect, useState, useLayoutEffect, useCallback } from 'react'
 import { BarChart3, ChevronRight, ChevronDown, TrendingUp, Activity, ArrowUp, ArrowDown } from 'lucide-react'
 import {
   DropdownMenu,
@@ -190,6 +190,7 @@ interface StockListProps {
   onFilterChange: (filter: string) => void
   onStockSelect: (symbol: string) => void
   selectedCard?: StockData
+  displayPeriodDescription?: string
 }
 
 const formatPrice = (price: number | undefined, isBond: boolean = false) => {
@@ -199,13 +200,14 @@ const formatPrice = (price: number | undefined, isBond: boolean = false) => {
   return transformedPrice.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
-export const StockList = ({
+const StockListComponent = ({
   loading,
   activeFilter,
   filteredStocks,
   onFilterChange,
   onStockSelect,
   selectedCard,
+  displayPeriodDescription,
 }: StockListProps) => {
   const { t, i18n } = useTranslation()
   const currentLanguage = i18n.language || 'mn';
@@ -289,9 +291,16 @@ export const StockList = ({
       <div className={`flex justify-between items-center mb-4 transition-all duration-1000 ${
         stockListInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}>
-        <h2 className="text-lg font-semibold flex items-center text-gray-900 dark:text-white">
-          {t('dashboard.popularStocks')}
-        </h2>
+        <div className="flex flex-col">
+          <h2 className="text-lg font-semibold flex items-center text-gray-900 dark:text-white">
+            {t('dashboard.popularStocks')}
+          </h2>
+          {displayPeriodDescription && activeFilter !== 'bonds' && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {displayPeriodDescription}
+            </p>
+          )}
+        </div>
         <Link 
           href={`/stocks?filter=${activeFilter}`} 
           className="flex items-center text-sm font-normal text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -382,10 +391,10 @@ export const StockList = ({
               </p>
             </div>
             <div className="mt-1 z-10">
-              <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
+              <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Өмнөх хаалтын үнэ</div>
               <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                {formatPrice(selectedStock.LastTradedPrice, isStockABond(selectedStock))} 
-                {formatPrice(selectedStock.LastTradedPrice, isStockABond(selectedStock)) !== '-' ? '₮' : ''}
+                {formatPrice(selectedStock.PreviousClose, isStockABond(selectedStock))} 
+                {formatPrice(selectedStock.PreviousClose, isStockABond(selectedStock)) !== '-' ? '₮' : ''}
               </div>
             </div>
             <MiniChart 
@@ -426,7 +435,7 @@ export const StockList = ({
                 otherStocks.map((stock, index) => {
                   const isPositive = (stock.Changep || 0) >= 0;
                   return (
-                    <CarouselItem key={`stock-${stock.Symbol}-${index}`} className={`pl-6  md:pl-4 ${getBasisClass()}`} >
+                    <CarouselItem key={`stock-${stock.Symbol}`} className={`pl-6  md:pl-4 ${getBasisClass()}`} >
                       <div
                         className={`relative w-full p-3 sm:p-3 overflow-hidden transition-all duration-700 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between ${
                           stockListInView 
@@ -482,10 +491,10 @@ export const StockList = ({
                           </p>
                         </div>
                         <div className="mt-1 z-10">
-                          <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Сүүлийн үнэ</div>
+                          <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Өмнөх хаалтын үнэ</div>
                           <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {formatPrice(stock.LastTradedPrice, isStockABond(stock))}
-                            {formatPrice(stock.LastTradedPrice, isStockABond(stock)) !== '-' ? '₮' : ''}
+                            {formatPrice(stock.PreviousClose, isStockABond(stock))}
+                            {formatPrice(stock.PreviousClose, isStockABond(stock)) !== '-' ? '₮' : ''}
                           </div>
                         </div>
                         <MiniChart 
@@ -522,3 +531,32 @@ export const StockList = ({
     </div>
   )
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export const StockList = React.memo(StockListComponent, (prevProps, nextProps) => {
+  // Simplified comparison to reduce computation and prevent over-optimization
+  if (prevProps.loading !== nextProps.loading) return false;
+  if (prevProps.activeFilter !== nextProps.activeFilter) return false;
+  if (prevProps.displayPeriodDescription !== nextProps.displayPeriodDescription) return false;
+  
+  // Check selected card key fields only
+  if (prevProps.selectedCard?.Symbol !== nextProps.selectedCard?.Symbol) return false;
+  if (Math.abs((prevProps.selectedCard?.PreviousClose || 0) - (nextProps.selectedCard?.PreviousClose || 0)) > 0.01) return false;
+  if (Math.abs((prevProps.selectedCard?.Changep || 0) - (nextProps.selectedCard?.Changep || 0)) > 0.01) return false;
+  
+  // Check filteredStocks length and first few items only (performance optimization)
+  if (prevProps.filteredStocks.length !== nextProps.filteredStocks.length) return false;
+  
+  // Only check first 5 stocks to reduce computation
+  const checkLimit = Math.min(5, prevProps.filteredStocks.length);
+  for (let i = 0; i < checkLimit; i++) {
+    const prev = prevProps.filteredStocks[i];
+    const next = nextProps.filteredStocks[i];
+    if (!prev || !next) return false;
+    if (prev.Symbol !== next.Symbol) return false;
+    if (Math.abs((prev.PreviousClose || 0) - (next.PreviousClose || 0)) > 0.01) return false;
+    if (Math.abs((prev.Changep || 0) - (next.Changep || 0)) > 0.01) return false;
+  }
+  
+  return true;
+})
