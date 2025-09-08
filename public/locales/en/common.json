@@ -224,7 +224,18 @@
     "pending": "Pending",
     "completed": "Completed",
     "failed": "Failed",
-    "noHistory": "No recharge history found"
+    "noHistory": "No recharge history found",
+    "checkAll": "Check Status",
+    "checking": "Checking...",
+    "completedMessage": "Recharge request(s) completed successfully",
+    "checkError": "Failed to check recharge status",
+    "noUpdates": "No completed recharge requests found",
+    "status": {
+      "all": "All",
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed"
+    }
   },
   "chart": {
     "1d": "1D",

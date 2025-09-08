@@ -62,6 +62,8 @@ export default function RechargeBalance() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<RechargeHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'COMPLETED' | 'PENDING' | 'FAILED'>('ALL');
   const [pagination, setPagination] = useState<PaginationInfo>({
     total: 0,
     page: 1,
@@ -73,7 +75,7 @@ export default function RechargeBalance() {
     fetchHistory(1);
   }, []);
 
-  const fetchHistory = async (page: number) => {
+  const fetchHistory = async (page: number, status?: string) => {
     setLoadingHistory(true);
     try {
       const token = Cookies.get('token');
@@ -81,7 +83,17 @@ export default function RechargeBalance() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`${BASE_URL}/istockApp/recharge-balance/history?page=${page}&limit=10`, {
+      const queryStatus = status || statusFilter;
+      const url = new URL(`${BASE_URL}/istockApp/recharge-balance/history`);
+      url.searchParams.append('page', page.toString());
+      url.searchParams.append('limit', '10');
+      if (queryStatus !== 'ALL') {
+        url.searchParams.append('status', queryStatus);
+      }
+
+      console.log('Fetching history:', url.toString());
+
+      const response = await fetch(url.toString(), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -92,14 +104,54 @@ export default function RechargeBalance() {
         throw new Error();
       }
       const data: RechargeHistoryResponse = await response.json();
+      console.log('History response:', data);
+      
       if (data.success) {
-        setHistory(data.data.items);
+        setHistory(data.data.items || []);
         setPagination(data.data.pagination);
       }
     } catch (error) {
       console.error('Failed to fetch recharge history:', error);
+      setHistory([]);
+      setPagination(prev => ({ ...prev, total: 0, totalPages: 0 }));
     } finally {
       setLoadingHistory(false);
+    }
+  };
+
+  const handleCheckAll = async () => {
+    setCheckingStatus(true);
+    try {
+      const token = Cookies.get('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${BASE_URL}/istockApp/recharge-balance/check-all`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        if (data.data.completed > 0) {
+          toast.success(t('recharge.completedMessage'));
+          // Refresh the first page to show updated statuses
+          fetchHistory(1);
+        } else {
+          toast(t('recharge.noUpdates'));
+        }
+      }
+    } catch (error) {
+      toast.error(t('recharge.checkError'));
+    } finally {
+      setCheckingStatus(false);
     }
   };
 
@@ -235,15 +287,57 @@ export default function RechargeBalance() {
       </GlassCard>
 
       <GlassCard className="p-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">
-            {t('recharge.history')}
-          </h2>
-          {pagination.total > 0 && (
+        <div className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">
+                {t('recharge.history')}
+              </h2>
             <p className="text-sm text-gray-500">
-              {t('pagination.showing')} {(pagination.page - 1) * pagination.limit + 1}-{Math.min(pagination.page * pagination.limit, pagination.total)} {t('pagination.of')} {pagination.total}
+              {pagination.total > 0 ? (
+                <>{t('pagination.showing')} {(pagination.page - 1) * pagination.limit + 1}-{Math.min(pagination.page * pagination.limit, pagination.total)} {t('pagination.of')} {pagination.total}</>
+              ) : ''}
             </p>
-          )}
+            </div>
+            <div className="relative">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  const newStatus = e.target.value as typeof statusFilter;
+                  setStatusFilter(newStatus);
+                  fetchHistory(1, newStatus);
+                }}
+                className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 pr-8 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-bdsec w-full"
+              >
+                {(['ALL', 'COMPLETED', 'PENDING', 'FAILED'] as const).map((status) => (
+                  <option key={status} value={status}>
+                    {t(`recharge.status.${status.toLowerCase()}`)}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          <Button
+            onClick={handleCheckAll}
+            disabled={checkingStatus}
+            variant="outline"
+            size="sm"
+            className="w-full"
+          >
+            {checkingStatus ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                {t('recharge.checking')}
+              </div>
+            ) : (
+              t('recharge.checkAll')
+            )}
+          </Button>
         </div>
 
         {loadingHistory ? (
