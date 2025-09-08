@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff, Search, ChevronDown, ArrowLeft, Download, Calendar, ArrowUp, ArrowDown } from 'lucide-react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import Cookies from 'js-cookie';
 import { BASE_URL, fetchIstockNominalBalance, fetchIstockBalanceAsset, fetchIstockSecurityTransactions, fetchIstockCsdTransactions, fetchIstockYieldAnalysis } from '@/lib/api';
@@ -283,7 +284,7 @@ export default function Balance() {
   // Header showing total balance and eye toggle
   const renderBalanceHeader = () => (
     <div className="bg-bdsec dark:bg-indigo-600 text-white p-4 rounded-t-xl">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-3">
         <div>
           <p className="text-sm opacity-90">Нийт хөрөнгө</p>
           {loadingNominal ? (
@@ -294,16 +295,27 @@ export default function Balance() {
             </p>
           )}
         </div>
-        <button 
-          onClick={() => setShowBalance(!showBalance)}
-          className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowBalance(!showBalance)}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            {showBalance ? (
+              <Eye className="w-5 h-5" />
+            ) : (
+              <EyeOff className="w-5 h-5" />
+            )}
+          </button>
+        </div>
+      </div>
+      <div className="flex justify-end">
+        <Link 
+          href="/balance/recharge"
+          className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 transition-colors rounded-lg text-sm font-medium"
         >
-          {showBalance ? (
-            <Eye className="w-5 h-5" />
-          ) : (
-            <EyeOff className="w-5 h-5" />
-          )}
-        </button>
+          <ArrowUp className="w-4 h-4" />
+          {t('menu.recharge')}
+        </Link>
       </div>
     </div>
   );

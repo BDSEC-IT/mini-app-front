@@ -200,7 +200,25 @@
     "about": "About Us",
     "faq": "Frequently Asked Questions",
     "news": "News",
-    "withdraw": "Withdraw Money"
+    "withdraw": "Withdraw Money",
+    "recharge": "Recharge Balance"
+  },
+  "recharge": {
+    "title": "Recharge Balance",
+    "amount": "Amount",
+    "enterAmount": "Enter amount to recharge",
+    "submit": "Submit Request",
+    "history": "Recharge History",
+    "success": "Recharge request submitted successfully",
+    "error": "Failed to submit recharge request",
+    "invalidAmount": "Please enter a valid amount",
+    "minimumAmount": "Minimum amount is 1,000₮",
+    "date": "Date",
+    "status": "Status",
+    "pending": "Pending",
+    "completed": "Completed",
+    "failed": "Failed",
+    "noHistory": "No recharge history found"
   },
   "chart": {
     "1d": "1D",
