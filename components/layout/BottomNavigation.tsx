@@ -61,7 +61,7 @@ const BottomNavigation = () => {
 
   const advancedNavItems = [
     { name: 'balance', href: '/balance', icon: Wallet, label: t('nav.balance') },
-    { name: 'portfolio', href: '/portfolio', icon: TrendingUp, label: 'өгөөж' },
+    { name: 'portfolio', href: '/portfolio', icon: TrendingUp, label: 'Өгөөж' },
     { name: 'ipo', href: '/ipo', icon: Building, label: 'IPO' }
   ];
 

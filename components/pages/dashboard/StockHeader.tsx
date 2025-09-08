@@ -184,7 +184,7 @@ export const StockHeader = ({
             {/* Historical data indicator */}
             {selectedStockData && !isDataFresh && (
               <div className="text-xs px-2 py-1 bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-md border border-amber-200 dark:border-amber-800 mt-1">
-                Түүхэн дата
+                Хаалтын ханш
               </div>
             )}
             
@@ -227,7 +227,7 @@ export const StockHeader = ({
                             ? 'text-green-700 dark:text-green-400' 
                             : 'text-amber-700 dark:text-amber-400'
                         }`}>
-                          {isToday ? 'Өнөөдрийн мэдээлэл' : 'Түүхэн мэдээлэл'}
+                          {isToday ? 'Өнөөдрийн мэдээлэл' : 'Сүүлийн арилжаа'}
                         </span>
                         <span className={`text-xs ${
                           isToday 

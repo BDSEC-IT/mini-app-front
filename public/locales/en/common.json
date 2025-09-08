@@ -203,6 +203,12 @@
     "withdraw": "Withdraw Money",
     "recharge": "Recharge Balance"
   },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "showing": "Showing",
+    "of": "of"
+  },
   "recharge": {
     "title": "Recharge Balance",
     "amount": "Amount",
