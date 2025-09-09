@@ -2004,7 +2004,7 @@ export const fetchFirstPortfolioTotalByRegister = async (registerNumber: string,
 // ================= iStockApp helper wrappers =================
 // Simple in-memory cache for CSD transactions to avoid repeated slow calls
 let _csdCache: { data: any; ts: number } | null = null
-const CSD_CACHE_TTL = 60 * 1000 // 60 seconds
+const CSD_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 async function istockFetch(path: string, token?: string) {
   const url = `${BASE_URL}/istockApp/${path}`
@@ -2024,28 +2024,6 @@ async function istockFetch(path: string, token?: string) {
   }
 }
 
-async function istockCoreFetch(path: string, token?: string, method: 'GET' | 'POST' = 'GET', body?: any) {
-  const url = `${BASE_URL}/istock/${path}`
-  try {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-    }
-    const options: RequestInit = {
-      method,
-      headers,
-      ...(body && method === 'POST' ? { body: JSON.stringify(body) } : {})
-    }
-    const res = await fetchWithTimeout(url, options)
-    if (!res.ok) {
-      return { success: false, data: null }
-    }
-    const json = await res.json()
-    return json
-  } catch (e) {
-    return { success: false, data: null }
-  }
-}
 
 export const fetchIstockNominalBalance = async (token?: string) => {
   return istockFetch('nominal-balance', token)
@@ -2064,7 +2042,7 @@ export const fetchIstockYieldAnalysis = async (token?: string) => {
 }
 
 export const fetchIstockCashTransactions = async (token?: string) => {
-  return istockCoreFetch('core/stk-transaction/cash', token, 'POST')
+  return istockFetch('cash-transaction-history', token)
 }
 
 export const fetchIstockCsdTransactions = async (token?: string, forceRefresh = false) => {
@@ -2073,7 +2051,7 @@ export const fetchIstockCsdTransactions = async (token?: string, forceRefresh = 
     return _csdCache.data
   }
 
-  const result = await istockCoreFetch('core/stk-transaction/csd', token, 'POST')
+  const result = await istockFetch('csd-transaction-history', token)
   if (result && result.success) {
     _csdCache = { data: result, ts: Date.now() }
   }

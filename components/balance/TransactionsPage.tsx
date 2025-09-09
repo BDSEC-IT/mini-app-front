@@ -59,7 +59,7 @@ export default function TransactionsPage({
   onCustomEndChange
 }: TransactionsPageProps) {
   
-  const filterTransactionsByDate = (transaction: SecurityTransaction | CSDTransaction) => {
+  const filterTransactionsByDate = (transaction: SecurityTransaction | CSDTransaction | CashTransaction) => {
     if (dateRangeOption === 'all') return true;
     const txDate = new Date(transaction.transactionDate);
     const now = new Date();
