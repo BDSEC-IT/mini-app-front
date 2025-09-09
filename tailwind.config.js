@@ -155,14 +155,67 @@ module.exports = {
         'accordion-up': {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' }
+        },
+        'gradient-x': {
+          '0%, 100%': {
+            'background-size': '200% 200%',
+            'background-position': 'left center'
+          },
+          '50%': {
+            'background-size': '200% 200%',
+            'background-position': 'right center'
+          }
+        },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' }
+        },
+        'shimmer': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' }
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out'
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'gradient-x': 'gradient-x 15s ease infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'shimmer': 'shimmer 4s ease-in-out infinite'
       }
     }
   },
   darkMode: "class",
-  plugins: [heroui(), require('tailwindcss-animate')]
+  plugins: [
+    heroui(), 
+    require('tailwindcss-animate'),
+    function({ addUtilities, theme }) {
+      const newUtilities = {
+        '.border-dim': {
+          'border-color': '#d1d5db', // light mode - gray-300
+          '@media (prefers-color-scheme: dark)': {
+            'border-color': '#4b5563' // dark mode - gray-600
+          }
+        },
+        '.border-soft': {
+          'border-color': theme('colors.soft.DEFAULT'),
+          '@media (prefers-color-scheme: dark)': {
+            'border-color': theme('colors.soft.dark')
+          }
+        },
+        '.border-subtle': {
+          'border-color': '#e5e7eb', // light mode - gray-200
+          '@media (prefers-color-scheme: dark)': {
+            'border-color': '#374151' // dark mode - gray-700
+          }
+        },
+        '.border-muted': {
+          'border-color': '#f3f4f6', // light mode - gray-100
+          '@media (prefers-color-scheme: dark)': {
+            'border-color': '#1f2937' // dark mode - gray-800
+          }
+        }
+      }
+      addUtilities(newUtilities, ['responsive', 'dark'])
+    }
+  ]
 };

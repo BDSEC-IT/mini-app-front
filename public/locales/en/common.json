@@ -9,6 +9,10 @@
     "more": "More",
     "assets": "Assets"
   },
+  "balance": {
+    "totalAssets": "Total Assets",
+    "nominalBalance": "Nominal Available Balance"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error occurred",

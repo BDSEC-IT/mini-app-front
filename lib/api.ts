@@ -2024,6 +2024,29 @@ async function istockFetch(path: string, token?: string) {
   }
 }
 
+async function istockCoreFetch(path: string, token?: string, method: 'GET' | 'POST' = 'GET', body?: any) {
+  const url = `${BASE_URL}/istock/${path}`
+  try {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    }
+    const options: RequestInit = {
+      method,
+      headers,
+      ...(body && method === 'POST' ? { body: JSON.stringify(body) } : {})
+    }
+    const res = await fetchWithTimeout(url, options)
+    if (!res.ok) {
+      return { success: false, data: null }
+    }
+    const json = await res.json()
+    return json
+  } catch (e) {
+    return { success: false, data: null }
+  }
+}
+
 export const fetchIstockNominalBalance = async (token?: string) => {
   return istockFetch('nominal-balance', token)
 }
@@ -2040,13 +2063,17 @@ export const fetchIstockYieldAnalysis = async (token?: string) => {
   return istockFetch('yield-analysis', token)
 }
 
+export const fetchIstockCashTransactions = async (token?: string) => {
+  return istockCoreFetch('core/stk-transaction/cash', token, 'POST')
+}
+
 export const fetchIstockCsdTransactions = async (token?: string, forceRefresh = false) => {
   // Return cached copy if recent and not forced
   if (!forceRefresh && _csdCache && (Date.now() - _csdCache.ts) < CSD_CACHE_TTL) {
     return _csdCache.data
   }
 
-  const result = await istockFetch('csd-transaction-history', token)
+  const result = await istockCoreFetch('core/stk-transaction/csd', token, 'POST')
   if (result && result.success) {
     _csdCache = { data: result, ts: Date.now() }
   }
