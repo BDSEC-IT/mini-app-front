@@ -2058,6 +2058,176 @@ export const fetchIstockCsdTransactions = async (token?: string, forceRefresh = 
   return result
 }
 
+// ================= Secondary Order Types =================
+
+export interface SecondaryOrderData {
+  symbol: string;
+  orderType: string;
+  buySell: string;
+  quantity: number;
+  stockAccountId: number;
+  fee: number;
+  createdUsername: string;
+  cumQty: number;
+  leavesQty: number;
+  statusname: string;
+  buySellTxt: string;
+  feeAmt: number;
+  exchangeId: number;
+  total: number;
+  createdDate: string;
+  price: number;
+  name: string;
+  exchangeName: string;
+  id: number;
+  timeInForce: string;
+}
+
+export interface SecondaryOrderResponse {
+  success: boolean;
+  data: SecondaryOrderData[];
+}
+
+// ================= Secondary Order API Functions =================
+
+export const fetchSecondaryOrders = async (token?: string): Promise<SecondaryOrderResponse> => {
+  return istockFetch('secondary-order', token)
+}
+
+export const fetchSecondaryOrderStatus = async (orderId: number, token?: string) => {
+  return istockFetch(`secondary-order/status?orderId=${orderId}`, token)
+}
+
+export const placeSecondaryOrder = async (orderData: {
+  symbol: string;
+  orderType: string;
+  timeForce: string;
+  channel: string;
+  side: string;
+  price: number;
+  quantity: number;
+  expireDate?: string;
+  exchangeId: number;
+}, token?: string) => {
+  const url = `${BASE_URL}/istockApp/secondary-order/place`
+  try {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    }
+    const res = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(orderData)
+    })
+    if (!res.ok) {
+      return { success: false, data: null }
+    }
+    const json = await res.json()
+    return json
+  } catch (e) {
+    return { success: false, data: null }
+  }
+}
+
+export const cancelSecondaryOrder = async (orderId: number, token?: string) => {
+  const url = `${BASE_URL}/istockApp/secondary-order/cancel`
+  try {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    }
+    const res = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ orderId })
+    })
+    if (!res.ok) {
+      return { success: false, data: null }
+    }
+    const json = await res.json()
+    return json
+  } catch (e) {
+    return { success: false, data: null }
+  }
+}
+
+// ================= Order Book and Market Data API Functions =================
+
+export interface EnhancedOrderBookEntry {
+  buySell: string;
+  price: number;
+  symbol: string;
+  quantity: number;
+  id: number;
+}
+
+export interface EnhancedOrderBookData {
+  buy: EnhancedOrderBookEntry[];
+  sell: EnhancedOrderBookEntry[];
+}
+
+export interface EnhancedOrderBookResponse {
+  success: boolean;
+  data: EnhancedOrderBookData;
+  source: string;
+}
+
+export interface CompletedOrderEntry {
+  mdentryTime: string;
+  mdentrySize: number;
+  mdentryPx: number;
+}
+
+export interface CompletedOrdersData {
+  count: number;
+  assetList: any;
+  assetTradeList: CompletedOrderEntry[];
+  assetTradeBuySells: any;
+}
+
+export interface CompletedOrdersResponse {
+  success: boolean;
+  data: CompletedOrdersData;
+  message: string;
+}
+
+export const fetchEnhancedOrderBook = async (symbol: string, token?: string): Promise<EnhancedOrderBookResponse> => {
+  const url = `${BASE_URL}/securities/enhanced-order-book?symbol=${symbol}`
+  try {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    }
+    const res = await fetchWithTimeout(url, { method: 'GET', headers })
+    if (!res.ok) {
+      return { success: false, data: { buy: [], sell: [] }, source: '' }
+    }
+    const json = await res.json()
+    return json
+  } catch (e) {
+    return { success: false, data: { buy: [], sell: [] }, source: '' }
+  }
+}
+
+export const fetchTodayCompletedOrders = async (symbol: string, token?: string): Promise<CompletedOrdersResponse> => {
+  const url = `${BASE_URL}/securities/today-completed-orders?symbol=${symbol}`
+  try {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    }
+    const res = await fetchWithTimeout(url, { method: 'GET', headers })
+    if (!res.ok) {
+      return { success: false, data: { count: 0, assetList: null, assetTradeList: [], assetTradeBuySells: null }, message: 'Error' }
+    }
+    const json = await res.json()
+    return json
+  } catch (e) {
+    return { success: false, data: { count: 0, assetList: null, assetTradeList: [], assetTradeBuySells: null }, message: 'Error' }
+  }
+}
+
 // ...existing code...
 // Types used by portfolio charts and utilities
 interface AssetBalance {
