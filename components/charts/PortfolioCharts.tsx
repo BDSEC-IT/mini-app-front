@@ -102,7 +102,7 @@ export const PortfolioCharts = ({
       </div>
 
       {/* Footer with summary stats */}
-      <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30 px-6 py-4">
+      {/* <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30 px-6 py-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
           <div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('portfolio.totalAssets')}</div>
@@ -129,7 +129,7 @@ export const PortfolioCharts = ({
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   )
 }

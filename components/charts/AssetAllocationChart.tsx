@@ -37,12 +37,24 @@ export const AssetAllocationChart = ({
   const totalValue = processedData.reduce((sum, asset) => sum + asset.totalNow, 0)
 
   // Generate colors for each asset
-  const colors = processedData.map((_, index) => {
-    const hue = (index * 137.5) % 360 // Golden angle for better color distribution
-    return theme === 'dark' 
-      ? `hsl(${hue}, 70%, 60%)` 
-      : `hsl(${hue}, 60%, 50%)`
-  })
+  // const colors = processedData.map((_, index) => {
+  //   const hue = (index * 137.5) % 360 // Golden angle for better color distribution
+  //   return theme === 'dark' 
+  //     ? `hsl(${hue}, 70%, 60%)` 
+  //     : `hsl(${hue}, 60%, 50%)`
+  // })
+// Generate colors for each asset, avoiding red (~0°) and green (~120°)
+const colors = processedData.map((_, index) => {
+  let hue = (index * 137.5) % 360 // golden angle
+
+  // Avoid red and green ranges
+  if ((hue >= 0 && hue <= 20) || (hue >= 340 && hue <= 360)) hue += 25 // skip red
+  if (hue >= 100 && hue <= 140) hue += 40 // skip green
+
+  return theme === 'dark'
+    ? `hsl(${hue % 360}, 70%, 60%)`
+    : `hsl(${hue % 360}, 60%, 50%)`
+})
 
   const borderColors = colors.map(color => 
     theme === 'dark' ? color : color.replace('50%)', '40%)')
