@@ -12,23 +12,126 @@ import {
   fetchCompanies,
   fetchSpecificStockData,
   fetchEnhancedOrderBook,
+  fetchOrderBook,
   fetchTodayCompletedOrders,
   type StockData,
   type SecondaryOrderData,
   type EnhancedOrderBookData,
   type CompletedOrderEntry
 } from '@/lib/api';
-import { ArrowLeftIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
+import { TradingViewChart } from '../ui/TradingViewChart';
+import { useTheme } from '@/contexts/ThemeContext';
+import { Button, Input, Select, Card } from '@/components/ui';
+import { StockSelector } from '@/components/exchange/StockSelector';
+import { OrderBook } from '@/components/exchange/OrderBook';
+import { CompletedOrders } from '@/components/exchange/CompletedOrders';
+import { OrderForm } from '@/components/exchange/OrderForm';
+import { MyOrders } from '@/components/exchange/MyOrders';
 
 type OrderSide = 'BUY' | 'SELL';
+type ActiveTab = 'orderbook' | 'chart';
+
+interface OrderData {
+  id: string;
+  symbol: string;
+  statusname: string;
+  buySell: 'BUY' | 'SELL';
+  quantity: number;
+  price: number;
+}
+type OrderTab = 'active' | 'completed' | 'cancelled';
+
+interface OrderConfirmationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  orderData: {
+    symbol: string;
+    side: OrderSide;
+    type: string;
+    quantity: string;
+    price?: string;
+    total: number;
+  };
+}
+
+const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen, onClose, onConfirm, orderData }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-sm w-full p-6">
+        <h3 className="text-lg font-medium mb-4">Захиалга баталгаажуулах</h3>
+        
+        <div className="space-y-3 mb-6">
+          <div className="flex justify-between">
+            <span className="text-gray-600 dark:text-gray-400">Хувьцаа:</span>
+            <span className="font-medium">{orderData.symbol}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600 dark:text-gray-400">Төрөл:</span>
+            <span className={`font-medium ${orderData.side === 'BUY' ? 'text-green-600' : 'text-red-600'}`}>
+              {orderData.side === 'BUY' ? 'Худалдан авах' : 'Худалдан зарах'}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600 dark:text-gray-400">Тоо ширхэг:</span>
+            <span className="font-medium">{orderData.quantity}</span>
+          </div>
+          {orderData.price && (
+            <div className="flex justify-between">
+              <span className="text-gray-600 dark:text-gray-400">Үнэ:</span>
+              <span className="font-medium">{parseFloat(orderData.price).toLocaleString()}₮</span>
+            </div>
+          )}
+          <div className="flex justify-between border-t pt-3">
+            <span className="text-gray-600 dark:text-gray-400">Нийт дүн:</span>
+            <span className="font-bold text-lg">{orderData.total.toLocaleString()}₮</span>
+          </div>
+        </div>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Цуцлах
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`flex-1 py-2 px-4 rounded-lg text-white ${
+              orderData.side === 'BUY' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+            }`}
+          >
+            Баталгаажуулах
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+const getPriceStep = (price: number): number => {
+  if (price < 1000) return 0.01;
+  if (price < 5000) return 1;
+  if (price < 10000) return 5;
+  if (price < 20000) return 10;
+  if (price < 40000) return 20;
+  if (price < 50000) return 40;
+  if (price < 80000) return 50;
+  return 80;
+};
 
 export default function Exchange() {
-  const { t, i18n } = useTranslation('common');
+  useTranslation('common');
+  const { theme } = useTheme();
   
   // Core state
   const [accountBalance, setAccountBalance] = useState<number | null>(null);
-  const [stockBalance, setStockBalance] = useState(0);
+  const [, setStockBalance] = useState(0);
   const [stockHoldings, setStockHoldings] = useState<any[]>([]);
   const [selectedStockHolding, setSelectedStockHolding] = useState<any>(null);
   const [orders, setOrders] = useState<SecondaryOrderData[]>([]);
@@ -39,14 +142,18 @@ export default function Exchange() {
   const [selectedStock, setSelectedStock] = useState<StockData | null>(null);
   const [showStockSelector, setShowStockSelector] = useState(false);
   const [showPriceSteps, setShowPriceSteps] = useState(false);
-  const [showChart, setShowChart] = useState(false);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('orderbook');
+  const [orderTab, setOrderTab] = useState<OrderTab>('active');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingOrder, setPendingOrder] = useState<any>(null);
   
   // Form state
   const [orderSide, setOrderSide] = useState<OrderSide>('BUY');
   const [orderType, setOrderType] = useState('Зах зээлийн');
   const [quantity, setQuantity] = useState('');
   const [price, setPrice] = useState('');
+  const [orderDuration, setOrderDuration] = useState('GTC'); // GTC, DAY, IOC, FOK
 
   // Initialize data
   useEffect(() => {
@@ -233,10 +340,16 @@ export default function Exchange() {
         
         setStocks(tradingStocks as StockData[]);
         
-        // Try to find and select the first available stock
-        const defaultStock = tradingStocks.find(stock => 
-          ['KHAN', 'APU', 'MSM', 'TDB', 'SBN'].includes(stock.Symbol)
-        ) || tradingStocks[0];
+        // Try to find and select BDS as default, then fallback to others
+        console.log('=== STOCK SELECTION DEBUG ===');
+        console.log('Available stock symbols:', tradingStocks.map(s => s.Symbol));
+        const bdsStock = tradingStocks.find(stock => stock.Symbol.includes('BDS'));
+        console.log('BDS stock found:', bdsStock ? `YES - ${bdsStock.Symbol}` : 'NO');
+        console.log('Total stocks available:', tradingStocks.length);
+        
+        const defaultStock = bdsStock ||
+          tradingStocks.find(stock => ['KHAN', 'APU', 'MSM', 'TDB', 'SBN'].includes(stock.Symbol)) ||
+          tradingStocks[0];
         
         if (defaultStock) {
           console.log('Selected default stock:', defaultStock.Symbol);
@@ -294,13 +407,26 @@ export default function Exchange() {
   const fetchOrderBookData = async (symbol: string) => {
     const token = Cookies.get('token');
     try {
+      // Try to get more data by adding parameters
+      const enhancedUrl = `${symbol}-O-0000`;
+      console.log('Fetching orderbook for:', enhancedUrl);
+      
       const [orderBookResult, completedResult] = await Promise.all([
-        fetchEnhancedOrderBook(`${symbol}-O-0000`, token || undefined),
+        fetchEnhancedOrderBook(enhancedUrl, token || undefined, 20), // Request 20 entries
         fetchTodayCompletedOrders(symbol, token || undefined)
       ]);
 
       if (orderBookResult.success) {
+        console.log('OrderBook data received:', orderBookResult.data);
+        console.log('Buy orders count:', orderBookResult.data?.buy?.length || 0);
+        console.log('Sell orders count:', orderBookResult.data?.sell?.length || 0);
+        console.log('API source:', orderBookResult.source);
         setOrderBook(orderBookResult.data);
+      } else {
+        console.log('Enhanced orderbook failed, trying regular orderbook...');
+        // Fallback to regular orderbook API if enhanced fails
+        const regularOrderBook = await fetchOrderBook(symbol);
+        console.log('Regular orderbook result:', regularOrderBook);
       }
       if (completedResult.success) {
         setCompletedOrders(completedResult.data.assetTradeList.slice(0, 10));
@@ -347,7 +473,28 @@ export default function Exchange() {
       return;
     }
 
+    const orderData = {
+      symbol: selectedStock!.Symbol,
+      side: orderSide,
+      type: orderType,
+      quantity: quantity,
+      price: orderType === 'Нөхцөлт' ? price : undefined,
+      total: calculateTotal()
+    };
+
+    setPendingOrder(orderData);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmOrder = async () => {
+    if (!pendingOrder) return;
+    
+    const token = Cookies.get('token');
+    if (!token) return;
+
     setPlacing(true);
+    setShowConfirmModal(false);
+    
     try {
       const orderData = {
         symbol: selectedStock!.Symbol,
@@ -379,6 +526,7 @@ export default function Exchange() {
       toast.error('Алдаа гарлаа');
     } finally {
       setPlacing(false);
+      setPendingOrder(null);
     }
   };
 
@@ -396,12 +544,13 @@ export default function Exchange() {
     return 0;
   };
 
-  const handleCancelOrder = async (orderId: number) => {
+  const handleCancelOrder = async (orderId: string) => {
+    const numericOrderId = parseInt(orderId);
     const token = Cookies.get('token');
     if (!token) return;
     
     try {
-      const result = await cancelSecondaryOrder(orderId, token);
+      const result = await cancelSecondaryOrder(numericOrderId, token);
       if (result.success) {
         toast.success('Захиалга цуцлагдлаа');
         await fetchOrdersData();
@@ -421,19 +570,39 @@ export default function Exchange() {
     return (qty * orderPrice * 1.001); // Include 0.1% fee
   };
 
+  const adjustPriceByStep = (currentPrice: string, direction: 'up' | 'down') => {
+    const priceVal = parseFloat(currentPrice) || (selectedStock?.PreviousClose || 0);
+    const step = getPriceStep(priceVal);
+    const newPrice = direction === 'up' ? priceVal + step : priceVal - step;
+    return Math.max(0, newPrice).toString();
+  };
+
   const formatNumber = (num: number) => num.toLocaleString('mn-MN', { minimumFractionDigits: 2 });
+
+  const handleOrderClick = (side: 'BUY' | 'SELL', price: string, quantity: string) => {
+    setOrderSide(side);
+    setPrice(price);
+    setQuantity(quantity);
+    setOrderType('Нөхцөлт');
+  };
+
+  const handleSelectStock = (stock: StockData) => {
+    setSelectedStock(stock);
+    setSearchTerm('');
+    fetchStockPrice(stock.Symbol);
+  };
 
   if (showPriceSteps) {
     return (
-      <div className="max-w-md mx-auto bg-white min-h-screen">
-        <div className="flex items-center p-4 border-b">
+      <div className="w-full bg-white dark:bg-gray-900 min-h-screen">
+        <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700">
           <button onClick={() => setShowPriceSteps(false)} className="mr-3">
-            <ArrowLeftIcon className="w-5 h-5 text-gray-600" />
+            <ArrowLeftIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
-          <h1 className="text-lg font-medium">Үнийн алхам</h1>
+          <h1 className="text-lg font-medium text-gray-900 dark:text-white">Үнийн алхам</h1>
         </div>
         <div className="p-4">
-          <div className="grid grid-cols-2 gap-4 mb-4 text-sm font-medium text-gray-600">
+          <div className="grid grid-cols-2 gap-4 mb-4 text-sm font-medium text-gray-600 dark:text-gray-400">
             <div>Нэгжийн үнэ</div>
             <div>Өөрчлөлтийн хэмжээ</div>
           </div>
@@ -447,9 +616,9 @@ export default function Exchange() {
             ['50000-80000', '50 төгрөг'],
             ['80000-100000', '80 төгрөг'],
           ].map(([range, step], index) => (
-            <div key={index} className="grid grid-cols-2 gap-4 py-3 border-b border-gray-100">
-              <div className="text-gray-800">{range}</div>
-              <div className="text-gray-800">{step}</div>
+            <div key={index} className="grid grid-cols-2 gap-4 py-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="text-gray-800 dark:text-gray-200">{range}</div>
+              <div className="text-gray-800 dark:text-gray-200">{step}</div>
             </div>
           ))}
         </div>
@@ -458,457 +627,152 @@ export default function Exchange() {
   }
 
   if (showStockSelector) {
-    const filteredStocks = stocks.filter(stock => 
-      stock.Symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (stock.mnName && stock.mnName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (stock.enName && stock.enName.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-
     return (
-      <div className="max-w-md mx-auto bg-white min-h-screen">
-        <div className="flex items-center p-4 border-b">
-          <button onClick={() => setShowStockSelector(false)} className="mr-3">
-            <ArrowLeftIcon className="w-5 h-5 text-gray-600" />
-          </button>
-          <h1 className="text-lg font-medium">Хувьцаа сонгох</h1>
-        </div>
-        
-        {/* Search Bar */}
-        <div className="p-4 border-b">
-          <div className="relative">
-            <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Хувьцаа хайх..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-          </div>
-          <div className="text-xs text-gray-500 mt-2">
-            {filteredStocks.length} хувьцаа олдлоо
-          </div>
-        </div>
-
-        <div className="divide-y max-h-96 overflow-y-auto">
-          {filteredStocks.length > 0 ? (
-            filteredStocks.map((stock) => (
-              <button
-                key={stock.id}
-                onClick={() => {
-                  setSelectedStock(stock);
-                  setShowStockSelector(false);
-                  setSearchTerm(''); // Clear search
-                  // Fetch real price data when switching stocks
-                  fetchStockPrice(stock.Symbol);
-                }}
-                className={`w-full p-4 text-left hover:bg-gray-50 ${
-                  selectedStock?.Symbol === stock.Symbol ? 'bg-blue-50' : ''
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-medium">{stock.Symbol}</div>
-                    <div className="text-sm text-gray-500">{stock.mnName || stock.enName}</div>
-                  </div>
-                  {selectedStock?.Symbol === stock.Symbol && (
-                    <div className="text-blue-600 text-xs">✓ Сонгогдсон</div>
-                  )}
-                </div>
-              </button>
-            ))
-          ) : (
-            <div className="p-8 text-center text-gray-500">
-              <div className="text-lg mb-2">🔍</div>
-              <div className="text-sm">Хувьцаа олдсонгүй</div>
-              <div className="text-xs mt-1">Өөр утга хайж үзээрэй</div>
-            </div>
-          )}
-        </div>
-      </div>
+      <StockSelector
+        isOpen={showStockSelector}
+        onClose={() => setShowStockSelector(false)}
+        stocks={stocks}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        selectedStock={selectedStock}
+        onSelectStock={handleSelectStock}
+      />
     );
   }
 
   return (
-    <div className="max-w-md mx-auto bg-white min-h-screen">
-      {/* Header */}
- 
-
-      {/* Balance Cards - Show relevant balance based on order side */}
+    <div className="w-full bg-white dark:bg-gray-900 min-h-screen">
+      {/* Trading Header - Price Focused */}
       {selectedStock && (
-        <div className="p-4">
-          {orderSide === 'BUY' ? (
-            // When buying - show cash balance
-            <div className="bg-slate-800 rounded-lg p-4 text-white relative">
-              <div className="text-sm opacity-80">Дансны үлдэгдэл:</div>
-              <div className="text-2xl font-bold mb-2">
-                {accountBalance !== null ? `${formatNumber(accountBalance)}₮` : 'Ачаалж байна...'}
-              </div>
-              <div className="text-xs opacity-60">Авах боломжтой дүн</div>
-              <div className="absolute top-3 right-3">
-                <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">Цэнэглэх</span>
-              </div>
-            </div>
-          ) : (
-            // When selling - show stock holdings for this specific stock
-            <div className="bg-slate-800 rounded-lg p-4 text-white relative">
-              <div className="text-sm opacity-80">Үнэт цаасны үлдэгдэл:</div>
-              <div className="text-2xl font-bold mb-2">
-                {selectedStockHolding ? `${selectedStockHolding.quantity || 0} ширхэг` : '0 ширхэг'}
-              </div>
-              <div className="text-xs opacity-60">
-                {selectedStock.Symbol} - Зарах боломжтой
-              </div>
-              {selectedStockHolding && (
-                <div className="text-xs opacity-60 mt-1">
-                  Үнийн дүн: {formatNumber((selectedStockHolding.quantity || 0) * (selectedStock.PreviousClose || 0))}₮
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          {/* Combined Header */}
+          <div className="px-3 py-2">
+            <div className="flex items-center justify-between">
+              {/* Symbol Search */}
+              <button
+                onClick={() => setShowStockSelector(true)}
+                className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              >
+                <MagnifyingGlassIcon className="w-4 h-4" />
+                <span className="font-semibold">{selectedStock.Symbol.split('-')[0]}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[100px]">{selectedStock.mnName || selectedStock.enName}</span>
+                <ChevronDownIcon className="w-4 h-4" />
+              </button>
+              
+              {/* Price & Change */}
+              <div className="text-right">
+                <div className="text-lg font-bold text-gray-900 dark:text-white">
+                  {selectedStock.PreviousClose > 0 ? formatNumber(selectedStock.PreviousClose) : '...'}₮
                 </div>
-              )}
+                <div className={`text-xs font-medium ${selectedStock.Changes >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {selectedStock.PreviousClose > 0 ? `${selectedStock.Changes > 0 ? '+' : ''}${selectedStock.Changes.toFixed(2)} (${selectedStock.Changes > 0 ? '+' : ''}${selectedStock.Changep.toFixed(2)}%)` : '...'}
+                </div>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* Stock Info */}
+      {/* Tab Navigation */}
       {selectedStock && (
-        <div className="px-4">
-          <button
-            onClick={() => setShowStockSelector(true)}
-            className="w-full flex justify-between items-center mb-4"
-          >
-            <div className="text-left">
-              <h2 className="text-xl font-bold text-gray-900">{selectedStock.Symbol}</h2>
-              <p className="text-sm text-gray-600">{selectedStock.mnName || selectedStock.enName}</p>
-            </div>
-            <div className="text-right">
-              <div className="text-xl font-bold text-gray-900">
-                {selectedStock.PreviousClose > 0 ? formatNumber(selectedStock.PreviousClose) : '...'}
-              </div>
-              <div className={`text-sm ${selectedStock.Changes >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {selectedStock.PreviousClose > 0 ? `${selectedStock.Changes.toFixed(2)} (${selectedStock.Changep.toFixed(2)}%)` : '...'}
-              </div>
-            </div>
-          </button>
-
-          {/* Chart/OrderBook Toggle */}
-          {showChart ? (
-            <div className="mb-6">
-              <div className="bg-gray-100 rounded-lg p-4 text-center">
-                <div className="text-gray-500 text-sm mb-2">График харуулах боломжтой</div>
-                <button 
-                  onClick={() => setShowChart(false)}
-                  className="text-blue-600 text-sm underline"
-                >
-                  Захиалгын дэвтэр харах
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Order Book Headers */}
-              <div className="grid grid-cols-4 gap-1 py-2 text-xs font-medium text-gray-600 text-center border-b">
-                <div className="text-green-600">Авах үнэ</div>
-                <div>Тоо ширхэг</div>
-                <div className="text-red-600">Зарах үнэ</div>
-                <div>Тоо ширхэг</div>
-              </div>
-
-              {/* Order Book Data */}
-              <div className="mb-6">
-                {orderBook ? (
-                  Array.from({ length: 10 }).map((_, index) => {
-                    const bidOrder = orderBook.sell[index];
-                    const askOrder = orderBook.buy[index];
-                    return (
-                      <div key={index} className="grid grid-cols-4 gap-1 py-1 text-xs text-center">
-                        <button 
-                          onClick={() => {
-                            if (bidOrder) {
-                              setOrderSide('BUY');
-                              setPrice(bidOrder.price.toString());
-                              setOrderType('Нөхцөлт');
-                            }
-                          }}
-                          className="text-green-600 font-semibold hover:bg-green-50 py-1 rounded"
-                        >
-                          {bidOrder ? bidOrder.price.toFixed(2) : ''}
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (bidOrder) {
-                              setQuantity(bidOrder.quantity.toString());
-                            }
-                          }}
-                          className="text-gray-800 hover:bg-gray-50 py-1 rounded"
-                        >
-                          {bidOrder ? bidOrder.quantity : ''}
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (askOrder) {
-                              setOrderSide('SELL');
-                              setPrice(askOrder.price.toString());
-                              setOrderType('Нөхцөлт');
-                            }
-                          }}
-                          className="text-red-600 font-semibold hover:bg-red-50 py-1 rounded"
-                        >
-                          {askOrder ? askOrder.price.toFixed(2) : ''}
-                        </button>
-                        <button 
-                          onClick={() => {
-                            if (askOrder) {
-                              setQuantity(askOrder.quantity.toString());
-                            }
-                          }}
-                          className="text-gray-800 hover:bg-gray-50 py-1 rounded"
-                        >
-                          {askOrder ? askOrder.quantity : ''}
-                        </button>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-8 text-gray-500 text-sm">Мэдээлэл ачааллаж байна</div>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <button
-              onClick={() => setShowPriceSteps(true)}
-              className="py-2 px-3 bg-slate-800 text-white rounded text-sm font-medium"
+        <div className="px-3 border-b pb-2 border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setActiveTab('orderbook')}
+              className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+                activeTab === 'orderbook'
+                  ? 'text-blue-600 dark:text-blue-400' 
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
             >
-              Үнийн алхам
+              Захиалгын дэвтэр
+              {activeTab === 'orderbook' && (
+                <div className="absolute bottom-0 left-0 right-0 h-[2px]   bg-blue-600 dark:bg-blue-400"></div>
+              )}
             </button>
             <button 
-              onClick={() => setShowChart(!showChart)}
-              className="py-2 px-3 bg-slate-800 text-white rounded text-sm font-medium"
+              onClick={() => setActiveTab('chart')}
+              className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+                activeTab === 'chart'
+                  ? 'text-blue-600 dark:text-blue-400' 
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
             >
-              Зах зээлийн харах
+              График
+              {activeTab === 'chart' && (
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600 dark:bg-blue-400"></div>
+              )}
             </button>
           </div>
 
-          {/* Buy/Sell Toggle */}
-          <div className="grid grid-cols-2 gap-1 mb-4">
-            <button
-              onClick={() => setOrderSide('BUY')}
-              className={`py-2 rounded text-sm font-medium ${
-                orderSide === 'BUY'
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              Авах
-            </button>
-            <button
-              onClick={() => setOrderSide('SELL')}
-              className={`py-2 rounded text-sm font-medium ${
-                orderSide === 'SELL'
-                  ? 'bg-red-500 text-white'
-                  : 'bg-gray-200 text-gray-700'
-              }`}
-            >
-              Зарах
-            </button>
-          </div>
-
-          {/* Order Form */}
-          <div className="space-y-3 mb-4">
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Захиалгын төрөл</label>
-                <select
-                  value={orderType}
-                  onChange={(e) => setOrderType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white"
-                >
-                  <option value="Зах зээлийн">Зах зээлийн</option>
-                  <option value="Нөхцөлт">Нөхцөлт</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Тоо ширхэг</label>
-                <input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="Тоо ширхэг"
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  min="1"
-                  max={getMaxQuantity()}
+          {/* Tab Content */}
+          {activeTab === 'chart' ? (
+            <div className="mb-2 h-80">
+              <TradingViewChart 
+                symbol={selectedStock.Symbol}
+                theme={theme}
+                period="ALL"
+              />
+            </div>
+          ) : (
+            <div>
+              <div className="grid grid-cols-5">
+                <OrderBook 
+                  orderBook={orderBook}
+                  onOrderClick={handleOrderClick}
+                />
+                <CompletedOrders 
+                  completedOrders={completedOrders}
                 />
               </div>
             </div>
+          )}
 
-            {/* Quick quantity buttons */}
-            <div className="flex gap-1">
-              {[25, 50, 75, 100].map((percent) => (
-                <button
-                  key={percent}
-                  onClick={() => {
-                    const maxQty = getMaxQuantity();
-                    const qty = Math.floor((maxQty * percent) / 100);
-                    setQuantity(qty.toString());
-                  }}
-                  className="flex-1 py-1 px-2 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-                  disabled={getMaxQuantity() === 0}
-                >
-                  {percent}%
-                </button>
-              ))}
-              <button
-                onClick={() => setQuantity(getMaxQuantity().toString())}
-                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                disabled={getMaxQuantity() === 0}
-              >
-                Max
-              </button>
-            </div>
+          <OrderForm
+            orderType={orderType}
+            setOrderType={setOrderType}
+            orderSide={orderSide}
+            setOrderSide={setOrderSide}
+            orderDuration={orderDuration}
+            setOrderDuration={setOrderDuration}
+            quantity={quantity}
+            setQuantity={setQuantity}
+            price={price}
+            setPrice={setPrice}
+            accountBalance={accountBalance}
+            selectedStockHolding={selectedStockHolding}
+            calculateTotal={calculateTotal}
+            formatNumber={formatNumber}
+            getMaxQuantity={getMaxQuantity}
+            adjustPriceByStep={adjustPriceByStep}
+            getPriceStep={getPriceStep}
+            selectedStock={selectedStock}
+            showPriceSteps={showPriceSteps}
+            setShowPriceSteps={setShowPriceSteps}
+            placing={placing}
+            onPlaceOrder={handlePlaceOrder}
+          />
 
-            {getMaxQuantity() > 0 && (
-              <div className="text-xs text-gray-500">
-                {orderSide === 'BUY' 
-                  ? `Авах боломжтой: ${getMaxQuantity().toLocaleString()} ширхэг`
-                  : `Зарах боломжтой: ${getMaxQuantity().toLocaleString()} ширхэг`
-                }
-              </div>
-            )}
-
-            {orderType === 'Нөхцөлт' && (
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Үнэ</label>
-                <input
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="Үнэ"
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
-                  step="0.01"
-                />
-              </div>
-            )}
-
-            <div className="bg-gray-50 p-3 rounded">
-              <div className="text-xs text-gray-600 mb-1">НИЙТ ДҮН:</div>
-              <div className="text-xs text-gray-500 mb-1">ДҮН + Шимтгэл: (0.10%)</div>
-              <div className="text-lg font-bold text-gray-900">
-                {formatNumber(calculateTotal())}₮
-              </div>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            onClick={handlePlaceOrder}
-            disabled={placing || !quantity || (orderType === 'Нөхцөлт' && !price)}
-            className={`w-full py-3 rounded font-medium text-white mb-6 ${
-              placing || !quantity || (orderType === 'Хугацаа' && !price)
-                ? 'bg-gray-400'
-                : orderSide === 'BUY'
-                ? 'bg-green-500'
-                : 'bg-red-500'
-            }`}
-          >
-            {placing ? 'Захиалж байна...' : orderSide === 'BUY' ? 'Авах' : 'Зарах'}
-          </button>
+          {/* Order Confirmation Modal */}
+          <OrderConfirmationModal
+            isOpen={showConfirmModal}
+            onClose={() => {
+              setShowConfirmModal(false);
+              setPendingOrder(null);
+            }}
+            onConfirm={handleConfirmOrder}
+            orderData={pendingOrder}
+          />
         </div>
       )}
 
-      {/* Order History */}
-      <div className="bg-white border-t-4 border-gray-100">
-        <div className="grid grid-cols-2 text-center py-3 bg-gray-50 text-sm font-medium">
-          <div>Бүх захиалга</div>
-          <div>Биелсэн арилжаа</div>
-        </div>
-        
-        <div className="grid grid-cols-2 min-h-[300px]">
-          {/* All Orders Column */}
-          <div className="border-r border-gray-100 p-2">
-            {orders
-              .slice(0, 8)
-              .map((order) => (
-                <div key={order.id} className="mb-3 text-xs border-b border-gray-50 pb-2">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium">{order.symbol}</span>
-                    <div className="flex gap-1 items-center">
-                      <span className={`px-1 rounded text-[9px] ${
-                        order.statusname === 'pending' 
-                          ? 'bg-orange-100 text-orange-600' 
-                          : order.statusname === 'completed'
-                          ? 'bg-green-100 text-green-600'
-                          : order.statusname === 'cancelled'
-                          ? 'bg-red-100 text-red-600'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {order.statusname === 'pending' 
-                          ? 'Хүлээгдэж буй' 
-                          : order.statusname === 'completed'
-                          ? 'Биелсэн'
-                          : order.statusname === 'cancelled'
-                          ? 'Цуцлагдсан'
-                          : order.statusname
-                        }
-                      </span>
-                      {order.statusname === 'pending' && (
-                        <button
-                          onClick={() => handleCancelOrder(order.id)}
-                          className="text-red-500 hover:text-red-700 text-[9px] underline"
-                        >
-                          Цуцлах
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-gray-700 text-[10px] mb-0.5 font-medium">
-                    {order.buySell === 'BUY' ? '📈 ' + (order.buySellTxt || 'Худалдан авах') : '📉 ' + (order.buySellTxt || 'Худалдан зарах')}
-                  </div>
-                  <div className="text-gray-600 text-[10px] mb-0.5">
-                    Тоо: {order.quantity} ширхэг
-                  </div>
-                  <div className="text-gray-600 text-[10px] mb-0.5">
-                    Үнэ: {order.price.toFixed(2)}₮
-                  </div>
-                  <div className="text-gray-500 text-[9px]">
-                    Нийт: {formatNumber(order.quantity * order.price)}₮
-                  </div>
-                  <div className="text-gray-400 text-[9px]">
-                    {new Date(order.createdDate).toLocaleString('mn-MN', { 
-                      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
-                    })}
-                  </div>
-                </div>
-              ))}
-          </div>
-
-          {/* Completed Orders Column */}
-          <div className="p-2">
-            {completedOrders.slice(0, 8).map((trade, index) => (
-              <div key={index} className="mb-3 text-xs">
-                <div className="flex justify-between text-[10px] text-gray-700 font-medium mb-1">
-                  <span>Огноо</span>
-                  <span>Хэмжээ</span>
-                  <span>Хэмжээ</span>
-                </div>
-                <div className="text-[10px] text-gray-500 mb-0.5">
-                  {trade.mdentryTime}
-                </div>
-                <div className="text-[10px] text-gray-900">
-                  {trade.mdentryPx.toFixed(2)}
-                </div>
-                <div className="text-[10px] text-gray-900">
-                  {trade.mdentrySize}
-                </div>
-                <div className="text-[10px] text-gray-500">
-                  {Math.floor(Math.random() * 500) + 5}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <MyOrders
+        orders={orders.map(order => ({ ...order, id: order.id.toString(), buySell: order.buySell as 'BUY' | 'SELL' }))}
+        orderTab={orderTab}
+        setOrderTab={setOrderTab}
+        formatNumber={formatNumber}
+        onCancelOrder={handleCancelOrder}
+      />
     </div>
   );
 }

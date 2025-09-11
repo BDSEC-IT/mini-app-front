@@ -2192,8 +2192,10 @@ export interface CompletedOrdersResponse {
   message: string;
 }
 
-export const fetchEnhancedOrderBook = async (symbol: string, token?: string): Promise<EnhancedOrderBookResponse> => {
-  const url = `${BASE_URL}/securities/enhanced-order-book?symbol=${symbol}`
+export const fetchEnhancedOrderBook = async (symbol: string, token?: string, limit?: number): Promise<EnhancedOrderBookResponse> => {
+  const limitParam = limit ? `&limit=${limit}&count=${limit}&size=${limit}&depth=${limit}` : '';
+  const url = `${BASE_URL}/securities/enhanced-order-book?symbol=${symbol}${limitParam}`
+  console.log('Enhanced OrderBook URL:', url);
   try {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
