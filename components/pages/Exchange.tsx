@@ -545,10 +545,10 @@ export default function Exchange() {
   };
 
   const handleCancelOrder = async (orderId: string) => {
-    const numericOrderId = parseInt(orderId);
+    const numericOrderId: number = parseInt(orderId, 10);
     const token = Cookies.get('token');
     if (!token) return;
-    
+
     try {
       const result = await cancelSecondaryOrder(numericOrderId, token);
       if (result.success) {
@@ -644,21 +644,30 @@ export default function Exchange() {
     <div className="w-full bg-white dark:bg-gray-900 min-h-screen">
       {/* Trading Header - Price Focused */}
       {selectedStock && (
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-900 mx-3 mt-3 rounded-lg border border-gray-200 dark:border-gray-700">
           {/* Combined Header */}
-          <div className="px-3 py-2">
+          <div className="px-4 py-3">
             <div className="flex items-center justify-between">
-              {/* Symbol Search */}
+              {/* Symbol Search - Dashboard Style */}
               <button
                 onClick={() => setShowStockSelector(true)}
-                className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 max-w-44 sm:max-w-52 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 h-10 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
-                <MagnifyingGlassIcon className="w-4 h-4" />
-                <span className="font-semibold">{selectedStock.Symbol.split('-')[0]}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[100px]">{selectedStock.mnName || selectedStock.enName}</span>
-                <ChevronDownIcon className="w-4 h-4" />
+                <MagnifyingGlassIcon className="w-3 h-3 text-gray-600 dark:text-gray-300 mr-1 flex-shrink-0" />
+                <div className="flex items-center text-xs font-normal min-w-0 overflow-hidden">
+                  <span className="font-medium flex-shrink-0 text-gray-900 dark:text-gray-100">
+                    {selectedStock.Symbol.split('-')[0]}
+                  </span>
+                  <span className="mx-1 text-xs font-normal flex-shrink-0 text-gray-500 dark:text-gray-300">
+                    •
+                  </span>
+                  <span className="truncate text-xs font-normal text-gray-600 dark:text-gray-300">
+                    {(selectedStock.mnName || selectedStock.enName)?.substring(0, 8) || ''}
+                  </span>
+                </div>
+                <ChevronDownIcon className="w-3 h-3 text-gray-600 dark:text-gray-300 ml-1 flex-shrink-0" />
               </button>
-              
+
               {/* Price & Change */}
               <div className="text-right">
                 <div className="text-lg font-bold text-gray-900 dark:text-white">
@@ -675,26 +684,26 @@ export default function Exchange() {
 
       {/* Tab Navigation */}
       {selectedStock && (
-        <div className="px-3 border-b pb-2 border-gray-200 dark:border-gray-700">
+        <div className="px-3 pb-2 border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-6">
-            <button 
+            <button
               onClick={() => setActiveTab('orderbook')}
               className={`px-4 py-2 text-sm font-medium transition-colors relative ${
                 activeTab === 'orderbook'
-                  ? 'text-blue-600 dark:text-blue-400' 
+                  ? 'text-blue-600 dark:text-blue-400'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
               Захиалгын дэвтэр
               {activeTab === 'orderbook' && (
-                <div className="absolute bottom-0 left-0 right-0 h-[2px]   bg-blue-600 dark:bg-blue-400"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600 dark:bg-blue-400"></div>
               )}
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('chart')}
               className={`px-4 py-2 text-sm font-medium transition-colors relative ${
                 activeTab === 'chart'
-                  ? 'text-blue-600 dark:text-blue-400' 
+                  ? 'text-blue-600 dark:text-blue-400'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
@@ -708,7 +717,7 @@ export default function Exchange() {
           {/* Tab Content */}
           {activeTab === 'chart' ? (
             <div className="mb-2 h-80">
-              <TradingViewChart 
+              <TradingViewChart
                 symbol={selectedStock.Symbol}
                 theme={theme}
                 period="ALL"
@@ -716,12 +725,12 @@ export default function Exchange() {
             </div>
           ) : (
             <div>
-              <div className="grid grid-cols-5">
-                <OrderBook 
+              <div className="grid grid-cols-5 gap-x-3">
+                <OrderBook
                   orderBook={orderBook}
                   onOrderClick={handleOrderClick}
                 />
-                <CompletedOrders 
+                <CompletedOrders
                   completedOrders={completedOrders}
                 />
               </div>

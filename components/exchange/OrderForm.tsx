@@ -53,8 +53,8 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   onPlaceOrder
 }) => {
   return (
-    <div className="bg-white dark:bg-gray-900  py-4 border-t border-gray-200 dark:border-gray-700">
-      {/* Order Type & Side Row */}
+    <div className="bg-white dark:bg-gray-900  mt-3 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-6">
+      {/* Order Type & Side Row - Keep Original 3-Column Structure */}
       <div className="grid grid-cols-3 gap-3 mb-3">
         <Select
           value={orderType}
@@ -64,20 +64,40 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           <option value="Зах зээлийн">Зах зээлийн</option>
           <option value="Нөхцөлт">Нөхцөлт</option>
         </Select>
-        <Button
-          variant={orderSide === 'BUY' ? 'success' : 'secondary'}
-          onClick={() => setOrderSide('BUY')}
-          className="py-2 text-xs font-semibold transition-all duration-200 transform hover:scale-105"
-        >
-          Авах
-        </Button>
-        <Button
-          variant={orderSide === 'SELL' ? 'danger' : 'secondary'}
-          onClick={() => setOrderSide('SELL')}
-          className="py-2 text-xs font-semibold transition-all duration-200 transform hover:scale-105"
-        >
-          Зарах
-        </Button>
+
+        {/* Buy/Sell Toggle Buttons */}
+        <div className="col-span-2 flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <button
+            onClick={() => setOrderSide('BUY')}
+            className={`flex-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 ${
+              orderSide === 'BUY'
+                ? 'bg-green-500 hover:bg-green-600 text-white shadow-sm'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600'
+            }`}
+            style={{
+              filter: orderSide === 'BUY'
+                ? 'drop-shadow(0 0 10px rgba(34, 197, 94, 0.5))'
+                : 'none'
+            }}
+          >
+            АВАХ
+          </button>
+          <button
+            onClick={() => setOrderSide('SELL')}
+            className={`flex-1 px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 ${
+              orderSide === 'SELL'
+                ? 'bg-red-500 hover:bg-red-600 text-white shadow-sm'
+                : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600'
+            }`}
+            style={{
+              filter: orderSide === 'SELL'
+                ? 'drop-shadow(0 0 10px rgba(239, 68, 68, 0.5))'
+                : 'none'
+            }}
+          >
+            ЗАРАХ
+          </button>
+        </div>
       </div>
 
       {/* Order Duration */}
@@ -190,19 +210,29 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         </div>
       </div>
 
-      {/* Submit Button */}
-      <Button
-        variant={orderSide === 'BUY' ? 'success' : 'danger'}
-        onClick={onPlaceOrder}
-        disabled={placing || !quantity || (orderType === 'Нөхцөлт' && !price)}
-        className={`w-full py-3 text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] ${
-          placing || !quantity || (orderType === 'Нөхцөлт' && !price)
-            ? 'bg-gray-400 cursor-not-allowed hover:bg-gray-400 transform-none'
-            : ''
-        }`}
-      >
-        {placing ? 'Захиалж байна...' : orderSide === 'BUY' ? 'АВАХ' : 'ЗАРАХ'}
-      </Button>
+      {/* Submit Button with Glow Effect */}
+      <div className="relative mb-2">
+        <Button
+          variant={orderSide === 'BUY' ? 'success' : 'danger'}
+          onClick={onPlaceOrder}
+          disabled={placing || !quantity || (orderType === 'Нөхцөлт' && !price)}
+          className={`relative w-full py-3 text-sm font-bold transition-all duration-200 transform hover:scale-[1.02] ${
+            placing || !quantity || (orderType === 'Нөхцөлт' && !price)
+              ? 'bg-gray-400 cursor-not-allowed hover:bg-gray-400 transform-none'
+              : ''
+          }`}
+          style={{
+            filter: !(placing || !quantity || (orderType === 'Нөхцөлт' && !price))
+              ? `drop-shadow(0 0 12px ${orderSide === 'BUY' ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)'})`
+              : 'none',
+            textShadow: !(placing || !quantity || (orderType === 'Нөхцөлт' && !price))
+              ? `0 0 8px ${orderSide === 'BUY' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.8)'}, 0 0 16px ${orderSide === 'BUY' ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`
+              : 'none'
+          }}
+        >
+          {placing ? 'Захиалж байна...' : orderSide === 'BUY' ? 'АВАХ' : 'ЗАРАХ'}
+        </Button>
+      </div>
     </div>
   );
 };

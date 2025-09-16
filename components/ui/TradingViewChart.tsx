@@ -10,6 +10,8 @@ interface TradingViewChartProps {
   theme?: string
   period?: string
   onPriceHover?: (price: number | null, change?: number, changePercent?: number) => void
+  showChartTypeToggle?: boolean
+  defaultChartType?: ChartType
 }
 
 interface Point {
@@ -32,11 +34,13 @@ type ChartType = 'line' | 'candlestick';
 // Fixed candle colors: green-500 for up, red-500 for down
 const candleColors = { up: '#22c55e', down: '#ef4444' }; // Tailwind green-500/red-500
 
-export function TradingViewChart({ 
-  symbol = 'BDS-O-0000', 
-  theme = 'light', 
+export function TradingViewChart({
+  symbol = 'BDS-O-0000',
+  theme = 'light',
   period = 'ALL',
-  onPriceHover
+  onPriceHover,
+  showChartTypeToggle = true,
+  defaultChartType = 'line'
 }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -52,7 +56,7 @@ export function TradingViewChart({
   const { t } = useTranslation()
   const [isMobile, setIsMobile] = useState(false)
   const [activePeriod, setActivePeriod] = useState(period)
-  const [chartType, setChartType] = useState<ChartType>('line');
+  const [chartType, setChartType] = useState<ChartType>(defaultChartType);
   // Removed colorTheme state
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
 
@@ -389,33 +393,40 @@ export function TradingViewChart({
   }
 
   return (
-    <div className="w-full h-full flex flex-col  transition-all duration-300  mb-8 ">
-      {/* Header Bar */}
-      <div className="h-[38px] flex justify-between items-center md:px-4 rounded-lg mb-2">
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={() => setChartType('line')}
-            className={` text-center text-sm font-medium px-4 py-2 rounded-full transition-colors  ${
-              chartType === 'line' 
-                ? 'bg-bdsec dark:bg-indigo-500 text-white' 
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
-          >
-            {t('chart.line')}
-          </button>
-          <button 
-            onClick={() => setChartType('candlestick')}
-            className={` text-sm font-medium px-4 py-2 rounded-full transition-colors  ${
-              chartType === 'candlestick' 
-                ? 'bg-bdsec dark:bg-indigo-500 text-white' 
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
-          >
-            {t('chart.candlestick')}
-          </button>
+    <div className="w-full h-full flex flex-col transition-all duration-300 mb-8">
+      {/* Conditional Header Bar for Chart Type Toggle */}
+      {showChartTypeToggle && (
+        <div className="h-[38px] flex justify-between items-center md:px-4 rounded-lg mb-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setChartType('line')}
+              className={`text-center text-sm font-medium px-4 py-2 rounded-full transition-colors ${
+                chartType === 'line'
+                  ? 'bg-bdsec dark:bg-indigo-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              {t('chart.line')}
+            </button>
+            <button
+              onClick={() => setChartType('candlestick')}
+              className={`text-sm font-medium px-4 py-2 rounded-full transition-colors ${
+                chartType === 'candlestick'
+                  ? 'bg-bdsec dark:bg-indigo-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              {t('chart.candlestick')}
+            </button>
+          </div>
         </div>
-      </div>
-      <div ref={containerRef} className="w-full  h-[calc(100%-80px)] relative mb-2">
+      )}
+      <div
+        ref={containerRef}
+        className={`w-full relative mb-2 ${
+          showChartTypeToggle ? 'h-[calc(100%-80px)]' : 'h-[calc(100%-50px)]'
+        }`}
+      >
         <svg 
           ref={svgRef} 
           className="w-full h-full"
