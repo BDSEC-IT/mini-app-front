@@ -90,7 +90,7 @@ export default function Balance() {
             const y = yieldAnalysis.find(z => z.symbol === asset.symbol);
             const assetValue = y ? (y.totalNow || 0) : 0;
             return (
-              <div key={index} className="relative w-full p-3 overflow-hidden transition-all duration-300 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between">
+              <div key={index} className=" relative w-full p-3 overflow-hidden transition-all duration-300 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between">
                 {/* SVG Illumination Effect */}
                 <svg
                   className="absolute text-indigo-500 -top-1/4 -left-1/4 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-0 dark:opacity-80 pointer-events-none z-0"
@@ -127,10 +127,12 @@ export default function Balance() {
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between z-10">
+                <div className="flex items-center justify-end z-10">
+                  {/* Temporarily commented out Арилжаа button
                   <button className="bg-bdsec dark:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-bdsec/90">
                     Арилжаа
                   </button>
+                  */}
                   <button
                     onClick={() => {
                       setSelectedAssetSymbol(asset.symbol);
@@ -192,29 +194,20 @@ export default function Balance() {
           </div>
           
           
-          <div className="flex items-center justify-between z-10">
+          <div className="flex items-center justify-end z-10">
             <button 
               onClick={() => setCurrentPage('withdrawals')}
-              className="bg-bdsec dark:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-bdsec/90"
+              className="bg-bdsec dark:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-bdsec/90"
             >
               Мөнгө хүсэх
-            </button>
-            <button 
-              onClick={() => {
-                setTransactionType('cash');
-                setCurrentPage('transactions');
-              }}
-              className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-sm rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-            >
-              Хуулга
             </button>
           </div>
         </div>
       ) : (
-        // Fallback display with zeroed balances
+        // Fallback display with zeroed balances - sorted in descending order
         [
-          { currency: 'MNT', name: 'Бэлэн мөнгө', balance: 0, icon: '₮' },
-          { currency: 'USD', name: 'Бэлэн мөнгө', balance: 0, icon: '$' }
+          { currency: 'USD', name: 'Бэлэн мөнгө', balance: 0, icon: '$' },
+          { currency: 'MNT', name: 'Бэлэн мөнгө', balance: 0, icon: '₮' }
         ].map((item, index) => (
           <div key={index} className="relative w-full p-3 overflow-hidden transition-all duration-300 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between">
             {/* SVG Illumination Effect */}
@@ -251,21 +244,12 @@ export default function Balance() {
               </div>
             </div>
             
-            <div className="flex items-center justify-between z-10">
+            <div className="flex items-center justify-end z-10">
               <button 
                 onClick={() => setCurrentPage('withdrawals')}
-                className="bg-bdsec dark:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-bdsec/90"
+                className="bg-bdsec dark:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-bdsec/90"
               >
                 Мөнгө хүсэх
-              </button>
-              <button 
-                onClick={() => {
-                  setTransactionType('cash');
-                  setCurrentPage('transactions');
-                }}
-                className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-sm rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-              >
-                Хуулга
               </button>
             </div>
           </div>
@@ -315,14 +299,7 @@ export default function Balance() {
             </div>
           </div>
           
-          <div className="flex items-center justify-between z-10">
-            <button className="bg-bdsec dark:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-bdsec/90">
-              Арилжаа
-            </button>
-            <button className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-sm rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-              Хуулга
-            </button>
-          </div>
+          {/* Buttons removed from ҮЦТХТ tab */}
         </div>
       ))}
     </div>

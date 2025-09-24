@@ -83,6 +83,7 @@ export default function TransactionsPage({
   };
 
   const filteredSecurityTransactions = securityTransactions
+    .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
     .filter((transaction) => {
       // filter by selected asset symbol if provided
       if (selectedAssetSymbol) {
@@ -106,6 +107,7 @@ export default function TransactionsPage({
     .filter(filterTransactionsByDate);
 
   const filteredCsdTransactions = csdTransactions
+    .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
     .filter((transaction) => {
       if (selectedAssetSymbol) {
         const sym = selectedAssetSymbol.toLowerCase();
@@ -120,6 +122,7 @@ export default function TransactionsPage({
     .filter(filterTransactionsByDate);
 
   const filteredCashTransactions = cashTransactions
+    .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
     .filter((transaction) => {
       if (selectedAssetSymbol) {
         const sym = selectedAssetSymbol.toLowerCase();

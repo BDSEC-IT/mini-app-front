@@ -12,14 +12,14 @@ interface CompletedOrdersProps {
 
 export const CompletedOrders: React.FC<CompletedOrdersProps> = ({ completedOrders }) => {
   return (
-    <div className="col-span-2 bg-gray-50 dark:bg-gray-800/30 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-      <div className="text-xs font-medium h-10 text-center place-content-center text-gray-600 dark:text-gray-300 mb-2 pb-0">
+    <div className="col-span-2 bg-gray-50 dark:bg-gray-800/30 rounded-lg p-1.5 border border-gray-200 dark:border-gray-700">
+      <div className="text-[10px] font-medium h-6 text-center text-gray-600 dark:text-gray-300">
         Биелсэн захиалга
       </div>
-      <div className={`${completedOrders.length > 3 ? 'max-h-24 overflow-y-auto' : ''} space-y-1`}>
+      <div className={`${completedOrders.length > 3 ? 'max-h-[88px] overflow-y-auto' : ''} space-y-0.5`}>
         {completedOrders.length > 0 ? completedOrders.map((trade, index) => (
-          <div key={index} className="text-xs py-2 px-2 bg-white dark:bg-gray-700/50 rounded-lg">
-            <div className="grid grid-cols-3 gap-1 text-xs text-center">
+          <div key={index} className="text-[10px] py-1 px-1.5 bg-white dark:bg-gray-700/50 rounded">
+            <div className="grid grid-cols-3 gap-1 text-center">
               <span className="text-gray-500 dark:text-gray-300">
                 {trade.mdentryTime ? 
                   (trade.mdentryTime.includes(' ') ? 
@@ -37,7 +37,7 @@ export const CompletedOrders: React.FC<CompletedOrdersProps> = ({ completedOrder
             </div>
           </div>
         )) : (
-          <div className="text-xs text-gray-500 dark:text-gray-400 py-4 text-center">
+          <div className="text-[10px] text-gray-500 dark:text-gray-400 py-2 text-center">
             Арилжаа байхгүй
           </div>
         )}

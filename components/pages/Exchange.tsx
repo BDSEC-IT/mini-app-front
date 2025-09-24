@@ -641,7 +641,7 @@ export default function Exchange() {
   }
 
   return (
-    <div className="w-full bg-white dark:bg-gray-900 min-h-screen">
+    <div className="w-full bg-white dark:bg-gray-900 min-h-screen mb-20">
       {/* Trading Header - Price Focused */}
       {selectedStock && (
         <div className="bg-white dark:bg-gray-900 mx-3 mt-3 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -716,7 +716,7 @@ export default function Exchange() {
 
           {/* Tab Content */}
           {activeTab === 'chart' ? (
-            <div className="mb-2 h-80">
+            <div className="mb-10 mt-5 h-80">
               <TradingViewChart
                 symbol={selectedStock.Symbol}
                 theme={theme}
@@ -776,6 +776,7 @@ export default function Exchange() {
       )}
 
       <MyOrders
+
         orders={orders.map(order => ({ ...order, id: order.id.toString(), buySell: order.buySell as 'BUY' | 'SELL' }))}
         orderTab={orderTab}
         setOrderTab={setOrderTab}

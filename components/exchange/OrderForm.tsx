@@ -145,21 +145,21 @@ export const OrderForm: React.FC<OrderFormProps> = ({
       {/* Price Input for Limit Orders */}
       {orderType === 'Нөхцөлт' && (
         <div className="mb-4">
-          <div className="flex items-center gap-2 relative">
+          <div className="grid grid-cols-[40px_1fr_40px] gap-1">
             <Button
               variant="secondary"
               onClick={() => setPrice(adjustPriceByStep(price, 'down'))}
-              className="px-3 py-2"
+              className="rounded h-[38px] flex items-center justify-center"
             >
               -
             </Button>
-            <div className="flex-1 relative">
+            <div className="relative w-full">
               <Input
                 type="number"
                 value={price}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
                 placeholder="Үнэ"
-                className={`flex-1 ${price ? 'pr-8' : ''}`}
+                className={`w-full rounded ${price ? 'pr-8' : ''}`}
                 step={selectedStock ? getPriceStep(selectedStock.PreviousClose || 0) : 0.01}
               />
               {price && (
@@ -171,7 +171,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
             <Button
               variant="secondary"
               onClick={() => setPrice(adjustPriceByStep(price, 'up'))}
-              className="px-3 py-2"
+              className="rounded h-[38px] flex items-center justify-center"
             >
               +
             </Button>
@@ -185,7 +185,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
               onClick={() => setShowPriceSteps(!showPriceSteps)}
               className="px-2 py-1 text-xs"
             >
-              үнийн алхам
+              Үнийн алхам
             </Button>
           </div>
         </div>
