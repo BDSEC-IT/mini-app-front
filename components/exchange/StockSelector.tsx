@@ -28,9 +28,9 @@ export const StockSelector: React.FC<StockSelectorProps> = ({
     (stock.mnName && stock.mnName.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (stock.enName && stock.enName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
+  console.log(filteredStocks);
   return (
-    <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
+    <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900 flex flex-col h-screen">
       {/* Header */}
       <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex-shrink-0">
         <button onClick={onClose} className="mr-4">
@@ -45,7 +45,7 @@ export const StockSelector: React.FC<StockSelectorProps> = ({
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Хувьцааны нэр эсвэл код хайх..."
+            placeholder="Хувьцааны нэр эсвэл симболоор хайх..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -55,7 +55,7 @@ export const StockSelector: React.FC<StockSelectorProps> = ({
       </div>
       
       {/* Stock List */}
-      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900">
+      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 min-h-0">
         {filteredStocks.length > 0 ? (
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {filteredStocks.map((stock, index) => (

@@ -196,7 +196,7 @@ export default function Balance() {
           
           <div className="flex items-center justify-end z-10">
             <button 
-              onClick={() => setCurrentPage('withdrawals')}
+              onClick={() => window.location.href = '/balance/withdrawal'}
               className="bg-bdsec dark:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-bdsec/90"
             >
               Мөнгө хүсэх
@@ -246,7 +246,7 @@ export default function Balance() {
             
             <div className="flex items-center justify-end z-10">
               <button 
-                onClick={() => setCurrentPage('withdrawals')}
+                onClick={() => window.location.href = '/balance/withdrawal'}
                 className="bg-bdsec dark:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-bdsec/90"
               >
                 Мөнгө хүсэх

@@ -685,7 +685,7 @@ export default function Exchange() {
       {/* Tab Navigation */}
       {selectedStock && (
         <div className="px-3 pb-2 border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-6">
+          <div className="flex mb-3 items-center gap-6">
             <button
               onClick={() => setActiveTab('orderbook')}
               className={`px-4 py-2 text-sm font-medium transition-colors relative ${
@@ -694,7 +694,7 @@ export default function Exchange() {
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              Захиалгын дэвтэр
+              Захиалгын сан
               {activeTab === 'orderbook' && (
                 <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600 dark:bg-blue-400"></div>
               )}

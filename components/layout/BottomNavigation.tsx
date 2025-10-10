@@ -23,7 +23,8 @@ const BottomNavigation = () => {
 
   const [accountInfo, setAccountInfo] = useState<UserAccountResponse['data'] | null>(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [showTooltip, setShowTooltip] = useState<'balance' | 'portfolio' | 'ipo' | 'exchange' | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [showTooltip, setShowTooltip] = useState<'balance' | 'portfolio' | 'news' | 'exchange' | null>(null)
   
   useEffect(() => {
     const checkAccountStatus = async () => {
@@ -39,13 +40,14 @@ const BottomNavigation = () => {
           console.error('Error fetching account info:', error)
         }
       }
+      setIsLoading(false)
     }
     checkAccountStatus()
   }, [])
   
   const accountOpened = accountInfo?.MCSDAccount && accountInfo.MCSDAccount.DGStatus === 'COMPLETED';
 
-  const handleMenuClick = (e: React.MouseEvent, type: 'balance' | 'portfolio' | 'ipo' | 'exchange') => {
+  const handleMenuClick = (e: React.MouseEvent, type: 'balance' | 'portfolio' | 'news' | 'exchange') => {
     if (!isLoggedIn || !accountOpened) {
       e.preventDefault()
       setShowTooltip(type)
@@ -59,17 +61,18 @@ const BottomNavigation = () => {
     }
   }
 
-  const basicNavItems = [
+  // Define nav items inside component to ensure proper translation
+  const basicNavItems = useMemo(() => [
     { name: 'securities', href: '/stocks', icon: BarChart3, label: t('common.securities') },
     { name: 'bonds', href: '/bonds', icon: Landmark, label: t('common.bonds') },
     { name: 'news', href: '/news', icon: Newspaper, label: t('menu.news') },
-  ];
+  ], [t]);
 
-  const advancedNavItems = [
+  const advancedNavItems = useMemo(() => [
     { name: 'balance', href: '/balance', icon: Wallet, label: t('nav.balance') },
-    { name: 'portfolio', href: '/portfolio', icon: TrendingUp, label: 'Өгөөж' },
-    { name: 'ipo', href: '/ipo', icon: Building, label: 'IPO' }
-  ];
+    { name: 'portfolio', href: '/portfolio', icon: TrendingUp, label: t('nav.portfolio') },
+    { name: 'news', href: '/news', icon: Newspaper, label: t('menu.news') }
+  ], [t]);
 
   const itemsToShow = accountOpened ? advancedNavItems : basicNavItems;
 
@@ -132,12 +135,15 @@ const BottomNavigation = () => {
   const renderNavItem = useCallback((item: typeof basicNavItems[0] | typeof advancedNavItems[0]) => {
       const isButton = accountOpened;
       const className = `flex flex-col items-center ${isActive(item.href) ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`;
+      
+      // Specific icon size for Newspaper icon to ensure consistency
+      const iconSizeToUse = item.name === 'news' ? Math.max(16, Math.min(20, winW * 0.05)) : iconSize;
 
       if (isButton) {
           return (
               <div className="relative" key={item.name}>
                   <button onClick={(e) => handleMenuClick(e, item.name as any)} className={`${className} hover:text-bdsec dark:hover:text-indigo-400`}>
-                      <item.icon size={iconSize} />
+                      <item.icon size={iconSizeToUse} />
                       <span className={`${textSize} mt-1`}>{item.label}</span>
                   </button>
               </div>
@@ -146,14 +152,35 @@ const BottomNavigation = () => {
 
       return (
           <Link href={item.href} className={className} key={item.name}>
-              <item.icon size={iconSize} />
+              <item.icon size={iconSizeToUse} />
               <span className={`${textSize} mt-1`}>{item.label}</span>
           </Link>
       );
-  }, [accountOpened, isActive, handleMenuClick, iconSize, textSize]);
+  }, [accountOpened, isActive, handleMenuClick, iconSize, textSize, winW]);
+
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950" style={{ paddingBottom: 'env(safe-area-inset-bottom)', minHeight: BAR_H }}>
+      <div className="relative" style={{ height: BAR_H }}>
+        <div className="absolute inset-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-700" />
+        <div className="absolute bottom-2 inset-x-0 flex items-center justify-evenly px-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex flex-col items-center">
+              <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="w-8 h-2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-1" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950" style={{ paddingBottom: 'env(safe-area-inset-bottom)', minHeight: BAR_H }}>
       <div className="relative" style={{ height: BAR_H }}>
         {pathname === '/exchange' ? (
           // Simple flat background for exchange page

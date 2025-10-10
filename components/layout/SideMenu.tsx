@@ -17,7 +17,9 @@ import {
   CircleAlert,
   CircleDashed,
   UserPlus,
-  ArrowUpDown
+  ArrowUpDown,
+  Wallet2,
+  CreditCard
 } from 'lucide-react'
 import Cookies from 'js-cookie'
 import { useTranslation } from 'react-i18next'
@@ -127,7 +129,11 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   // Add Orders menu item for logged-in users with MCSD account
   const accountOpened = accountInfo?.MCSDAccount && accountInfo.MCSDAccount.DGStatus === 'COMPLETED';
   const advancedMenuItems = accountOpened ? [
-    { href: '/orders', icon: ArrowUpDown, label: 'nav.orders' },
+    { href: '/balance', icon: Wallet2, label: 'nav.balance' },
+    { href: '/portfolio', icon: TrendingUp, label: 'nav.portfolio' },
+    { href: '/balance/recharge', icon: CreditCard, label: 'nav.recharge' },
+    { href: '/exchange', icon: ArrowUpDown, label: 'nav.orders' },
+    { href: '/balance/withdrawal', icon: CreditCard, label: 'nav.withdrawal' },
     ...menuItems
   ] : menuItems;
   
@@ -218,8 +224,29 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
               </li>
             )}
             
+            {/* My Section - Advanced Menu Items */}
+            {accountOpened && (
+              <li className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="mb-2 px-2">
+                  <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('menu.mySection', 'My Section')}</h3>
+                </div>
+                {advancedMenuItems.slice(0, 5).map((item) => (
+                  <Link href={item.href} onClick={onClose} key={item.href}>
+                    <div className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === item.href ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+                      <item.icon size={18} className="mr-2.5" />
+                      <span className="text-sm">{t(item.label)}</span>
+                    </div>
+                  </Link>
+                ))}
+              </li>
+            )}
+
+            {/* General Section - Basic Menu Items */}
             <li className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-              {advancedMenuItems.map((item) => (
+              <div className="mb-2 px-2">
+                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('menu.general', 'General')}</h3>
+              </div>
+              {menuItems.map((item) => (
                 <Link href={item.href} onClick={onClose} key={item.href}>
                   <div className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === item.href ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
                     <item.icon size={18} className="mr-2.5" />
@@ -229,14 +256,14 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
               ))}
             </li>
 
-            {!isLoggedIn && (
+            {/* {!isLoggedIn && (
               <li className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                 <Link href="/auth/nationality" onClick={onClose} className="flex items-center p-2.5 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                     <LogIn size={18} className="mr-2.5" />
                     <span className="text-sm">{t('auth.login')}</span>
                 </Link>
               </li>
-            )}
+            )} */}
           </ul>
           </nav>
         </div>

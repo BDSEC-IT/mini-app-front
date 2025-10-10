@@ -7,7 +7,10 @@
     "shareholders": "For Shareholders",
     "about": "About",
     "more": "More",
-    "assets": "Assets"
+    "assets": "Assets",
+    "withdrawal": "Withdrawal",
+    "recharge": "Recharge Balance",
+    "portfolio": "Portfolio"
   },
   "balance": {
     "totalAssets": "Total Assets",
@@ -205,7 +208,9 @@
     "faq": "Frequently Asked Questions",
     "news": "News",
     "withdraw": "Withdraw Money",
-    "recharge": "Recharge Balance"
+    "recharge": "Recharge Balance",
+    "mySection": "My Section",
+    "general": "General"
   },
   "pagination": {
     "previous": "Previous",

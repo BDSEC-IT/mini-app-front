@@ -3,6 +3,95 @@ import { AccountSetupFormData, mongolianBanks } from './schemas';
 // API base URL
 export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
 export const BDSEC_MAIN =  'https://new.bdsec.mn'
+
+// Bank codes for Mongolia
+export const MONGOLIAN_BANKS = [
+  { "name": "Монголбанк", "code": "010000" },
+  { "name": "Ариг банк", "code": "210000" },
+  { "name": "Богд банк", "code": "380000" },
+  { "name": "Голомт банк", "code": "150000" },
+  { "name": "Капитрон банк", "code": "300000" },
+  { "name": "М банк", "code": "390000" },
+  { "name": "Төрийн банк", "code": "340000" },
+  { "name": "Тээвэр хөгжлийн банк", "code": "190000" },
+  { "name": "Үндэсний хөрөнгө оруулалтын банк", "code": "290000" },
+  { "name": "Хаан банк", "code": "050000" },
+  { "name": "Хас банк", "code": "320000" },
+  { "name": "Хөгжлийн банк", "code": "360000" },
+  { "name": "Худалдаа хөгжлийн банк", "code": "040000" },
+  { "name": "Чингис хаан банк", "code": "330000" },
+  { "name": "Капитал банк ЭХА", "code": "030000" },
+  { "name": "Хадгаламж банк ЭХА", "code": "180000" },
+  { "name": "Анод банк", "code": "250000" },
+  { "name": "Зоос банк", "code": "240000" },
+  { "name": "Сангийн яам (Төрийн сан)", "code": "900000" },
+  { "name": "Үнэт цаасны төвлөрсөн хадгаламжийн төв", "code": "950000" },
+  { "name": "Монголын үнэт цаасны клирингийн төв", "code": "940000" },
+  { "name": "360 Файнанс ББСБ", "code": "560000" },
+  { "name": "Ард кредит ББСБ", "code": "520000" },
+  { "name": "Дата бэйнк", "code": "550000" },
+  { "name": "Инвескор Хэтэвч ББСБ", "code": "530000" },
+  { "name": "Мобифинанс ББСБ", "code": "500000" },
+  { "name": "Нэткапитал Финанс Корпораци ББСБ", "code": "540000" },
+  { "name": "Хай пэймэнт солюшнс", "code": "510000" }
+]
+;
+
+// Withdrawal types
+export type WithdrawalType = 'NOMINAL' | 'CSD';
+
+// Withdrawal request interfaces
+export interface WithdrawalRequest {
+  date: string;
+  shareCode: string | null;
+  withdrawalid: number;
+  amount: number;
+  stockAccountId: number;
+  channel: string;
+  description: string;
+  accountNumber: string;
+  type: string;
+  acceptedDate: string | null;
+  feeAmount: number;
+  name: string;
+  state: 'new' | 'accepted' | 'cancelled' | 'completed';
+}
+
+export interface BankAccount {
+  bankCode: string;
+  accNumber: string;
+  accHolderName: string;
+  resPartnerBankId: number;
+  active: boolean;
+  bankName: string;
+  partnerId: number;
+}
+
+export interface NominalBalance {
+  balance: number;
+  nominalId: number;
+  hbo: number;
+  hbz: number;
+  currencyFullName: string;
+  currency: string;
+  withdrawalAmount: number;
+  orderAmount: number | null;
+  totalHbz: number | null;
+  accountId: number;
+  firstBalance: number | null;
+}
+
+export interface CSDAgreement {
+  brokerCode: string;
+  stkAcntNum: string;
+  lastName: string;
+  firstName: string;
+  register: string;
+  bankBic: string | null;
+  bankAcntNum: string | null;
+  contractNo: string | null;
+  hasContract: boolean;
+}
 interface StockData {
   pkId: number;
   id: number;
@@ -2424,6 +2513,325 @@ export const cancelOrder = async (orderId: number, token: string): Promise<Place
       success: false,
       message: error instanceof Error ? error.message : 'Failed to cancel order',
       errorCode: 'NETWORK_ERROR'
+    };
+  }
+};
+
+// ================= Withdrawal API Functions =================
+
+// Fetch withdrawal request list
+export const fetchWithdrawalList = async (token: string): Promise<{ success: boolean; data: WithdrawalRequest[]; message?: string }> => {
+  const url = `${BASE_URL}/istockApp/withdrawal/list`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({})
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        data: [],
+        message: responseData.message || `Failed to fetch withdrawal list: ${response.status}`
+      };
+    }
+    
+    return {
+      success: true,
+      data: responseData.data || [],
+      message: responseData.message
+    };
+  } catch (error) {
+    console.error('Error fetching withdrawal list:', error);
+    return {
+      success: false,
+      data: [],
+      message: error instanceof Error ? error.message : 'Failed to fetch withdrawal list'
+    };
+  }
+};
+
+// Create withdrawal request
+export const createWithdrawalRequest = async (
+  type: WithdrawalType,
+  requestData: {
+    accountNumber: string;
+    amount: number;
+    description: string;
+    assetCode?: string;
+    channel: string;
+  },
+  token: string
+): Promise<{ success: boolean; data?: { id: number; message: string }; message?: string }> => {
+  const url = `${BASE_URL}/istockApp/withdrawal/create/${type}`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(requestData)
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        message: responseData.message || `Failed to create withdrawal request: ${response.status}`
+      };
+    }
+    
+    return {
+      success: true,
+      data: responseData.data,
+      message: responseData.message
+    };
+  } catch (error) {
+    console.error('Error creating withdrawal request:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to create withdrawal request'
+    };
+  }
+};
+
+// Cancel withdrawal request
+export const cancelWithdrawalRequest = async (withdrawalId: number, token: string): Promise<{ success: boolean; message?: string }> => {
+  const url = `${BASE_URL}/istockApp/withdrawal/cancel?withdrawalId=${withdrawalId}`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        message: responseData.message || `Failed to cancel withdrawal request: ${response.status}`
+      };
+    }
+    
+    return {
+      success: true,
+      message: responseData.message
+    };
+  } catch (error) {
+    console.error('Error cancelling withdrawal request:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to cancel withdrawal request'
+    };
+  }
+};
+
+// Fetch bank account list
+export const fetchBankList = async (token: string): Promise<{ success: boolean; data: BankAccount[]; message?: string }> => {
+  const url = `${BASE_URL}/istockApp/bank/list`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        data: [],
+        message: responseData.message || `Failed to fetch bank list: ${response.status}`
+      };
+    }
+    
+    return {
+      success: true,
+      data: responseData.data || [],
+      message: responseData.message
+    };
+  } catch (error) {
+    console.error('Error fetching bank list:', error);
+    return {
+      success: false,
+      data: [],
+      message: error instanceof Error ? error.message : 'Failed to fetch bank list'
+    };
+  }
+};
+
+// Add new bank account
+export const addBankAccount = async (
+  bankData: {
+    accNumber: string;
+    accName: string;
+    bankCode: string;
+    currency: string;
+  },
+  token: string
+): Promise<{ success: boolean; data?: BankAccount; message?: string }> => {
+  const url = `${BASE_URL}/istockApp/bank`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(bankData)
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        message: responseData.message || `Failed to add bank account: ${response.status}`
+      };
+    }
+    
+    return {
+      success: true,
+      data: responseData.data,
+      message: responseData.message
+    };
+  } catch (error) {
+    console.error('Error adding bank account:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to add bank account'
+    };
+  }
+};
+
+// Fetch nominal balance
+export const fetchNominalBalance = async (token: string): Promise<{ success: boolean; data?: NominalBalance; message?: string }> => {
+  const url = `${BASE_URL}/istockApp/nominal-balance`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        message: responseData.message || `Failed to fetch nominal balance: ${response.status}`
+      };
+    }
+    
+    return {
+      success: true,
+      data: responseData.data,
+      message: responseData.message
+    };
+  } catch (error) {
+    console.error('Error fetching nominal balance:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to fetch nominal balance'
+    };
+  }
+};
+
+// Fetch CSD balance from portfolio total
+export const fetchCSDBalance = async (token: string): Promise<{ success: boolean; data?: { mcsdBalance: any[] }; message?: string }> => {
+  const url = `${BASE_URL}/istock/core/stk-balance/portfolio-total`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        message: responseData.message || `Failed to fetch CSD balance: ${response.status}`
+      };
+    }
+    
+    // Filter only codes 9992 and 9998
+    const filteredMcsdBalance = responseData.data?.mcsdBalance?.filter((item: any) => 
+      item.code === '9992' || item.code === '9998'
+    ) || [];
+    
+    return {
+      success: true,
+      data: { mcsdBalance: filteredMcsdBalance },
+      message: responseData.message
+    };
+  } catch (error) {
+    console.error('Error fetching CSD balance:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to fetch CSD balance'
+    };
+  }
+};
+
+// Check CSD agreement
+export const checkCSDAgreement = async (token: string): Promise<{ success: boolean; data?: CSDAgreement; message?: string }> => {
+  const url = `${BASE_URL}/istockApp/csd-agreement/check`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        message: responseData.message || `Failed to check CSD agreement: ${response.status}`
+      };
+    }
+    
+    return {
+      success: true,
+      data: responseData.data,
+      message: responseData.message
+    };
+  } catch (error) {
+    console.error('Error checking CSD agreement:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to check CSD agreement'
     };
   }
 };

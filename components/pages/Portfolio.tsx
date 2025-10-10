@@ -498,16 +498,16 @@ export default function Portfolio() {
     <div>
       <p className="text-gray-500 dark:text-gray-400 mb-1">{t('portfolio.profitLoss')}</p>
       {yieldData ? (
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col space-y-1">
           <span
-            className={`font-semibold text-base ${
+            className={`font-semibold text-sm ${
               profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
             }`}
           >
             {showBalance ? (profit >= 0 ? '+' : '') + formatCurrency(Math.abs(profit)) : '***'} ₮
           </span>
           <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${
+            className={`px-2 py-1 rounded-full text-xs font-medium w-fit ${
               profit >= 0
                 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                 : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
