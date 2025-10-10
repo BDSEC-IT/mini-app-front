@@ -59,6 +59,22 @@ const isStockABond = (stock: StockData | undefined | null): boolean => {
   return isSymbolBond || isMarketSegmentBond;
 };
 
+// Helper function to format symbol display (shorten both stocks and bonds)
+const formatSymbolDisplay = (symbol: string): string => {
+  if (!symbol) return '';
+  
+  // For bonds with pattern like "TMPG-BD-07/03/18-A0121-15.5"
+  // Extract just the first part before "-BD"
+  if (symbol.toUpperCase().includes('-BD')) {
+    const parts = symbol.split('-BD');
+    return parts[0]; // Returns "TMPG" from "TMPG-BD-07/03/18-A0121-15.5"
+  }
+  
+  // For stocks with pattern like "BRM-O-0000" or "BRM-O-0001"
+  // Extract just the base symbol
+  return symbol.split('-')[0]; // Returns "BRM" from "BRM-O-0000"
+};
+
 // Loading Skeleton Component with scroll animations
 const LoadingSkeleton = ({ delay = 0, fromRight = false, inView = false }: { delay?: number, fromRight?: boolean, inView?: boolean }) => {
   return (
@@ -370,7 +386,7 @@ const StockListComponent = ({
             </svg>
             <div className="flex items-start justify-between mb-1 z-10">
               <h3 className="flex items-center justify-center font-medium text-xs text-white rounded-full h-7 w-7 bg-bdsec dark:bg-indigo-400">
-                {selectedStock.Symbol.toUpperCase().includes('-BD') ? selectedStock.Symbol : selectedStock.Symbol.split('-')[0]}
+                {formatSymbolDisplay(selectedStock.Symbol)}
               </h3>
               <div className={`text-xs font-semibold px-1 py-0.5 rounded-md ${
                 Math.abs(selectedStock.Changep || 0) < 0.01 
@@ -470,7 +486,7 @@ const StockListComponent = ({
                         </svg>
                         <div className="flex items-start justify-between mb-1 z-10">
                           <h3 className="flex items-center justify-center font-medium text-xs text-white rounded-full h-7 w-7 bg-bdsec dark:bg-indigo-500">
-                            {stock.Symbol.toUpperCase().includes('-BD') ? stock.Symbol : stock.Symbol.split('-')[0]}
+                            {formatSymbolDisplay(stock.Symbol)}
                           </h3>
                           <div className={`text-xs font-semibold px-1 py-0.5 rounded-md ${
                             Math.abs(stock.Changep || 0) < 0.01 
@@ -534,6 +550,7 @@ const StockListComponent = ({
 
 // Memoize the component to prevent unnecessary re-renders
 export const StockList = React.memo(StockListComponent, (prevProps, nextProps) => {
+  console.log(prevProps, nextProps)
   // Simplified comparison to reduce computation and prevent over-optimization
   if (prevProps.loading !== nextProps.loading) return false;
   if (prevProps.activeFilter !== nextProps.activeFilter) return false;

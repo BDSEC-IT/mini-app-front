@@ -307,10 +307,10 @@ const DashboardContent = () => {
         });
       } else {
         console.log('🏠 Dashboard: Socket.IO connection failed, using periodic refresh');
-        // Fallback to periodic refresh every 5 seconds
+        // Fallback to periodic refresh every 20 seconds
         const interval = setInterval(() => {
           fetchStocksData();
-        }, 5000);
+        }, 20000);
         
         return () => clearInterval(interval);
       }
@@ -392,23 +392,31 @@ const DashboardContent = () => {
     
     switch (activeFilter) {
       case 'trending':
-        filtered = filtered.sort((a, b) => (b.Volume || 0) - (a.Volume || 0))
+        // Exclude bonds from trending view
+        filtered = filtered
+          .filter(stock => !stock.Symbol.toUpperCase().includes('-BD'))
+          .sort((a, b) => (b.Volume || 0) - (a.Volume || 0))
         break
       case 'mostActive':
-        filtered = filtered.sort((a, b) => {
-          const dateA = a.MDEntryTime ? new Date(a.MDEntryTime).getTime() : 0;
-          const dateB = b.MDEntryTime ? new Date(b.MDEntryTime).getTime() : 0;
-          return dateB - dateA;
-        });
+        // Exclude bonds from most active view
+        filtered = filtered
+          .filter(stock => !stock.Symbol.toUpperCase().includes('-BD'))
+          .sort((a, b) => {
+            const dateA = a.MDEntryTime ? new Date(a.MDEntryTime).getTime() : 0;
+            const dateB = b.MDEntryTime ? new Date(b.MDEntryTime).getTime() : 0;
+            return dateB - dateA;
+          });
         break
       case 'gainers':
+        // Exclude bonds from gainers view
         filtered = filtered
-          .filter(stock => stock.Changep > 0)
+          .filter(stock => !stock.Symbol.toUpperCase().includes('-BD') && stock.Changep > 0)
           .sort((a, b) => b.Changep - a.Changep)
         break
       case 'losers':
+        // Exclude bonds from losers view
         filtered = filtered
-          .filter(stock => stock.Changep < 0)
+          .filter(stock => !stock.Symbol.toUpperCase().includes('-BD') && stock.Changep < 0)
           .sort((a, b) => a.Changep - b.Changep)
         break
       case 'bonds':
@@ -496,23 +504,31 @@ const DashboardContent = () => {
 
     switch (filter) {
       case 'trending':
-        filtered = filtered.sort((a, b) => (b.Volume || 0) - (a.Volume || 0));
+        // Exclude bonds from trending view
+        filtered = filtered
+          .filter(stock => !stock.Symbol.toUpperCase().includes('-BD'))
+          .sort((a, b) => (b.Volume || 0) - (a.Volume || 0));
         break;
       case 'mostActive':
-        filtered = filtered.sort((a, b) => {
-          const dateA = a.MDEntryTime ? new Date(a.MDEntryTime).getTime() : 0;
-          const dateB = b.MDEntryTime ? new Date(b.MDEntryTime).getTime() : 0;
-          return dateB - dateA;
-        });
+        // Exclude bonds from most active view
+        filtered = filtered
+          .filter(stock => !stock.Symbol.toUpperCase().includes('-BD'))
+          .sort((a, b) => {
+            const dateA = a.MDEntryTime ? new Date(a.MDEntryTime).getTime() : 0;
+            const dateB = b.MDEntryTime ? new Date(b.MDEntryTime).getTime() : 0;
+            return dateB - dateA;
+          });
         break;
       case 'gainers':
+        // Exclude bonds from gainers view
         filtered = filtered
-          .filter(stock => stock.Changep > 0)
+          .filter(stock => !stock.Symbol.toUpperCase().includes('-BD') && stock.Changep > 0)
           .sort((a, b) => b.Changep - a.Changep);
         break;
       case 'losers':
+        // Exclude bonds from losers view
         filtered = filtered
-          .filter(stock => stock.Changep < 0)
+          .filter(stock => !stock.Symbol.toUpperCase().includes('-BD') && stock.Changep < 0)
           .sort((a, b) => a.Changep - b.Changep);
         break;
       case 'bonds':
@@ -604,8 +620,8 @@ const DashboardContent = () => {
       {isBond && displayStockData && (
         <div 
           ref={bondRef}
-          className={`bg-white dark:bg-gray-800 rounded-md shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-1000 delay-200 ${
-            bondInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          className={` rounded-md shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-1000 delay-200 ${
+            !bondInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
         >
           <div className="border-b border-gray-100 dark:border-gray-700 p-4 rounded-md">
@@ -623,13 +639,13 @@ const DashboardContent = () => {
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">{selectedCard.Symbol}</div>
                   </div>
                   <div>
-                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.company')}</div>
+                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.name')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">{selectedCard.mnName || selectedCard.enName}</div>
                   </div>
                   <div>
-                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">Өмнөх хаалтын үнэ</div>
+                    <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.previousClose')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
-                      {selectedCard.PreviousClose ? (selectedCard.PreviousClose * 1000).toLocaleString() : '-'} ₮
+                      {selectedCard.LastTradedPrice ? (selectedCard.LastTradedPrice * 1000).toLocaleString() : '-'} ₮
                     </div>
                   </div>
                 </div>
@@ -641,24 +657,24 @@ const DashboardContent = () => {
                       {selectedCard.Turnover ? selectedCard.Turnover.toLocaleString() : '-'}
                     </div>
                   </div>
-                  <div>
+                  {/* <div>
                     <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.volume')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
                       {selectedCard.Volume ? selectedCard.Volume.toLocaleString() : '-'}
                     </div>
-                  </div>
+                  </div> */}
                   <div>
                     <div className="text-sm font-normal text-gray-500 dark:text-gray-400">ISIN</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
                       {companyDetails?.ISIN || '-'}
                     </div>
                   </div>
-                  <div>
+                  {/* <div>
                     <div className="text-sm font-normal text-gray-500 dark:text-gray-400">{t('dashboard.listingDate')}</div>
                     <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
-                      {companyDetails?.changedate || '-'}
+                      {companyDetails?.NominalValue || '-'}
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>

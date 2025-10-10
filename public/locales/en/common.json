@@ -311,6 +311,7 @@
       "noOrders": "No Orders",
     "symbol": "Symbol",
     "company": "Company",
+    "name": "Name",
     "lastPrice": "Last Price",
     "company_search" : "Search : BDS/BDSec",
     "searchByCompanyOrSymbol": "Company/symbol",

@@ -49,10 +49,10 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
               <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.listedShares')}:</span>
               <span className="text-xs sm:text-sm font-medium">{details.outstanding_shares}</span>
             </div> */}
-            <div className="flex justify-between items-center p-3">
+            {/* <div className="flex justify-between items-center p-3">
               <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.listingDate')}:</span>
               <span className="text-xs sm:text-sm font-medium">{details.changedate}</span>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

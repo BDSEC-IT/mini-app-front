@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, X, ArrowUp, ArrowDown, ExternalLink } from 'lucide-react'
+import { Search, X, ExternalLink } from 'lucide-react'
 import { fetchBonds, type BondData } from '@/lib/api'
 
 const Bonds = () => {
@@ -11,10 +11,6 @@ const Bonds = () => {
   const [filteredBonds, setFilteredBonds] = useState<BondData[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [sortConfig, setSortConfig] = useState<{
-    key: keyof BondData | null;
-    direction: 'asc' | 'desc';
-  }>({ key: null, direction: 'asc' })
   const currentLanguage = i18n.language || 'mn'
   // Fetch bonds data
   const fetchBondsData = useCallback(async () => {
@@ -42,22 +38,10 @@ const Bonds = () => {
     setSearchTerm('')
   }
 
-  // Handle sorting
-  const handleSort = (key: keyof BondData) => {
-    let direction: 'asc' | 'desc' = 'asc'
-    
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc'
-    }
-    
-    setSortConfig({ key, direction })
-  }
-
-  // Apply filters and sorting
+  // Apply search filter
   useEffect(() => {
     let filtered = [...bonds]
     
-    // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(bond => 
         (bond.Symbol?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -66,35 +50,8 @@ const Bonds = () => {
       )
     }
     
-    // Apply sorting
-    if (sortConfig.key) {
-      filtered.sort((a, b) => {
-        const aValue = a[sortConfig.key!];
-        const bValue = b[sortConfig.key!];
-        
-        if (aValue === null || aValue === undefined) return 1
-        if (bValue === null || bValue === undefined) return -1
-        
-        // Handle string comparison
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-          return sortConfig.direction === 'asc' 
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue)
-        }
-        
-        // Handle number comparison
-        if (aValue < bValue) {
-          return sortConfig.direction === 'asc' ? -1 : 1
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === 'asc' ? 1 : -1
-        }
-        return 0
-      })
-    }
-    
     setFilteredBonds(filtered)
-  }, [bonds, searchTerm, sortConfig, currentLanguage])
+  }, [bonds, searchTerm, currentLanguage])
 
   // Fetch data on component mount
   useEffect(() => {
@@ -125,172 +82,131 @@ const Bonds = () => {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="bg-white dark:bg-gray-800">
-        <h1 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">{t('bonds.title')}</h1>
-        
-        {/* Search bar */}
-        <div className="relative mb-4">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <Search className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+    <div className="p-3">
+      {/* Header with MSE information */}
+      <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">{t('bonds.title')}</h1>
+            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+              {currentLanguage === 'mn' ? 'МХБ-ийн бонд' : 'MSE Bonds'}
+            </p>
           </div>
-          <input
-            type="text"
-            className="h-10 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-bdsec dark:focus:ring-indigo-500 focus:border-bdsec dark:focus:border-indigo-500 block w-full pl-9 pr-10"
-            placeholder={t('bonds.searchPlaceholder', 'Search bonds...')}
-            value={searchTerm}
-            onChange={handleSearch}
-          />
-          {searchTerm && (
-            <button
-              className="absolute inset-y-0 right-0 flex items-center pr-3 h-8 w-8 justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              onClick={clearSearch}
+          <div className="text-xs text-blue-600 dark:text-blue-400">
+            {currentLanguage === 'mn' ? 'MSE' : 'MSE'}
+          </div>
+        </div>
+      </div>
+      
+      {/* Search bar */}
+      <div className="relative mb-3">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+          <Search className="w-4 h-4 text-gray-500" />
+        </div>
+        <input
+          type="text"
+          className="h-10 bg-transparent border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white text-sm rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent block w-full pl-9 pr-10"
+          placeholder={t('bonds.searchPlaceholder', 'Search bonds...')}
+          value={searchTerm}
+          onChange={handleSearch}
+        />
+        {searchTerm && (
+          <button
+            className="absolute inset-y-0 right-0 flex items-center pr-3 h-8 w-8 justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            onClick={clearSearch}
+            aria-label="Clear search"
+          >
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
+        )}
+      </div>
+      
+      {/* Bonds list */}
+      <div className="space-y-2">
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+          </div>
+        ) : filteredBonds.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('bonds.noResults', 'No bonds found')}</p>
+          </div>
+        ) : (
+          filteredBonds.map((bond, index) => (
+            <div 
+              key={bond.pkId || `${bond.Symbol}-${index}`} 
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2"
             >
-              <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </button>
-          )}
-        </div>
-        
-        {/* Bonds table */}
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="animate-spin h-8 w-8 border-4 border-bdsec dark:border-indigo-500 border-t-transparent rounded-full"></div>
-            </div>
-          ) : filteredBonds.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-base font-normal text-gray-600 dark:text-gray-400">{t('bonds.noResults', 'No bonds found')}</p>
-            </div>
-          ) : (
-            <table className="w-full text-sm text-left">
-              <thead className="text-sm uppercase bg-gray-100 dark:bg-gray-800">
-                <tr>
-                  <th className="px-3 py-3 cursor-pointer whitespace-nowrap" onClick={() => handleSort('Symbol')}>
-                    <div className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {t('bonds.symbol', 'Symbol')}
-                      {sortConfig.key === 'Symbol' && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" /> 
-                          : <ArrowDown className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 cursor-pointer" onClick={() => handleSort(currentLanguage === 'mn' ? 'BondmnName' : 'BondenName')}>
-                    <div className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {t('bonds.name', 'Name')}
-                      {sortConfig.key === (currentLanguage === 'mn' ? 'BondmnName' : 'BondenName') && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" /> 
-                          : <ArrowDown className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 cursor-pointer" onClick={() => handleSort(currentLanguage === 'mn' ? 'Issuer' : 'IssuerEn')}>
-                    <div className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {t('bonds.issuer', 'Issuer')}
-                      {sortConfig.key === (currentLanguage === 'mn' ? 'Issuer' : 'IssuerEn') && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" /> 
-                          : <ArrowDown className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 cursor-pointer" onClick={() => handleSort('TradedDate')}>
-                    <div className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {t('bonds.period', 'Period')}
-                      {sortConfig.key === 'TradedDate' && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" /> 
-                          : <ArrowDown className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 cursor-pointer" onClick={() => handleSort('Interest')}>
-                    <div className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {t('bonds.yield', 'Yield %')}
-                      {sortConfig.key === 'Interest' && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" /> 
-                          : <ArrowDown className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 cursor-pointer" onClick={() => handleSort(currentLanguage === 'mn' ? 'mnInterestConditions' : 'enInterestConditions')}>
-                    <div className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {t('bonds.conditions', 'Conditions')}
-                      {sortConfig.key === (currentLanguage === 'mn' ? 'mnInterestConditions' : 'enInterestConditions') && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" /> 
-                          : <ArrowDown className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 cursor-pointer" onClick={() => handleSort('NominalValue')}>
-                    <div className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {t('bonds.price', 'Price')}
-                      {sortConfig.key === 'NominalValue' && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" /> 
-                          : <ArrowDown className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 cursor-pointer" onClick={() => handleSort('RefundDate')}>
-                    <div className="flex items-center text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {t('bonds.refundDate', 'Refund')}
-                      {sortConfig.key === 'RefundDate' && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUp className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" /> 
-                          : <ArrowDown className="ml-1 h-3 w-3 text-gray-600 dark:text-gray-400" />
-                      )}
-                    </div>
-                  </th>
-                  <th className="px-3 py-3 text-sm font-medium text-gray-600 dark:text-gray-400">
-                    {t('bonds.details', 'Details')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredBonds.map((bond, index) => (
-                  <tr 
-                    key={bond.pkId || `${bond.Symbol}-${index}`} 
-                    className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+              {/* Header row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  {bond.Symbol && (
+                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium rounded">
+                      {formatSymbol(bond.Symbol)}
+                    </span>
+                  )}
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {currentLanguage === 'mn' ? bond.BondmnName : bond.BondenName}
+                  </span>
+                </div>
+                {bond.MoreInfo && (
+                  <a 
+                    href={bond.MoreInfo} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 dark:text-blue-400 hover:underline flex items-center text-xs"
+                    aria-label="View more details"
                   >
-                    <td className="px-3 py-3 font-medium">
-                      {bond.Symbol ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                          {formatSymbol(bond.Symbol)}
-                        </span>
-                      ) : (
-                        <span className="text-gray-500 dark:text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-sm font-normal text-gray-900 dark:text-gray-100">{currentLanguage === 'mn' ? bond.BondmnName : bond.BondenName}</td>
-                    <td className="px-3 py-3 text-sm font-normal text-gray-900 dark:text-gray-100">{currentLanguage === 'mn' ? bond.Issuer : bond.IssuerEn}</td>
-                    <td className="px-3 py-3 text-sm font-normal text-gray-900 dark:text-gray-100">{formatDate(bond.Date)} {bond.Date==="-" ? '' : t('bonds.years', 'years')}</td>
-                    <td className="px-3 py-3 text-sm font-normal text-gray-900 dark:text-gray-100">{formatPercentage(bond.Interest)}</td>
-                    <td className="px-3 py-3 text-sm font-normal text-gray-900 dark:text-gray-100">{currentLanguage === 'mn' ? bond.mnInterestConditions : bond.enInterestConditions}</td>
-                    <td className="px-3 py-3 text-sm font-normal text-gray-900 dark:text-gray-100">{formatNominalValue(bond.NominalValue, bond.Isdollar)}</td>
-                    <td className="px-3 py-3 text-sm font-normal text-gray-900 dark:text-gray-100">{formatDate(bond.RefundDate)}</td>
-                    <td className="px-3 py-3">
-                      {bond.MoreInfo && (
-                        <a 
-                          href={bond.MoreInfo} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-bdsec dark:text-indigo-400 hover:underline flex items-center text-sm font-normal"
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1 text-gray-600 dark:text-gray-400" />
-                          {t('bonds.viewMore', 'View')}
-                        </a>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    {t('bonds.viewMore', 'View')}
+                  </a>
+                )}
+              </div>
+              
+              {/* Details grid */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">{t('bonds.issuer', 'Issuer')}:</span>
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {currentLanguage === 'mn' ? bond.Issuer : bond.IssuerEn}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">{t('bonds.yield', 'Yield')}:</span>
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {formatPercentage(bond.Interest)}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">{t('bonds.period', 'Period')}:</span>
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {formatDate(bond.Date)} {bond.Date !== "-" && t('bonds.years', 'years')}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400">{t('bonds.price', 'Price')}:</span>
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {formatNominalValue(bond.NominalValue, bond.Isdollar)}
+                  </div>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-gray-500 dark:text-gray-400">{t('bonds.refundDate', 'Refund')}:</span>
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {formatDate(bond.RefundDate)}
+                  </div>
+                </div>
+                {(currentLanguage === 'mn' ? bond.mnInterestConditions : bond.enInterestConditions) && (
+                  <div className="col-span-2">
+                    <span className="text-gray-500 dark:text-gray-400">{t('bonds.conditions', 'Conditions')}:</span>
+                    <div className="font-medium text-gray-900 dark:text-white text-xs">
+                      {currentLanguage === 'mn' ? bond.mnInterestConditions : bond.enInterestConditions}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   )

@@ -106,10 +106,9 @@ export default function NewsDetailPage() {
           </div>
 
           {/* Organization Logos */}
-          {article.cover && (
+          {/* {article.cover && (
             <div className="mb-6">
               <div className="flex justify-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg mb-6">
-                {/* You can add specific logos here based on the article */}
                 <div className="flex gap-4 items-center opacity-60">
                   <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">ХААН БАНК</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">BDSEC ҮЦК</span>
@@ -118,7 +117,7 @@ export default function NewsDetailPage() {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Main Article Image */}
           {article.cover && (

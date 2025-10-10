@@ -42,6 +42,22 @@ const getCompanyName = (stock: StockData | null, t: any, lang: string) => {
   return lang === 'mn' ? stock.mnName : stock.enName;
 };
 
+// Helper: Format symbol display (shorten both stocks and bonds)
+const formatSymbolDisplay = (symbol: string): string => {
+  if (!symbol) return '';
+  
+  // For bonds with pattern like "TMPG-BD-07/03/18-A0121-15.5"
+  // Extract just the first part before "-BD"
+  if (symbol.toUpperCase().includes('-BD')) {
+    const parts = symbol.split('-BD');
+    return parts[0]; // Returns "TMPG" from "TMPG-BD-07/03/18-A0121-15.5"
+  }
+  
+  // For stocks with pattern like "BRM-O-0000" or "BRM-O-0001"
+  // Extract just the base symbol
+  return symbol.split('-')[0]; // Returns "BRM" from "BRM-O-0000"
+};
+
 
 // Main StockHeader component
 export const StockHeader = ({
@@ -80,9 +96,7 @@ export const StockHeader = ({
         <div className="flex ">
         <div className="w-full items-center ">
           <h2 className="text-lg font-semibold ml-2">
-            {selectedStockData?.Symbol?.toUpperCase().includes('-BD')
-              ? selectedStockData?.Symbol
-              : selectedStockData?.Symbol?.split('-')[0]}
+            {selectedStockData?.Symbol ? formatSymbolDisplay(selectedStockData.Symbol) : ''}
           </h2>
           {selectedStockData && (
             <span className="text-sm font-medium bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-md">
@@ -103,7 +117,9 @@ export const StockHeader = ({
                 >
                   <Search size={12} className="text-gray-600 dark:text-gray-400 mr-1 flex-shrink-0" />
                   <div className="flex items-center text-xs font-normal min-w-0 overflow-hidden">
-                    <span className="font-medium flex-shrink-0 text-gray-900 dark:text-gray-100">{selectedSymbol.split('-')[0]}</span>
+                    <span className="font-medium flex-shrink-0 text-gray-900 dark:text-gray-100">
+                      {selectedStockData ? formatSymbolDisplay(selectedStockData.Symbol) : selectedSymbol.split('-')[0]}
+                    </span>
                     <span className="mx-1 text-xs font-normal flex-shrink-0 text-gray-500 dark:text-gray-400">•</span>
                     <span className="truncate text-xs font-normal text-gray-600 dark:text-gray-300">
                       {getCompanyName(selectedStockData, t, currentLanguage)?.substring(0, 8) || ''}
@@ -151,7 +167,7 @@ export const StockHeader = ({
                             }}
                           >
                             <div className="flex flex-col items-start">
-                              <span className="font-medium text-gray-900 dark:text-white flex-shrink-0">{stock.Symbol}</span>
+                              <span className="font-medium text-gray-900 dark:text-white flex-shrink-0">{formatSymbolDisplay(stock.Symbol)}</span>
                               <span className="text-gray-600 dark:text-gray-300 truncate text-xs font-normal mt-0.5">{companyName}</span>
                             </div>
                           </button>
@@ -172,9 +188,18 @@ export const StockHeader = ({
         <div className="mt-2">
           <div className="flex flex-col items-start mb-2 px-2">
             {selectedStockData ? (
-              <BlinkEffect value={selectedStockData?.PreviousClose || 0}>
+              <BlinkEffect value={
+                selectedStockData.Symbol?.toUpperCase().includes('-BD')
+                  ? (selectedStockData.LastTradedPrice || 0)
+                  : (selectedStockData.PreviousClose || 0)
+              }>
                 <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {formatPrice(selectedStockData.PreviousClose, selectedStockData.Symbol)} ₮
+                  {formatPrice(
+                    selectedStockData.Symbol?.toUpperCase().includes('-BD')
+                      ? selectedStockData.LastTradedPrice
+                      : selectedStockData.PreviousClose,
+                    selectedStockData.Symbol
+                  )} ₮
                 </div>
               </BlinkEffect>
             ) : (

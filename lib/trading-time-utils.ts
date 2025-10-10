@@ -39,18 +39,26 @@ export function isTodaysFreshData(mdEntryTime: string | undefined): boolean {
 }
 
 /**
- * Filter stocks to show only today's fresh trading data
+ * Filter stocks to show only today's fresh trading data OR stocks with valid order book data
  * @param stocks Array of stock data
- * @returns Stocks with today's fresh data only
+ * @returns Stocks with today's fresh data or active trading data
  */
-export function filterTodaysFreshStocks<T extends { MDEntryTime?: string; Symbol: string }>(stocks: T[]): T[] {
+export function filterTodaysFreshStocks<T extends { MDEntryTime?: string; Symbol: string; PreviousClose?: number; HighestBidPrice?: number; LowestOfferPrice?: number }>(stocks: T[]): T[] {
   return stocks.filter(stock => {
     // Always show bonds regardless of date
     const isBond = stock.Symbol?.toUpperCase().includes('-BD');
     if (isBond) return true;
     
-    // For stocks, only show today's fresh data
-    return isTodaysFreshData(stock.MDEntryTime);
+    // For stocks, show if:
+    // 1. It has today's fresh data, OR
+    // 2. It has active order book data (bid/ask prices), OR
+    // 3. It has a valid previous close price
+    const hasFreshData = isTodaysFreshData(stock.MDEntryTime);
+    const hasOrderBookData = (stock.HighestBidPrice && stock.HighestBidPrice > 0) || 
+                            (stock.LowestOfferPrice && stock.LowestOfferPrice > 0);
+    const hasValidPrice = stock.PreviousClose && stock.PreviousClose > 0;
+    
+    return hasFreshData || hasOrderBookData || hasValidPrice;
   });
 }
 

@@ -234,10 +234,10 @@ export default function StockInfo({
                 <span>{t('dashboard.listedShares')}</span>
                 <span className="font-semibold">{details.listedShares}</span>
               </div>
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <span>{t('dashboard.listingDate')}</span>
                 <span className="font-semibold">{details.listingDate}</span>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

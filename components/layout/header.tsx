@@ -56,7 +56,7 @@ const Header = () => {
           </div>
           
           {!isLoggedIn && (
-            <p className="text-sm lg:text-base ">DiGiPAY</p>
+            <p className="text-sm lg:text-base ">Mini-App</p>
           )}
           
           {/* <button

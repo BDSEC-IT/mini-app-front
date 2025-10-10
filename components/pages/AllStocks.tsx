@@ -928,7 +928,7 @@ const getStockCategory = (stock: StockData): string => {
                 ))}
               </div>
               
-              <div className="mt-3">
+              {/* <div className="mt-3">
                 <h3 className="font-medium mb-2">{t('allStocks.timeFilter')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {['today', 'yesterday', 'thisWeek', 'thisMonth'].map(period => (
@@ -940,7 +940,7 @@ const getStockCategory = (stock: StockData): string => {
                     </button>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
           )}
           
