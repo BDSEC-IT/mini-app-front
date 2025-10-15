@@ -252,7 +252,7 @@ export const StockHeader = ({
                             ? 'text-green-700 dark:text-green-400' 
                             : 'text-amber-700 dark:text-amber-400'
                         }`}>
-                          {isToday ? 'Өнөөдрийн мэдээлэл' : 'Сүүлийн арилжаа'}
+                          {isToday ? 'Сүүлд шинэчлэгдсэн' : 'Сүүлд шинэчлэгдсэн'}
                         </span>
                         <span className={`text-xs ${
                           isToday 
