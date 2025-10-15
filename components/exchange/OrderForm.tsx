@@ -61,7 +61,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setOrderType(e.target.value)}
           className="text-xs py-2"
         >
-          <option value="Зах зээлийн">Зах зээлийн</option>
+          <option value="Зах зээлийн">Зах зээл</option>
           <option value="Нөхцөлт">Нөхцөлт</option>
         </Select>
 

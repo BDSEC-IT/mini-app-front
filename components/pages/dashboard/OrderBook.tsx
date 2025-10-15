@@ -100,6 +100,8 @@ const OrderBookComponent = ({
             <Activity size={16} className="mr-2 text-gray-600 dark:text-gray-400" />
             {t('dashboard.orderBook')} - {selectedSymbol.split('-')[0]}
           </h2>
+          <div className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.orderBookExplanation')}</div>
+
           {/* <div className="flex items-center gap-2 mt-1">
             <div className="hidden sm:block text-sm font-normal text-gray-600 dark:text-gray-400">
               {t('dashboard.lastUpdated')}

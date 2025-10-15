@@ -28,7 +28,7 @@ export default function Balance() {
   
   // Transaction filters
   const [transactionFilter, setTransactionFilter] = useState<TransactionFilter>('all');
-  const [transactionType, setTransactionType] = useState<TransactionType>('all');
+  const [transactionType, setTransactionType] = useState<TransactionType>('security');
   const [dateRangeOption, setDateRangeOption] = useState<DateRangeOption>('all');
   const [customStart, setCustomStart] = useState<string>('');
   const [customEnd, setCustomEnd] = useState<string>('');
@@ -119,10 +119,10 @@ export default function Balance() {
                   </div>
                   <div className="text-right z-10">
                     <p className="font-bold text-gray-900 dark:text-white">
-                      {showBalance ? asset.quantity : '***'}
+                      {showBalance ? asset.quantity.toLocaleString() : '***'}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      <span>Эхний үлдэгдэл: </span>{showBalance ? `${formatCurrency(assetValue)} ₮` : '***,*** ₮'}
+                      <span>Одоогийн үнэлгээ: </span>{showBalance ? `${formatCurrency(assetValue)} ₮` : '***,*** ₮'}
                     </p>
                   </div>
                 </div>
@@ -194,7 +194,17 @@ export default function Balance() {
           </div>
           
           
-          <div className="flex items-center justify-end z-10">
+          <div className="flex items-center justify-end space-x-2 z-10">
+            <button
+              onClick={() => {
+                // Set type first, then change page in next tick to ensure type is set
+                setTransactionType('cash');
+                setTimeout(() => setCurrentPage('transactions'), 0);
+              }}
+              className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-sm rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+            >
+              Хуулга
+            </button>
             <button 
               onClick={() => window.location.href = '/balance/withdrawal'}
               className="bg-bdsec dark:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-bdsec/90"
@@ -239,12 +249,22 @@ export default function Balance() {
                   {showBalance ? `${formatCurrency(item.balance)} ₮` : '***,*** ₮'}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  <span>Эхний үлдэгдэл: </span>{showBalance ? `${formatCurrency(item.balance)} ₮` : '***,*** ₮'}
+                  <span>Одоогийн үнэлгээ: </span>{showBalance ? `${formatCurrency(item.balance)} ₮` : '***,*** ₮'}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center justify-end z-10">
+            <div className="flex items-center justify-end space-x-2 z-10">
+              <button
+                onClick={() => {
+                  // Set type first, then change page in next tick to ensure type is set
+                  setTransactionType('cash');
+                  setTimeout(() => setCurrentPage('transactions'), 0);
+                }}
+                className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-sm rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+              >
+                Хуулга
+              </button>
               <button 
                 onClick={() => window.location.href = '/balance/withdrawal'}
                 className="bg-bdsec dark:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-bdsec/90"
@@ -333,6 +353,7 @@ export default function Balance() {
         customEnd={customEnd}
         onBack={() => {
           setSelectedAssetSymbol(null);
+          setTransactionType('security'); // Reset to default
           setCurrentPage('balance');
         }}
         onClearAssetFilter={() => setSelectedAssetSymbol(null)}

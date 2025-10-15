@@ -2131,7 +2131,7 @@ export const fetchIstockYieldAnalysis = async (token?: string) => {
 }
 
 export const fetchIstockCashTransactions = async (token?: string) => {
-  return istockFetch('cash-transaction-history', token)
+  return istockFetch('transaction-cash', token)
 }
 
 export const fetchIstockCsdTransactions = async (token?: string, forceRefresh = false) => {

@@ -14,9 +14,10 @@
   },
   "balance": {
     "totalAssets": "Total Assets",
-    "nominalBalance": "Nominal Available Balance"
+    "nominalBalance": "Nominal Available Balance (9995)"
   },
   "common": {
+    "noTransactions": "No transactions found",
     "loading": "Loading...",
     "error": "Error occurred",
     "success": "Success",
@@ -273,6 +274,7 @@
     "losers": "Losers",
     "sort": "Sort",
     "orderBook": "Order Book",
+    "orderBookExplanation" :"Active Order Books at the moment",
     "asOf": "As of",
     "sell": "Sell",
     "buy": "Buy",
@@ -322,8 +324,7 @@
     "searchByCompanyOrSymbol": "Company/symbol",
     "bonds": "Bonds",
     "tooltip": {
-      "trending": "Stocks sorted by their trading volume in descending order. Data reflects the latest available trading information, updated during trading hours (10 AM - 1 PM MNT).",
-      "mostActive": "Displays securities with the highest number of active order book orders. If multiple securities have the same number of orders, the most recently updated (freshest) order book is shown first.",
+      "mostActive": "Displays securities with the highest turnover.",
       "gainers": "Stocks with positive percentage change, sorted by change percentage in descending order. Data reflects the latest available trading information, updated during trading hours (10 AM - 1 PM MNT).",
       "losers": "Stocks with negative percentage change, sorted by change percentage in ascending order. Data reflects the latest available trading information, updated during trading hours (10 AM - 1 PM MNT).",
       "bonds": "Displays all bond instruments."

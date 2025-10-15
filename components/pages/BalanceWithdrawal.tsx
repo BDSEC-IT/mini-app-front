@@ -743,7 +743,7 @@ export default function BalanceWithdrawal() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 min-h-screen">
+    <div className=" pb-20 bg-white dark:bg-gray-900 min-h-screen">
       {/* Header */}
       {renderHeader()}
 

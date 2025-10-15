@@ -262,7 +262,6 @@ const StockListComponent = ({
   )
 
   const filters = [
-    { id: 'trending', label: t('dashboard.trending'), icon: TrendingUp },
     { id: 'mostActive', label: t('dashboard.mostActive'), icon: Activity },
     { id: 'gainers', label: t('dashboard.gainers'), icon: ArrowUp },
     { id: 'losers', label: t('dashboard.losers'), icon: ArrowDown },

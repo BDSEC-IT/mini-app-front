@@ -57,7 +57,7 @@ const DashboardContent = () => {
   const { t } = useTranslation();
   const [selectedSymbol, setSelectedSymbol] = useState('BDS'); // Default to BDS
   const { theme } = useTheme()
-  const [activeFilter, setActiveFilter] = useState('trending')
+  const [activeFilter, setActiveFilter] = useState('mostActive')
   const [orderBookData, setOrderBookData] = useState<OrderBookEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -391,12 +391,7 @@ const DashboardContent = () => {
     let filtered = filterTodaysFreshStocks(allStocks);
     
     switch (activeFilter) {
-      case 'trending':
-        // Exclude bonds from trending view
-        filtered = filtered
-          .filter(stock => !stock.Symbol.toUpperCase().includes('-BD'))
-          .sort((a, b) => (b.Volume || 0) - (a.Volume || 0))
-        break
+
       case 'mostActive':
         // Exclude bonds from most active view
         filtered = filtered
@@ -503,12 +498,7 @@ const DashboardContent = () => {
     let filtered = [...allStocks];
 
     switch (filter) {
-      case 'trending':
-        // Exclude bonds from trending view
-        filtered = filtered
-          .filter(stock => !stock.Symbol.toUpperCase().includes('-BD'))
-          .sort((a, b) => (b.Volume || 0) - (a.Volume || 0));
-        break;
+  
       case 'mostActive':
         // Exclude bonds from most active view
         filtered = filtered
