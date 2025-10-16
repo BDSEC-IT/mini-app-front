@@ -185,15 +185,20 @@ export const StockHeader = ({
 
 </div>
         {/* Price and Date */}
-        <div className="mt-2">
-          <div className="flex flex-col items-start mb-2 px-2">
+        <div className="mt-2 ">
+          <div className="flex  items-start   px-2">
+            {/* {selectedStockData && !isDataFresh && (
+              <div className="text-xs mr-2 px-2 py-1 bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-md   mt-1">
+                Хаалтын ханш
+              </div>
+            )} */}
             {selectedStockData ? (
               <BlinkEffect value={
                 selectedStockData.Symbol?.toUpperCase().includes('-BD')
                   ? (selectedStockData.LastTradedPrice || 0)
                   : (selectedStockData.PreviousClose || 0)
               }>
-                <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                <div className="text-3xl font-semibold text-gray-900 dark:text-white">
                   {formatPrice(
                     selectedStockData.Symbol?.toUpperCase().includes('-BD')
                       ? selectedStockData.LastTradedPrice
@@ -207,14 +212,10 @@ export const StockHeader = ({
             )}
             
             {/* Historical data indicator */}
-            {selectedStockData && !isDataFresh && (
-              <div className="text-xs px-2 py-1 bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-md border border-amber-200 dark:border-amber-800 mt-1">
-                Хаалтын ханш
-              </div>
-            )}
+            
             
             {/* Enhanced date/time display with clear visibility */}
-            <div className="mt-2 min-h-[32px] flex items-center gap-2">
+            <div className="  flex items-center self-center  ml-1">
               {chartLoading && !selectedStockData?.MDEntryTime ? (
                 <div className="flex items-center gap-2">
                   <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-bdsec dark:border-t-white rounded-full animate-spin"></span>
@@ -236,25 +237,23 @@ export const StockHeader = ({
                   );
                   
                   return (
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${
-                      isToday 
-                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-                        : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
-                    }`}>
+                    <div className={`flex items-center gap-2 px-3  rounded-lg 
+                  
+                    `}>
                       <div className={`w-2 h-2 rounded-full ${
                         isToday 
                           ? 'bg-green-500 animate-pulse' 
                           : 'bg-amber-500'
                       }`}></div>
                       <div className="flex flex-col">
-                        <span className={`text-sm font-medium ${
+                        <span className={`text-xs font-medium ${
                           isToday 
                             ? 'text-green-700 dark:text-green-400' 
                             : 'text-amber-700 dark:text-amber-400'
                         }`}>
                           {isToday ? 'Сүүлд шинэчлэгдсэн' : 'Сүүлд шинэчлэгдсэн'}
                         </span>
-                        <span className={`text-xs ${
+                        <span className={`text-[10px] ${
                           isToday 
                             ? 'text-green-600 dark:text-green-500' 
                             : 'text-amber-600 dark:text-amber-500'

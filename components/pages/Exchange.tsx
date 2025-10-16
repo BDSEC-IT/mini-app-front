@@ -58,36 +58,38 @@ interface OrderConfirmationModalProps {
 }
 
 const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen, onClose, onConfirm, orderData }) => {
+  const { t } = useTranslation('common');
+  
   if (!isOpen) return null;
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg max-w-sm w-full p-6">
-        <h3 className="text-lg font-medium mb-4">Захиалга баталгаажуулах</h3>
+        <h3 className="text-lg font-medium mb-4">{t('exchange.confirmOrder', 'Захиалга баталгаажуулах')}</h3>
         
         <div className="space-y-3 mb-6">
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Хувьцаа:</span>
+            <span className="text-gray-600 dark:text-gray-400">{t('exchange.stock', 'Хувьцаа')}:</span>
             <span className="font-medium">{orderData.symbol}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Төрөл:</span>
+            <span className="text-gray-600 dark:text-gray-400">{t('exchange.type', 'Төрөл')}:</span>
             <span className={`font-medium ${orderData.side === 'BUY' ? 'text-green-600' : 'text-red-600'}`}>
-              {orderData.side === 'BUY' ? 'Худалдан авах' : 'Худалдан зарах'}
+              {orderData.side === 'BUY' ? t('exchange.buyAction', 'Худалдан авах') : t('exchange.sellAction', 'Худалдан зарах')}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Тоо ширхэг:</span>
+            <span className="text-gray-600 dark:text-gray-400">{t('exchange.quantity', 'Тоо ширхэг')}:</span>
             <span className="font-medium">{orderData.quantity}</span>
           </div>
           {orderData.price && (
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">Үнэ:</span>
+              <span className="text-gray-600 dark:text-gray-400">{t('exchange.price', 'Үнэ')}:</span>
               <span className="font-medium">{parseFloat(orderData.price).toLocaleString()}₮</span>
             </div>
           )}
           <div className="flex justify-between border-t pt-3">
-            <span className="text-gray-600 dark:text-gray-400">Нийт дүн:</span>
+            <span className="text-gray-600 dark:text-gray-400">{t('exchange.total', 'Нийт дүн')}:</span>
             <span className="font-bold text-lg">{orderData.total.toLocaleString()}₮</span>
           </div>
         </div>
@@ -97,7 +99,7 @@ const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen,
             onClick={onClose}
             className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            Цуцлах
+            {t('exchange.cancel', 'Цуцлах')}
           </button>
           <button
             onClick={onConfirm}
@@ -105,7 +107,7 @@ const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen,
               orderData.side === 'BUY' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
             }`}
           >
-            Баталгаажуулах
+            {t('exchange.confirm', 'Баталгаажуулах')}
           </button>
         </div>
       </div>
@@ -126,7 +128,7 @@ const getPriceStep = (price: number): number => {
 };
 
 export default function Exchange() {
-  useTranslation('common');
+  const { t } = useTranslation('common');
   const { theme } = useTheme();
   
   // Core state
@@ -153,7 +155,8 @@ export default function Exchange() {
   const [orderType, setOrderType] = useState('Зах зээлийн');
   const [quantity, setQuantity] = useState('');
   const [price, setPrice] = useState('');
-  const [orderDuration, setOrderDuration] = useState('GTC'); // GTC, DAY, IOC, FOK
+  const [orderDuration, setOrderDuration] = useState('GTC'); // GTC, DAY, GTD
+  const [expireDate, setExpireDate] = useState<string>(''); // For GTD orders
 
   // Initialize data
   useEffect(() => {
@@ -437,14 +440,14 @@ export default function Exchange() {
   };
 
   const validateOrder = () => {
-    if (!selectedStock || !quantity) return 'Мэдээлэл дутуу байна';
+    if (!selectedStock || !quantity) return t('exchange.missingInfo', 'Мэдээлэл дутуу байна');
     
     const qty = parseFloat(quantity);
-    if (qty <= 0) return 'Тоо ширхэг буруу байна';
+    if (qty <= 0) return t('exchange.invalidQuantity', 'Тоо ширхэг буруу байна');
     
     if (orderSide === 'SELL') {
       const availableShares = selectedStockHolding?.quantity || 0;
-      if (qty > availableShares) return `Зөвхөн ${availableShares} ширхэг зарах боломжтой`;
+      if (qty > availableShares) return t('exchange.insufficientShares', `Зөвхөн ${availableShares} ширхэг зарах боломжтой`, { shares: availableShares });
     }
     
     if (orderSide === 'BUY') {
@@ -452,10 +455,32 @@ export default function Exchange() {
         ? (selectedStock.PreviousClose || 0)
         : (parseFloat(price) || 0);
       const totalCost = qty * orderPrice;
-      if (totalCost > (accountBalance || 0)) return 'Дансны үлдэгдэл хүрэлцэхгүй байна';
+      if (totalCost > (accountBalance || 0)) return t('exchange.insufficientBalance', 'Дансны үлдэгдэл хүрэлцэхгүй байна');
     }
     
-    if (orderType === 'Нөхцөлт' && !price) return 'Үнэ оруулна уу';
+    if (orderType === 'Нөхцөлт' && !price) return t('exchange.enterPrice', 'Үнэ оруулна уу');
+    
+    // Validate expireDate for GTD orders
+    if (orderDuration === 'GTD' && !expireDate) {
+      return t('exchange.selectExpireDate', 'Захиалга дуусах огноо сонгоно уу');
+    }
+    
+    // Ensure date is within 30 days
+    if (orderDuration === 'GTD' && expireDate) {
+      const selectedDate = new Date(expireDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const maxDate = new Date();
+      maxDate.setDate(maxDate.getDate() + 30);
+      maxDate.setHours(23, 59, 59, 999);
+      
+      if (selectedDate < today) {
+        return t('exchange.pastDateNotAllowed', 'Захиалга дуусах огноо өнгөрсөн байж болохгүй');
+      }
+      if (selectedDate > maxDate) {
+        return t('exchange.dateExceeds30Days', 'Захиалга дуусах огноо 30 хоногоос хэтрэхгүй байх ёстой');
+      }
+    }
     
     return null;
   };
@@ -463,7 +488,7 @@ export default function Exchange() {
   const handlePlaceOrder = async () => {
     const token = Cookies.get('token');
     if (!token) {
-      toast.error('Нэвтэрч орно уу');
+      toast.error(t('exchange.pleaseLogin', 'Нэвтэрч орно уу'));
       return;
     }
 
@@ -496,20 +521,50 @@ export default function Exchange() {
     setShowConfirmModal(false);
     
     try {
+      // Calculate expireDate based on timeForce
+      let calculatedExpireDate: string | undefined;
+      
+      if (orderDuration === 'DAY') {
+        // For DAY orders: expire at end of today
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+        calculatedExpireDate = today.toISOString();
+      } else if (orderDuration === 'GTD') {
+        // For GTD orders: use selected date or default to 30 days
+        if (expireDate) {
+          const selectedDate = new Date(expireDate);
+          selectedDate.setHours(23, 59, 59, 999);
+          calculatedExpireDate = selectedDate.toISOString();
+        } else {
+          // Default to 30 days from now
+          const thirtyDaysLater = new Date();
+          thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
+          thirtyDaysLater.setHours(23, 59, 59, 999);
+          calculatedExpireDate = thirtyDaysLater.toISOString();
+        }
+      } else if (orderDuration === 'GTC') {
+        // For GTC orders: automatically set to 30 days from now (MSE requirement)
+        const thirtyDaysLater = new Date();
+        thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
+        thirtyDaysLater.setHours(23, 59, 59, 999);
+        calculatedExpireDate = thirtyDaysLater.toISOString();
+      }
+      
       const orderData = {
         symbol: selectedStock!.Symbol,
         orderType: orderType === 'Зах зээлийн' ? 'MARKET' : 'CONDITIONAL',
-        timeForce: 'GTC',
+        timeForce: orderDuration,
         channel: 'API',
         side: orderSide,
         price: orderType === 'Зах зээлийн' ? (selectedStock!.PreviousClose || selectedStock!.LastTradedPrice || 0) : parseFloat(price),
         quantity: parseFloat(quantity),
-        exchangeId: 1
+        exchangeId: 1,
+        ...(calculatedExpireDate && { expireDate: calculatedExpireDate })
       };
 
       const result = await placeSecondaryOrder(orderData, token);
       if (result.success) {
-        toast.success('Захиалга амжилттай илгээгдлээ');
+        toast.success(t('exchange.orderPlaced', 'Захиалга амжилттай илгээгдлээ'));
         setQuantity('');
         setPrice('');
         // Refresh all data
@@ -520,10 +575,10 @@ export default function Exchange() {
           selectedStock ? fetchOrderBookData(selectedStock.Symbol) : Promise.resolve()
         ]);
       } else {
-        toast.error(result.message || 'Захиалга амжилтгүй');
+        toast.error(result.message || t('exchange.orderFailed', 'Захиалга амжилтгүй'));
       }
     } catch (error) {
-      toast.error('Алдаа гарлаа');
+      toast.error(t('exchange.error', 'Алдаа гарлаа'));
     } finally {
       setPlacing(false);
       setPendingOrder(null);
@@ -552,13 +607,13 @@ export default function Exchange() {
     try {
       const result = await cancelSecondaryOrder(numericOrderId, token);
       if (result.success) {
-        toast.success('Захиалга цуцлагдлаа');
+        toast.success(t('exchange.orderCancelled', 'Захиалга цуцлагдлаа'));
         await fetchOrdersData();
       } else {
-        toast.error('Захиалга цуцлах үед алдаа гарлаа');
+        toast.error(t('exchange.error', 'Захиалга цуцлах үед алдаа гарлаа'));
       }
     } catch (error) {
-      toast.error('Алдаа гарлаа');
+      toast.error(t('exchange.error', 'Алдаа гарлаа'));
     }
   };
 
@@ -599,12 +654,12 @@ export default function Exchange() {
           <button onClick={() => setShowPriceSteps(false)} className="mr-3">
             <ArrowLeftIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
-          <h1 className="text-lg font-medium text-gray-900 dark:text-white">Үнийн алхам</h1>
+          <h1 className="text-lg font-medium text-gray-900 dark:text-white">{t('exchange.priceSteps', 'Үнийн алхам')}</h1>
         </div>
         <div className="p-4">
           <div className="grid grid-cols-2 gap-4 mb-4 text-sm font-medium text-gray-600 dark:text-gray-400">
-            <div>Нэгжийн үнэ</div>
-            <div>Өөрчлөлтийн хэмжээ</div>
+            <div>{t('exchange.unitPrice', 'Нэгжийн үнэ')}</div>
+            <div>{t('exchange.changeAmount', 'Өөрчлөлтийн хэмжээ')}</div>
           </div>
           {[
             ['1000-с доош', '0.01 төгрөг'],
@@ -694,7 +749,7 @@ export default function Exchange() {
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              Захиалгын сан
+              {t('exchange.orderbook', 'Захиалгын сан')}
               {activeTab === 'orderbook' && (
                 <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600 dark:bg-blue-400"></div>
               )}
@@ -707,7 +762,7 @@ export default function Exchange() {
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              График
+              {t('exchange.chart', 'График')}
               {activeTab === 'chart' && (
                 <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-blue-600 dark:bg-blue-400"></div>
               )}
@@ -744,6 +799,8 @@ export default function Exchange() {
             setOrderSide={setOrderSide}
             orderDuration={orderDuration}
             setOrderDuration={setOrderDuration}
+            expireDate={expireDate}
+            setExpireDate={setExpireDate}
             quantity={quantity}
             setQuantity={setQuantity}
             price={price}

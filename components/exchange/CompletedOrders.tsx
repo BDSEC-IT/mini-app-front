@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CompletedOrderEntry {
   mdentryTime: string;
@@ -11,10 +12,12 @@ interface CompletedOrdersProps {
 }
 
 export const CompletedOrders: React.FC<CompletedOrdersProps> = ({ completedOrders }) => {
+  const { t } = useTranslation('common');
+  
   return (
     <div className="col-span-2 bg-gray-50 dark:bg-gray-800/30 rounded-lg p-1.5 border border-gray-200 dark:border-gray-700">
       <div className="text-[10px] font-medium h-6 text-center text-gray-600 dark:text-gray-300">
-        Биелсэн захиалга
+        {t('exchange.completedTrades', 'Биелсэн захиалга')}
       </div>
       <div className={`${completedOrders.length > 3 ? 'max-h-[88px] overflow-y-auto' : ''} space-y-0.5`}>
         {completedOrders.length > 0 ? completedOrders.map((trade, index) => (
@@ -38,7 +41,7 @@ export const CompletedOrders: React.FC<CompletedOrdersProps> = ({ completedOrder
           </div>
         )) : (
           <div className="text-[10px] text-gray-500 dark:text-gray-400 py-2 text-center">
-            Арилжаа байхгүй
+            {t('exchange.noTrades', 'Арилжаа байхгүй')}
           </div>
         )}
       </div>

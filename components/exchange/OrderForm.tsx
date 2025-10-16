@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Input, Select } from '../ui';
 
 type OrderSide = 'BUY' | 'SELL';
@@ -10,6 +11,8 @@ interface OrderFormProps {
   setOrderSide: (side: OrderSide) => void;
   orderDuration: string;
   setOrderDuration: (duration: string) => void;
+  expireDate: string;
+  setExpireDate: (date: string) => void;
   quantity: string;
   setQuantity: (quantity: string) => void;
   price: string;
@@ -35,6 +38,8 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   setOrderSide,
   orderDuration,
   setOrderDuration,
+  expireDate,
+  setExpireDate,
   quantity,
   setQuantity,
   price,
@@ -52,6 +57,37 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   placing,
   onPlaceOrder
 }) => {
+  const { t } = useTranslation('common');
+  const [showDatePicker, setShowDatePicker] = React.useState(false);
+  
+  // Calculate min and max dates for date picker (today to 30 days from now)
+  const today = new Date();
+  const minDate = today.toISOString().split('T')[0];
+  
+  const maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 30);
+  const maxDateString = maxDate.toISOString().split('T')[0];
+  
+  // Generate array of available dates for mobile picker
+  const generateDateOptions = () => {
+    const dates = [];
+    const current = new Date();
+    for (let i = 0; i <= 30; i++) {
+      const date = new Date(current);
+      date.setDate(date.getDate() + i);
+      dates.push({
+        value: date.toISOString().split('T')[0],
+        label: date.toLocaleDateString('mn-MN', { 
+          month: 'short', 
+          day: 'numeric',
+          weekday: 'short'
+        })
+      });
+    }
+    return dates;
+  };
+  
+  const dateOptions = generateDateOptions();
   return (
     <div className="bg-white dark:bg-gray-900  mt-3 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-6">
       {/* Order Type & Side Row - Keep Original 3-Column Structure */}
@@ -61,8 +97,8 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setOrderType(e.target.value)}
           className="text-xs py-2"
         >
-          <option value="Зах зээлийн">Зах зээл</option>
-          <option value="Нөхцөлт">Нөхцөлт</option>
+          <option value="Зах зээлийн">{t('exchange.market', 'Зах зээл')}</option>
+          <option value="Нөхцөлт">{t('exchange.limit', 'Нөхцөлт')}</option>
         </Select>
 
         {/* Buy/Sell Toggle Buttons */}
@@ -104,14 +140,57 @@ export const OrderForm: React.FC<OrderFormProps> = ({
       <div className="mb-3">
         <Select
           value={orderDuration}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setOrderDuration(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+            setOrderDuration(e.target.value);
+            // Clear expireDate when switching away from GTD
+            if (e.target.value !== 'GTD') {
+              setExpireDate('');
+              setShowDatePicker(false);
+            }
+          }}
           className="w-full text-xs py-2"
         >
-          <option value="GTC">Захиалга цуцлагдах хүртэл</option>
-          <option value="DAY">Захиалга хийсэн өдөр</option>
-          <option value="IOC">Заасан өдөр</option>
+          <option value="GTC">{t('exchange.gtc', 'Захиалга цуцлагдах хүртэл (GTC)')}</option>
+          <option value="DAY">{t('exchange.day', 'Өдрийн захиалга (DAY)')}</option>
+          <option value="GTD">{t('exchange.gtd', 'Заасан өдөр (GTD)')}</option>
         </Select>
       </div>
+
+      {/* Mobile-Friendly Date Picker for GTD orders */}
+      {orderDuration === 'GTD' && (
+        <div className="mb-3">
+          <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+            {t('exchange.expireDate', 'Захиалга дуусах огноо')}
+          </label>
+          
+          {/* Enhanced mobile-friendly date input with larger touch target */}
+          <Input
+            type="date"
+            value={expireDate}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setExpireDate(e.target.value)}
+            min={minDate}
+            max={maxDateString}
+            className="w-full text-sm py-3 px-4"
+            style={{
+              minHeight: '44px', // iOS recommended minimum touch target
+              fontSize: '16px', // Prevents iOS zoom on focus
+            }}
+            placeholder={t('exchange.selectDate', 'Огноо сонгох')}
+          />
+          
+          {expireDate && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {t('exchange.orderActiveUntil', { 
+                date: new Date(expireDate).toLocaleDateString('mn-MN', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })
+              })}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Quantity Input */}
       <div className="mb-4 relative">
@@ -129,7 +208,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
               e.preventDefault();
             }
           }}
-          placeholder="Тоо ширхэг"
+          placeholder={t('exchange.quantity', 'Тоо ширхэг')}
           className={`w-full ${quantity ? 'pr-16' : ''}`}
           min="1"
           max={getMaxQuantity()}
@@ -137,7 +216,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         />
         {quantity && (
           <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 pointer-events-none">
-            ширхэг
+            {t('exchange.shares', 'ширхэг')}
           </span>
         )}
       </div>
@@ -158,7 +237,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 type="number"
                 value={price}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
-                placeholder="Үнэ"
+                placeholder={t('exchange.price', 'Үнэ')}
                 className={`w-full rounded ${price ? 'pr-8' : ''}`}
                 step={selectedStock ? getPriceStep(selectedStock.PreviousClose || 0) : 0.01}
               />
@@ -178,14 +257,14 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              Алхам: {selectedStock ? getPriceStep(selectedStock.PreviousClose || 0) : 0.01}₮
+              {t('exchange.step', 'Алхам')}: {selectedStock ? getPriceStep(selectedStock.PreviousClose || 0) : 0.01}₮
             </span>
             <Button
               variant="secondary"
               onClick={() => setShowPriceSteps(!showPriceSteps)}
               className="px-2 py-1 text-xs"
             >
-              Үнийн алхам
+              {t('exchange.priceStep', 'Үнийн алхам')}
             </Button>
           </div>
         </div>
@@ -194,16 +273,16 @@ export const OrderForm: React.FC<OrderFormProps> = ({
       {/* Balance & Total - Minimal */}
       <div className="mb-3">
         <div className="flex justify-between text-xs mb-1">
-          <span className="text-gray-600 dark:text-gray-400">Үлдэгдэл:</span>
+          <span className="text-gray-600 dark:text-gray-400">{t('exchange.balance', 'Үлдэгдэл')}:</span>
           <span className="text-gray-900 dark:text-white">
             {orderSide === 'BUY' 
               ? (accountBalance !== null ? `${formatNumber(accountBalance)}₮` : '...')
-              : `${selectedStockHolding?.quantity || 0} ширхэг`
+              : `${selectedStockHolding?.quantity || 0} ${t('exchange.shares', 'ширхэг')}`
             }
           </span>
         </div>
         <div className="flex justify-between text-sm items-center">
-          <span className="text-gray-700 dark:text-gray-300 font-medium">Нийт:</span>
+          <span className="text-gray-700 dark:text-gray-300 font-medium">{t('exchange.total', 'Нийт')}:</span>
           <span className="font-bold text-gray-900 dark:text-white">
             {formatNumber(calculateTotal())}₮
           </span>
@@ -230,7 +309,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
               : 'none'
           }}
         >
-          {placing ? 'Захиалж байна...' : orderSide === 'BUY' ? 'АВАХ' : 'ЗАРАХ'}
+          {placing ? t('exchange.placing', 'Захиалж байна...') : orderSide === 'BUY' ? t('exchange.buy', 'АВАХ') : t('exchange.sell', 'ЗАРАХ')}
         </Button>
       </div>
     </div>

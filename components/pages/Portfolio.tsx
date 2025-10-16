@@ -320,82 +320,67 @@ export default function Portfolio() {
 
       <div className="p-4 space-y-6">
         {/* Balance Overview Cards */}
-<div className="grid grid-cols-2 gap-4">
-  {/* Total Invested + Current Value */}
-  <GlowCard
-    glowColor="blue"
-    className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 p-4 group"
-  >
-    {/* Total Invested */}
-    <div className="mb-4">
-      <div className="flex items-center space-x-2 mb-2">
-        <TrendingUp className="h-4 w-4 text-bdsec dark:text-indigo-400" />
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          {t('portfolio.totalInvested')}
-        </span>
-      </div>
-      <p className="text-base font-bold text-gray-900 dark:text-white">
-        {showBalance ? formatCurrency(totalInvested) : '***,***'} ₮
-      </p>
-    </div>
+        <div className="grid grid-cols-2 gap-4">
+          {/* Total Investment */}
+          <GlowCard 
+            glowColor="blue" 
+            className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 p-4 group"
+          >
+            <div className="flex items-center space-x-2 mb-2">
+              <TrendingUp className="h-4 w-4 text-bdsec dark:text-indigo-400" />
+              <span className="text-sm text-gray-600 dark:text-gray-400">{t('portfolio.totalInvested')}</span>
+            </div>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">
+              {showBalance ? formatCurrency(totalInvested) : '***,***'} ₮
+            </p>
+          </GlowCard>
 
-    {/* Current Value */}
-    <div>
-      <div className="flex items-center space-x-2 mb-2">
-        <PieChart className="h-4 w-4 text-green-600 dark:text-green-400" />
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          {t('portfolio.currentValue')}
-        </span>
-      </div>
-      <p className="text-base font-bold text-gray-900 dark:text-white">
-        {showBalance ? formatCurrency(totalAssetValue) : '***,***'} ₮
-      </p>
-    </div>
-  </GlowCard>
+          {/* Current Value */}
+          <GlowCard 
+            glowColor="green" 
+            className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 p-4 group"
+          >
+            <div className="flex items-center space-x-2 mb-2">
+              <PieChart className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <span className="text-sm text-gray-600 dark:text-gray-400">{t('portfolio.currentValue')}</span>
+            </div>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">
+              {showBalance ? formatCurrency(totalAssetValue) : '***,***'} ₮
+            </p>
+          </GlowCard>
+        </div>
 
-  {/* Profit/Loss */}
-  <GlowCard
-    glowColor={totalProfit >= 0 ? "green" : "red"}
-    className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 p-4 group"
-  >
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-2">
-        {totalProfit >= 0 ? (
-          <ArrowUpRight className="h-4 w-4 text-green-600 dark:text-green-400" />
-        ) : (
-          <ArrowDownRight className="h-4 w-4 text-red-600 dark:text-red-400" />
-        )}
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          {t('portfolio.profitLoss')}
-        </span>
-      </div>
-      <div
-        className={`px-2 py-1 rounded text-xs font-medium ${
-          totalProfit >= 0
-            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-        }`}
-      >
-        {showBalance ? formatPercentage(profitLossPercent) : '***%'}
-      </div>
-    </div>
-    <p
-      className={`text-base font-bold mt-2 ${
-        totalProfit >= 0
-          ? 'text-green-600 dark:text-green-400'
-          : 'text-red-600 dark:text-red-400'
-      }`}
-    >
-      {showBalance
-        ? (totalProfit >= 0 ? '+' : '') + formatCurrency(Math.abs(totalProfit))
-        : '***,***'} ₮
-    </p>
-  </GlowCard>
-</div>
-
+        {/* Profit/Loss Card */}
+        <div>
+          <GlowCard 
+            glowColor={totalProfit >= 0 ? "green" : "red"} 
+            className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 p-4 group"
+          >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              {totalProfit >= 0 ? (
+                <ArrowUpRight className="h-4 w-4 text-green-600 dark:text-green-400" />
+              ) : (
+                <ArrowDownRight className="h-4 w-4 text-red-600 dark:text-red-400" />
+              )}
+              <span className="text-sm text-gray-600 dark:text-gray-400">{t('portfolio.profitLoss')}</span>
+            </div>
+            <div className={`px-2 py-1 rounded text-xs font-medium ${
+              totalProfit >= 0 
+                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+            }`}>
+              {showBalance ? formatPercentage(profitLossPercent) : '***%'}
+            </div>
+          </div>
+          <p className={`text-xl font-bold mt-2 ${totalProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+            {showBalance ? (totalProfit >= 0 ? '+' : '') + formatCurrency(Math.abs(totalProfit)) : '***,***'} ₮
+          </p>
+        </GlowCard>
+        </div>
 
         {/* Cash Balance */}
-        {/* <div>
+        <div>
           <GlowCard 
             glowColor="blue" 
             className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 p-4 group"
@@ -420,7 +405,7 @@ export default function Portfolio() {
             </div>
           </div>
         </GlowCard>
-        </div> */}
+        </div>
 
         {/* Portfolio Charts */}
         <div>
@@ -435,7 +420,7 @@ export default function Portfolio() {
         <div className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800/50 overflow-hidden">
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold flex items-center gap-2">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
                 <span className="h-6 w-1 bg-bdsec dark:bg-indigo-500 rounded-md"></span>
                 {t('portfolio.stockHoldings')}
               </h3>
@@ -453,78 +438,60 @@ export default function Portfolio() {
                 const glowColor = profit > 0 ? 'green' : profit < 0 ? 'red' : 'neutral';
                 
                 return (
-              <GlowCard
-  key={index}
-  glowColor={glowColor}
-  intensity="medium"
-  className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900/50 p-5 shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
->
-  <div className="flex items-center justify-between mb-4">
-    <div className="flex items-center space-x-3">
-      {/* <div className="h-12 w-12 rounded-lg bg-indigo-600 dark:bg-indigo-500 flex items-center justify-center">
-        <span className="text-sm font-bold text-white">{asset.symbol}</span>
-      </div> */}
-      <div>
-        <h4 className="font-semibold text-gray-900 dark:text-white">{asset.symbol}</h4>
-        {/* <p className="text-sm text-gray-500 dark:text-gray-400">{asset.name}</p> */}
-      </div>
-    </div>
-
- <div className="text-right">
-             
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Худалдаж авсан үнэлгээ</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {yieldData && showBalance ? formatCurrency(yieldData.total) : '***,***'} ₮
-                </p>
-                   <p className="text-xs text-gray-500 dark:text-gray-400">Одоогийн үнэлгээ</p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {yieldData && showBalance ? formatCurrency(yieldData.totalNow) : '***,***'} ₮
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {t('portfolio.shares')}: {showBalance ? asset.quantity.toLocaleString() : '***'}
-                </p>
-              </div>
-  </div>
-
-  <div className="grid grid-cols-2 gap-5 text-sm">
-
-    <div>
-      <p className="text-xs text-gray-500 dark:text-gray-400">{t('portfolio.closingPrice')}</p>
-      <p className="font-medium text-gray-900 dark:text-white text-base">
-        {yieldData && showBalance ? formatCurrency(yieldData.closePrice) : '***'} ₮
-      </p>
-    </div>
-
-    <div>
-      <p className="text-gray-500 dark:text-gray-400 mb-1">{t('portfolio.profitLoss')}</p>
-      {yieldData ? (
-        <div className="flex flex-col space-y-1">
-          <span
-            className={`font-semibold text-sm ${
-              profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-            }`}
-          >
-            {showBalance ? (profit >= 0 ? '+' : '') + formatCurrency(Math.abs(profit)) : '***'} ₮
-          </span>
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium w-fit ${
-              profit >= 0
-                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-            }`}
-          >
-            {showBalance ? ((yieldData.profitPer ?? 0) >= 0 ? '+' : '') + (yieldData.profitPer ?? 0).toFixed(2) : '***'}%
-          </span>
-        </div>
-      ) : (
-        <p className="text-gray-400">-</p>
-      )}
-    </div>
-  </div>
-
-
-</GlowCard>
-
+                  <GlowCard 
+                    key={index} 
+                    glowColor={glowColor}
+                    intensity="low"
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50 p-4 group hover:scale-[1.01] transition-transform duration-200"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 rounded-lg bg-bdsec dark:bg-indigo-600 flex items-center justify-center">
+                          <span className="text-sm font-bold text-white">{asset.symbol}</span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">{asset.symbol}</h4>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{asset.name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-gray-900 dark:text-white">
+                          {showBalance ? asset.quantity.toLocaleString() : '***'} {t('portfolio.shares')}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {yieldData && showBalance ? formatCurrency(yieldData.totalNow) : '***,***'} ₮
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400 mb-1">{t('portfolio.closingPrice')}</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {yieldData && showBalance ? formatCurrency(yieldData.closePrice) : '***'} ₮
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400 mb-1">{t('portfolio.profitLoss')}</p>
+                        {yieldData ? (
+                          <div className="flex items-center space-x-2">
+                            <span className={`font-medium ${profit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                              {showBalance ? (profit >= 0 ? '+' : '') + formatCurrency(Math.abs(profit)) : '***'} ₮
+                            </span>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              profit >= 0 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                            }`}>
+                              {showBalance ? ((yieldData.profitPer ?? 0) >= 0 ? '+' : '') + (yieldData.profitPer ?? 0).toFixed(2) : '***'}%
+                            </span>
+                          </div>
+                        ) : (
+                          <p className="text-gray-400">-</p>
+                        )}
+                      </div>
+                    </div>
+                  </GlowCard>
                 );
               })}
 

@@ -180,7 +180,7 @@ const BottomNavigation = () => {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950" style={{ paddingBottom: 'env(safe-area-inset-bottom)', minHeight: BAR_H }}>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-none" style={{ paddingBottom: 'env(safe-area-inset-bottom)', minHeight: BAR_H }}>
       <div className="relative" style={{ height: BAR_H }}>
         {pathname === '/exchange' ? (
           // Simple flat background for exchange page
@@ -188,24 +188,24 @@ const BottomNavigation = () => {
         ) : (
           // Curved background for other pages
           <div className="absolute inset-0 flex items-start">
-            <div className="relative z-20 bg-white dark:bg-gray-950 dark:drop-shadow-[0_-4px_4px_rgba(255,255,255,0.07)]" style={{ width: sideW, height: PANEL_H, marginTop: PANEL_Y, marginRight: -overlap, boxShadow: '0 -4px 4px -2px rgba(0, 0, 0, 0.15)' }} />
+            <div className="relative z-20 bg-white dark:bg-gray-950 dark:drop-shadow-[0_-4px_4px_rgba(255,255,255,0.05)]" style={{ width: sideW, height: PANEL_H, marginTop: PANEL_Y, marginRight: -overlap, boxShadow: '0 -4px 4px -2px rgba(0, 0, 0, 0.15)' }} />
             <div className="relative z-10" style={{ width: CURVE_W, height: CURVE_H, marginTop: PANEL_Y - 0.5, marginLeft: -4, }}>
-              <svg width={CURVE_W} height={CURVE_H} viewBox={`0 0 ${CURVE_W} ${CURVE_H}`} xmlns="http://www.w3.org/2000/svg" className="filter drop-shadow-[0_-4px_4px_rgba(0,0,0,0.15)] dark:drop-shadow-[0_-4px_4px_rgba(255,255,255,0.07)]">
+              <svg width={CURVE_W} height={CURVE_H} viewBox={`0 0 ${CURVE_W} ${CURVE_H}`} xmlns="http://www.w3.org/2000/svg" className="filter drop-shadow-[0_-4px_4px_rgba(0,0,0,0.15)] dark:drop-shadow-[0_-4px_4px_rgba(255,255,255,0.05)]">
                 <path d={curvePath} fill="currentColor" className="text-white dark:text-gray-950" strokeWidth="0" />
               </svg>
             </div>
-            <div className="relative z-20 bg-white dark:bg-gray-950 dark:drop-shadow-[0_-4px_4px_rgba(255,255,255,0.07)]" style={{ width: sideW, height: PANEL_H, marginTop: PANEL_Y, marginLeft: -overlap, boxShadow: '0 -4px 4px -2px rgba(0, 0, 0, 0.15)' }} />
+            <div className="relative z-20 bg-white dark:bg-gray-950 dark:drop-shadow-[0_-4px_4px_rgba(255,255,255,0.05)]" style={{ width: sideW, height: PANEL_H, marginTop: PANEL_Y, marginLeft: -overlap, boxShadow: '0 -4px 4px -2px rgba(0, 0, 0, 0.15)' }} />
           </div>
         )}
 
         <div className="absolute inset-0 pointer-events-none">
           {/* Conditionally hide exchange button when on /exchange page */}
           {pathname !== '/exchange' && (
-            <div className={`absolute left-1/2 -translate-x-1/2 z-30 pointer-events-auto`} style={{ top: -topOffset - buttonSize/2 }}>
+            <div className={`absolute left-1/2 -translate-x-1/2 translate-y-1 z-30 pointer-events-auto`} style={{ top: -topOffset - buttonSize/2 }}>
               <div className="relative">
                 <button
                   onClick={(e) => handleMenuClick(e, 'exchange')}
-                  className={`relative rounded-full bg-bdsec dark:bg-indigo-500 text-white flex items-center justify-center transition ${(!isLoggedIn || !accountOpened) ? 'cursor-not-allowed opacity-80' : 'hover:scale-105'}`}
+                  className={`relative rounded-full bg-bdsec dark:bg-indigo-500 text-white  flex items-center justify-center transition ${(!isLoggedIn || !accountOpened) ? 'cursor-not-allowed opacity-80' : 'hover:scale-105'}`}
                   style={{ width: buttonSize, height: buttonSize }}
                 >
                   <div

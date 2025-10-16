@@ -82,7 +82,7 @@ const Bonds = () => {
   }
 
   return (
-    <div className="p-3">
+    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24 p-3">
       {/* Header with MSE information */}
       <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
         <div className="flex items-center justify-between">

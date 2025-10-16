@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { Button } from '../ui';
+import { useTranslation } from 'react-i18next';
 
 interface OrderData {
   id: string;
@@ -24,6 +25,8 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
   order,
   formatNumber
 }) => {
+  const { t } = useTranslation('common');
+  
   if (!isOpen || !order) return null;
 
   const handleConfirm = () => {
@@ -36,12 +39,12 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
       <div className="bg-white dark:bg-gray-900 rounded-lg w-full max-w-md shadow-lg">
         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-            Захиалга цуцлах
+            {t('exchange.cancelOrderTitle', 'Захиалга цуцлах')}
           </h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-red-500 transition-colors"
-            aria-label="Хаах"
+            aria-label={t('exchange.close', 'Хаах')}
           >
             <X size={20} />
           </button>
@@ -49,25 +52,25 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
 
         <div className="p-4">
           <p className="text-gray-700 dark:text-gray-300 mb-4">
-            Та дараах захиалгыг цуцлахдаа итгэлтэй байна уу?
+            {t('exchange.cancelOrderConfirm', 'Та дараах захиалгыг цуцлахдаа итгэлтэй байна уу?')}
           </p>
 
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 mb-4">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Төрөл:
+                {t('exchange.type', 'Төрөл')}:
               </span>
               <span className={`text-sm font-semibold px-2 py-1 rounded ${
                 order.buySell === 'BUY'
                   ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20'
                   : 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/20'
               }`}>
-                {order.buySell === 'BUY' ? 'АВАХ' : 'ЗАРАХ'}
+                {order.buySell === 'BUY' ? t('exchange.buy', 'АВАХ') : t('exchange.sell', 'ЗАРАХ')}
               </span>
             </div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Тоо ширхэг:
+                {t('exchange.quantity', 'Тоо ширхэг')}:
               </span>
               <span className="text-sm text-gray-900 dark:text-white">
                 {order.quantity}
@@ -75,7 +78,7 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
             </div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Үнэ:
+                {t('exchange.price', 'Үнэ')}:
               </span>
               <span className="text-sm text-gray-900 dark:text-white">
                 {order.price}₮
@@ -83,7 +86,7 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
             </div>
             <div className="flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-2">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Нийт дүн:
+                {t('exchange.total', 'Нийт дүн')}:
               </span>
               <span className="text-sm font-semibold text-gray-900 dark:text-white">
                 {formatNumber(order.quantity * order.price)}₮
@@ -97,14 +100,14 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
               onClick={onClose}
               className="flex-1"
             >
-              Болих
+              {t('exchange.close', 'Болих')}
             </Button>
             <Button
               variant="danger"
               onClick={handleConfirm}
               className="flex-1"
             >
-              Цуцлах
+              {t('exchange.confirmCancel', 'Цуцлах')}
             </Button>
           </div>
         </div>

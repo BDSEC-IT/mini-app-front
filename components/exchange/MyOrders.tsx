@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../ui';
 import { CancelOrderModal } from './CancelOrderModal';
 
@@ -27,6 +28,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
   formatNumber,
   onCancelOrder
 }) => {
+  const { t } = useTranslation('common');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<OrderData | null>(null);
 
@@ -54,14 +56,14 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
       <div className="px-3 py-2">
         <div className="flex items-center justify-between mb-1.5">
           <h3 className="text-[14px] font-medium text-gray-700 dark:text-gray-300">
-            Миний захиалгууд
+            {t('exchange.myOrders', 'Миний захиалгууд')}
           </h3>
         </div>
         <div className="flex gap-1">
           {[
-            { key: 'active', label: 'Идэвхтэй', count: orders.filter(o => o.statusname === 'pending').length },
-            { key: 'completed', label: 'Биелсэн', count: orders.filter(o => o.statusname === 'completed').length },
-            { key: 'cancelled', label: 'Цуцлагдсан', count: orders.filter(o => o.statusname === 'cancelled').length }
+            { key: 'active', label: t('exchange.activeOrders', 'Идэвхтэй'), count: orders.filter(o => o.statusname === 'pending').length },
+            { key: 'completed', label: t('exchange.completedOrdersTab', 'Биелсэн'), count: orders.filter(o => o.statusname === 'completed').length },
+            { key: 'cancelled', label: t('exchange.cancelledOrders', 'Цуцлагдсан'), count: orders.filter(o => o.statusname === 'cancelled').length }
           ].map((tab) => (
             <button
               key={tab.key}
@@ -90,7 +92,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
                       ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20'
                       : 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/20'
                   }`}>
-                    {order.buySell === 'BUY' ? 'АВАХ' : 'ЗАРАХ'}
+                    {order.buySell === 'BUY' ? t('exchange.buy', 'АВАХ') : t('exchange.sell', 'ЗАРАХ')}
                   </span>
                 </div>
                 <div className="text-gray-600 dark:text-gray-300 mt-1">
@@ -114,9 +116,9 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
           ))
         ) : (
           <div className="text-center py-2 text-gray-500 dark:text-gray-400 text-[10px]">
-            {orderTab === 'active' && 'Идэвхтэй захиалга байхгүй'}
-            {orderTab === 'completed' && 'Биелсэн захиалга байхгүй'}
-            {orderTab === 'cancelled' && 'Цуцлагдсан захиалга байхгүй'}
+            {orderTab === 'active' && t('exchange.noActiveOrders', 'Идэвхтэй захиалга байхгүй')}
+            {orderTab === 'completed' && t('exchange.noCompletedOrders', 'Биелсэн захиалга байхгүй')}
+            {orderTab === 'cancelled' && t('exchange.noCancelledOrders', 'Цуцлагдсан захиалга байхгүй')}
           </div>
         )}
       </div>
