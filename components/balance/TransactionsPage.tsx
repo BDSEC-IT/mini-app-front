@@ -202,7 +202,6 @@ const CashTransactionCard = ({ transaction }: CashTransactionCardProps) => {
 };
 
 interface TransactionsPageProps {
-  balanceType: BalanceType;
   selectedAssetSymbol: string | null;
   securityTransactions: SecurityTransaction[];
   csdTransactions: CSDTransaction[];
@@ -224,8 +223,10 @@ interface TransactionsPageProps {
   onCustomEndChange: (date: string) => void;
 }
 
+const VALID_TYPES = ['security', 'cash', 'csd'] as const;
+type ValidType = typeof VALID_TYPES[number];
+
 export default function TransactionsPage({
-  balanceType,
   selectedAssetSymbol,
   securityTransactions,
   csdTransactions,
@@ -247,7 +248,7 @@ export default function TransactionsPage({
   onCustomEndChange
 }: TransactionsPageProps) {
   
-  const filterTransactionsByDate = (transaction: SecurityTransaction | CSDTransaction | CashTransaction) => {
+  const filterTransactionsByDate = useMemo(() => (transaction: SecurityTransaction | CSDTransaction | CashTransaction) => {
     if (dateRangeOption === 'all') return true;
     const txDate = new Date(transaction.transactionDate);
     const now = new Date();
@@ -268,51 +269,64 @@ export default function TransactionsPage({
       return txDate >= start && txDate <= end;
     }
     return true;
-  };
+  }, [dateRangeOption, customStart, customEnd]);
 
-  const filteredSecurityTransactions = securityTransactions
-    .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
-    .filter((transaction) => {
-      // filter by selected asset symbol if provided
-      if (selectedAssetSymbol) {
-        return (transaction.symbol || '').toLowerCase() === selectedAssetSymbol.toLowerCase();
-      }
-      // filter by income/expense
-      if (transactionFilter === 'income') return transaction.buySell === 'sell';
-      if (transactionFilter === 'expense') return transaction.buySell === 'buy';
-      return true;
-    })
-    .filter((transaction) => {
-      // filter by transactionType
-      if (transactionType === 'security') return true;
-      return false;
-    })
-    .filter(filterTransactionsByDate);
+  const filteredSecurityTransactions = useMemo(() => {
+    if (transactionType !== 'security') return [];
+    
+    return securityTransactions
+      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
+      .filter((transaction) => {
+        // filter by selected asset symbol if provided
+        if (selectedAssetSymbol) {
+          return (transaction.symbol || '').toLowerCase() === selectedAssetSymbol.toLowerCase();
+        }
+        return true;
+      })
+      .filter((transaction) => {
+        // filter by income/expense
+        if (transactionFilter === 'income') return transaction.buySell === 'sell';
+        if (transactionFilter === 'expense') return transaction.buySell === 'buy';
+        return true;
+      })
+      .filter(filterTransactionsByDate);
+  }, [securityTransactions, selectedAssetSymbol, transactionFilter, transactionType, filterTransactionsByDate]);
 
-  const filteredCsdTransactions = csdTransactions
-    .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
-    .filter((transaction) => {
-      if (selectedAssetSymbol) {
-        const sym = selectedAssetSymbol.toLowerCase();
-        if (transaction.code && transaction.code.toLowerCase().includes(sym)) return true;
-        if (transaction.description && transaction.description.toLowerCase().includes(sym)) return true;
-        return false;
-      }
-      if (transactionFilter === 'income') return transaction.creditAmt > 0;
-      if (transactionFilter === 'expense') return transaction.debitAmt > 0;
-      return true;
-    })
-    .filter(filterTransactionsByDate);
+  const filteredCsdTransactions = useMemo(() => {
+    if (transactionType !== 'csd') return [];
+    
+    return csdTransactions
+      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
+      .filter((transaction) => {
+        if (selectedAssetSymbol) {
+          const sym = selectedAssetSymbol.toLowerCase();
+          if (transaction.code && transaction.code.toLowerCase().includes(sym)) return true;
+          if (transaction.description && transaction.description.toLowerCase().includes(sym)) return true;
+          return false;
+        }
+        return true;
+      })
+      .filter((transaction) => {
+        if (transactionFilter === 'income') return transaction.creditAmt > 0;
+        if (transactionFilter === 'expense') return transaction.debitAmt > 0;
+        return true;
+      })
+      .filter(filterTransactionsByDate);
+  }, [csdTransactions, selectedAssetSymbol, transactionFilter, transactionType, filterTransactionsByDate]);
 
-  const filteredCashTransactions = cashTransactions
-    .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
-    .filter((transaction) => {
-      // For cash transactions, we don't filter by symbol
-      if (transactionFilter === 'income') return (transaction.creditAmt || 0) > 0;
-      if (transactionFilter === 'expense') return (transaction.debitAmt || 0) > 0;
-      return true;
-    })
-    .filter(filterTransactionsByDate);
+  const filteredCashTransactions = useMemo(() => {
+    if (transactionType !== 'cash') return [];
+    
+    return cashTransactions
+      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
+      .filter((transaction) => {
+        // For cash transactions, we don't filter by symbol
+        if (transactionFilter === 'income') return (transaction.debitAmt || 0) > 0;
+        if (transactionFilter === 'expense') return (transaction.creditAmt || 0) > 0;
+        return true;
+      })
+      .filter(filterTransactionsByDate);
+  }, [cashTransactions, transactionFilter, transactionType, filterTransactionsByDate]);
 
   const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
@@ -328,19 +342,6 @@ export default function TransactionsPage({
   // Get total pages
   const getTotalPages = (data: any[]) => Math.ceil(data.length / itemsPerPage);
 
-  // Filter cash transactions
-  const filteredCashData = useMemo(() => {
-    return cashTransactions
-      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
-      .filter(transaction => {
-        // Apply income/expense filter
-        if (transactionFilter === 'income') return (transaction.debitAmt || 0) > 0;
-        if (transactionFilter === 'expense') return (transaction.creditAmt || 0) > 0;
-        return true;
-      })
-      .filter(filterTransactionsByDate); // Apply date filter
-  }, [cashTransactions, transactionFilter, dateRangeOption, customStart, customEnd]);
-
   // Get current data based on transaction type
   const getCurrentData = () => {
     switch (transactionType) {
@@ -352,8 +353,8 @@ export default function TransactionsPage({
         };
       case 'cash':
         return {
-          data: getPaginatedData(filteredCashData),
-          totalPages: getTotalPages(filteredCashData),
+          data: getPaginatedData(filteredCashTransactions),
+          totalPages: getTotalPages(filteredCashTransactions),
           loading: loadingCashTransactions
         };
       case 'csd':
@@ -383,6 +384,15 @@ export default function TransactionsPage({
     }
   };
 
+  // Handle type change with validation
+  const handleTypeChange = (newType: string) => {
+    console.log('newType', newType);
+    if (VALID_TYPES.includes(newType as ValidType)) {
+      onTransactionTypeChange(newType as TransactionType);
+      // Don't call onClearAssetFilter here - it's handled in setType
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">
       {/* Header */}
@@ -408,11 +418,9 @@ export default function TransactionsPage({
           {/* Transaction Type Filter */}
           <div className="w-full">
             <select
+              // value={'cash'}
               value={transactionType}
-              onChange={(e) => {
-                onTransactionTypeChange(e.target.value as TransactionType);
-                onClearAssetFilter(); // Clear symbol filter when changing transaction type
-              }}
+              onChange={(e) => handleTypeChange(e.target.value)}
               className="w-full appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 pr-8 text-sm"
             >
               <option value="security">Үнэт цаасны гүйлгээ</option>
@@ -506,15 +514,6 @@ export default function TransactionsPage({
 
       {/* Transaction List */}
       <div id="transaction-list" className="pb-40 p-4 space-y-3">
-        {/* Transaction Count */}
-        {/* <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-          {t('common.total')}: {
-            transactionType === 'security' ? filteredSecurityTransactions.length :
-            transactionType === 'cash' ? filteredCashTransactions.length :
-            transactionType === 'csd' ? filteredCsdTransactions.length : 0
-          } {t('common.transactions')}
-        </div> */}
-
         {/* Transactions */}
         {loading ? (
           <>

@@ -6,18 +6,13 @@ import { useBalanceData } from '@/hooks/useBalanceData';
 import { formatCurrency, calculateSecuritiesValue, calculateTotalBalance } from '@/utils/balanceUtils';
 import BalanceHeader from '@/components/balance/BalanceHeader';
 import BalanceNavigation from '@/components/balance/BalanceNavigation';
-import TransactionsPage from '@/components/balance/TransactionsPage';
 import WithdrawalsPage from '@/components/balance/WithdrawalsPage';
 import { SkeletonCard } from '@/components/balance/SkeletonComponents';
-import type { 
-  BalanceType, 
-  PageType, 
-  TransactionFilter, 
-  TransactionType, 
-  DateRangeOption 
-} from '@/types/balance';
+import type { BalanceType, PageType } from '@/types/balance';
+import { useRouter } from 'next/navigation';
 
 export default function Balance() {
+  const router = useRouter();
   
   // Page and UI state
   const [currentPage, setCurrentPage] = useState<PageType>('balance');
@@ -25,28 +20,14 @@ export default function Balance() {
   const [showBalance, setShowBalance] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [totalBalance, setTotalBalance] = useState(0);
-  
-  // Transaction filters
-  const [transactionFilter, setTransactionFilter] = useState<TransactionFilter>('all');
-  const [transactionType, setTransactionType] = useState<TransactionType>('security');
-  const [dateRangeOption, setDateRangeOption] = useState<DateRangeOption>('all');
-  const [customStart, setCustomStart] = useState<string>('');
-  const [customEnd, setCustomEnd] = useState<string>('');
-  const [selectedAssetSymbol, setSelectedAssetSymbol] = useState<string | null>(null);
 
   // Use custom hook for data fetching
   const {
     loadingNominal,
     loadingAssets,
-    loadingSecurityTransactions,
-    loadingCsdTransactions,
-    loadingCashTransactions,
     nominalBalance,
     assetBalances,
     yieldAnalysis,
-    securityTransactions,
-    csdTransactions,
-    cashTransactions,
     isLoading
   } = useBalanceData();
 
@@ -135,9 +116,7 @@ export default function Balance() {
                   */}
                   <button
                     onClick={() => {
-                      setSelectedAssetSymbol(asset.symbol);
-                      setTransactionType('security');
-                      setCurrentPage('transactions');
+                      router.push(`/balance/history?symbol=${asset.symbol}&type=security`);
                     }}
                     className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-sm rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
                   >
@@ -194,24 +173,24 @@ export default function Balance() {
           </div>
           
           
-          <div className="flex items-center justify-end space-x-2 z-10">
+          {/* <div className="flex items-center justify-end space-x-2 z-10">
             <button
               onClick={() => {
-                // Set type first, then change page in next tick to ensure type is set
-                setTransactionType('cash');
-                setTimeout(() => setCurrentPage('transactions'), 0);
+                console.log('clicked');
+                router.push(`/balance/history?type=cash`);
+                
               }}
               className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-sm rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
             >
               Хуулга
             </button>
             <button 
-              onClick={() => window.location.href = '/balance/withdrawal'}
+              onClick={() => router.push('/balance/withdrawal')}
               className="bg-bdsec dark:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-bdsec/90"
             >
               Мөнгө хүсэх
             </button>
-          </div>
+          </div> */}
         </div>
       ) : (
         // Fallback display with zeroed balances - sorted in descending order
@@ -257,16 +236,15 @@ export default function Balance() {
             <div className="flex items-center justify-end space-x-2 z-10">
               <button
                 onClick={() => {
-                  // Set type first, then change page in next tick to ensure type is set
-                  setTransactionType('cash');
-                  setTimeout(() => setCurrentPage('transactions'), 0);
+                  console.log('clicked');
+                  router.push(`/balance/history?type=cash`);
                 }}
                 className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-sm rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
               >
                 Хуулга
               </button>
               <button 
-                onClick={() => window.location.href = '/balance/withdrawal'}
+                onClick={() => router.push('/balance/withdrawal')}
                 className="bg-bdsec dark:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-bdsec/90"
               >
                 Мөнгө хүсэх
@@ -331,38 +309,6 @@ export default function Balance() {
       <div className="bg-white dark:bg-gray-900 min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bdsec dark:border-indigo-500"></div>
       </div>
-    );
-  }
-
-  // Page routing
-  if (currentPage === 'transactions') {
-    return (
-      <TransactionsPage
-        balanceType={balanceType}
-        selectedAssetSymbol={selectedAssetSymbol}
-        securityTransactions={securityTransactions}
-        csdTransactions={csdTransactions}
-        cashTransactions={cashTransactions}
-        loadingSecurityTransactions={loadingSecurityTransactions}
-        loadingCsdTransactions={loadingCsdTransactions}
-        loadingCashTransactions={loadingCashTransactions}
-        transactionFilter={transactionFilter}
-        transactionType={transactionType}
-        dateRangeOption={dateRangeOption}
-        customStart={customStart}
-        customEnd={customEnd}
-        onBack={() => {
-          setSelectedAssetSymbol(null);
-          setTransactionType('security'); // Reset to default
-          setCurrentPage('balance');
-        }}
-        onClearAssetFilter={() => setSelectedAssetSymbol(null)}
-        onTransactionFilterChange={setTransactionFilter}
-        onTransactionTypeChange={setTransactionType}
-        onDateRangeChange={setDateRangeOption}
-        onCustomStartChange={setCustomStart}
-        onCustomEndChange={setCustomEnd}
-      />
     );
   }
 

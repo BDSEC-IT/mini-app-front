@@ -64,7 +64,7 @@ export default function RechargeBalance() {
   const [history, setHistory] = useState<RechargeHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'COMPLETED' | 'PENDING' | 'FAILED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'COMPLETED' | 'PENDING' | 'FAILED'>('COMPLETED');
   const [pagination, setPagination] = useState<PaginationInfo>({
     total: 0,
     page: 1,
@@ -92,7 +92,7 @@ export default function RechargeBalance() {
         url.searchParams.append('status', queryStatus);
       }
 
-      console.log('Fetching history:', url.toString());
+      // console.log('Fetching history:', url.toString());
 
       const response = await fetch(url.toString(), {
         headers: {
@@ -105,7 +105,7 @@ export default function RechargeBalance() {
         throw new Error();
       }
       const data: RechargeHistoryResponse = await response.json();
-      console.log('History response:', data);
+      // console.log('History response:', data);
       
       if (data.success) {
         setHistory(data.data.items || []);
@@ -313,7 +313,7 @@ export default function RechargeBalance() {
               ) : ''}
             </p>
             </div>
-            <div className="relative">
+            {/* <div className="relative">
               <select
                 value={statusFilter}
                 onChange={(e) => {
@@ -334,9 +334,9 @@ export default function RechargeBalance() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-            </div>
+            </div> */}
           </div>
-          <Button
+          {/* <Button
             onClick={handleCheckAll}
             disabled={checkingStatus}
             variant="outline"
@@ -351,7 +351,7 @@ export default function RechargeBalance() {
             ) : (
               t('recharge.checkAll')
             )}
-          </Button>
+          </Button> */}
         </div>
 
         {loadingHistory ? (
