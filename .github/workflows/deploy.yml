@@ -8,7 +8,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    timeout-minutes: 30
+    
     env:
       DEPLOY_SCRIPT: |
         set -eu

@@ -1,24 +1,46 @@
-# Step 1: Build
+# ======================
+# Step 1: Build stage
+# ======================
 FROM node:18-alpine AS builder
+
+# Use a dedicated user for better security
+RUN addgroup -S app && adduser -S app -G app
+
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm install
+
+# Copy only the package files first (better caching)
+COPY package*.json ./
+
+# Install dependencies using clean cache
+RUN npm ci
+
+# Copy the rest of the source code
 COPY . .
+
+# Build the application
 RUN npm run build
 
-# Step 2: Serve
+# ======================
+# Step 2: Production stage
+# ======================
 FROM node:18-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
 
-# Copy necessary files from the builder stage
+ENV NODE_ENV=production
+WORKDIR /app
+
+# Use the same non-root user as builder
+RUN addgroup -S app && adduser -S app -G app
+
+# Copy only necessary output files from builder
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/package-lock.json* ./
+COPY --from=builder /app/package*.json ./
 
-# Install only production dependencies, which is much faster
-RUN npm install --production
+# Install only production dependencies efficiently
+RUN npm ci --omit=dev && npm cache clean --force
+
+# Change ownership for safety
+USER app
 
 EXPOSE 3000
 CMD ["npm", "run", "start"]
