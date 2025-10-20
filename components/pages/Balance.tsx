@@ -88,11 +88,7 @@ export default function Balance() {
                 </svg>
                 <div className="flex items-center justify-between mb-10 z-10">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                        {asset.symbol.slice(0, 2)}
-                      </span>
-                    </div>
+               
                     <div className="z-10">
                       <h3 className="font-semibold text-gray-900 dark:text-white">{asset.symbol}</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">{asset.name}</p>
@@ -168,29 +164,8 @@ export default function Balance() {
               <p className="font-bold text-gray-900 dark:text-white">
                 {showBalance ? `${formatCurrency(nominalBalance.balance)} ₮` : '***,*** ₮'}
               </p>
-             
             </div>
           </div>
-          
-          
-          {/* <div className="flex items-center justify-end space-x-2 z-10">
-            <button
-              onClick={() => {
-                console.log('clicked');
-                router.push(`/balance/history?type=cash`);
-                
-              }}
-              className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-sm rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-            >
-              Хуулга
-            </button>
-            <button 
-              onClick={() => router.push('/balance/withdrawal')}
-              className="bg-bdsec dark:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-bdsec/90"
-            >
-              Мөнгө хүсэх
-            </button>
-          </div> */}
         </div>
       ) : (
         // Fallback display with zeroed balances - sorted in descending order
@@ -227,28 +202,7 @@ export default function Balance() {
                 <p className="font-bold text-gray-900 dark:text-white">
                   {showBalance ? `${formatCurrency(item.balance)} ₮` : '***,*** ₮'}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  <span>Одоогийн үнэлгээ: </span>{showBalance ? `${formatCurrency(item.balance)} ₮` : '***,*** ₮'}
-                </p>
               </div>
-            </div>
-            
-            <div className="flex items-center justify-end space-x-2 z-10">
-              <button
-                onClick={() => {
-                  console.log('clicked');
-                  router.push(`/balance/history?type=cash`);
-                }}
-                className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-sm rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-              >
-                Хуулга
-              </button>
-              <button 
-                onClick={() => router.push('/balance/withdrawal')}
-                className="bg-bdsec dark:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-bdsec/90"
-              >
-                Мөнгө хүсэх
-              </button>
             </div>
           </div>
         ))

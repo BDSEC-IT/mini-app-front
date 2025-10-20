@@ -20,6 +20,7 @@ import Autoplay from 'embla-carousel-autoplay'
 import type { StockData, TradingHistoryData } from '@/lib/api'
 import { fetchTradingHistory } from '@/lib/api'
 import { BlinkEffect } from '@/components/ui/BlinkEffect'
+import { InfoTooltip } from '@/components/ui'
 
 // Custom hook for intersection observer
 const useInView = (threshold = 0.1) => {
@@ -310,17 +311,25 @@ const StockListComponent = ({
           <h2 className="text-lg font-semibold flex items-center text-gray-900 dark:text-white">
             {t('dashboard.popularStocks')}
           </h2>
+         
           {displayPeriodDescription && activeFilter !== 'bonds' && (
+           
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {displayPeriodDescription}
-            </p>
+            {displayPeriodDescription} 
+          </p>
+       
+            
           )}
+     
         </div>
         <Link 
           href={`/stocks?filter=${activeFilter}`} 
-          className="flex items-center text-sm font-normal text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          aria-label={t('dashboard.viewAll')}
+          className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-bdsec/50 dark:focus:ring-indigo-500/40 transition"
         >
-          {t('dashboard.viewAll')} <ChevronRight size={16} className="ml-1" />
+          <span>{t('dashboard.viewAll')}</span>
+          <ChevronRight size={14} className="ml-0.5 transition-transform group-hover:translate-x-0.5" />
+          
         </Link>
       </div>
 
@@ -331,7 +340,7 @@ const StockListComponent = ({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="flex items-center gap-2 text-bdsec  dark:bg-gray-800 px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700  dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors"
+              className="flex items-center gap-2 text-bdsec   dark:bg-gray-800 px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700  dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors"
               aria-label={t('dashboard.filter')}
               type="button"
             >
@@ -543,6 +552,7 @@ const StockListComponent = ({
       }`}>
         {activeFilter && t(`dashboard.tooltip.${activeFilter}`)}
       </div>
+
     </div>
   )
 }

@@ -550,7 +550,7 @@ const DashboardContent = () => {
   }, [selectedSymbol])
 
   return (
-    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24 p-4 flex flex-col gap-y-4">
+    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24 p-4 flex flex-col gap-y-4 overflow-x-hidden">
     
         <StockList
           loading={loading}
@@ -672,12 +672,7 @@ const DashboardContent = () => {
       
       )}
     
-       <div 
-        ref={orderBookRef}
-        className={`transition-all duration-1000 delay-400 ${
-          orderBookInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
-      >
+      <div ref={orderBookRef}>
         <OrderBook
           selectedSymbol={selectedSymbol}
           loading={loading}
@@ -687,12 +682,7 @@ const DashboardContent = () => {
         />
       </div>
       
-      <div 
-        ref={detailsRef}
-        className={`transition-all duration-1000 delay-600 ${
-          detailsInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
-      >
+      <div ref={detailsRef}>
         <StockDetails
           selectedSymbol={selectedSymbol}
           details={companyDetails}

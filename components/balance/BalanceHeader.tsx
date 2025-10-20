@@ -1,7 +1,8 @@
 "use client";
 
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/utils/balanceUtils';
 import type { NominalBalance } from '@/types/balance';
 
@@ -21,6 +22,7 @@ export default function BalanceHeader({
   onToggleBalance
 }: BalanceHeaderProps) {
   const { t } = useTranslation();
+  const router = useRouter();
 
   return (
     <div className="relative overflow-hidden p-6 rounded-xl m-4 text-white">
@@ -73,6 +75,23 @@ export default function BalanceHeader({
             )}
           </button>
         </div>
+      </div>
+      
+      {/* Action Buttons */}
+      <div className="relative z-10 mt-4 flex gap-2">
+        <button
+          onClick={() => router.push('/balance/recharge')}
+          className="flex-1 py-2 px-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 hover:border-white/50 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 text-sm font-medium"
+        >
+          {/* <Plus className="w-4 h-4" /> */}
+          <span>Данс цэнэглэх</span>
+        </button>
+        <button
+          onClick={() => router.push('/balance/withdrawal')}
+          className="flex-1 py-2 px-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 hover:border-white/50 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 text-sm font-medium"
+        >
+          <span>Мөнгө хүсэх</span>
+        </button>
       </div>
     </div>
   );

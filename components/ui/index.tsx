@@ -1,5 +1,8 @@
 import React from 'react';
 
+// Export reusable components
+export { default as InfoTooltip } from './InfoTooltip';
+
 // Design System
 export const styles = {
   button: {
