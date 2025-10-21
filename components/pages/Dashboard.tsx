@@ -59,7 +59,8 @@ const DashboardContent = () => {
   const { theme } = useTheme()
   const [activeFilter, setActiveFilter] = useState('mostActive')
   const [orderBookData, setOrderBookData] = useState<OrderBookEntry[]>([])
-  const [loading, setLoading] = useState(false)
+  const [stocksLoading, setStocksLoading] = useState(true)
+  const [orderBookLoading, setOrderBookLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string>('')
   const [allStocks, setAllStocks] = useState<StockData[]>([])
@@ -165,6 +166,7 @@ const DashboardContent = () => {
   // Fetch all stocks data with company information
   const fetchStocksData = useCallback(async () => {
     console.log('=== Dashboard: fetchStocksData START ===');
+    setStocksLoading(true)
     try {
       console.log('Calling fetchAllStocksWithCompanyInfo...');
       const response = await fetchAllStocksWithCompanyInfo()
@@ -176,6 +178,8 @@ const DashboardContent = () => {
       }
     } catch (err) {
       console.error('Error fetching stocks:', err)
+    } finally {
+      setStocksLoading(false)
     }
     console.log('=== Dashboard: fetchStocksData END ===');
   }, [])
@@ -222,7 +226,7 @@ const DashboardContent = () => {
   // Fetch order book data
   const fetchOrderBookData = useCallback(async () => {
     try {
-      setLoading(true)
+      setOrderBookLoading(true)
       setError(null)
       const baseSymbol = selectedSymbol.split('-')[0]; // Extract base symbol
       const fullSymbol = `${baseSymbol}-O-0000`;
@@ -253,7 +257,7 @@ const DashboardContent = () => {
       setError(err instanceof Error ? err.message : 'Failed to fetch order book data')
       console.error('Error fetching order book:', err)
     } finally {
-      setLoading(false)
+      setOrderBookLoading(false)
     }
   }, [selectedSymbol, displayStockData])
 
@@ -550,10 +554,10 @@ const DashboardContent = () => {
   }, [selectedSymbol])
 
   return (
-    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24 p-4 flex flex-col gap-y-4">
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white pb-24 px-4 pt-4 flex flex-col gap-y-4 overflow-hidden">
     
         <StockList
-          loading={loading}
+          loading={stocksLoading}
           activeFilter={activeFilter}
           filteredStocks={filteredStocks}
           onFilterChange={handleFilterChange}
@@ -680,7 +684,7 @@ const DashboardContent = () => {
       >
         <OrderBook
           selectedSymbol={selectedSymbol}
-          loading={loading}
+          loading={orderBookLoading}
           lastUpdated={lastUpdated}
           processedOrderBook={processedOrderBook}
           onRefresh={fetchOrderBookData}

@@ -302,7 +302,7 @@ const StockListComponent = ({
   }, [filteredStocks, selectedCard, fetchStockHistoricalData]);
 
   return (
-    <div ref={stockListRef} className="w-full transition-all duration-300 my-4">
+    <div ref={stockListRef} className="w-full max-w-full overflow-hidden transition-all duration-300 my-4">
       <div className={`flex justify-between items-center mb-4 transition-all duration-1000 ${
         stockListInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}>
@@ -360,13 +360,13 @@ const StockListComponent = ({
       </div>
 
       {/* Selected card pinned to the left, outside the scrollable carousel */}
-      <div className={`flex items-stretch gap-2 mt-0 py-0 sm:pt-4 sm:mt-4 transition-all duration-1000 delay-400 ${
+      <div className={`flex items-stretch gap-1 mt-0 py-0 sm:pt-4 sm:mt-4 transition-all duration-1000 delay-400 overflow-hidden ${
         stockListInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}>
         
         {selectedStock && (
           <div
-            className={`shrink-0 ${getBasisClass()} border-bdsec border-[2px]  dark:border-indigo-400  dark:from-indigo-500/10 dark:to-indigo-500/5 rounded-xl  p-3 my-2 sm:p-3 flex flex-col justify-between transition-all duration-300 relative overflow-hidden z-10`}
+            className={`shrink-0 ${getBasisClass()} border-bdsec border-[2px] dark:border-indigo-400 dark:from-indigo-500/10 dark:to-indigo-500/5 rounded-xl p-3 my-2 sm:p-3 flex flex-col justify-between transition-all duration-300 relative overflow-hidden z-10`}
             style={{ minWidth: 160, maxWidth: 160, minHeight: 140, height: 140 }}
           >
             {/* SVG Illumination Effect */}
@@ -422,7 +422,7 @@ const StockListComponent = ({
           </div>
         )}
         {/* Scrollable carousel for other cards */}
-        <div className="flex-1 overflow-x-auto no-scrollbar relative">
+        <div className="flex-1 min-w-0 overflow-hidden relative">
           <Carousel
             opts={{
               align: "start",
@@ -434,11 +434,11 @@ const StockListComponent = ({
             className="w-full"
             setApi={setApi}
           >
-            <CarouselContent className="flex pl-8 py-2">
+            <CarouselContent className="flex pl-2 py-2">
               {loading ? (
                 // Cool loading skeletons with staggered animations from left and right
                 Array.from({ length: 6 }).map((_, index) => (
-                  <CarouselItem key={`skeleton-${index}`} className={`pl-6 md:pl-4 ${getBasisClass()}`}>
+                  <CarouselItem key={`skeleton-${index}`} className={`pl-2 md:pl-3 ${getBasisClass()}`}>
                     <LoadingSkeleton 
                       delay={index * 100} 
                       fromRight={index % 2 === 1} 
@@ -450,7 +450,7 @@ const StockListComponent = ({
                 otherStocks.map((stock, index) => {
                   const isPositive = (stock.Changep || 0) >= 0;
                   return (
-                    <CarouselItem key={`stock-${stock.Symbol}`} className={`pl-6  md:pl-4 ${getBasisClass()}`} >
+                    <CarouselItem key={`stock-${stock.Symbol}`} className={`pl-2 md:pl-3 ${getBasisClass()}`} >
                       <div
                         className={`relative w-full p-3 sm:p-3 overflow-hidden transition-all duration-700 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between ${
                           stockListInView 
