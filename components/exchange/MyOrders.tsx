@@ -14,6 +14,7 @@ interface OrderData {
 }
 
 interface MyOrdersProps {
+  loading?: boolean;
   orders: OrderData[];
   orderTab: OrderTab;
   setOrderTab: (tab: OrderTab) => void;
@@ -22,6 +23,7 @@ interface MyOrdersProps {
 }
 
 export const MyOrders: React.FC<MyOrdersProps> = ({
+  loading = false,
   orders,
   orderTab,
   setOrderTab,
@@ -82,7 +84,19 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
       
       {/* Order Content - Compact */}
       <div className="px-3 pb-2">
-        {filteredOrders.length > 0 ? (
+        {loading ? (
+          <div className="space-y-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between py-1.5 px-2 mb-1 bg-gray-50 dark:bg-gray-800/30 rounded">
+                <div className="flex-1">
+                  <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  <div className="h-3 w-28 bg-gray-200 dark:bg-gray-700 rounded mt-1 animate-pulse"></div>
+                </div>
+                <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        ) : filteredOrders.length > 0 ? (
           filteredOrders.map((order) => (
             <div key={order.id} className="flex items-center justify-between py-1.5 px-2 mb-1 bg-gray-50 dark:bg-gray-800/30 rounded text-[10px] hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
               <div className="flex-1">

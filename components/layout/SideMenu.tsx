@@ -16,10 +16,10 @@ import {
   CircleCheck,
   CircleAlert,
   CircleDashed,
-  UserPlus,
+  BanknoteArrowUp,
+  BanknoteArrowDown,
   ArrowUpDown,
   Wallet2,
-  CreditCard
 } from 'lucide-react'
 import Cookies from 'js-cookie'
 import { useTranslation } from 'react-i18next'
@@ -129,11 +129,11 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   // Add Orders menu item for logged-in users with MCSD account
   const accountOpened = accountInfo?.MCSDAccount && accountInfo.MCSDAccount.DGStatus === 'COMPLETED';
   const advancedMenuItems = accountOpened ? [
+    { href: '/exchange', icon: ArrowUpDown, label: 'nav.orders' },
     { href: '/balance', icon: Wallet2, label: 'nav.balance' },
     { href: '/portfolio', icon: TrendingUp, label: 'nav.portfolio' },
-    { href: '/balance/recharge', icon: CreditCard, label: 'nav.recharge' },
-    { href: '/exchange', icon: ArrowUpDown, label: 'nav.orders' },
-    { href: '/balance/withdrawal', icon: CreditCard, label: 'nav.withdrawal' },
+    { href: '/balance/recharge', icon: BanknoteArrowUp, label: 'nav.recharge' },
+    { href: '/balance/withdrawal', icon: BanknoteArrowDown, label: 'nav.withdrawal' },
     ...menuItems
   ] : menuItems;
   

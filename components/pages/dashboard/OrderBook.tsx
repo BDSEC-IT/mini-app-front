@@ -38,6 +38,21 @@ const formatOrderPrice = (price: number | undefined, symbol: string) => {
   return finalPrice.toLocaleString();
 };
 
+// Skeleton component for order book entries
+const OrderBookSkeleton = () => (
+  <div className="space-y-2">
+    {[...Array(5)].map((_, index) => (
+      <div
+        key={index}
+        className="grid grid-cols-2 text-right text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+      >
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse justify-self-end w-16"></div>
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse justify-self-end w-12"></div>
+      </div>
+    ))}
+  </div>
+);
+
 // Custom date check function that considers strings that might be dates
 const isValidDate = (dateStr: any): boolean => {
   if (!dateStr) return false;
@@ -126,13 +141,49 @@ const OrderBookComponent = ({
         )}
       </div>
 
-      <div className={`grid grid-cols-2 gap-4 mt-4 transition-all duration-1000 delay-400 ${
-        orderBookInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`}>
-        {/* Sell Orders */}
-        <div className={`overflow-hidden transition-all duration-700 delay-500 ${
-          orderBookInView ? 'opacity-100 -translate-x-0' : 'opacity-0 -translate-x-8'
-        }`}>
+      <div className="grid grid-cols-2 gap-4 mt-4">
+      
+
+        {/* Buy Orders */}
+        <div className="overflow-hidden">
+          <div className="px-3 py-2 bg-green-50 dark:bg-green-900/10">
+            <div className="grid grid-cols-2 text-right">
+                <h3 className="text-sm font-medium text-gray-500">{t('dashboard.quantity')}</h3>
+              <h3 className="text-sm font-medium text-green-500 flex justify-end">
+                <ArrowUp size={12} className="mr-1 text-green-500" />
+                {t('dashboard.buy')}
+              </h3>
+            
+            </div>
+          </div>
+
+          <div className="p-3">
+            {loading ? (
+              <OrderBookSkeleton />
+            ) : sortedBuyOrders.length > 0 ? (
+              sortedBuyOrders.map((order, index) => (
+                <div
+                  key={`buy-${order.id}-${index}`}
+                  className="grid grid-cols-2 text-right text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+                >
+                  <span className="bg-green-50 dark:bg-green-900/10 px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
+                    {(order.MDEntrySize || 0).toLocaleString()}
+                  </span>
+                  <span className="text-green-500 font-medium justify-self-end text-xs sm:text-sm">
+                    {formatOrderPrice(order.MDEntryPx, selectedSymbol)}
+                  </span>
+                  
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-gray-400 text-sm py-6">
+                {t('dashboard.noBuyOrders')}
+              </div>
+            )}
+          </div>
+        </div>
+          {/* Sell Orders */}
+        <div className="overflow-hidden">
           <div className="px-3 py-2 bg-red-50 dark:bg-red-900/10">
             <div className="grid grid-cols-2 text-right">
               <h3 className="text-sm font-medium text-red-500 flex items-center">
@@ -145,16 +196,14 @@ const OrderBookComponent = ({
 
           <div className="p-3">
             {loading ? (
-              <div className="text-center text-gray-400 text-sm py-6">
-                {t('dashboard.loading')}
-              </div>
+              <OrderBookSkeleton />
             ) : sortedSellOrders.length > 0 ? (
               sortedSellOrders.map((order, index) => (
                 <div
                   key={`sell-${order.id}-${index}`}
                   className="grid grid-cols-2 text-right text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
-                  <span className="text-red-500 font-medium justify-self-end">
+                  <span className="text-red-500 font-medium justify-self-end text-xs sm:text-sm">
                     {formatOrderPrice(order.MDEntryPx, selectedSymbol)} ₮
                   </span>
                   <span className="bg-red-50 dark:bg-red-900/10 px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
@@ -165,47 +214,6 @@ const OrderBookComponent = ({
             ) : (
               <div className="text-center text-gray-400 text-sm py-6">
                 {t('dashboard.noSellOrders')}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Buy Orders */}
-        <div className={`overflow-hidden transition-all duration-700 delay-600 ${
-          orderBookInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
-        }`}>
-          <div className="px-3 py-2 bg-green-50 dark:bg-green-900/10">
-            <div className="grid grid-cols-2 text-right">
-              <h3 className="text-sm font-medium text-green-500 flex items-center">
-                <ArrowUp size={12} className="mr-1 text-green-500" />
-                {t('dashboard.buy')}
-              </h3>
-              <h3 className="text-sm font-medium text-gray-500">{t('dashboard.quantity')}</h3>
-            </div>
-          </div>
-
-          <div className="p-3">
-            {loading ? (
-              <div className="text-center text-gray-400 text-sm py-6">
-                {t('dashboard.loading')}
-              </div>
-            ) : sortedBuyOrders.length > 0 ? (
-              sortedBuyOrders.map((order, index) => (
-                <div
-                  key={`buy-${order.id}-${index}`}
-                  className="grid grid-cols-2 text-right text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
-                >
-                  <span className="text-green-500 font-medium justify-self-end">
-                    {formatOrderPrice(order.MDEntryPx, selectedSymbol)} ₮
-                  </span>
-                  <span className="bg-green-50 dark:bg-green-900/10 px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
-                    {(order.MDEntrySize || 0).toLocaleString()}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-400 text-sm py-6">
-                {t('dashboard.noBuyOrders')}
               </div>
             )}
           </div>

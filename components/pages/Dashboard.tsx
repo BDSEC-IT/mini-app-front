@@ -554,7 +554,7 @@ const DashboardContent = () => {
   }, [selectedSymbol])
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white pb-24 px-4 pt-4 flex flex-col gap-y-4 overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white pb-24 px-4 pt-4 flex flex-col gap-y-4 overflow-hidden overflow-x-hidden">
     
         <StockList
           loading={stocksLoading}
@@ -676,12 +676,7 @@ const DashboardContent = () => {
       
       )}
     
-       <div 
-        ref={orderBookRef}
-        className={`transition-all duration-1000 delay-400 ${
-          orderBookInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
-      >
+      <div ref={orderBookRef}>
         <OrderBook
           selectedSymbol={selectedSymbol}
           loading={orderBookLoading}
@@ -691,16 +686,11 @@ const DashboardContent = () => {
         />
       </div>
       
-      <div 
-        ref={detailsRef}
-        className={`transition-all duration-1000 delay-600 ${
-          detailsInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
-      >
+      <div ref={detailsRef}>
         <StockDetails
           selectedSymbol={selectedSymbol}
           details={companyDetails}
-          infoLabel={isBond ? 'Bond Info' : 'Stock Info'}
+          infoLabel={isBond ? 'Bond Info' : 'Компанийн мэдээлэл'}
         />
       </div>
       

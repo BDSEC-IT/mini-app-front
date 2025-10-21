@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     env:
       DEPLOY_SCRIPT: |
@@ -71,3 +72,5 @@ jobs:
           username: damdinsuren
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: ${{ env.DEPLOY_SCRIPT }}
+          timeout: 60m           # total SSH session timeout
+          command_timeout: 60m   # per-command timeout

@@ -44,7 +44,7 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-red-500 transition-colors"
-            aria-label={t('exchange.close', 'Хаах')}
+            aria-label={t('exchange.close', 'Болих')}
           >
             <X size={20} />
           </button>

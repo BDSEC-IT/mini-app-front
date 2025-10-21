@@ -93,13 +93,13 @@ export const StockHeader = ({
     <div className="w-full transition-all duration-300 my-3 ">
       <div className="flex flex-col">
         {/* Symbol and Company Name */}
-        <div className="flex ">
-        <div className="w-full items-center ">
-          <h2 className="text-lg font-semibold ml-2">
+        <div className="flex mb-3 ">
+        <div className="w-full items-center  flex ">
+          <h2 className="text-lg font-semibold mr-2">
             {selectedStockData?.Symbol ? formatSymbolDisplay(selectedStockData.Symbol) : ''}
           </h2>
           {selectedStockData && (
-            <span className="text-sm font-medium bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-md">
+            <span className="text-sm font-medium md:visible hidden bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-md">
               {getCompanyName(selectedStockData, t, currentLanguage)}
             </span>
           )}
@@ -185,8 +185,8 @@ export const StockHeader = ({
 
 </div>
         {/* Price and Date */}
-        <div className="mt-2 ">
-          <div className="flex  items-start   px-2">
+        <div className="mt-3 ">
+          <div className="flex  items-start   ">
             {/* {selectedStockData && !isDataFresh && (
               <div className="text-xs mr-2 px-2 py-1 bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-md   mt-1">
                 Хаалтын ханш

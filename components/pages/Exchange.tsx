@@ -137,6 +137,7 @@ export default function Exchange() {
   const [stockHoldings, setStockHoldings] = useState<any[]>([]);
   const [selectedStockHolding, setSelectedStockHolding] = useState<any>(null);
   const [orders, setOrders] = useState<SecondaryOrderData[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState<boolean>(false);
   const [orderBook, setOrderBook] = useState<EnhancedOrderBookData | null>(null);
   const [completedOrders, setCompletedOrders] = useState<CompletedOrderEntry[]>([]);
   const [placing, setPlacing] = useState(false);
@@ -152,7 +153,7 @@ export default function Exchange() {
   
   // Form state
   const [orderSide, setOrderSide] = useState<OrderSide>('BUY');
-  const [orderType, setOrderType] = useState('Зах зээлийн');
+  const [orderType, setOrderType] = useState('Нөхцөлт');
   const [quantity, setQuantity] = useState('');
   const [price, setPrice] = useState('');
   const [orderDuration, setOrderDuration] = useState('GTC'); // GTC, DAY, GTD
@@ -398,12 +399,15 @@ export default function Exchange() {
     const token = Cookies.get('token');
     if (!token) return;
     try {
+      setLoadingOrders(true);
       const result = await fetchSecondaryOrders(token);
       if (result.success && result.data) {
         setOrders(result.data);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
+    } finally {
+      setLoadingOrders(false);
     }
   };
 
@@ -696,7 +700,7 @@ export default function Exchange() {
   }
 
   return (
-    <div className="w-full bg-white dark:bg-gray-900 min-h-screen mb-20">
+    <div className="w-full bg-white dark:bg-gray-900 min-h-screen pb-24">
       {/* Trading Header - Price Focused */}
       {selectedStock && (
         <div className="bg-white dark:bg-gray-900 mx-3 mt-3 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -833,7 +837,7 @@ export default function Exchange() {
       )}
 
       <MyOrders
-
+        loading={loadingOrders}
         orders={orders.map(order => ({ ...order, id: order.id.toString(), buySell: order.buySell as 'BUY' | 'SELL' }))}
         orderTab={orderTab}
         setOrderTab={setOrderTab}

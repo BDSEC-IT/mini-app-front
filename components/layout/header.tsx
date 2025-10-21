@@ -55,9 +55,9 @@ const Header = () => {
             <LanguageToggle />
           </div>
           
-          {!isLoggedIn && (
+          {/* {!isLoggedIn && (
             <p className="text-sm lg:text-base ">Mini-App</p>
-          )}
+          )} */}
           
           {/* <button
             className="text-bdsec dark:text-indigo-400 hover:text-gray-500 dark:hover:text-white p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

@@ -20,6 +20,7 @@ import Autoplay from 'embla-carousel-autoplay'
 import type { StockData, TradingHistoryData } from '@/lib/api'
 import { fetchTradingHistory } from '@/lib/api'
 import { BlinkEffect } from '@/components/ui/BlinkEffect'
+import { InfoTooltip } from '@/components/ui'
 
 // Custom hook for intersection observer
 const useInView = (threshold = 0.1) => {
@@ -310,33 +311,34 @@ const StockListComponent = ({
           <h2 className="text-lg font-semibold flex items-center text-gray-900 dark:text-white">
             {t('dashboard.popularStocks')}
           </h2>
+         
           {displayPeriodDescription && activeFilter !== 'bonds' && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {displayPeriodDescription}
-            </p>
+           
+            <p className="text-xs max-w-[150px] text-gray-500 dark:text-gray-400 ">
+            {displayPeriodDescription} 
+          </p>
+       
+            
           )}
+     
         </div>
-        <Link 
-          href={`/stocks?filter=${activeFilter}`} 
-          className="flex items-center text-sm font-normal text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-        >
-          {t('dashboard.viewAll')} <ChevronRight size={16} className="ml-1" />
-        </Link>
-      </div>
-
-      {/* Filter Dropdown */}
-      <div className={`mb-4 flex justify-start transition-all duration-1000 delay-200 ${
+  
+        {/* Filter Dropdown */}
+          <div className="">
+      <div className={`flex justify-end transition-all duration-1000 delay-200 ${
         stockListInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}>
+      
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="flex items-center gap-2 text-bdsec  dark:bg-gray-800 px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700  dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors"
+              className="flex items-center gap-1 text-bdsec   dark:bg-gray-800 px-2 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700  dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600 transition-colors"
               aria-label={t('dashboard.filter')}
               type="button"
             >
               {filters.find(f => f.id === activeFilter)?.label}
-              <ChevronDown size={16} className="text-bdsec dark:text-gray-400" />
+              
+              <ChevronDown size={16} className="text-bdsec dark:text-gray-400 " />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="min-w-[160px] p-1">
@@ -353,14 +355,28 @@ const StockListComponent = ({
               >
                 {filter.icon && <filter.icon size={16} className="mr-1" />}
                 {filter.label}
+                
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+         
+      </div>
+      {/* <div className="text-end">
+
+         <div className={`mt-0 px-1 sm:px-0 text-xs font-normal text-gray-500 dark:text-gray-400 transition-all duration-1000 delay-800 ${
+        stockListInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}>
+        {activeFilter && t(`dashboard.tooltip.${activeFilter}`)}
+      </div>
+        </div> */}
+      </div>
       </div>
 
-      {/* Selected card pinned to the left, outside the scrollable carousel */}
-      <div className={`flex items-stretch gap-1 mt-0 py-0 sm:pt-4 sm:mt-4 transition-all duration-1000 delay-400 overflow-hidden ${
+     
+
+     
+      <div className={`flex items-stretch gap-1 mt-0 py-0  transition-all duration-1000 delay-400 overflow-hidden ${
         stockListInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}>
         
@@ -406,7 +422,7 @@ const StockListComponent = ({
               </p>
             </div>
             <div className="mt-1 z-10">
-              <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Өмнөх хаалтын үнэ</div>
+              <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Хаалт</div>
               <div className="text-sm font-semibold text-gray-900 dark:text-white">
                 {formatPrice(selectedStock.PreviousClose, isStockABond(selectedStock))} 
                 {formatPrice(selectedStock.PreviousClose, isStockABond(selectedStock)) !== '-' ? '₮' : ''}
@@ -506,7 +522,7 @@ const StockListComponent = ({
                           </p>
                         </div>
                         <div className="mt-1 z-10">
-                          <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Өмнөх хаалтын үнэ</div>
+                          <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Хаалт</div>
                           <div className="text-sm font-semibold text-gray-900 dark:text-white">
                             {formatPrice(stock.PreviousClose, isStockABond(stock))}
                             {formatPrice(stock.PreviousClose, isStockABond(stock)) !== '-' ? '₮' : ''}
@@ -538,11 +554,20 @@ const StockListComponent = ({
           </Carousel>
         </div>
       </div>
-      <div className={`mt-0 px-1 sm:px-0 text-xs font-normal text-gray-400 dark:text-gray-500 transition-all duration-1000 delay-800 ${
-        stockListInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`}>
-        {activeFilter && t(`dashboard.tooltip.${activeFilter}`)}
+      <div className="flex w-full justify-end ">
+   
+              
+              <Link 
+          href={`/stocks?filter=${activeFilter}`} 
+          aria-label={t('dashboard.viewAll')}
+          className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[5px] text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-bdsec/50 dark:focus:ring-indigo-500/40 transition"
+        >
+          <span>{t('dashboard.viewAll')}</span>
+          <ChevronRight size={14} className="ml-0.5 transition-transform group-hover:translate-x-0.5" />
+          
+        </Link>
       </div>
+
     </div>
   )
 }

@@ -12,6 +12,7 @@ export default function BalanceWithdrawal() {
   const [currentView, setCurrentView] = useState<'main' | 'create' | 'addBank'>('main');
   const [selectedBank, setSelectedBank] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
+  const [displayAmount, setDisplayAmount] = useState<string>(''); // Formatted display value
   const [description, setDescription] = useState<string>('');
   const [selectedAssetCode, setSelectedAssetCode] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -69,6 +70,40 @@ export default function BalanceWithdrawal() {
     }
   }, [success]);
 
+  // Handle amount input with formatting
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value;
+    
+    // Remove all non-numeric characters except decimal point
+    let cleanValue = input.replace(/[^\d.]/g, '');
+    
+    // Handle multiple decimal points - keep only the first one
+    const parts = cleanValue.split('.');
+    if (parts.length > 2) {
+      cleanValue = parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    // Limit to 2 decimal places
+    if (parts.length === 2 && parts[1].length > 2) {
+      cleanValue = parts[0] + '.' + parts[1].substring(0, 2);
+    }
+    
+    // Store the raw value (without commas) for calculations
+    setAmount(cleanValue);
+    
+    // Format for display with commas
+    if (cleanValue) {
+      const [integerPart, decimalPart] = cleanValue.split('.');
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const formatted = decimalPart !== undefined 
+        ? `${formattedInteger}.${decimalPart}`
+        : formattedInteger;
+      setDisplayAmount(formatted);
+    } else {
+      setDisplayAmount('');
+    }
+  };
+
   // Handle withdrawal creation
   const handleCreateWithdrawal = async () => {
     if (!selectedBank || !amount || !description) {
@@ -109,6 +144,7 @@ export default function BalanceWithdrawal() {
       setSuccess('Мөнгө хүсэх хүсэлт амжилттай илгээгдлээ');
       setCurrentView('main');
       setAmount('');
+      setDisplayAmount('');
       setDescription('');
       setSelectedBank('');
       setSelectedAssetCode('');
@@ -433,12 +469,13 @@ export default function BalanceWithdrawal() {
         {/* Amount */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Дүн (₮)
+            Мөнгөн дүн (₮)
           </label>
           <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            type="text"
+            inputMode="decimal"
+            value={displayAmount}
+            onChange={handleAmountChange}
             placeholder="Дүн оруулах"
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec focus:border-transparent"
           />
@@ -450,12 +487,12 @@ export default function BalanceWithdrawal() {
         {/* Description */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Тайлбар
+            Гүйлгээний утга
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Хүсэлтийн тайлбар"
+            placeholder="Гүйлгээний утга оруулна уу"
             rows={3}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec focus:border-transparent resize-none"
           />

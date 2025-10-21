@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { ArrowLeft, ChevronDown, TrendingUp, TrendingDown, Filter, X } from 'lucide-react';
 import { formatCurrency } from '@/utils/balanceUtils';
 import { SkeletonTransaction } from './SkeletonComponents';
 import { useTranslation } from 'react-i18next';
@@ -202,7 +202,6 @@ const CashTransactionCard = ({ transaction }: CashTransactionCardProps) => {
 };
 
 interface TransactionsPageProps {
-  balanceType: BalanceType;
   selectedAssetSymbol: string | null;
   securityTransactions: SecurityTransaction[];
   csdTransactions: CSDTransaction[];
@@ -224,8 +223,10 @@ interface TransactionsPageProps {
   onCustomEndChange: (date: string) => void;
 }
 
+const VALID_TYPES = ['security', 'cash', 'csd'] as const;
+type ValidType = typeof VALID_TYPES[number];
+
 export default function TransactionsPage({
-  balanceType,
   selectedAssetSymbol,
   securityTransactions,
   csdTransactions,
@@ -247,7 +248,7 @@ export default function TransactionsPage({
   onCustomEndChange
 }: TransactionsPageProps) {
   
-  const filterTransactionsByDate = (transaction: SecurityTransaction | CSDTransaction | CashTransaction) => {
+  const filterTransactionsByDate = useMemo(() => (transaction: SecurityTransaction | CSDTransaction | CashTransaction) => {
     if (dateRangeOption === 'all') return true;
     const txDate = new Date(transaction.transactionDate);
     const now = new Date();
@@ -268,55 +269,92 @@ export default function TransactionsPage({
       return txDate >= start && txDate <= end;
     }
     return true;
-  };
+  }, [dateRangeOption, customStart, customEnd]);
 
-  const filteredSecurityTransactions = securityTransactions
-    .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
-    .filter((transaction) => {
-      // filter by selected asset symbol if provided
-      if (selectedAssetSymbol) {
-        return (transaction.symbol || '').toLowerCase() === selectedAssetSymbol.toLowerCase();
-      }
-      // filter by income/expense
-      if (transactionFilter === 'income') return transaction.buySell === 'sell';
-      if (transactionFilter === 'expense') return transaction.buySell === 'buy';
-      return true;
-    })
-    .filter((transaction) => {
-      // filter by transactionType
-      if (transactionType === 'security') return true;
-      return false;
-    })
-    .filter(filterTransactionsByDate);
+  const filteredSecurityTransactions = useMemo(() => {
+    if (transactionType !== 'security') return [];
+    
+    return securityTransactions
+      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
+      .filter((transaction) => {
+        // filter by selected asset symbol if provided
+        if (selectedAssetSymbol) {
+          return (transaction.symbol || '').toLowerCase() === selectedAssetSymbol.toLowerCase();
+        }
+        return true;
+      })
+      .filter((transaction) => {
+        // filter by income/expense
+        if (transactionFilter === 'income') return transaction.buySell === 'sell';
+        if (transactionFilter === 'expense') return transaction.buySell === 'buy';
+        return true;
+      })
+      .filter(filterTransactionsByDate);
+  }, [securityTransactions, selectedAssetSymbol, transactionFilter, transactionType, filterTransactionsByDate]);
 
-  const filteredCsdTransactions = csdTransactions
-    .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
-    .filter((transaction) => {
-      if (selectedAssetSymbol) {
-        const sym = selectedAssetSymbol.toLowerCase();
-        if (transaction.code && transaction.code.toLowerCase().includes(sym)) return true;
-        if (transaction.description && transaction.description.toLowerCase().includes(sym)) return true;
-        return false;
-      }
-      if (transactionFilter === 'income') return transaction.creditAmt > 0;
-      if (transactionFilter === 'expense') return transaction.debitAmt > 0;
-      return true;
-    })
-    .filter(filterTransactionsByDate);
+  const filteredCsdTransactions = useMemo(() => {
+    if (transactionType !== 'csd') return [];
+    
+    return csdTransactions
+      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
+      .filter((transaction) => {
+        if (selectedAssetSymbol) {
+          const sym = selectedAssetSymbol.toLowerCase();
+          if (transaction.code && transaction.code.toLowerCase().includes(sym)) return true;
+          if (transaction.description && transaction.description.toLowerCase().includes(sym)) return true;
+          return false;
+        }
+        return true;
+      })
+      .filter((transaction) => {
+        if (transactionFilter === 'income') return transaction.creditAmt > 0;
+        if (transactionFilter === 'expense') return transaction.debitAmt > 0;
+        return true;
+      })
+      .filter(filterTransactionsByDate);
+  }, [csdTransactions, selectedAssetSymbol, transactionFilter, transactionType, filterTransactionsByDate]);
 
-  const filteredCashTransactions = cashTransactions
-    .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
-    .filter((transaction) => {
-      // For cash transactions, we don't filter by symbol
-      if (transactionFilter === 'income') return (transaction.creditAmt || 0) > 0;
-      if (transactionFilter === 'expense') return (transaction.debitAmt || 0) > 0;
-      return true;
-    })
-    .filter(filterTransactionsByDate);
+  const filteredCashTransactions = useMemo(() => {
+    if (transactionType !== 'cash') return [];
+    
+    return cashTransactions
+      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
+      .filter((transaction) => {
+        // For cash transactions, we don't filter by symbol
+        if (transactionFilter === 'income') return (transaction.debitAmt || 0) > 0;
+        if (transactionFilter === 'expense') return (transaction.creditAmt || 0) > 0;
+        return true;
+      })
+      .filter(filterTransactionsByDate);
+  }, [cashTransactions, transactionFilter, transactionType, filterTransactionsByDate]);
 
   const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
+  const filterPanelRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 10;
+
+  // Close filter panel when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterPanelRef.current && !filterPanelRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+    };
+
+    if (showFilters) {
+      document.addEventListener('mousedown', handleClickOutside);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = '';
+    };
+  }, [showFilters]);
 
   // Get paginated data
   const getPaginatedData = (data: any[]) => {
@@ -327,19 +365,6 @@ export default function TransactionsPage({
 
   // Get total pages
   const getTotalPages = (data: any[]) => Math.ceil(data.length / itemsPerPage);
-
-  // Filter cash transactions
-  const filteredCashData = useMemo(() => {
-    return cashTransactions
-      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
-      .filter(transaction => {
-        // Apply income/expense filter
-        if (transactionFilter === 'income') return (transaction.debitAmt || 0) > 0;
-        if (transactionFilter === 'expense') return (transaction.creditAmt || 0) > 0;
-        return true;
-      })
-      .filter(filterTransactionsByDate); // Apply date filter
-  }, [cashTransactions, transactionFilter, dateRangeOption, customStart, customEnd]);
 
   // Get current data based on transaction type
   const getCurrentData = () => {
@@ -352,8 +377,8 @@ export default function TransactionsPage({
         };
       case 'cash':
         return {
-          data: getPaginatedData(filteredCashData),
-          totalPages: getTotalPages(filteredCashData),
+          data: getPaginatedData(filteredCashTransactions),
+          totalPages: getTotalPages(filteredCashTransactions),
           loading: loadingCashTransactions
         };
       case 'csd':
@@ -383,138 +408,267 @@ export default function TransactionsPage({
     }
   };
 
+  // Handle type change with validation
+  const handleTypeChange = (newType: string) => {
+    console.log('newType', newType);
+    if (VALID_TYPES.includes(newType as ValidType)) {
+      onTransactionTypeChange(newType as TransactionType);
+      // Don't call onClearAssetFilter here - it's handled in setType
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 min-h-screen">
+      {/* Filter Panel - Fixed Modal (Rendered First) */}
+      {showFilters && (
+        <>
+          {/* Backdrop Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+          />
+          
+          <div 
+            ref={filterPanelRef}
+            className="pb-28 fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300 max-h-[85vh] overflow-y-auto"
+          >
+            {/* Panel Header */}
+            <div className="sticky top-0 bg-white dark:bg-gray-900 px-4 pt-4 pb-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Шүүлтүүр</h2>
+              <button
+                onClick={() => setShowFilters(false)}
+                className="flex items-center justify-center w-8 h-8 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Filter Content */}
+            <div className="px-4 py-4 space-y-4">
+            {/* Transaction Type */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                Хуулганы төрөл
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleTypeChange('security')}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                    transactionType === 'security'
+                      ? 'bg-bdsec dark:bg-indigo-600 text-white shadow-md scale-[1.02]'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  📊 Үнэт цаас
+                </button>
+                <button
+                  onClick={() => handleTypeChange('cash')}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                    transactionType === 'cash'
+                      ? 'bg-bdsec dark:bg-indigo-600 text-white shadow-md scale-[1.02]'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  💰 Номинал
+                </button>
+              </div>
+            </div>
+
+            {/* Income/Expense Filter */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                Төрөл
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => onTransactionFilterChange('all')}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                    transactionFilter === 'all'
+                      ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-md scale-[1.02]'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Бүгд
+                </button>
+                <button
+                  onClick={() => onTransactionFilterChange('income')}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                    transactionFilter === 'income'
+                      ? 'bg-green-600 dark:bg-green-500 text-white shadow-md scale-[1.02]'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Орлого
+                </button>
+                <button
+                  onClick={() => onTransactionFilterChange('expense')}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                    transactionFilter === 'expense'
+                      ? 'bg-red-600 dark:bg-red-500 text-white shadow-md scale-[1.02]'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Зарлага
+                </button>
+              </div>
+            </div>
+
+            {/* Date Range */}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                Хугацаа
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => onDateRangeChange('all')}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                    dateRangeOption === 'all'
+                      ? 'bg-purple-600 dark:bg-purple-500 text-white shadow-md scale-[1.02]'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Бүгд
+                </button>
+                <button
+                  onClick={() => onDateRangeChange('7')}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                    dateRangeOption === '7'
+                      ? 'bg-purple-600 dark:bg-purple-500 text-white shadow-md scale-[1.02]'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  7 хоног
+                </button>
+                <button
+                  onClick={() => onDateRangeChange('30')}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                    dateRangeOption === '30'
+                      ? 'bg-purple-600 dark:bg-purple-500 text-white shadow-md scale-[1.02]'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  30 хоног
+                </button>
+                <button
+                  onClick={() => onDateRangeChange('custom')}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                    dateRangeOption === 'custom'
+                      ? 'bg-purple-600 dark:bg-purple-500 text-white shadow-md scale-[1.02]'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Өдрөөр
+                </button>
+              </div>
+
+              {/* Custom Date Inputs */}
+              {dateRangeOption === 'custom' && (
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <input
+                    type="date"
+                    value={customStart}
+                    onChange={(e) => onCustomStartChange(e.target.value)}
+                    className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3 text-sm focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  <input
+                    type="date"
+                    value={customEnd}
+                    onChange={(e) => onCustomEndChange(e.target.value)}
+                    className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-3 text-sm focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500 focus:border-transparent"
+                  />
+                </div>
+              )}
+            </div>
+
+       
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between p-4">
           <button 
             onClick={onBack}
-            className="flex items-center space-x-2 text-gray-600 dark:text-gray-400"
+            className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span className="text-sm font-medium">Буцах</span>
           </button>
-          <h1 className="text-base font-semibold text-gray-900 dark:text-white truncate max-w-[200px] text-center">
-            {transactionType === 'security' ? 'Үнэт цаасны гүйлгээ' :
-             transactionType === 'csd' ? 'ҮЦТХТ-ийн гүйлгээ' :
-             transactionType === 'cash' ? 'Номинал дансны гүйлгээ' : 'Хуулга'}
+          <h1 className="text-base font-semibold text-gray-900 dark:text-white">
+            Хуулга
           </h1>
-          <div className="w-5"></div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="relative flex items-center justify-center w-9 h-9 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+          >
+            <Filter className="w-5 h-5" />
+            {/* Active Filter Indicator */}
+            {(transactionFilter !== 'all' || dateRangeOption !== 'all' || selectedAssetSymbol) && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-bdsec dark:bg-indigo-500 rounded-full"></span>
+            )}
+          </button>
         </div>
 
-        {/* Filters */}
-        <div className="px-4 pb-4 space-y-3">
-          {/* Transaction Type Filter */}
-          <div className="w-full">
-            <select
-              value={transactionType}
-              onChange={(e) => {
-                onTransactionTypeChange(e.target.value as TransactionType);
-                onClearAssetFilter(); // Clear symbol filter when changing transaction type
-              }}
-              className="w-full appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 pr-8 text-sm"
+        {/* Compact Filter Bar - Always Visible */}
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+            {/* Transaction Type Chip */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex-shrink-0 px-3 py-1.5 bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 rounded-full text-sm font-medium flex items-center gap-1.5 hover:bg-bdsec/20 dark:hover:bg-indigo-500/30 transition-colors"
             >
-              <option value="security">Үнэт цаасны гүйлгээ</option>
-              {/* <option value="csd">ҮЦТХТ-ийн гүйлгээ</option> */}
-              <option value="cash">Номинал дансны гүйлгээ</option>
-            </select>
-          </div>
+              {transactionType === 'security' ? '📊 Үнэт цаас' : 
+               transactionType === 'cash' ? '💰 Номинал' : '🏦 ҮЦТХТ'}
+            </button>
 
-          {/* Symbol Filter for Securities */}
-          {transactionType === 'security' && selectedAssetSymbol && (
-            <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 rounded-lg px-3 py-2">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Үнэт цаас:</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">{selectedAssetSymbol}</span>
-              </div>
-              <button 
-                onClick={onClearAssetFilter}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <span className="text-lg">×</span>
-              </button>
-            </div>
-          )}
-
-          {/* Date Range and Custom Date Filters */}
-          <div className="flex flex-col space-y-3">
-            <select
-              value={dateRangeOption}
-              onChange={(e) => onDateRangeChange(e.target.value as DateRangeOption)}
-              className="w-full appearance-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 pr-8 text-sm"
-            >
-              <option value="all">Бүх хугацаа</option>
-              <option value="7">7 хоног</option>
-              <option value="30">30 хоног</option>
-              <option value="custom">Өөрчлөх</option>
-            </select>
-
-            {dateRangeOption === 'custom' && (
-              <div className="grid grid-cols-2 gap-2">
-                <input 
-                  type="date" 
-                  value={customStart} 
-                  onChange={(e) => onCustomStartChange(e.target.value)} 
-                  className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm" 
-                />
-                <input 
-                  type="date" 
-                  value={customEnd} 
-                  onChange={(e) => onCustomEndChange(e.target.value)} 
-                  className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 text-sm" 
-                />
+            {/* Selected Symbol Chip */}
+            {transactionType === 'security' && selectedAssetSymbol && (
+              <div className="flex-shrink-0 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium flex items-center gap-1.5">
+                <span>{selectedAssetSymbol}</span>
+                <button 
+                  onClick={onClearAssetFilter}
+                  className="hover:text-blue-900 dark:hover:text-blue-100"
+                >
+                  ×
+                </button>
               </div>
             )}
-          </div>
 
-          {/* Income/Expense Filter */}
-          <div className="grid grid-cols-3 gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-            <button
-              onClick={() => onTransactionFilterChange('all')}
-              className={`py-2 rounded-md text-sm font-medium transition-colors ${
-                transactionFilter === 'all' 
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' 
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-700/50'
-              }`}
-            >
-              Бүгд
-            </button>
-            <button
-              onClick={() => onTransactionFilterChange('income')}
-              className={`py-2 rounded-md text-sm font-medium transition-colors ${
-                transactionFilter === 'income' 
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' 
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-700/50'
-              }`}
-            >
-              Орлого
-            </button>
-            <button
-              onClick={() => onTransactionFilterChange('expense')}
-              className={`py-2 rounded-md text-sm font-medium transition-colors ${
-                transactionFilter === 'expense' 
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' 
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-700/50'
-              }`}
-            >
-              Зарлага
-            </button>
+                {/* Date Range Chip */}
+                {dateRangeOption !== 'all' && (
+                  <div className="flex-shrink-0 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-medium flex items-center gap-1.5">
+                    <span>
+                      {dateRangeOption === '7' ? '7 хоног' : 
+                       dateRangeOption === '30' ? '30 хоног' : 'Өдрөөр'}
+                    </span>
+                    <button
+                      onClick={() => onDateRangeChange('all')}
+                      className="hover:text-purple-900 dark:hover:text-purple-100"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+
+                {/* Filter Type Chip */}
+                {transactionFilter !== 'all' && (
+                  <div className="flex-shrink-0 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium flex items-center gap-1.5">
+                    <span>{transactionFilter === 'income' ? '📈 Орлого' : '📉 Зарлага'}</span>
+                    <button
+                      onClick={() => onTransactionFilterChange('all')}
+                      className="hover:text-green-900 dark:hover:text-green-100"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
           </div>
         </div>
       </div>
 
       {/* Transaction List */}
       <div id="transaction-list" className="pb-40 p-4 space-y-3">
-        {/* Transaction Count */}
-        {/* <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-          {t('common.total')}: {
-            transactionType === 'security' ? filteredSecurityTransactions.length :
-            transactionType === 'cash' ? filteredCashTransactions.length :
-            transactionType === 'csd' ? filteredCsdTransactions.length : 0
-          } {t('common.transactions')}
-        </div> */}
-
         {/* Transactions */}
         {loading ? (
           <>
