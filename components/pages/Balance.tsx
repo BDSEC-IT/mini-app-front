@@ -289,7 +289,7 @@ export default function Balance() {
   // Main loading state
   if (isLoading) {
     return (
-      <div className="bg-gray-50 dark:bg-gray-950 min-h-screen flex items-center justify-center pb-20">
+      <div className="bg-white dark:bg-gray-950 min-h-screen flex items-center justify-center pb-20">
         <div className="flex flex-col items-center space-y-3">
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 dark:border-gray-800 border-t-bdsec dark:border-t-indigo-500"></div>
           <p className="text-xs text-gray-500 dark:text-gray-400">Loading...</p>
@@ -310,7 +310,7 @@ export default function Balance() {
 
   // Main balance page
   return (
-    <div className="bg-gray-50 dark:bg-gray-950 min-h-screen pb-20">
+    <div className="bg-white dark:bg-gray-950 min-h-screen pb-20">
       <BalanceHeader
         totalBalance={totalBalance}
         nominalBalance={nominalBalance}

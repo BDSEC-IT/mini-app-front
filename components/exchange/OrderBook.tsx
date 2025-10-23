@@ -23,8 +23,9 @@ export const OrderBook: React.FC<OrderBookProps> = ({ orderBook, onOrderClick })
     <div className="col-span-3 bg-gray-50 dark:bg-gray-800/30 rounded-lg p-1.5 border border-gray-200 dark:border-gray-700">
       {/* Order Book Headers */}
       <div className="grid grid-cols-4  text-[10px] font-medium text-gray-600 dark:text-gray-300 pb-1">
+                <div className="text-center">{t('exchange.shares', 'Ширхэг')}</div>
         <div className="text-green-600 text-center">{t('exchange.buy', 'Авах')}</div>
-        <div className="text-center">{t('exchange.shares', 'Ширхэг')}</div>
+
         <div className="text-red-600 text-center">{t('exchange.sell', 'Зарах')}</div>
         <div className="text-center">{t('exchange.shares', 'Ширхэг')}</div>
       </div>
@@ -46,12 +47,13 @@ export const OrderBook: React.FC<OrderBookProps> = ({ orderBook, onOrderClick })
                   }}
                   className="col-span-2  gap-x-4 grid grid-cols-2 hover:bg-green-50 dark:hover:bg-green-900/10 py-0.5 transition-colors"
                 >
-                  <span className="text-green-600 font-medium text-right">
-                    {bidOrder ? bidOrder.price.toFixed(0) : ''}
-                  </span>
-                  <span className="text-gray-700 dark:text-gray-300 text-right">
+                     <span className="text-gray-700 dark:text-gray-300 text-right">
                     {bidOrder ? bidOrder.quantity : ''}
                   </span>
+                  <span className="text-green-600 ml-3 font-medium text-right">
+                    {bidOrder ? bidOrder.price.toFixed(0) : ''}
+                  </span>
+               
                 </button>
                 {/* Sell side - clickable row */}
                 <button 

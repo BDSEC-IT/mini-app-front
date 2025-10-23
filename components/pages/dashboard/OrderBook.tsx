@@ -203,7 +203,7 @@ const OrderBookComponent = ({
                   key={`sell-${order.id}-${index}`}
                   className="grid grid-cols-2 text-right text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
-                  <span className="text-red-500 font-medium justify-self-end text-xs sm:text-sm">
+                  <span className="text-red-500 mr-5 font-medium justify-self-end text-xs sm:text-sm">
                     {formatOrderPrice(order.MDEntryPx, selectedSymbol)} ₮
                   </span>
                   <span className="bg-red-50 dark:bg-red-900/10 px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">

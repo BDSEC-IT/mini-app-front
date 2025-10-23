@@ -572,7 +572,7 @@ const DashboardContent = () => {
   }, [selectedSymbol])
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white pb-20 px-2.5 pt-2.5 flex flex-col gap-y-2.5 overflow-hidden overflow-x-hidden">
+    <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white pb-20 px-2.5 pt-2.5 flex flex-col gap-y-2.5 overflow-hidden overflow-x-hidden">
       
       {/* Search Bar at Top */}
       <div className="w-full mb-1.5 h-[26px]">

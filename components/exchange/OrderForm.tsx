@@ -118,7 +118,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 : 'none'
             }}
           >
-            АВАХ
+            {t('exchange.buy', 'АВАХ')}
           </button>
           <button
             onClick={() => setOrderSide('SELL')}
@@ -133,7 +133,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 : 'none'
             }}
           >
-            ЗАРАХ
+            {t('exchange.sell', 'ЗАРАХ')}
           </button>
         </div>
       </div>
@@ -290,12 +290,12 @@ export const OrderForm: React.FC<OrderFormProps> = ({
 
       {/* Total Summary with Color Styling */}
       <div className="mb-3">
-        <div className="flex justify-between text-sm items-center mb-2">
+        {/* <div className="flex justify-between text-sm items-center mb-2">
           <span className="text-gray-700 dark:text-gray-300 font-medium">{t('exchange.total')}:</span>
           <span className="font-bold text-gray-900 dark:text-white">
             {formatNumber(calculateTotal())}₮
           </span>
-        </div>
+        </div> */}
         {feeEquity && (
           <>
             <div className="flex justify-between text-xs py-1 border-t border-gray-200 dark:border-gray-700">
@@ -307,10 +307,10 @@ export const OrderForm: React.FC<OrderFormProps> = ({
               </span>
             </div>
             <div className="flex justify-between text-sm items-center mt-1 pt-1 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-blue-800 dark:text-blue-300 font-bold">
+              <span className="text-blue-700 dark:text-blue-400 font-bold">
                 {t('exchange.netTotal', 'Шимтгэл тооцсон нийт дүн')}:
               </span>
-              <span className="text-blue-800 dark:text-blue-300 font-extrabold">
+              <span className="text-blue-800 dark:text-blue-300 font-bold">
                 {formatNumber(calculateTotal())}₮
               </span>
             </div>

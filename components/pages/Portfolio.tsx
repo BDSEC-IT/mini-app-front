@@ -224,7 +224,7 @@ export default function Portfolio() {
   // Early returns for loading, error, and no data states
   if (loading) {
     return (
-      <div className="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen pb-20 flex items-center justify-center">
+      <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen pb-20 flex items-center justify-center">
         <div className="flex flex-col items-center space-y-3">
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 dark:border-gray-800 border-t-bdsec dark:border-t-indigo-500"></div>
           <p className="text-xs text-gray-500 dark:text-gray-400">{t('portfolio.loading')}</p>
@@ -235,7 +235,7 @@ export default function Portfolio() {
 
   if (error) {
     return (
-      <div className="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen pb-20 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen pb-20 flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
           <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <p className="text-red-600 dark:text-red-400 text-xs">{error}</p>
@@ -253,7 +253,7 @@ export default function Portfolio() {
 
   if (!portfolioData) {
     return (
-      <div className="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen pb-20 flex items-center justify-center">
+      <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen pb-20 flex items-center justify-center">
         <p className="text-xs text-gray-500 dark:text-gray-400">{t('portfolio.noData')}</p>
       </div>
     );
@@ -267,7 +267,7 @@ export default function Portfolio() {
   const profitLossPercent = totalInvested > 0 ? ((totalProfit / totalInvested) * 100) : 0;
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen pb-20">
+    <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen pb-20">
       {/* Compact Header */}
       <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between px-3 py-2.5">

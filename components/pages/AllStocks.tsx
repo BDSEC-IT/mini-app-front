@@ -741,9 +741,9 @@ const getStockCategory = (stock: StockData): string => {
                 </div>
           {/* Summary info */}
           <div className="flex flex-wrap gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
-            <span>Компани: <span className="font-semibold text-bdsec dark:text-indigo-400">{summary.count}</span></span>
-            <span>Үнийн дүн: <span className="font-semibold">{summary.totalTurnover.toLocaleString()}₮</span></span>
-            <span>Тоо ширхэг: <span className="font-semibold">{summary.totalVolume.toLocaleString()}</span></span>
+            <span>{t('dashboard.company', 'Компани')}: <span className="font-semibold text-bdsec dark:text-indigo-400">{summary.count}</span></span>
+            <span>{t('allStocks.turnover', 'Үнийн дүн')}: <span className="font-semibold">{summary.totalTurnover.toLocaleString()}₮</span></span>
+            <span>{t('dashboard.quantity', 'Тоо ширхэг')}: <span className="font-semibold">{summary.totalVolume.toLocaleString()}</span></span>
           </div>
         </div>
 
@@ -751,7 +751,7 @@ const getStockCategory = (stock: StockData): string => {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-100 dark:bg-gray-800">
+                <tr className="bg-white dark:bg-gray-800">
                   <th className="px-2 py-3 text-left">
                     <div className="flex items-center cursor-pointer" onClick={() => handleSort('Symbol')}>
                       {t('allStocks.symbol')}
@@ -875,7 +875,7 @@ const getStockCategory = (stock: StockData): string => {
                 </tr>
               </thead>
               <tbody>
-                {renderCategoryStocks([...stocks].sort((a, b) => b.Turnover - a.Turnover))}
+                {renderCategoryStocks(sortConfig.key ? sortedStocks().filter(stock => getStockCategory(stock) === categoryId) : [...stocks].sort((a, b) => b.Turnover - a.Turnover))}
               </tbody>
             </table>
           </div>

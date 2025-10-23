@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 // Mock data that matches the screenshot
 const mockOrderBookData = {
@@ -36,6 +37,8 @@ interface OrderBookDisplayProps {
 }
 
 export default function OrderBookDisplay({ symbol = 'KHAN', onPriceSelect }: OrderBookDisplayProps) {
+  const { t } = useTranslation('common');
+  
   const formatNumber = (num: number) => {
     return num.toLocaleString();
   };
@@ -51,10 +54,10 @@ export default function OrderBookDisplay({ symbol = 'KHAN', onPriceSelect }: Ord
 
       {/* Order Book Headers */}
       <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 grid grid-cols-4 gap-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-        <div className="text-center">Авах үнэ</div>
-        <div className="text-center">Тоо ширхэг</div>
-        <div className="text-center">Зарах үнэ</div>
-        <div className="text-center">Тоо ширхэг</div>
+        <div className="text-center">{t('dashboard.bid', 'Авах үнэ')}</div>
+        <div className="text-center">{t('dashboard.quantity', 'Тоо ширхэг')}</div>
+        <div className="text-center">{t('dashboard.ask', 'Зарах үнэ')}</div>
+        <div className="text-center">{t('dashboard.quantity', 'Тоо ширхэг')}</div>
       </div>
 
       {/* Order Book Data */}
@@ -97,10 +100,10 @@ export default function OrderBookDisplay({ symbol = 'KHAN', onPriceSelect }: Ord
       <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
         <div className="grid grid-cols-2 gap-2">
           <button className="py-2 px-4 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors">
-            Авах
+            {t('dashboard.buy', 'Авах')}
           </button>
           <button className="py-2 px-4 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 dark:hover:bg-red-800/30 transition-colors">
-            Зарах
+            {t('dashboard.sell', 'Зарах')}
           </button>
         </div>
       </div>

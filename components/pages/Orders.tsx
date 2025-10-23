@@ -321,7 +321,7 @@ export default function Orders() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Account Balance Header */}
       <div className="bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex justify-between items-center">
@@ -416,7 +416,7 @@ export default function Orders() {
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
               }`}
             >
-              Авах
+              {t('orders.buy', 'Авах')}
             </button>
             <button
               onClick={() => setOrderSide('SELL')}
@@ -426,7 +426,7 @@ export default function Orders() {
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
               }`}
             >
-              Зарах
+              {t('orders.sell', 'Зарах')}
             </button>
           </div>
 
@@ -440,8 +440,8 @@ export default function Orders() {
               }}
               className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm"
             >
-              <option value="MARKET">Зах зээлийн</option>
-              <option value="CONDITIONAL">Шинжээт</option>
+              <option value="MARKET">{t('orders.market', 'Зах зээлийн')}</option>
+              <option value="CONDITIONAL">{t('orders.conditional', 'Шинжээт')}</option>
             </select>
           </div>
 
@@ -460,7 +460,7 @@ export default function Orders() {
               type="number"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              placeholder="Хувцаа"
+              placeholder={t('exchange.quantity', 'Хувцаа')}
               className={`px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm ${
                 orderType === 'MARKET' ? 'col-span-2' : ''
               }`}
@@ -475,17 +475,17 @@ export default function Orders() {
                 onChange={(e) => setTimeInForce(e.target.value as TimeInForce)}
                 className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm"
               >
-                <option value="DAY">Өдөр</option>
-                <option value="GTC">Цуцлах хүртэл</option>
-                <option value="GTD">Заасан өдөр хүртэл</option>
+                <option value="DAY">{t('exchange.day', 'Өдөр')}</option>
+                <option value="GTC">{t('exchange.gtc', 'Цуцлах хүртэл')}</option>
+                <option value="GTD">{t('exchange.gtd', 'Заасан өдөр хүртэл')}</option>
               </select>
             </div>
           )}
 
           {/* Total */}
           <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded">
-            <div className="text-sm text-gray-600 dark:text-gray-400">НИЙТ ДҮН:</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">ДҮН + Шимтгэл: (-1.00%)</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">{t('exchange.total', 'НИЙТ ДҮН')}:</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">{t('exchange.subtotal', 'ДҮН')} + {t('exchange.tradingFee', 'Шимтгэл')}: (-1.00%)</div>
             <div className="text-xl font-bold text-gray-900 dark:text-white">
               {formatNumber(calculateTotal() + calculateFee())}₮
             </div>
@@ -503,15 +503,15 @@ export default function Orders() {
                 : 'bg-red-500 hover:bg-red-600'
             }`}
           >
-            {placing ? 'Захиалж байна...' : orderSide === 'BUY' ? 'Авах' : 'Зарах'}
+            {placing ? t('exchange.placing', 'Захиалж байна...') : orderSide === 'BUY' ? t('orders.buy', 'Авах') : t('orders.sell', 'Зарах')}
           </button>
         </div>
 
         {/* Order History */}
         <div className="bg-white dark:bg-gray-800 p-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Захиалгын түүх
-            <span className="ml-2 text-sm bg-red-100 text-red-600 px-2 py-1 rounded">Шинэ</span>
+            {t('orders.orderHistory', 'Захиалгын түүх')}
+            <span className="ml-2 text-sm bg-red-100 text-red-600 px-2 py-1 rounded">{t('news.newest', 'Шинэ')}</span>
           </h3>
           
           {loading ? (
@@ -520,7 +520,7 @@ export default function Orders() {
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              Захиалга байхгүй байна
+              {t('orders.noOrders', 'Захиалга байхгүй байна')}
             </div>
           ) : (
             <div className="space-y-2">
@@ -587,7 +587,7 @@ export default function Orders() {
             <div className="overflow-y-auto max-h-[60vh]">
               {filteredStocks.length === 0 ? (
                 <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  Хайлтын үр дүн олдсонгүй
+                  {t('common.noResultsFound', 'Хайлтын үр дүн олдсонгүй')}
                 </div>
               ) : (
                 <div className="p-2">
