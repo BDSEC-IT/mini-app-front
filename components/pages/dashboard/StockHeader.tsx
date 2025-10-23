@@ -112,18 +112,9 @@ export const StockHeader = ({
               </div>
             )} */}
             {selectedStockData ? (
-              <BlinkEffect value={
-                selectedStockData.Symbol?.toUpperCase().includes('-BD')
-                  ? (selectedStockData.LastTradedPrice || 0)
-                  : (selectedStockData.PreviousClose || 0)
-              }>
+              <BlinkEffect value={selectedStockData.LastTradedPrice || 0}>
                 <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {formatPrice(
-                    selectedStockData.Symbol?.toUpperCase().includes('-BD')
-                      ? selectedStockData.LastTradedPrice
-                      : selectedStockData.PreviousClose,
-                    selectedStockData.Symbol
-                  )} ₮
+                  {formatPrice(selectedStockData.LastTradedPrice, selectedStockData.Symbol)} ₮
                 </div>
               </BlinkEffect>
             ) : (

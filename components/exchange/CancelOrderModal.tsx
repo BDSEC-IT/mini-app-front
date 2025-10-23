@@ -78,7 +78,7 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
             </div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                {t('exchange.price', 'Үнэ')}:
+                {t('exchange.price')}:
               </span>
               <span className="text-sm text-gray-900 dark:text-white">
                 {order.price}₮
@@ -86,7 +86,7 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
             </div>
             <div className="flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-2">
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                {t('exchange.total', 'Нийт дүн')}:
+                {t('exchange.total')}:
               </span>
               <span className="text-sm font-semibold text-gray-900 dark:text-white">
                 {formatNumber(order.quantity * order.price)}₮

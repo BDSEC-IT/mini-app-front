@@ -14,6 +14,7 @@ import {
   fetchEnhancedOrderBook,
   fetchOrderBook,
   fetchTodayCompletedOrders,
+  getUserAccountInformation,
   type StockData,
   type SecondaryOrderData,
   type EnhancedOrderBookData,
@@ -55,12 +56,20 @@ interface OrderConfirmationModalProps {
     price?: string;
     total: number;
   };
+  feeEquity: string | null;
 }
 
-const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen, onClose, onConfirm, orderData }) => {
+const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen, onClose, onConfirm, orderData, feeEquity }) => {
   const { t } = useTranslation('common');
   
   if (!isOpen) return null;
+  
+  // Calculate fee and net total
+  const feePercent = parseFloat(feeEquity || '1');
+  const feeAmount = orderData.total * (feePercent / 100);
+  const netTotal = orderData.side === 'BUY' 
+    ? orderData.total + feeAmount 
+    : orderData.total - feeAmount;
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -79,18 +88,34 @@ const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen,
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">{t('exchange.quantity', 'Тоо ширхэг')}:</span>
+            <span className="text-gray-600 dark:text-gray-400">{t('exchange.quantity')}:</span>
             <span className="font-medium">{orderData.quantity}</span>
           </div>
           {orderData.price && (
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400">{t('exchange.price', 'Үнэ')}:</span>
+              <span className="text-gray-600 dark:text-gray-400">{t('exchange.price')}:</span>
               <span className="font-medium">{parseFloat(orderData.price).toLocaleString()}₮</span>
             </div>
           )}
-          <div className="flex justify-between border-t pt-3">
-            <span className="text-gray-600 dark:text-gray-400">{t('exchange.total', 'Нийт дүн')}:</span>
-            <span className="font-bold text-lg">{orderData.total.toLocaleString()}₮</span>
+          <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+            <span className="text-gray-600 dark:text-gray-400">{t('exchange.subtotal', 'Дүн')}:</span>
+            <span className="font-medium">{orderData.total.toLocaleString()}₮</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600 dark:text-gray-400">
+              {t('exchange.tradingFee', 'Шимтгэл')} ({feePercent}%):
+            </span>
+            <span className="font-medium text-orange-600 dark:text-orange-400">
+              {orderData.side === 'BUY' ? '+' : '-'}{feeAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}₮
+            </span>
+          </div>
+          <div className="flex justify-between pt-2 border-t-2 border-gray-300 dark:border-gray-600">
+            <span className="text-base font-bold text-gray-800 dark:text-gray-200" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.02em' }}>
+              {t('exchange.netTotal', 'Шимтгэл тооцсон нийт дүн')}:
+            </span>
+            <span className="text-lg font-extrabold text-gray-900 dark:text-white" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.01em' }}>
+              {netTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}₮
+            </span>
           </div>
         </div>
         
@@ -148,6 +173,7 @@ export default function Exchange() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('orderbook');
   const [orderTab, setOrderTab] = useState<OrderTab>('active');
   const [searchTerm, setSearchTerm] = useState('');
+  const [feeEquity, setFeeEquity] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<any>(null);
   
@@ -167,7 +193,8 @@ export default function Exchange() {
         fetchAccountInfo(),
         fetchStockHoldings(),
         fetchStocks(),
-        fetchOrdersData()
+        fetchOrdersData(),
+        fetchFeeInformation()
       ]);
     };
     init();
@@ -254,6 +281,28 @@ export default function Exchange() {
     } catch (error) {
       console.error('Error fetching account info:', error);
       setAccountBalance(0);
+    }
+  };
+
+  const fetchFeeInformation = async () => {
+    const token = Cookies.get('token');
+    if (!token) {
+      console.log('No token found in cookies');
+      return;
+    }
+    
+    try {
+      const result = await getUserAccountInformation(token);
+      console.log('Account information API result:', result);
+      
+      if (result.success && result.data) {
+        const feeEquityValue = result.data.FeeEquity || '1';
+        setFeeEquity(feeEquityValue);
+        console.log('Set fee equity to:', feeEquityValue);
+      }
+    } catch (error) {
+      console.error('Error fetching fee information:', error);
+      setFeeEquity('1'); // Default to 1% if fetch fails
     }
   };
 
@@ -402,7 +451,13 @@ export default function Exchange() {
       setLoadingOrders(true);
       const result = await fetchSecondaryOrders(token);
       if (result.success && result.data) {
-        setOrders(result.data);
+        // Sort orders by date in descending order (newest first)
+        const sortedOrders = result.data.sort((a: any, b: any) => {
+          const dateA = new Date(a.createdAt || a.date || 0).getTime();
+          const dateB = new Date(b.createdAt || b.date || 0).getTime();
+          return dateB - dateA; // Descending order
+        });
+        setOrders(sortedOrders);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -579,10 +634,14 @@ export default function Exchange() {
           selectedStock ? fetchOrderBookData(selectedStock.Symbol) : Promise.resolve()
         ]);
       } else {
-        toast.error(result.message || t('exchange.orderFailed', 'Захиалга амжилтгүй'));
+        // Show the actual API error message
+        const errorMessage = result.message || result.error || t('exchange.orderFailed', 'Захиалга амжилтгүй');
+        toast.error(errorMessage);
       }
-    } catch (error) {
-      toast.error(t('exchange.error', 'Алдаа гарлаа'));
+    } catch (error: any) {
+      // Show the actual error message from the exception
+      const errorMessage = error?.response?.data?.message || error?.message || t('exchange.error', 'Алдаа гарлаа');
+      toast.error(errorMessage);
     } finally {
       setPlacing(false);
       setPendingOrder(null);
@@ -614,10 +673,14 @@ export default function Exchange() {
         toast.success(t('exchange.orderCancelled', 'Захиалга цуцлагдлаа'));
         await fetchOrdersData();
       } else {
-        toast.error(t('exchange.error', 'Захиалга цуцлах үед алдаа гарлаа'));
+        // Show the actual API error message
+        const errorMessage = result.message || result.error || t('exchange.error', 'Захиалга цуцлах үед алдаа гарлаа');
+        toast.error(errorMessage);
       }
-    } catch (error) {
-      toast.error(t('exchange.error', 'Алдаа гарлаа'));
+    } catch (error: any) {
+      // Show the actual error message from the exception
+      const errorMessage = error?.response?.data?.message || error?.message || t('exchange.error', 'Алдаа гарлаа');
+      toast.error(errorMessage);
     }
   };
 
@@ -821,6 +884,7 @@ export default function Exchange() {
             setShowPriceSteps={setShowPriceSteps}
             placing={placing}
             onPlaceOrder={handlePlaceOrder}
+            feeEquity={feeEquity}
           />
 
           {/* Order Confirmation Modal */}
@@ -832,6 +896,7 @@ export default function Exchange() {
             }}
             onConfirm={handleConfirmOrder}
             orderData={pendingOrder}
+            feeEquity={feeEquity}
           />
         </div>
       )}
@@ -843,6 +908,7 @@ export default function Exchange() {
         setOrderTab={setOrderTab}
         formatNumber={formatNumber}
         onCancelOrder={handleCancelOrder}
+        feeEquity={feeEquity}
       />
     </div>
   );

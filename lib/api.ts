@@ -1441,6 +1441,9 @@ interface UserAccountResponse {
     refreshTokenExpiresAt: string | null;
     MCSDAccount: any | null;
     khanUser: KhanUser;
+    FeeEquity?: string;
+    FeeDebt?: string;
+    FeeCorpDebt?: string;
   } | null;
   statusCode?: number;
   errorCode?: string;
@@ -2209,13 +2212,27 @@ export const placeSecondaryOrder = async (orderData: {
       headers,
       body: JSON.stringify(orderData)
     })
-    if (!res.ok) {
-      return { success: false, data: null }
-    }
+    
     const json = await res.json()
+    
+    // If response is not ok, return the error message from API
+    if (!res.ok) {
+      return { 
+        success: false, 
+        data: null,
+        message: json.message || json.error || 'Захиалга өгөхөд алдаа гарлаа',
+        error: json.message || json.error
+      }
+    }
+    
     return json
-  } catch (e) {
-    return { success: false, data: null }
+  } catch (e: any) {
+    return { 
+      success: false, 
+      data: null,
+      message: e.message || 'Захиалга өгөхөд алдаа гарлаа',
+      error: e.message
+    }
   }
 }
 
@@ -2231,13 +2248,27 @@ export const cancelSecondaryOrder = async (orderId: number, token?: string) => {
       headers,
       body: JSON.stringify({ orderId })
     })
-    if (!res.ok) {
-      return { success: false, data: null }
-    }
+    
     const json = await res.json()
+    
+    // If response is not ok, return the error message from API
+    if (!res.ok) {
+      return { 
+        success: false, 
+        data: null,
+        message: json.message || json.error || 'Захиалга цуцлахад алдаа гарлаа',
+        error: json.message || json.error
+      }
+    }
+    
     return json
-  } catch (e) {
-    return { success: false, data: null }
+  } catch (e: any) {
+    return { 
+      success: false, 
+      data: null,
+      message: e.message || 'Захиалга цуцлахад алдаа гарлаа',
+      error: e.message
+    }
   }
 }
 

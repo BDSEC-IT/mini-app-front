@@ -20,6 +20,7 @@ interface MyOrdersProps {
   setOrderTab: (tab: OrderTab) => void;
   formatNumber: (num: number) => string;
   onCancelOrder: (orderId: string) => void;
+  feeEquity?: string | null;
 }
 
 export const MyOrders: React.FC<MyOrdersProps> = ({
@@ -28,7 +29,8 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
   orderTab,
   setOrderTab,
   formatNumber,
-  onCancelOrder
+  onCancelOrder,
+  feeEquity
 }) => {
   const { t } = useTranslation('common');
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -49,6 +51,19 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
   const handleConfirmCancel = () => {
     if (orderToCancel) {
       onCancelOrder(orderToCancel.id);
+    }
+  };
+
+  // Calculate fee-adjusted total
+  const calculateTotal = (order: OrderData) => {
+    const baseTotal = order.quantity * order.price;
+    const feePercent = parseFloat(feeEquity || '1');
+    const feeAmount = baseTotal * (feePercent / 100);
+    
+    if (order.buySell === 'BUY') {
+      return baseTotal + feeAmount;
+    } else {
+      return baseTotal - feeAmount;
     }
   };
 
@@ -97,37 +112,46 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
             ))}
           </div>
         ) : filteredOrders.length > 0 ? (
-          filteredOrders.map((order) => (
-            <div key={order.id} className="flex items-center justify-between py-1.5 px-2 mb-1 bg-gray-50 dark:bg-gray-800/30 rounded text-[10px] hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
-              <div className="flex-1">
-                <div>
-                  <span className={`font-medium px-1.5 py-0.5 rounded ${
-                    order.buySell === 'BUY'
-                      ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20'
-                      : 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/20'
-                  }`}>
-                    {order.buySell === 'BUY' ? t('exchange.buy', 'АВАХ') : t('exchange.sell', 'ЗАРАХ')}
+          filteredOrders.map((order) => {
+            const baseTotal = order.quantity * order.price;
+            const totalWithFee = calculateTotal(order);
+            const feePercent = parseFloat(feeEquity || '1');
+            
+            return (
+              <div key={order.id} className="flex items-center justify-between py-1.5 px-2 mb-1 bg-gray-50 dark:bg-gray-800/30 rounded text-[10px] hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+                <div className="flex-1">
+                  <div>
+                    <span className={`font-medium px-1.5 py-0.5 rounded ${
+                      order.buySell === 'BUY'
+                        ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20'
+                        : 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/20'
+                    }`}>
+                      {order.buySell === 'BUY' ? t('exchange.buy', 'АВАХ') : t('exchange.sell', 'ЗАРАХ')}
+                    </span>
+                    <span className="ml-1.5 text-gray-500 dark:text-gray-400">
+                      ({feePercent}% {t('exchange.fee', 'шимтгэл')})
+                    </span>
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-300 mt-1">
+                    {order.quantity} × {order.price.toLocaleString()}₮
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-0.5">
+                  <span className="text-gray-900 dark:text-gray-100 font-bold">
+                    {formatNumber(totalWithFee)}₮
                   </span>
-                </div>
-                <div className="text-gray-600 dark:text-gray-300 mt-1">
-                  {order.quantity} × {order.price.toLocaleString()}₮
+                  {orderTab === 'active' && (
+                    <button
+                      onClick={() => handleCancelClick(order)}
+                      className="w-5 h-5 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-sm font-bold transition-colors"
+                    >
+                      ×
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-900 dark:text-gray-100 font-medium">
-                  {formatNumber(order.quantity * order.price)}₮
-                </span>
-                {orderTab === 'active' && (
-                  <button
-                    onClick={() => handleCancelClick(order)}
-                    className="w-5 h-5 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-sm font-bold transition-colors"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="text-center py-2 text-gray-500 dark:text-gray-400 text-[10px]">
             {orderTab === 'active' && t('exchange.noActiveOrders', 'Идэвхтэй захиалга байхгүй')}

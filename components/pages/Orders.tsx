@@ -452,7 +452,7 @@ export default function Orders() {
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                placeholder="Үнэ"
+                placeholder={t('exchange.price')}
                 className="px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm"
               />
             )}

@@ -416,7 +416,7 @@ const StockListComponent = ({
                 </p>
               </div>
               <div className="mt-1">
-                <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Хаалт</div>
+                <div className="text-xs font-normal text-gray-500 dark:text-gray-400">{t('dashboard.close')}</div>
                 <div className="text-sm font-semibold text-gray-900 dark:text-white">
                   {formatPrice(selectedStock.PreviousClose, isStockABond(selectedStock))}
                   {formatPrice(selectedStock.PreviousClose, isStockABond(selectedStock)) !== '-' ? '₮' : ''}
@@ -506,7 +506,7 @@ const StockListComponent = ({
                             </p>
                           </div>
                           <div className="mt-1">
-                            <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Хаалт</div>
+                            <div className="text-xs font-normal text-gray-500 dark:text-gray-400">{t('dashboard.close')}</div>
                             <div className="text-sm font-semibold text-gray-900 dark:text-white">
                               {formatPrice(stock.PreviousClose, isStockABond(stock))}
                               {formatPrice(stock.PreviousClose, isStockABond(stock)) !== '-' ? '₮' : ''}

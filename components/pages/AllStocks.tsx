@@ -644,6 +644,42 @@ const getStockCategory = (stock: StockData): string => {
             </a>
           </td>
           <td className="px-2 py-2 text-right">
+            {formatPrice(stock.LastTradedPrice, isBondCategory)}
+          </td>
+          <td className="px-2 py-2 text-right">
+            <div className="flex items-center justify-end">
+              {stock.Changep !== null && stock.Changep !== undefined ? (
+                <>
+                  <span className={
+                    stock.Changep > 0 
+                      ? 'text-green-500' 
+                      : stock.Changep < 0 
+                        ? 'text-red-500' 
+                        : ''
+                  }>
+                    {stock.Changep > 0 ? '+' : ''}{stock.Changep.toFixed(2)}%
+                  </span>
+                  {stock.Changep !== 0 && (
+                    <span className="ml-0.5">
+                      {stock.Changep > 0 ? <ArrowUp size={8} className="text-green-500" /> : <ArrowDown size={8} className="text-red-500" />}
+                    </span>
+                  )}
+                </>
+              ) : '-'}
+            </div>
+          </td>
+          <td className="px-2 py-2 text-right">
+            <span className={
+              Number(stock.Changes) > 0 
+                ? 'text-green-500' 
+                : Number(stock.Changes) < 0 
+                  ? 'text-red-500' 
+                  : ''
+            }>
+              {Number(stock.Changes) > 0 ? '+' : ''}{Number(stock.Changes || 0).toFixed(2)}
+            </span>
+          </td>
+          <td className="px-2 py-2 text-right">
             {stock.Volume?.toLocaleString() || '-'}
           </td>
           <td className="px-2 py-2 text-right">
@@ -662,43 +698,7 @@ const getStockCategory = (stock: StockData): string => {
             {formatPrice(stock.LowPrice, isBondCategory)}
           </td>
           <td className="px-2 py-2 text-right">
-            {formatPrice(stock.LastTradedPrice, isBondCategory)}
-          </td>
-          <td className="px-2 py-2 text-right">
             {formatPrice(stock.ClosingPrice, isBondCategory)}
-          </td>
-          <td className="px-2 py-2 text-right">
-            <span className={
-              Number(stock.Changes) > 0 
-                ? 'text-green-500' 
-                : Number(stock.Changes) < 0 
-                  ? 'text-red-500' 
-                  : ''
-            }>
-              {Number(stock.Changes) > 0 ? '+' : ''}{Number(stock.Changes || 0).toFixed(2)}
-                    </span>
-          </td>
-          <td className="px-2 py-2 text-right">
-              <div className="flex items-center justify-end">
-                {stock.Changep !== null && stock.Changep !== undefined ? (
-                  <>
-                    <span className={
-                      stock.Changep > 0 
-                        ? 'text-green-500' 
-                        : stock.Changep < 0 
-                          ? 'text-red-500' 
-                          : ''
-                    }>
-                      {stock.Changep > 0 ? '+' : ''}{stock.Changep.toFixed(2)}%
-                    </span>
-                    {stock.Changep !== 0 && (
-                      <span className="ml-0.5">
-                        {stock.Changep > 0 ? <ArrowUp size={8} className="text-green-500" /> : <ArrowDown size={8} className="text-red-500" />}
-                    </span>
-                    )}
-                  </>
-                ) : '-'}
-              </div>
           </td>
           <td className="px-2 py-2 text-right">
             {stock.sizemd?.toLocaleString() || '-'}
@@ -761,73 +761,115 @@ const getStockCategory = (stock: StockData): string => {
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LastTradedPrice')}>
+                      {t('allStocks.lastTradedPrice')}
+                      {sortConfig.key === 'LastTradedPrice' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
+                      %
+                      {sortConfig.key === 'Changep' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
+                      {t('dashboard.change')}
+                      {sortConfig.key === 'Changes' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Volume')}>
                       {t('allStocks.volume')}
+                      {sortConfig.key === 'Volume' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Turnover')}>
                       {t('allStocks.turnover')}
+                      {sortConfig.key === 'Turnover' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('PreviousClose')}>
                       {t("dashboard.previousClose")}
+                      {sortConfig.key === 'PreviousClose' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('OpeningPrice')}>
                       {t("allStocks.openingPrice")}
+                      {sortConfig.key === 'OpeningPrice' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('HighPrice')}>
-                       {t("allStocks.highPrice")}
+                      {t("allStocks.highPrice")}
+                      {sortConfig.key === 'HighPrice' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LowPrice')}>
                       {t("allStocks.lowPrice")}
-                    </div>
-                  </th>
-                  <th className="px-2 py-3 text-right">
-                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('LastTradedPrice')}>
-                     {t("allStocks.lastTradedPrice")}
+                      {sortConfig.key === 'LowPrice' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('ClosingPrice')}>
                       {t('allStocks.closingPrice')}
-          </div>
-                  </th>
-                  <th className="px-2 py-3 text-right">
-                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
-                    {t('dashboard.change')}
-        </div>
-                  </th>
-                  <th className="px-2 py-3 text-right">
-                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
-                      %
-          </div>
+                      {sortConfig.key === 'ClosingPrice' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
+                    </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd')}>
-                   {t('allStocks.bidVolume')}
+                      {t('allStocks.bidVolume')}
+                      {sortConfig.key === 'sizemd' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx')}>
-                   {t('allStocks.bidPrice')}
+                      {t('allStocks.bidPrice')}
+                      {sortConfig.key === 'MDEntryPx' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('MDEntryPx2')}>
-                    {t('allStocks.askPrice')}
+                      {t('allStocks.askPrice')}
+                      {sortConfig.key === 'MDEntryPx2' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
                     <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('sizemd2')}>
                       {t('allStocks.askVolume')}
+                      {sortConfig.key === 'sizemd2' && (
+                        sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
+                      )}
                     </div>
                   </th>
                 </tr>

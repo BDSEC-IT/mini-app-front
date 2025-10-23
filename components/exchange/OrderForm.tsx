@@ -29,6 +29,7 @@ interface OrderFormProps {
   setShowPriceSteps: (show: boolean) => void;
   placing: boolean;
   onPlaceOrder: () => void;
+  feeEquity: string | null;
 }
 
 export const OrderForm: React.FC<OrderFormProps> = ({
@@ -55,7 +56,8 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   showPriceSteps,
   setShowPriceSteps,
   placing,
-  onPlaceOrder
+  onPlaceOrder,
+  feeEquity
 }) => {
   const { t } = useTranslation('common');
   const [showDatePicker, setShowDatePicker] = React.useState(false);
@@ -192,33 +194,49 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         </div>
       )}
 
-      {/* Quantity Input */}
-      <div className="mb-4 relative">
-        <Input
-          type="number"
-          value={quantity}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            const value = e.target.value;
-            if (value === '' || /^\d+$/.test(value)) {
-              setQuantity(value);
-            }
-          }}
-          onKeyDown={(e: React.KeyboardEvent) => {
-            if (e.key === '.' || e.key === ',' || e.key === '-' || e.key === '+') {
-              e.preventDefault();
-            }
-          }}
-          placeholder={t('exchange.quantity', 'Тоо ширхэг')}
-          className={`w-full ${quantity ? 'pr-16' : ''}`}
-          min="1"
-          max={getMaxQuantity()}
-          step="1"
-        />
-        {quantity && (
-          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 pointer-events-none">
-            {t('exchange.shares', 'ширхэг')}
+      {/* Quantity Input with Balance Display on Top */}
+      <div className="mb-4">
+        {/* Balance Display - Above Quantity */}
+        <div className="mb-2 flex justify-between items-center px-1">
+          <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+            {t('exchange.balance')}:
           </span>
-        )}
+          <span className="text-sm text-gray-900 dark:text-white font-bold">
+            {orderSide === 'BUY'
+              ? (accountBalance !== null ? `${formatNumber(accountBalance)}₮` : '...')
+              : `${selectedStockHolding?.quantity || 0} ${t('exchange.shares')}`
+            }
+          </span>
+        </div>
+        
+        {/* Quantity Input */}
+        <div className="relative">
+          <Input
+            type="number"
+            value={quantity}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const value = e.target.value;
+              if (value === '' || /^\d+$/.test(value)) {
+                setQuantity(value);
+              }
+            }}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              if (e.key === '.' || e.key === ',' || e.key === '-' || e.key === '+') {
+                e.preventDefault();
+              }
+            }}
+            placeholder={t('exchange.quantity', 'Тоо ширхэг')}
+            className={`w-full ${quantity ? 'pr-16' : ''}`}
+            min="1"
+            max={getMaxQuantity()}
+            step="1"
+          />
+          {quantity && (
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 pointer-events-none">
+              {t('exchange.shares', 'ширхэг')}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Price Input for Limit Orders */}
@@ -237,7 +255,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 type="number"
                 value={price}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
-                placeholder={t('exchange.price', 'Үнэ')}
+                placeholder={t('exchange.price')}
                 className={`w-full rounded ${price ? 'pr-8' : ''}`}
                 step={selectedStock ? getPriceStep(selectedStock.PreviousClose || 0) : 0.01}
               />
@@ -257,36 +275,47 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {t('exchange.step', 'Алхам')}: {selectedStock ? getPriceStep(selectedStock.PreviousClose || 0) : 0.01}₮
+              {t('exchange.step')}: {selectedStock ? getPriceStep(selectedStock.PreviousClose || 0) : 0.01}₮
             </span>
             <Button
               variant="secondary"
               onClick={() => setShowPriceSteps(!showPriceSteps)}
               className="px-2 py-1 text-xs"
             >
-              {t('exchange.priceStep', 'Үнийн алхам')}
+              {t('exchange.priceStep')}
             </Button>
           </div>
         </div>
       )}
 
-      {/* Balance & Total - Minimal */}
+      {/* Total Summary with Color Styling */}
       <div className="mb-3">
-        <div className="flex justify-between text-xs mb-1">
-          <span className="text-gray-600 dark:text-gray-400">{t('exchange.balance', 'Үлдэгдэл')}:</span>
-          <span className="text-gray-900 dark:text-white">
-            {orderSide === 'BUY' 
-              ? (accountBalance !== null ? `${formatNumber(accountBalance)}₮` : '...')
-              : `${selectedStockHolding?.quantity || 0} ${t('exchange.shares', 'ширхэг')}`
-            }
-          </span>
-        </div>
-        <div className="flex justify-between text-sm items-center">
-          <span className="text-gray-700 dark:text-gray-300 font-medium">{t('exchange.total', 'Нийт')}:</span>
+        <div className="flex justify-between text-sm items-center mb-2">
+          <span className="text-gray-700 dark:text-gray-300 font-medium">{t('exchange.total')}:</span>
           <span className="font-bold text-gray-900 dark:text-white">
             {formatNumber(calculateTotal())}₮
           </span>
         </div>
+        {feeEquity && (
+          <>
+            <div className="flex justify-between text-xs py-1 border-t border-gray-200 dark:border-gray-700">
+              <span className="text-blue-700 dark:text-blue-400 font-medium">
+                {t('exchange.tradingFee', 'Шимтгэл')}:
+              </span>
+              <span className="text-blue-700 dark:text-blue-400 font-semibold">
+                {feeEquity}%
+              </span>
+            </div>
+            <div className="flex justify-between text-sm items-center mt-1 pt-1 border-t border-gray-200 dark:border-gray-700">
+              <span className="text-blue-800 dark:text-blue-300 font-bold">
+                {t('exchange.netTotal', 'Шимтгэл тооцсон нийт дүн')}:
+              </span>
+              <span className="text-blue-800 dark:text-blue-300 font-extrabold">
+                {formatNumber(calculateTotal())}₮
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Submit Button with Glow Effect */}
