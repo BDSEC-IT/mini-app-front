@@ -234,27 +234,14 @@ export function shouldDisplayStock(
 
 /**
  * Get a human-readable description of what time period we're showing
+ * Returns date in YYYY.MM.DD format
  */
 export function getDisplayPeriodDescription(
   now: Date = new Date(),
   config: TradingTimeConfig = DEFAULT_TRADING_CONFIG
 ): string {
   const targetDate = getStockFilterDate(now, config);
-  const todayDate = formatDate(now);
   
-  if (targetDate === todayDate) {
-    return isDuringTradingHours(now, config) ? "Today's trading data" : "Today's data";
-  }
-  
-  const targetDateObj = new Date(targetDate + 'T00:00:00');
-  const daysDiff = Math.floor((now.getTime() - targetDateObj.getTime()) / (1000 * 60 * 60 * 24));
-  
-  if (daysDiff === 1) {
-    return "Yesterday's data";
-  } else if (daysDiff <= 7) {
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return `${dayNames[targetDateObj.getDay()]}'s data`;
-  } else {
-    return `Data from ${targetDate}`;
-  }
+  // Convert YYYY-MM-DD to YYYY.MM.DD format
+  return targetDate.replace(/-/g, '.');
 }

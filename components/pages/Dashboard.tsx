@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Search, ChevronDown } from 'lucide-react'
 import { TradingViewChart } from '../ui/TradingViewChart'
 import { useTheme } from '@/contexts/ThemeContext'
-import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, type OrderBookEntry, type StockData, BASE_URL } from '@/lib/api'
+import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, getUserAccountInformation, type OrderBookEntry, type StockData, BASE_URL } from '@/lib/api'
 import socketIOService from '@/lib/socketio'
 import { StockHeader } from './dashboard/StockHeader'
 import { OrderBook } from './dashboard/OrderBook'
@@ -13,6 +13,7 @@ import { StockList } from './dashboard/StockList'
 import { getStockFilterDate, shouldDisplayStock, getDisplayPeriodDescription, isDuringTradingHours, filterTodaysFreshStocks, isTodaysFreshData } from '@/lib/trading-time-utils'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { useTranslation } from 'react-i18next'
+import Cookies from 'js-cookie'
 
 // Custom hook for intersection observer
 const useInView = (threshold = 0.1) => {
@@ -97,6 +98,7 @@ const DashboardContent = () => {
   const [displayPeriodDescription, setDisplayPeriodDescription] = useState<string>('')
   const [updateQueue, setUpdateQueue] = useState<StockData[]>([])
   const throttleRef = useRef<NodeJS.Timeout | null>(null)
+  const [canTrade, setCanTrade] = useState(false)
 
   // Throttled update function to reduce visual glitching
   const processUpdateQueue = useCallback(() => {
@@ -281,12 +283,38 @@ const DashboardContent = () => {
 
 
 
+  // Check if user can trade (has MCSD account)
+  useEffect(() => {
+    const checkTradingStatus = async () => {
+      const token = Cookies.get('token');
+      if (!token) {
+        setCanTrade(false);
+        return;
+      }
+
+      try {
+        const accountInfo = await getUserAccountInformation(token);
+        if (accountInfo.success && accountInfo.data) {
+          // Check if user has MCSD account with COMPLETED status
+          const hasActiveAccount = accountInfo.data.MCSDAccount &&
+                                   accountInfo.data.MCSDAccount.DGStatus === 'COMPLETED';
+          setCanTrade(hasActiveAccount);
+        }
+      } catch (error) {
+        console.error('Error checking trading status:', error);
+        setCanTrade(false);
+      }
+    };
+
+    checkTradingStatus();
+  }, []);
+
   // Fetch data when component mounts or selectedSymbol changes
   useEffect(() => {
     console.log('=== Dashboard: useEffect triggered ===');
     console.log('fetchStocksData function:', typeof fetchStocksData);
     console.log('fetchSelectedStockData function:', typeof fetchSelectedStockData);
-    
+
     fetchStocksData()
     fetchSelectedStockData()
   }, [fetchStocksData, fetchSelectedStockData])
@@ -719,6 +747,8 @@ const DashboardContent = () => {
               selectedStockData={displayStockData}
               chartLoading={chartLoading}
               isDataFresh={isDataFresh}
+              orderBook={processedOrderBook}
+              canTrade={canTrade}
             />
           </div>
           {/* Chart section: full-bleed, outside the padded container */}

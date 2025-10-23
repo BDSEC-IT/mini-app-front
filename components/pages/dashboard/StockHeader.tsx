@@ -1,15 +1,16 @@
 
 // External libraries
 import React, { useEffect, useRef } from 'react';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 
 // Internal UI components
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { BlinkEffect } from '@/components/ui/BlinkEffect';
 
 // Types
-import type { StockData } from '@/lib/api';
+import type { StockData, OrderBookEntry } from '@/lib/api';
 
 
 // Props interface
@@ -21,6 +22,11 @@ interface StockHeaderProps {
   searchResults?: StockData[];
   chartLoading: boolean;
   isDataFresh?: boolean;
+  orderBook?: {
+    buy: OrderBookEntry[];
+    sell: OrderBookEntry[];
+  };
+  canTrade?: boolean; // Whether user has MCSD account and can place orders
   onSearchClick?: () => void;
   onSearchClose?: () => void;
   onSearchChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -68,14 +74,54 @@ export const StockHeader = ({
   searchResults,
   chartLoading,
   isDataFresh = true,
+  orderBook,
+  canTrade = false,
   onSearchClick,
   onSearchClose,
   onSearchChange,
   onStockSelect
 }: StockHeaderProps) => {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const searchRef = useRef<HTMLDivElement>(null);
   const currentLanguage = i18n.language || 'mn';
+
+  // Get best bid (highest buy price) and best ask (lowest sell price) from orderbook
+  const bestBid = orderBook?.buy && orderBook.buy.length > 0
+    ? Math.max(...orderBook.buy.map(order => order.MDEntryPx || 0))
+    : null;
+
+  const bestAsk = orderBook?.sell && orderBook.sell.length > 0
+    ? Math.min(...orderBook.sell.map(order => order.MDEntryPx || 0))
+    : null;
+
+  // Handler for quick buy (use best ask price)
+  const handleQuickBuy = () => {
+    if (!canTrade || !selectedStockData) return;
+
+    // Navigate to exchange page with query params
+    const params = new URLSearchParams({
+      symbol: selectedStockData.Symbol,
+      side: 'BUY',
+      ...(bestAsk && { price: bestAsk.toString() })
+    });
+
+    router.push(`/exchange?${params.toString()}`);
+  };
+
+  // Handler for quick sell (use best bid price)
+  const handleQuickSell = () => {
+    if (!canTrade || !selectedStockData) return;
+
+    // Navigate to exchange page with query params
+    const params = new URLSearchParams({
+      symbol: selectedStockData.Symbol,
+      side: 'SELL',
+      ...(bestBid && { price: bestBid.toString() })
+    });
+
+    router.push(`/exchange?${params.toString()}`);
+  };
 
   // Close search popover when clicking outside
   useEffect(() => {
@@ -90,101 +136,95 @@ export const StockHeader = ({
 
   // UI
   return (
-    <div className="w-full transition-all duration-300 ">
+    <div className="w-full transition-all duration-300">
       <div className="flex flex-col">
-        {/* Symbol and Company Name */}
-        <div className="flex  ">
-        <div className="w-full items-center   ">
-          <h2 className="text-lg font-semibold mr-2">
-            {selectedStockData?.Symbol ? formatSymbolDisplay(selectedStockData.Symbol) : ''}
-          </h2>
-          {selectedStockData && (
-            <span className="text-sm font-medium md:visible hidden bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2  rounded-md">
-              {getCompanyName(selectedStockData, t, currentLanguage)}
-            </span>
-          )}
-              {/* Price and Date */}
-        <div className="">
-          <div className="flex  items-start   ">
-            {/* {selectedStockData && !isDataFresh && (
-              <div className="text-xs mr-2 px-2 py-1 bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-md   mt-1">
-                Хаалтын ханш
-              </div>
-            )} */}
+        {/* Single Line Header with Symbol/Price/Time on left, Buttons on right */}
+        <div className="flex items-start justify-between gap-4">
+          {/* Left: Symbol with Price and Time stacked below */}
+          <div className="flex flex-col gap-1">
+            {/* Symbol Only */}
+            <h2 className="text-lg font-semibold">
+              {selectedStockData?.Symbol ? formatSymbolDisplay(selectedStockData.Symbol) : ''}
+            </h2>
+
+            {/* Price */}
             {selectedStockData ? (
               <BlinkEffect value={selectedStockData.LastTradedPrice || 0}>
-                <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {formatPrice(selectedStockData.LastTradedPrice, selectedStockData.Symbol)} ₮
                 </div>
               </BlinkEffect>
             ) : (
-              <div className="animate-pulse bg-gray-300 dark:bg-gray-700 rounded-md w-32 h-10"></div>
+              <div className="animate-pulse bg-gray-300 dark:bg-gray-700 rounded-md w-24 h-8"></div>
             )}
-            
-            {/* Historical data indicator */}
-            
-            
-            {/* Enhanced date/time display with clear visibility */}
-            <div className="  flex items-center self-center  ml-1">
-              {chartLoading && !selectedStockData?.MDEntryTime ? (
+
+            {/* Last Updated - Label on one line, Date/Time on line below */}
+            {chartLoading && !selectedStockData?.MDEntryTime ? (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs text-gray-600 dark:text-gray-400">Сүүлд шинэчлэгдсэн</span>
                 <div className="flex items-center gap-2">
-                  <span className="inline-block w-4 h-4 border-2 border-gray-300 border-t-bdsec dark:border-t-white rounded-full animate-spin"></span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Мэдээлэл ачаалж байна...</span>
+                  <span className="inline-block w-3 h-3 border-2 border-gray-300 border-t-bdsec dark:border-t-white rounded-full animate-spin"></span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">Ачаалж байна...</span>
                 </div>
-              ) : selectedStockData?.MDEntryTime ? (
-                (() => {
-                  const isoString = selectedStockData.MDEntryTime;
-                  const [datePart, timePartWithZ] = isoString.split('T');
-                  const timePart = timePartWithZ.split('.')[0];
-                  
-                  // Check if it's today's data
-                  const entryDate = new Date(isoString);
-                  const today = new Date();
-                  const isToday = (
-                    entryDate.getFullYear() === today.getFullYear() &&
-                    entryDate.getMonth() === today.getMonth() &&
-                    entryDate.getDate() === today.getDate()
-                  );
-                  
-                  return (
-                    <div className={`flex items-center gap-2 px-3  rounded-lg 
-                  
-                    `}>
-                      <div className={`w-2 h-2 rounded-full ${
-                        isToday 
-                          ? 'bg-green-500 animate-pulse' 
-                          : 'bg-amber-500'
-                      }`}></div>
-                      <div className="flex flex-col">
-                        <span className={`text-xs font-medium ${
-                          isToday 
-                            ? 'text-green-700 dark:text-green-400' 
-                            : 'text-amber-700 dark:text-amber-400'
-                        }`}>
-                          {isToday ? 'Сүүлд шинэчлэгдсэн' : 'Сүүлд шинэчлэгдсэн'}
-                        </span>
-                        <span className={`text-[10px] ${
-                          isToday 
-                            ? 'text-green-600 dark:text-green-500' 
-                            : 'text-amber-600 dark:text-amber-500'
-                        }`}>
-                          {datePart} {timePart}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })()
-              ) : (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                  <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Мэдээлэл байхгүй</span>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : selectedStockData?.MDEntryTime ? (
+              (() => {
+                const isoString = selectedStockData.MDEntryTime;
+                const [datePart, timePartWithZ] = isoString.split('T');
+                const timePart = timePartWithZ.split('.')[0];
+                
+                return (
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs text-gray-600 dark:text-gray-400">Сүүлд шинэчлэгдсэн</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      {datePart} {timePart}
+                    </span>
+                  </div>
+                );
+              })()
+            ) : (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs text-gray-600 dark:text-gray-400">Сүүлд шинэчлэгдсэн</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">Мэдээлэл байхгүй</span>
+              </div>
+            )}
           </div>
+
+          {/* Right: Quick Buy/Sell Buttons - Only show if user can trade */}
+          {canTrade && selectedStockData && (
+            <div className="flex gap-2 flex-shrink-0">
+              {/* Buy Button with Best Ask Price */}
+              <button
+                onClick={handleQuickBuy}
+                disabled={!bestAsk}
+                className="flex flex-col items-center justify-center px-5 py-3 rounded-lg bg-green-500 hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-colors duration-200 min-w-[95px]"
+                title={bestAsk ? `Авах - ${formatPrice(bestAsk, selectedStockData.Symbol)}₮` : 'Захиалга байхгүй'}
+              >
+                <span className="text-sm font-bold">Авах</span>
+                {bestAsk && (
+                  <span className="text-xs font-semibold mt-0.5 opacity-90">
+                    {formatPrice(bestAsk, selectedStockData.Symbol)}₮
+                  </span>
+                )}
+              </button>
+
+              {/* Sell Button with Best Bid Price */}
+              <button
+                onClick={handleQuickSell}
+                disabled={!bestBid}
+                className="flex flex-col items-center justify-center px-5 py-3 rounded-lg bg-red-500 hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-colors duration-200 min-w-[95px]"
+                title={bestBid ? `Зарах - ${formatPrice(bestBid, selectedStockData.Symbol)}₮` : 'Захиалга байхгүй'}
+              >
+                <span className="text-sm font-bold">Зарах</span>
+                {bestBid && (
+                  <span className="text-xs font-semibold mt-0.5 opacity-90">
+                    {formatPrice(bestBid, selectedStockData.Symbol)}₮
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
         </div>
-        </div>
-        
 
         {/* Search Popover - Only show if search props are provided */}
         {onSearchClick && onSearchClose && onSearchChange && onStockSelect && (
@@ -265,9 +305,6 @@ export const StockHeader = ({
           </Popover>
           </div>
         )}
-
-</div>
-    
       </div>
     </div>
   );

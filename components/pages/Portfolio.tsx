@@ -224,10 +224,10 @@ export default function Portfolio() {
   // Early returns for loading, error, and no data states
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen pb-20 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 dark:border-gray-800 border-t-bdsec dark:border-t-indigo-500"></div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{t('portfolio.loading')}</p>
+      <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-20 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 dark:border-gray-700 border-t-bdsec dark:border-t-indigo-500"></div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{t('portfolio.loading')}</p>
         </div>
       </div>
     );
@@ -235,14 +235,14 @@ export default function Portfolio() {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen pb-20 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-20 flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
-          <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-red-600 dark:text-red-400 text-xs">{error}</p>
+          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+            <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
           </div>
-          <button 
+          <button
             onClick={() => fetchPortfolioData()}
-            className="px-4 py-2 bg-bdsec dark:bg-indigo-600 text-white rounded-lg hover:bg-bdsec/90 dark:hover:bg-indigo-700 transition-colors text-xs font-semibold"
+            className="px-6 py-3 bg-bdsec dark:bg-indigo-600 text-white rounded-xl hover:bg-bdsec/90 dark:hover:bg-indigo-700 transition-colors text-sm font-semibold border border-bdsec/20 dark:border-indigo-500"
           >
             {t('portfolio.retry')}
           </button>
@@ -253,8 +253,8 @@ export default function Portfolio() {
 
   if (!portfolioData) {
     return (
-      <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen pb-20 flex items-center justify-center">
-        <p className="text-xs text-gray-500 dark:text-gray-400">{t('portfolio.noData')}</p>
+      <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-20 flex items-center justify-center">
+        <p className="text-sm text-gray-600 dark:text-gray-400">{t('portfolio.noData')}</p>
       </div>
     );
   }
@@ -267,30 +267,30 @@ export default function Portfolio() {
   const profitLossPercent = totalInvested > 0 ? ((totalProfit / totalInvested) * 100) : 0;
 
   return (
-    <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen pb-20">
+    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-20">
       {/* Compact Header */}
-      <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center justify-between px-3 py-2.5">
-          <div className="flex items-center space-x-2">
-            <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-bdsec to-indigo-600 flex items-center justify-center">
-              <Wallet className="h-3.5 w-3.5 text-white" />
+      <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center space-x-3">
+            <div className="h-8 w-8 rounded-xl bg-bdsec dark:bg-indigo-600 flex items-center justify-center">
+              <Wallet className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold">{t('portfolio.title')}</h1>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400">{t('portfolio.subtitle')}</p>
+              <h1 className="text-base font-semibold text-gray-900 dark:text-white">{t('portfolio.title')}</h1>
+              <p className="text-xs text-gray-600 dark:text-gray-400">{t('portfolio.subtitle')}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-1.5">
+          <div className="flex items-center space-x-2">
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-gray-200 dark:border-gray-700"
             >
               <RefreshCw className={`h-4 w-4 text-gray-600 dark:text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
             <button
               onClick={() => setShowBalance(!showBalance)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-gray-200 dark:border-gray-700"
             >
               {showBalance ? (
                 <Eye className="h-4 w-4 text-gray-600 dark:text-gray-400" />
@@ -302,84 +302,30 @@ export default function Portfolio() {
         </div>
       </div>
 
-      <div className="p-2.5 space-y-2">
+      <div className="p-4 space-y-3">
         {/* Total Portfolio Value - Hero Card */}
-        <div className="relative bg-gradient-to-br from-bdsec to-indigo-600 dark:from-indigo-600 dark:to-indigo-800 rounded-xl p-4 text-white shadow-xl overflow-hidden">
-          {/* Multiple Static Noise Layers */}
-          <div 
-            className="absolute inset-0 opacity-[0.3] mix-blend-soft-light pointer-events-none"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter1'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter1)'/%3E%3C/svg%3E")`,
-            }}
-          />
-          <div 
-            className="absolute inset-0 opacity-[0.2] mix-blend-overlay pointer-events-none"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter2'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter2)'/%3E%3C/svg%3E")`,
-            }}
-          />
-          <div 
-            className="absolute inset-0 opacity-[0.25] mix-blend-overlay pointer-events-none"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter3'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter3)'/%3E%3C/svg%3E")`,
-            }}
-          />
-          <div 
-            className="absolute inset-0 opacity-[0.15] mix-blend-soft-light pointer-events-none"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter4'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.45' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter4)'/%3E%3C/svg%3E")`,
-            }}
-          />
-          <div 
-            className="absolute inset-0 opacity-[0.18] mix-blend-overlay pointer-events-none"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter5'%3E%3CfeTurbulence type='turbulence' baseFrequency='1.2' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter5)'/%3E%3C/svg%3E")`,
-            }}
-          />
-          <div 
-            className="absolute inset-0 opacity-[0.12] mix-blend-soft-light pointer-events-none"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter6'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.0' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter6)'/%3E%3C/svg%3E")`,
-            }}
-          />
-          
-          {/* Gradient Orbs - Static */}
-          <div className="absolute -top-16 -right-16 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -top-8 -right-8 w-28 h-28 bg-indigo-300/15 rounded-full blur-2xl" />
-          <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-indigo-400/20 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-white/8 rounded-full blur-2xl" />
-          <div className="absolute bottom-1/4 left-1/3 w-24 h-24 bg-indigo-500/15 rounded-full blur-2xl" />
-          
-          {/* Subtle Grid Pattern */}
-          <div 
-            className="absolute inset-0 opacity-[0.04]"
-            style={{
-              backgroundImage: `
-                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-              `,
-              backgroundSize: '20px 20px'
-            }}
-          />
-          
+        <div className="relative bg-bdsec dark:bg-indigo-600 rounded-xl p-5 text-white border border-bdsec/20 dark:border-indigo-500 overflow-hidden">
+          {/* Simple gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-bdsec/90 to-indigo-600/90 dark:from-indigo-600/90 dark:to-indigo-700/90"></div>
+
           {/* Content */}
           <div className="relative z-10">
-            <p className="text-[10px] opacity-90 mb-1">{t('portfolio.currentValue')}</p>
-            <p className="text-2xl font-bold mb-3 drop-shadow-lg">
+            <p className="text-xs text-white/80 mb-2">{t('portfolio.currentValue')}</p>
+            <p className="text-3xl font-bold mb-4">
               {showBalance ? formatCurrency(totalAssetValue) : '***,***'} ₮
             </p>
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center space-x-1">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
                 {totalProfit >= 0 ? (
-                  <ArrowUpRight className="h-3.5 w-3.5 drop-shadow" />
+                  <ArrowUpRight className="h-4 w-4" />
                 ) : (
-                  <ArrowDownRight className="h-3.5 w-3.5 drop-shadow" />
+                  <ArrowDownRight className="h-4 w-4" />
                 )}
-                <span className="font-semibold drop-shadow">
+                <span className="font-semibold">
                   {showBalance ? (totalProfit >= 0 ? '+' : '') + formatCurrency(Math.abs(totalProfit)) : '***,***'} ₮
                 </span>
               </div>
-              <span className="font-semibold opacity-90 drop-shadow">
+              <span className="font-semibold">
                 {showBalance ? formatPercentage(profitLossPercent) : '***%'}
               </span>
             </div>
@@ -389,23 +335,23 @@ export default function Portfolio() {
 
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-2.5 border border-gray-200 dark:border-gray-800">
-            <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">{t('portfolio.totalInvested')}</p>
-            <p className="text-sm font-bold text-gray-900 dark:text-white">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{t('portfolio.totalInvested')}</p>
+            <p className="text-base font-bold text-gray-900 dark:text-white">
               {showBalance ? formatCurrency(totalInvested) : '***,***'} ₮
             </p>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-2.5 border border-gray-200 dark:border-gray-800">
-            <p className="text-[9px] text-gray-500 dark:text-gray-400 mb-1">{t('portfolio.cashAccount')}</p>
-            <p className="text-sm font-bold text-gray-900 dark:text-white">
+          <div className="bg-white dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{t('portfolio.cashAccount')}</p>
+            <p className="text-base font-bold text-gray-900 dark:text-white">
               {showBalance ? formatCurrency(nominalBalance) : '***,***'} ₮
             </p>
           </div>
         </div>
 
         {/* Portfolio Charts */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <PortfolioCharts
             assetBalances={portfolioData!.assetBalances}
             yieldAnalysis={portfolioData!.yieldAnalysis}
@@ -414,42 +360,42 @@ export default function Portfolio() {
         </div>
 
         {/* Stock Holdings */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
-          <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-            <h3 className="text-[10px] font-bold text-gray-900 dark:text-white">{t('portfolio.stockHoldings')}</h3>
-            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-semibold">
-              {portfolioData!.assetBalances.length}
+        <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('portfolio.stockHoldings')}</h3>
+            <span className="text-xs px-2 py-1 rounded-full bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 font-semibold">
+              {portfolioData!.assetBalances.length} {t('portfolio.assets')}
             </span>
           </div>
           
-          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {portfolioData!.assetBalances.map((asset, index) => {
               const yieldData = portfolioData!.yieldAnalysis.find(y => y.symbol === asset.symbol);
               const profit = yieldData?.profit ?? 0;
-              
+
               return (
-                <div key={index} className="px-2.5 py-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                <div key={index} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1.5 min-w-0 flex-1">
-                      <div className="h-7 w-7 rounded-md bg-gradient-to-br from-bdsec to-indigo-600 dark:from-indigo-600 dark:to-indigo-800 flex items-center justify-center flex-shrink-0">
-                        <span className="text-[9px] font-bold text-white">{asset.symbol.slice(0, 2)}</span>
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="h-10 w-10 rounded-xl bg-bdsec/10 dark:bg-indigo-500/20 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700">
+                        <span className="text-sm font-bold text-bdsec dark:text-indigo-400">{asset.symbol.slice(0, 2)}</span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline gap-1.5">
-                          <h4 className="text-[10px] font-bold text-gray-900 dark:text-white">{asset.symbol}</h4>
-                          <span className="text-[8px] text-gray-500 dark:text-gray-400">
-                            {showBalance ? asset.quantity.toLocaleString() : '***'}
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{asset.symbol}</h4>
+                          <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {showBalance ? asset.quantity.toLocaleString() : '***'} {t('portfolio.shares')}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <p className="text-[9px] text-gray-500 dark:text-gray-400">
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
                             {yieldData && showBalance ? formatCurrency(yieldData.closePrice) : '***'}₮
                           </p>
                           {yieldData && (
-                            <span className={`text-[8px] font-semibold ${
-                              profit >= 0 
-                                ? 'text-green-600 dark:text-green-400' 
-                                : 'text-red-600 dark:text-red-400'
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${
+                              profit >= 0
+                                ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                                : 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'
                             }`}>
                               {showBalance ? ((yieldData.profitPer ?? 0) >= 0 ? '+' : '') + (yieldData.profitPer ?? 0).toFixed(1) : '***'}%
                             </span>
@@ -457,8 +403,8 @@ export default function Portfolio() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-right flex-shrink-0 ml-2">
-                      <p className="text-[10px] font-bold text-gray-900 dark:text-white">
+                    <div className="text-right flex-shrink-0 ml-3">
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">
                         {yieldData && showBalance ? formatCurrency(yieldData.totalNow) : '***,***'}₮
                       </p>
                     </div>
@@ -468,11 +414,11 @@ export default function Portfolio() {
             })}
 
             {portfolioData!.assetBalances.length === 0 && (
-              <div className="text-center py-8">
-                <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-1.5">
-                  <TrendingUp className="h-5 w-5 text-gray-400" />
+              <div className="text-center py-12">
+                <div className="h-12 w-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3 border border-gray-200 dark:border-gray-700">
+                  <TrendingUp className="h-6 w-6 text-gray-400" />
                 </div>
-                <p className="text-gray-500 dark:text-gray-400 text-[10px]">{t('portfolio.noStockHoldings')}</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">{t('portfolio.noStockHoldings')}</p>
               </div>
             )}
           </div>

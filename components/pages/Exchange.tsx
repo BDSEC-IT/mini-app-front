@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'next/navigation';
 import Cookies from 'js-cookie';
 import { 
   fetchSecondaryOrders,
@@ -155,7 +156,8 @@ const getPriceStep = (price: number): number => {
 export default function Exchange() {
   const { t } = useTranslation('common');
   const { theme } = useTheme();
-  
+  const searchParams = useSearchParams();
+
   // Core state
   const [accountBalance, setAccountBalance] = useState<number | null>(null);
   const [, setStockBalance] = useState(0);
@@ -422,7 +424,7 @@ export default function Exchange() {
     try {
       const result = await fetchSpecificStockData(symbol);
       console.log(`Fetching price for ${symbol}:`, result);
-      
+
       if (result.success && result.data) {
         const stockData = Array.isArray(result.data) ? result.data[0] : result.data;
         if (stockData) {
@@ -443,6 +445,38 @@ export default function Exchange() {
       console.error('Error fetching stock price:', error);
     }
   };
+
+  // Handle URL query parameters from quick buy/sell buttons
+  useEffect(() => {
+    if (!stocks.length) return; // Wait for stocks to load
+
+    const symbol = searchParams.get('symbol');
+    const side = searchParams.get('side');
+    const priceParam = searchParams.get('price');
+
+    if (symbol && side) {
+      // Find the stock
+      const stock = stocks.find(s => s.Symbol === symbol || s.Symbol.startsWith(symbol));
+      if (stock) {
+        setSelectedStock(stock);
+        fetchStockPrice(stock.Symbol);
+      }
+
+      // Set order side
+      if (side === 'BUY' || side === 'SELL') {
+        setOrderSide(side as OrderSide);
+      }
+
+      // Set price if provided
+      if (priceParam) {
+        setPrice(priceParam);
+        setOrderType('Нөхцөлт'); // Set to limit order
+      }
+
+      // Clear URL parameters after setting
+      window.history.replaceState({}, '', '/exchange');
+    }
+  }, [stocks, searchParams]);
 
   const fetchOrdersData = async () => {
     const token = Cookies.get('token');

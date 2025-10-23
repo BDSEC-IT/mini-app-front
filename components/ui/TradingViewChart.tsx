@@ -396,7 +396,7 @@ export function TradingViewChart({
     <div className="w-full h-full flex flex-col transition-all duration-300 mb-8">
       {/* Conditional Header Bar for Chart Type Toggle */}
       {showChartTypeToggle && (
-        <div className="h-[38px] flex justify-between items-center md:px-4 rounded-lg mb-2">
+        <div className="h-[38px] flex justify-end items-center md:px-4 rounded-lg mb-2">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setChartType('line')}
