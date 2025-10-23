@@ -148,12 +148,12 @@ const OrderBookComponent = ({
         <div className="overflow-hidden">
           <div className="px-3 py-2 bg-green-50 dark:bg-green-900/10">
             <div className="grid grid-cols-2 text-right">
-                <h3 className="text-sm font-medium text-gray-500">{t('dashboard.quantity')}</h3>
+                <h3 className="text-sm font-medium text-gray-500">{t('dashboard.buyQuantity')}</h3>
               <h3 className="text-sm font-medium text-green-500 flex justify-end">
                 <ArrowUp size={12} className="mr-1 text-green-500" />
                 {t('dashboard.buy')}
               </h3>
-            
+
             </div>
           </div>
 
@@ -190,7 +190,7 @@ const OrderBookComponent = ({
                 <ArrowDown size={12} className="mr-1 text-red-500" />
                 {t('dashboard.sell')}
               </h3>
-              <h3 className="text-sm font-medium text-gray-500">{t('dashboard.quantity')}</h3>
+              <h3 className="text-sm font-medium text-gray-500">{t('dashboard.sellQuantity')}</h3>
             </div>
           </div>
 

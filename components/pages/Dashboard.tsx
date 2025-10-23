@@ -382,7 +382,41 @@ const DashboardContent = () => {
     return { buy: buyOrders, sell: sellOrders }
   }, [orderBookData])
 
-  
+  // Helper function to get last trading day date
+  const getLastTradingDay = (now: Date = new Date()): Date => {
+    const currentDay = now.getDay();
+    const lastTrading = new Date(now);
+    
+    // If it's Monday (1), go back to Friday (3 days)
+    // If it's Sunday (0), go back to Friday (2 days)
+    // If it's Saturday (6), go back to Friday (1 day)
+    // Otherwise, it's a weekday - just use today or yesterday
+    
+    if (currentDay === 0) { // Sunday
+      lastTrading.setDate(lastTrading.getDate() - 2); // Go to Friday
+    } else if (currentDay === 6) { // Saturday
+      lastTrading.setDate(lastTrading.getDate() - 1); // Go to Friday
+    } else if (currentDay === 1) { // Monday before trading hours
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentTimeInMinutes = currentHour * 60 + currentMinute;
+      const tradingStartMinutes = 9 * 60 + 30; // 9:30 AM
+      
+      if (currentTimeInMinutes < tradingStartMinutes) {
+        lastTrading.setDate(lastTrading.getDate() - 3); // Go to last Friday
+      }
+    }
+    
+    return lastTrading;
+  };
+
+  // Helper function to format date in Mongolian
+  const formatDateMongolian = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}.${month}.${day}`;
+  };
 
   // Update display description for real-time data
   useEffect(() => {
@@ -391,9 +425,12 @@ const DashboardContent = () => {
       const isTrading = isDuringTradingHours(now);
       
       if (isTrading) {
-        setDisplayPeriodDescription("Өнөөдрийн шууд арилжаа"); // Today's live trading
+        const formattedDate = formatDateMongolian(now);
+        setDisplayPeriodDescription(formattedDate); // Just today's date
       } else {
-        setDisplayPeriodDescription("Сүүлийн арилжааны өдрийн мэдээлэл"); // Last trading day data
+        const lastTradingDay = getLastTradingDay(now);
+        const formattedDate = formatDateMongolian(lastTradingDay);
+        setDisplayPeriodDescription(formattedDate); // Just the last trading day date
       }
     };
     
