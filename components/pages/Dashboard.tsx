@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { Search, ChevronDown } from 'lucide-react'
 import { TradingViewChart } from '../ui/TradingViewChart'
 import { useTheme } from '@/contexts/ThemeContext'
 import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, type OrderBookEntry, type StockData, BASE_URL } from '@/lib/api'
@@ -10,6 +11,8 @@ import { OrderBook } from './dashboard/OrderBook'
 import { StockDetails } from './dashboard/StockDetails'
 import { StockList } from './dashboard/StockList'
 import { getStockFilterDate, shouldDisplayStock, getDisplayPeriodDescription, isDuringTradingHours, filterTodaysFreshStocks, isTodaysFreshData } from '@/lib/trading-time-utils'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { useTranslation } from 'react-i18next'
 
 // Custom hook for intersection observer
 const useInView = (threshold = 0.1) => {
@@ -51,10 +54,25 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-import { useTranslation } from 'react-i18next';
-
 const DashboardContent = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.language || 'mn';
+  
+  // Helper: Format symbol display
+  const formatSymbolDisplay = (symbol: string): string => {
+    if (!symbol) return '';
+    if (symbol.toUpperCase().includes('-BD')) {
+      return symbol.split('-BD')[0];
+    }
+    return symbol.split('-')[0];
+  };
+
+  // Helper: Get company name by language
+  const getCompanyName = (stock: StockData | null) => {
+    if (!stock) return t('dashboard.stock');
+    return currentLanguage === 'mn' ? stock.mnName : stock.enName;
+  };
+
   const [selectedSymbol, setSelectedSymbol] = useState('BDS'); // Default to BDS
   const { theme } = useTheme()
   const [activeFilter, setActiveFilter] = useState('mostActive')
@@ -554,7 +572,93 @@ const DashboardContent = () => {
   }, [selectedSymbol])
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white pb-24 px-4 pt-4 flex flex-col gap-y-4 overflow-hidden overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white pb-20 px-2.5 pt-2.5 flex flex-col gap-y-2.5 overflow-hidden overflow-x-hidden">
+      
+      {/* Search Bar at Top */}
+      <div className="w-full mb-1.5 h-[26px]">
+        <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+          <PopoverTrigger asChild>
+            <button
+              className="w-full flex items-center border rounded-lg px-3 py-1.5 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+            >
+              <Search size={16} className="text-gray-500 dark:text-gray-400 mr-2 flex-shrink-0" />
+              <div className="flex-1 text-left">
+                {selectedStockData ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-xs text-gray-900 dark:text-white">
+                      {formatSymbolDisplay(selectedStockData.Symbol)}
+                    </span>
+                    <span className="text-gray-400 text-[10px]">•</span>
+                    <span className="text-[10px] text-gray-600 dark:text-gray-400 truncate">
+                      {getCompanyName(selectedStockData)}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.searchByCompanyOrSymbol')}</span>
+                )}
+              </div>
+              <ChevronDown size={16} className="text-gray-500 dark:text-gray-400 ml-1.5 flex-shrink-0" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-[calc(100vw-2rem)] sm:w-96 p-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg rounded-lg">
+            <div className="w-full">
+              <div className="flex items-center border rounded-lg px-2.5 py-2 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-800 mb-2">
+                <Search size={14} className="text-gray-500 dark:text-gray-400 mr-2 flex-shrink-0" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="bg-transparent outline-none text-gray-900 dark:text-gray-100 flex-1 text-xs"
+                  placeholder={t('dashboard.searchByCompanyOrSymbol')}
+                  autoFocus
+                />
+              </div>
+              {/* Search Results */}
+              {searchTerm && (
+                <div className="max-h-64 overflow-y-auto">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((stock, index) => (
+                      <button
+                        key={`search-${stock.Symbol}-${index}`}
+                        className="w-full text-left px-2.5 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors mb-0.5"
+                        onClick={() => {
+                          handleStockSelect(stock.Symbol);
+                          setIsSearchOpen(false);
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-xs text-gray-900 dark:text-white">
+                              {formatSymbolDisplay(stock.Symbol)}
+                            </div>
+                            <div className="text-[10px] text-gray-600 dark:text-gray-400 truncate mt-0.5">
+                              {getCompanyName(stock)}
+                            </div>
+                          </div>
+                          {stock.Changep !== undefined && (
+                            <div className={`ml-2 text-[10px] font-semibold ${
+                              stock.Changep >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                            }`}>
+                              {stock.Changep >= 0 ? '+' : ''}{stock.Changep.toFixed(2)}%
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+                      {t('common.noResults')}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
     
         <StockList
           loading={stocksLoading}
@@ -576,15 +680,8 @@ const DashboardContent = () => {
             <StockHeader
               selectedSymbol={selectedSymbol}
               selectedStockData={displayStockData}
-              isSearchOpen={isSearchOpen}
-              searchTerm={searchTerm}
-              searchResults={searchResults}
               chartLoading={chartLoading}
               isDataFresh={isDataFresh}
-              onSearchClick={handleSearchClick}
-              onSearchClose={handleSearchClose}
-              onSearchChange={handleSearchChange}
-              onStockSelect={handleStockSelect}
             />
           </div>
           {/* Chart section: full-bleed, outside the padded container */}

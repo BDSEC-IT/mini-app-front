@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, TrendingUp, TrendingDown } from 'lucide-react';
 import { useBalanceData } from '@/hooks/useBalanceData';
 import { formatCurrency, calculateSecuritiesValue, calculateTotalBalance } from '@/utils/balanceUtils';
 import BalanceHeader from '@/components/balance/BalanceHeader';
@@ -20,14 +20,17 @@ export default function Balance() {
   const [showBalance, setShowBalance] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [totalBalance, setTotalBalance] = useState(0);
+  const [nominalFilter, setNominalFilter] = useState<'all' | 'income' | 'expense'>('all');
 
   // Use custom hook for data fetching
   const {
     loadingNominal,
     loadingAssets,
+    loadingCashTransactions,
     nominalBalance,
     assetBalances,
     yieldAnalysis,
+    cashTransactions,
     isLoading
   } = useBalanceData();
 
@@ -47,19 +50,19 @@ export default function Balance() {
 
   // Render functions for different content sections
   const renderSecuritiesContent = () => (
-    <div className="p-4">
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+    <div className="p-2.5">
+      <div className="relative mb-2.5">
+        <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
         <input
           type="text"
-          placeholder="Өөрийн үнэт цаас хайх"
+          placeholder="Үнэт цаас хайх"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-bdsec"
+          className="w-full pl-9 pr-3 py-2 border text-xs border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-bdsec dark:focus:ring-indigo-500"
         />
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-1.5">
         {loadingAssets ? (
           <>
             <SkeletonCard />
@@ -71,50 +74,36 @@ export default function Balance() {
             const y = yieldAnalysis.find(z => z.symbol === asset.symbol);
             const assetValue = y ? (y.totalNow || 0) : 0;
             return (
-              <div key={index} className=" relative w-full p-3 overflow-hidden transition-all duration-300 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between">
-                {/* SVG Illumination Effect */}
-                <svg
-                  className="absolute text-indigo-500 -top-1/4 -left-1/4 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-0 dark:opacity-80 pointer-events-none z-0"
-                  width="200%"
-                  height="200%"
-                  viewBox="0 0 200 200"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fill="currentColor"
-                    d="M50,-60C60,-40,70,-30,80,-10C90,10,80,30,60,50C40,70,20,90,-10,100C-40,110,-70,110,-90,90C-110,70,-110,40,-100,10C-90,-20,-60,-50,-40,-70C-20,-90,10,-110,30,-100C50,-90,50,-80,50,-60Z"
-                    transform="translate(100 100)"
-                  />
-                </svg>
-                <div className="flex items-center justify-between mb-10 z-10">
-                  <div className="flex items-center space-x-3">
-               
-                    <div className="z-10">
-                      <h3 className="font-semibold text-gray-900 dark:text-white">{asset.symbol}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{asset.name}</p>
+              <div 
+                key={index} 
+                className="relative w-full p-2.5 overflow-hidden transition-colors duration-150 border rounded-lg border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-bdsec to-indigo-600 dark:from-indigo-600 dark:to-indigo-800 flex items-center justify-center">
+                      <span className="text-[10px] font-bold text-white">{asset.symbol.slice(0, 2)}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-xs font-bold text-gray-900 dark:text-white truncate">{asset.symbol}</h3>
+                      <p className="text-[9px] text-gray-500 dark:text-gray-400 truncate">{asset.name}</p>
                     </div>
                   </div>
-                  <div className="text-right z-10">
-                    <p className="font-bold text-gray-900 dark:text-white">
+                  <div className="text-right flex-shrink-0 ml-2">
+                    <p className="text-xs font-bold text-gray-900 dark:text-white">
                       {showBalance ? asset.quantity.toLocaleString() : '***'}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      <span>Одоогийн үнэлгээ: </span>{showBalance ? `${formatCurrency(assetValue)} ₮` : '***,*** ₮'}
+                    <p className="text-[9px] text-gray-500 dark:text-gray-400">
+                      {showBalance ? `${formatCurrency(assetValue)}₮` : '***,***₮'}
                     </p>
                   </div>
                 </div>
                 
-                <div className="flex items-center justify-end z-10">
-                  {/* Temporarily commented out Арилжаа button
-                  <button className="bg-bdsec dark:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-bdsec/90">
-                    Арилжаа
-                  </button>
-                  */}
+                <div className="flex items-center justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
                   <button
                     onClick={() => {
                       router.push(`/balance/history?symbol=${asset.symbol}&type=security`);
                     }}
-                    className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-sm rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                    className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
                     Хуулга
                   </button>
@@ -127,131 +116,171 @@ export default function Balance() {
     </div>
   );
 
-  const renderNominalContent = () => (
-    <div className="p-4 space-y-4">
-      {loadingNominal ? (
-        <>
-          <SkeletonCard />
-          <SkeletonCard />
-        </>
-      ) : nominalBalance ? (
-        <div className="relative w-full p-3 overflow-hidden transition-all duration-300 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between">
-          {/* SVG Illumination Effect */}
-          <svg
-            className="absolute text-indigo-500 -top-1/4 -left-1/4 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-0 dark:opacity-80 pointer-events-none z-0"
-            width="200%"
-            height="200%"
-            viewBox="0 0 200 200"
-            xmlns="http://www.w3.org/2000/svg"
+  const renderNominalContent = () => {
+    // Filter transactions based on selected filter
+    const filteredTransactions = cashTransactions.filter(transaction => {
+      const isIncome = (transaction.debitAmt || 0) > 0;
+      if (nominalFilter === 'income') return isIncome;
+      if (nominalFilter === 'expense') return !isIncome;
+      return true; // 'all'
+    });
+
+    // Get only the last 10 transactions
+    const recentTransactions = filteredTransactions.slice(0, 10);
+
+    return (
+      <div className="p-2.5 space-y-2">
+        {/* Filter buttons */}
+        <div className="flex gap-1.5 mb-2.5">
+          <button
+            onClick={() => setNominalFilter('all')}
+            className={`flex-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${
+              nominalFilter === 'all'
+                ? 'bg-bdsec dark:bg-indigo-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+            }`}
           >
-            <path
-              fill="currentColor"
-              d="M50,-60C60,-40,70,-30,80,-10C90,10,80,30,60,50C40,70,20,90,-10,100C-40,110,-70,110,-90,90C-110,70,-110,40,-100,10C-90,-20,-60,-50,-40,-70C-20,-90,10,-110,30,-100C50,-90,50,-80,50,-60Z"
-              transform="translate(100 100)"
-            />
-          </svg>
-          <div className="flex items-center justify-between mb-10 z-10">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-gray-700 dark:text-gray-300">₮</span>
-              </div>
-              <div className="z-10">
-                <h3 className="font-semibold text-gray-900 dark:text-white">{nominalBalance.currency}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Бэлэн мөнгө</p>
-              </div>
-            </div>
-            <div className="text-right z-10">
-              <p className="font-bold text-gray-900 dark:text-white">
-                {showBalance ? `${formatCurrency(nominalBalance.balance)} ₮` : '***,*** ₮'}
-              </p>
-            </div>
-          </div>
+            Бүгд
+          </button>
+          <button
+            onClick={() => setNominalFilter('income')}
+            className={`flex-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${
+              nominalFilter === 'income'
+                ? 'bg-green-600 dark:bg-green-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            Орлого
+          </button>
+          <button
+            onClick={() => setNominalFilter('expense')}
+            className={`flex-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-colors ${
+              nominalFilter === 'expense'
+                ? 'bg-red-600 dark:bg-red-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            Зарлага
+          </button>
         </div>
-      ) : (
-        // Fallback display with zeroed balances - sorted in descending order
-        [
-          { currency: 'USD', name: 'Бэлэн мөнгө', balance: 0, icon: '$' },
-          { currency: 'MNT', name: 'Бэлэн мөнгө', balance: 0, icon: '₮' }
-        ].map((item, index) => (
-          <div key={index} className="relative w-full p-3 overflow-hidden transition-all duration-300 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between">
-            {/* SVG Illumination Effect */}
-            <svg
-              className="absolute text-indigo-500 -top-1/4 -left-1/4 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-0 dark:opacity-80 pointer-events-none z-0"
-              width="200%"
-              height="200%"
-              viewBox="0 0 200 200"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill="currentColor"
-                d="M50,-60C60,-40,70,-30,80,-10C90,10,80,30,60,50C40,70,20,90,-10,100C-40,110,-70,110,-90,90C-110,70,-110,40,-100,10C-90,-20,-60,-50,-40,-70C-20,-90,10,-110,30,-100C50,-90,50,-80,50,-60Z"
-                transform="translate(100 100)"
-              />
-            </svg>
-            <div className="flex items-center justify-between mb-10 z-10">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{item.icon}</span>
+
+        {loadingCashTransactions ? (
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
+        ) : recentTransactions && recentTransactions.length > 0 ? (
+          <>
+            {recentTransactions.map((transaction, index) => {
+              // For cash transactions, creditAmt means money going out (expense)
+              // and debitAmt means money coming in (income)
+              const isIncome = (transaction.debitAmt || 0) > 0;
+              const amount = isIncome ? transaction.debitAmt || 0 : transaction.creditAmt || 0;
+              const date = new Date(transaction.transactionDate).toLocaleDateString('mn-MN');
+
+              return (
+                <div key={index} className="bg-white dark:bg-gray-900 rounded-lg p-2.5 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start space-x-2 min-w-0 flex-1">
+                      <div className={`flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full ${
+                        isIncome ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'
+                      }`}>
+                        {isIncome ? (
+                          <TrendingUp className={`w-3 h-3 text-green-600 dark:text-green-400`} />
+                        ) : (
+                          <TrendingDown className={`w-3 h-3 text-red-600 dark:text-red-400`} />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-1.5 mb-0.5">
+                          <span className="text-[10px] font-semibold text-gray-900 dark:text-white">
+                            Номинал данс
+                          </span>
+                          <span className="text-[9px] text-gray-500 dark:text-gray-400">{date}</span>
+                        </div>
+                        <p className="text-[10px] text-gray-600 dark:text-gray-400 break-words line-clamp-2">
+                          {transaction.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right flex-shrink-0">
+                      <div className={`text-xs font-bold ${
+                        isIncome ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                      }`}>
+                        {isIncome ? '+' : '-'}{formatCurrency(amount)}₮
+                      </div>
+                      <div className="text-[9px] text-gray-500 dark:text-gray-400">
+                        {showBalance ? `${formatCurrency(transaction.lastBalance)}₮` : '***,***₮'}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="z-10">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">{item.currency}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Бэлэн мөнгө</p>
-                </div>
-              </div>
-              <div className="text-right z-10">
-                <p className="font-bold text-gray-900 dark:text-white">
-                  {showBalance ? `${formatCurrency(item.balance)} ₮` : '***,*** ₮'}
-                </p>
-              </div>
-            </div>
+              );
+            })}
+            
+            {filteredTransactions.length > 10 && (
+              <button
+                onClick={() => router.push('/balance/history?type=cash')}
+                className="w-full py-2 mt-1 text-[10px] font-semibold text-bdsec dark:text-indigo-400 hover:text-bdsec/80 dark:hover:text-indigo-300 transition-colors"
+              >
+                Бүгдийг харах ({filteredTransactions.length})
+              </button>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+            <p className="text-xs">Гүйлгээний түүх байхгүй байна</p>
           </div>
-        ))
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
+  };
 
   const renderFundContent = () => (
-    <div className="p-4 space-y-3">
+    <div className="p-2.5 space-y-1.5">
       {(nominalBalance?.mcsdBalance?.length ? nominalBalance.mcsdBalance : [
         { account: null, currency: 'MNT', amount: 0, code: '9998', withdrawalBalance: 0 },
         { account: null, currency: 'USD', amount: 0, code: '8889', withdrawalBalance: 0 },
         { account: null, currency: 'DIV', amount: 0, code: '9992', withdrawalBalance: 0 }
       ]).map((item, index) => (
-        <div key={index} className="relative w-full p-3 overflow-hidden transition-all duration-300 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between">
-          {/* SVG Illumination Effect */}
-          <svg
-            className="absolute text-indigo-500 -top-1/4 -left-1/4 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-0 dark:opacity-80 pointer-events-none z-0"
-            width="200%"
-            height="200%"
-            viewBox="0 0 200 200"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              fill="currentColor"
-              d="M50,-60C60,-40,70,-30,80,-10C90,10,80,30,60,50C40,70,20,90,-10,100C-40,110,-70,110,-90,90C-110,70,-110,40,-100,10C-90,-20,-60,-50,-40,-70C-20,-90,10,-110,30,-100C50,-90,50,-80,50,-60Z"
-              transform="translate(100 100)"
-            />
-          </svg>
-          <div className="flex items-center justify-between mb-10 z-10">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
+        <div 
+          key={index} 
+          className="relative w-full p-2.5 overflow-hidden transition-colors duration-150 border rounded-lg border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-bdsec to-indigo-600 dark:from-indigo-600 dark:to-indigo-800 flex items-center justify-center">
+                <span className="text-xs font-bold text-white">
                   {item.currency === 'MNT' ? '₮' : item.currency === 'USD' ? '$' : '₮'}
                 </span>
               </div>
-              <div className="z-10">
-                <h3 className="font-semibold text-gray-900 dark:text-white">{item.currency || item.code}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">ҮЦТХТ</p>
+              <div className="min-w-0">
+                <h3 className="text-xs font-bold text-gray-900 dark:text-white truncate">{item.currency || item.code}</h3>
+                <p className="text-[9px] text-gray-500 dark:text-gray-400">ҮЦТХТ</p>
               </div>
             </div>
-            <div className="text-right z-10">
-              <p className="font-bold text-gray-900 dark:text-white">
-                {showBalance ? `${formatCurrency(item.amount || 0)} ${item.currency ? item.currency.toUpperCase() : '₮'}` : '***,*** ₮'}
+            <div className="text-right flex-shrink-0 ml-2">
+              <p className="text-xs font-bold text-gray-900 dark:text-white">
+                {showBalance ? `${formatCurrency(item.amount || 0)}` : '***,***'}
+              </p>
+              <p className="text-[9px] text-gray-500 dark:text-gray-400">
+                {item.currency ? item.currency.toUpperCase() : '₮'}
               </p>
             </div>
           </div>
           
-          {/* Buttons removed from ҮЦТХТ tab */}
+          <div className="flex items-center justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
+            <button
+              onClick={() => {
+                router.push('/balance/history?type=csd');
+              }}
+              className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              Хуулга
+            </button>
+          </div>
         </div>
       ))}
     </div>
@@ -260,8 +289,11 @@ export default function Balance() {
   // Main loading state
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-gray-900 min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bdsec dark:border-indigo-500"></div>
+      <div className="bg-gray-50 dark:bg-gray-950 min-h-screen flex items-center justify-center pb-20">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-200 dark:border-gray-800 border-t-bdsec dark:border-t-indigo-500"></div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -278,7 +310,7 @@ export default function Balance() {
 
   // Main balance page
   return (
-    <div className="bg-white dark:bg-gray-900 min-h-screen pb-24">
+    <div className="bg-gray-50 dark:bg-gray-950 min-h-screen pb-20">
       <BalanceHeader
         totalBalance={totalBalance}
         nominalBalance={nominalBalance}

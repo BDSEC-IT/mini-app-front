@@ -87,7 +87,7 @@ const Bonds = () => {
       <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">{t('bonds.title')}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('bonds.title')}</h1>
             <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
               {currentLanguage === 'mn' ? 'МХБ-ийн бонд' : 'MSE Bonds'}
             </p>

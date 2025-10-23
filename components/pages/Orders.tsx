@@ -337,7 +337,7 @@ export default function Orders() {
       </div>
 
       {/* Stock Selection Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         {/* Stock Selector */}
         <div className="p-4 border-b border-gray-100 dark:border-gray-600">
           <button
@@ -438,7 +438,7 @@ export default function Orders() {
                 setOrderType(e.target.value as OrderType);
                 if (e.target.value === 'MARKET') setTimeInForce('DAY');
               }}
-              className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm"
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm"
             >
               <option value="MARKET">Зах зээлийн</option>
               <option value="CONDITIONAL">Шинжээт</option>
@@ -453,7 +453,7 @@ export default function Orders() {
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="Үнэ"
-                className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm"
+                className="px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm"
               />
             )}
             <input
@@ -461,7 +461,7 @@ export default function Orders() {
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               placeholder="Хувцаа"
-              className={`px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm ${
+              className={`px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm ${
                 orderType === 'MARKET' ? 'col-span-2' : ''
               }`}
             />
@@ -473,7 +473,7 @@ export default function Orders() {
               <select
                 value={timeInForce}
                 onChange={(e) => setTimeInForce(e.target.value as TimeInForce)}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm"
               >
                 <option value="DAY">Өдөр</option>
                 <option value="GTC">Цуцлах хүртэл</option>

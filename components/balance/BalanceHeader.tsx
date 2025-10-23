@@ -1,8 +1,7 @@
 "use client";
 
-import { Eye, EyeOff, Plus } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/utils/balanceUtils';
 import type { NominalBalance } from '@/types/balance';
 
@@ -22,7 +21,6 @@ export default function BalanceHeader({
   onToggleBalance
 }: BalanceHeaderProps) {
   const { t } = useTranslation();
-  const router = useRouter();
 
   return (
     <div className="relative overflow-hidden p-6 rounded-xl m-4 text-white">
@@ -32,17 +30,8 @@ export default function BalanceHeader({
       <div className="absolute inset-0 bg-gradient-to-bl from-transparent via-blue-500/25 to-transparent animate-pulse delay-1000"></div>
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-bdsec/15 to-transparent animate-pulse delay-2000"></div>
       
-      {/* Animated particles - Blue/Indigo Theme */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/40 rounded-full animate-ping"></div>
-        <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-blue-400/60 rounded-full animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-3/4 w-1.5 h-1.5 bg-indigo-400/50 rounded-full animate-ping delay-500"></div>
-        <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-sky-400/40 rounded-full animate-pulse delay-1500"></div>
-        <div className="absolute top-2/3 left-1/2 w-1 h-1 bg-cyan-300/30 rounded-full animate-ping delay-2500"></div>
-      </div>
-      
       {/* Content container */}
-      <div className="relative z-10 flex items-center justify-between mb-3 text-white">
+      <div className="relative z-10 flex items-center justify-between text-white">
         <div>
           <p className="text-sm opacity-90">{t('balance.totalAssets')}</p>
           {loadingNominal ? (
@@ -75,23 +64,6 @@ export default function BalanceHeader({
             )}
           </button>
         </div>
-      </div>
-      
-      {/* Action Buttons */}
-      <div className="relative z-10 mt-4 flex gap-2">
-        <button
-          onClick={() => router.push('/balance/recharge')}
-          className="flex-1 py-2 px-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 hover:border-white/50 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 text-sm font-medium"
-        >
-          {/* <Plus className="w-4 h-4" /> */}
-          <span>Данс цэнэглэх</span>
-        </button>
-        <button
-          onClick={() => router.push('/balance/withdrawal')}
-          className="flex-1 py-2 px-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 hover:border-white/50 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 text-sm font-medium"
-        >
-          <span>Мөнгө хүсэх</span>
-        </button>
       </div>
     </div>
   );

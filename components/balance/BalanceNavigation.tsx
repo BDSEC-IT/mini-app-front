@@ -1,8 +1,7 @@
 "use client";
 
-import { ChevronDown, Download, Calendar } from 'lucide-react';
+import { ChevronDown, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { formatCurrency } from '@/utils/balanceUtils';
 import InfoTooltip from '@/components/ui/InfoTooltip';
 import type { BalanceType, PageType } from '@/types/balance';
 
@@ -58,12 +57,7 @@ export default function BalanceNavigation({
         />
       </div>
       
-      {balanceType === 'securities' ? (
-        <div className="ml-auto text-right">
-          <div className="text-xs text-gray-400">Үнэт цаасны үнэлгээ</div>
-          <div className="text-lg font-bold">{showBalance ? formatCurrency(securitiesValue) : '***,***.**'}</div>
-        </div>
-      ) : balanceType === 'nominal' ? (
+      {balanceType === 'nominal' && (
         <div className='flex gap-x-2 flex-shrink-0'>
           <button 
             onClick={() => router.push('/balance/history?type=cash')}
@@ -73,9 +67,6 @@ export default function BalanceNavigation({
             <span>Хуулга</span>
           </button>
         </div>
-      ) : (
-        // ҮЦТХТ tab - no buttons
-        <div className="ml-auto"></div>
       )}
     </div>
   );

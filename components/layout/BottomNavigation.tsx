@@ -160,9 +160,9 @@ const BottomNavigation = () => {
 
   // Loading skeleton component
   const LoadingSkeleton = () => (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950" style={{ paddingBottom: 'env(safe-area-inset-bottom)', minHeight: BAR_H }}>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900" style={{ paddingBottom: 'env(safe-area-inset-bottom)', minHeight: BAR_H }}>
       <div className="relative" style={{ height: BAR_H }}>
-        <div className="absolute inset-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-700" />
+        <div className="absolute inset-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700" />
         <div className="absolute bottom-2 inset-x-0 flex items-center justify-evenly px-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="flex flex-col items-center">
@@ -184,17 +184,17 @@ const BottomNavigation = () => {
       <div className="relative" style={{ height: BAR_H }}>
         {pathname === '/exchange' ? (
           // Simple flat background for exchange page
-          <div className="absolute inset-0 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-700" />
+          <div className="absolute inset-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700" />
         ) : (
           // Curved background for other pages
           <div className="absolute inset-0 flex items-start">
-            <div className="relative z-20 bg-white dark:bg-gray-950 dark:drop-shadow-[0_-4px_4px_rgba(255,255,255,0.05)]" style={{ width: sideW, height: PANEL_H, marginTop: PANEL_Y, marginRight: -overlap, boxShadow: '0 -4px 4px -2px rgba(0, 0, 0, 0.15)' }} />
+            <div className="relative z-20 bg-white dark:bg-gray-900 dark:drop-shadow-[0_-4px_4px_rgba(255,255,255,0.05)]" style={{ width: sideW, height: PANEL_H, marginTop: PANEL_Y, marginRight: -overlap, boxShadow: '0 -4px 4px -2px rgba(0, 0, 0, 0.15)' }} />
             <div className="relative z-10" style={{ width: CURVE_W, height: CURVE_H, marginTop: PANEL_Y - 0.5, marginLeft: -4, }}>
               <svg width={CURVE_W} height={CURVE_H} viewBox={`0 0 ${CURVE_W} ${CURVE_H}`} xmlns="http://www.w3.org/2000/svg" className="filter drop-shadow-[0_-4px_4px_rgba(0,0,0,0.15)] dark:drop-shadow-[0_-4px_4px_rgba(255,255,255,0.05)]">
-                <path d={curvePath} fill="currentColor" className="text-white dark:text-gray-950" strokeWidth="0" />
+                <path d={curvePath} fill="currentColor" className="text-white dark:text-gray-900" strokeWidth="0" />
               </svg>
             </div>
-            <div className="relative z-20 bg-white dark:bg-gray-950 dark:drop-shadow-[0_-4px_4px_rgba(255,255,255,0.05)]" style={{ width: sideW, height: PANEL_H, marginTop: PANEL_Y, marginLeft: -overlap, boxShadow: '0 -4px 4px -2px rgba(0, 0, 0, 0.15)' }} />
+            <div className="relative z-20 bg-white dark:bg-gray-900 dark:drop-shadow-[0_-4px_4px_rgba(255,255,255,0.05)]" style={{ width: sideW, height: PANEL_H, marginTop: PANEL_Y, marginLeft: -overlap, boxShadow: '0 -4px 4px -2px rgba(0, 0, 0, 0.15)' }} />
           </div>
         )}
 

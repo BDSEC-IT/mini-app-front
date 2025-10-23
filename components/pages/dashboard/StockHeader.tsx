@@ -16,15 +16,15 @@ import type { StockData } from '@/lib/api';
 interface StockHeaderProps {
   selectedSymbol: string;
   selectedStockData: StockData | null;
-  isSearchOpen: boolean;
-  searchTerm: string;
-  searchResults: StockData[];
+  isSearchOpen?: boolean;
+  searchTerm?: string;
+  searchResults?: StockData[];
   chartLoading: boolean;
   isDataFresh?: boolean;
-  onSearchClick: () => void;
-  onSearchClose: () => void;
-  onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onStockSelect: (symbol: string) => void;
+  onSearchClick?: () => void;
+  onSearchClose?: () => void;
+  onSearchChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onStockSelect?: (symbol: string) => void;
 }
 
 
@@ -81,7 +81,7 @@ export const StockHeader = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        onSearchClose();
+        onSearchClose?.();
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -90,102 +90,21 @@ export const StockHeader = ({
 
   // UI
   return (
-    <div className="w-full transition-all duration-300 my-3 ">
+    <div className="w-full transition-all duration-300 ">
       <div className="flex flex-col">
         {/* Symbol and Company Name */}
-        <div className="flex mb-3 ">
-        <div className="w-full items-center  flex ">
+        <div className="flex  ">
+        <div className="w-full items-center   ">
           <h2 className="text-lg font-semibold mr-2">
             {selectedStockData?.Symbol ? formatSymbolDisplay(selectedStockData.Symbol) : ''}
           </h2>
           {selectedStockData && (
-            <span className="text-sm font-medium md:visible hidden bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-md">
+            <span className="text-sm font-medium md:visible hidden bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2  rounded-md">
               {getCompanyName(selectedStockData, t, currentLanguage)}
             </span>
           )}
-        </div>
-
-        {/* Search Popover */}
-        <div className="relative flex h-7 justify-start mt-2">
-          <Popover open={isSearchOpen} onOpenChange={open => open ? onSearchClick() : onSearchClose()}>
-            <PopoverTrigger asChild>
-              {selectedStockData ? (
-                <button
-                  className="flex items-center border rounded-lg px-3 py-2 dark:bg-blue-900/20 dark:border-blue-800 max-w-44 sm:max-w-52 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 h-10"
-                  type="button"
-                  onClick={onSearchClick}
-                >
-                  <Search size={12} className="text-gray-600 dark:text-gray-400 mr-1 flex-shrink-0" />
-                  <div className="flex items-center text-xs font-normal min-w-0 overflow-hidden">
-                    <span className="font-medium flex-shrink-0 text-gray-900 dark:text-gray-100">
-                      {selectedStockData ? formatSymbolDisplay(selectedStockData.Symbol) : selectedSymbol.split('-')[0]}
-                    </span>
-                    <span className="mx-1 text-xs font-normal flex-shrink-0 text-gray-500 dark:text-gray-400">•</span>
-                    <span className="truncate text-xs font-normal text-gray-600 dark:text-gray-300">
-                      {getCompanyName(selectedStockData, t, currentLanguage)?.substring(0, 8) || ''}
-                    </span>
-                  </div>
-                  <ChevronDown size={12} className="text-gray-600 dark:text-gray-400 ml-1 flex-shrink-0" />
-                </button>
-              ) : (
-                <button
-                  className="flex items-center border rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 h-10"
-                  type="button"
-                  onClick={onSearchClick}
-                >
-                  <Search size={12} className="text-gray-600 dark:text-gray-400 mr-1" />
-                  <span className="text-xs font-normal text-gray-900 dark:text-gray-100">{t('common.search')}</span>
-                </button>
-              )}
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-64 sm:w-72 p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg rounded-lg mt-2">
-              <div ref={searchRef} className="w-full">
-                <div className="flex items-center border rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800 w-full h-10">
-                  <Search size={12} className="text-gray-600 dark:text-gray-400 mr-1.5 flex-shrink-0" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={onSearchChange}
-                    className="bg-transparent outline-none text-gray-900 dark:text-gray-100 flex-1 text-sm font-normal min-w-0"
-                    placeholder={t('dashboard.searchByCompanyOrSymbol')}
-                    autoFocus
-                  />
-                </div>
-                {/* Search Results Dropdown */}
-                {searchTerm && (
-                  <div className="mt-2 max-h-48 overflow-y-auto">
-                    {searchResults.length > 0 ? (
-                      searchResults.map((stock, index) => {
-                        const companyName = getCompanyName(stock, t, currentLanguage);
-                        return (
-                          <button
-                            key={`search-${stock.Symbol}-${index}`}
-                            className="w-full text-left px-3 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-sm font-normal bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 mb-1 h-12"
-                            onClick={() => {
-                              onStockSelect(stock.Symbol);
-                              window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }}
-                          >
-                            <div className="flex flex-col items-start">
-                              <span className="font-medium text-gray-900 dark:text-white flex-shrink-0">{formatSymbolDisplay(stock.Symbol)}</span>
-                              <span className="text-gray-600 dark:text-gray-300 truncate text-xs font-normal mt-0.5">{companyName}</span>
-                            </div>
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <div className="px-2.5 py-2 text-xs font-normal text-gray-500">{t('common.noResults')}</div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-</div>
-        {/* Price and Date */}
-        <div className="mt-3 ">
+              {/* Price and Date */}
+        <div className="">
           <div className="flex  items-start   ">
             {/* {selectedStockData && !isDataFresh && (
               <div className="text-xs mr-2 px-2 py-1 bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-md   mt-1">
@@ -198,7 +117,7 @@ export const StockHeader = ({
                   ? (selectedStockData.LastTradedPrice || 0)
                   : (selectedStockData.PreviousClose || 0)
               }>
-                <div className="text-3xl font-semibold text-gray-900 dark:text-white">
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">
                   {formatPrice(
                     selectedStockData.Symbol?.toUpperCase().includes('-BD')
                       ? selectedStockData.LastTradedPrice
@@ -273,6 +192,91 @@ export const StockHeader = ({
             </div>
           </div>
         </div>
+        </div>
+        
+
+        {/* Search Popover - Only show if search props are provided */}
+        {onSearchClick && onSearchClose && onSearchChange && onStockSelect && (
+          <div className="relative flex h-7 justify-start mt-2">
+            <Popover open={isSearchOpen} onOpenChange={open => open ? onSearchClick() : onSearchClose()}>
+              <PopoverTrigger asChild>
+              {selectedStockData ? (
+                <button
+                  className="flex items-center border rounded-lg px-3 py-2 dark:bg-blue-900/20 dark:border-blue-800 max-w-44 sm:max-w-52 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 h-10"
+                  type="button"
+                  onClick={onSearchClick}
+                >
+                  <Search size={12} className="text-gray-600 dark:text-gray-400 mr-1 flex-shrink-0" />
+                  <div className="flex items-center text-xs font-normal min-w-0 overflow-hidden">
+                    <span className="font-medium flex-shrink-0 text-gray-900 dark:text-gray-100">
+                      {selectedStockData ? formatSymbolDisplay(selectedStockData.Symbol) : selectedSymbol.split('-')[0]}
+                    </span>
+                    <span className="mx-1 text-xs font-normal flex-shrink-0 text-gray-500 dark:text-gray-400">•</span>
+                    <span className="truncate text-xs font-normal text-gray-600 dark:text-gray-300">
+                      {getCompanyName(selectedStockData, t, currentLanguage)?.substring(0, 8) || ''}
+                    </span>
+                  </div>
+                  <ChevronDown size={12} className="text-gray-600 dark:text-gray-400 ml-1 flex-shrink-0" />
+                </button>
+              ) : (
+                <button
+                  className="flex items-center border rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 h-10"
+                  type="button"
+                  onClick={onSearchClick}
+                >
+                  <Search size={12} className="text-gray-600 dark:text-gray-400 mr-1" />
+                  <span className="text-xs font-normal text-gray-900 dark:text-gray-100">{t('common.search')}</span>
+                </button>
+              )}
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-64 sm:w-72 p-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-lg rounded-lg mt-2">
+              <div ref={searchRef} className="w-full">
+                <div className="flex items-center border rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800 w-full h-10">
+                  <Search size={12} className="text-gray-600 dark:text-gray-400 mr-1.5 flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={onSearchChange}
+                    className="bg-transparent outline-none text-gray-900 dark:text-gray-100 flex-1 text-sm font-normal min-w-0"
+                    placeholder={t('dashboard.searchByCompanyOrSymbol')}
+                    autoFocus
+                  />
+                </div>
+                {/* Search Results Dropdown */}
+                {searchTerm && (
+                  <div className="mt-2 max-h-48 overflow-y-auto">
+                    {searchResults && searchResults.length > 0 ? (
+                      searchResults.map((stock, index) => {
+                        const companyName = getCompanyName(stock, t, currentLanguage);
+                        return (
+                          <button
+                            key={`search-${stock.Symbol}-${index}`}
+                            className="w-full text-left px-3 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-sm font-normal bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 mb-1 h-12"
+                            onClick={() => {
+                              onStockSelect(stock.Symbol);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                          >
+                            <div className="flex flex-col items-start">
+                              <span className="font-medium text-gray-900 dark:text-white flex-shrink-0">{formatSymbolDisplay(stock.Symbol)}</span>
+                              <span className="text-gray-600 dark:text-gray-300 truncate text-xs font-normal mt-0.5">{companyName}</span>
+                            </div>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="px-2.5 py-2 text-xs font-normal text-gray-500">{t('common.noResults')}</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+          </div>
+        )}
+
+</div>
+    
       </div>
     </div>
   );

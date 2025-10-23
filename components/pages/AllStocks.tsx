@@ -637,37 +637,37 @@ const getStockCategory = (stock: StockData): string => {
               : 'flash-red 800ms ease-out'
           } : {}}
         >
-          <td className="px-0.5 py-0.5 whitespace-nowrap">
+          <td className="px-2 py-2 whitespace-nowrap">
             <a href={`/stocks/${stock.Symbol}`} className="flex flex-col">
               <span className="font-medium text-xs">{stock.Symbol}</span>
               <span className="text-[10px] text-gray-500">{getCompanyName(stock)}</span>
             </a>
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             {stock.Volume?.toLocaleString() || '-'}
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             {stock.Turnover?.toLocaleString() || '-'}
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             {formatPrice(stock.PreviousClose, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             {formatPrice(stock.OpeningPrice, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             {formatPrice(stock.HighPrice, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             {formatPrice(stock.LowPrice, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             {formatPrice(stock.LastTradedPrice, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             {formatPrice(stock.ClosingPrice, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             <span className={
               Number(stock.Changes) > 0 
                 ? 'text-green-500' 
@@ -678,7 +678,7 @@ const getStockCategory = (stock: StockData): string => {
               {Number(stock.Changes) > 0 ? '+' : ''}{Number(stock.Changes || 0).toFixed(2)}
                     </span>
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
               <div className="flex items-center justify-end">
                 {stock.Changep !== null && stock.Changep !== undefined ? (
                   <>
@@ -700,16 +700,16 @@ const getStockCategory = (stock: StockData): string => {
                 ) : '-'}
               </div>
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             {stock.sizemd?.toLocaleString() || '-'}
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             {formatPrice(stock.MDEntryPx, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             {formatPrice(stock.MDEntryPx2, isBondCategory)}
           </td>
-          <td className="px-0.5 py-0.5 text-right">
+          <td className="px-2 py-2 text-right">
             {stock.sizemd2?.toLocaleString() || '-'}
           </td>
         </tr>

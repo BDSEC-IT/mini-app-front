@@ -151,7 +151,7 @@ const HighLow = () => {
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
       <div className="px-4 md:px-6 py-6">
-        <h1 className="text-xl font-bold mb-6">{t('highLow.title', '52-Week High/Low')}</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('highLow.title', '52-Week High/Low')}</h1>
         
         {/* Search and filters */}
         <div className="mb-6">

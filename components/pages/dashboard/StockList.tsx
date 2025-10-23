@@ -303,7 +303,10 @@ const StockListComponent = ({
   }, [filteredStocks, selectedCard, fetchStockHistoricalData]);
 
   return (
-    <div ref={stockListRef} className="w-full max-w-full overflow-hidden transition-all duration-300 my-4">
+    <div ref={stockListRef} className="w-full max-w-full overflow-hidden transition-all duration-300 my-4 relative">
+      {/* Clean subtle gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 via-transparent to-indigo-50/30 dark:from-gray-900/20 dark:via-transparent dark:to-indigo-950/20 pointer-events-none -z-10"></div>
+
       <div className={`flex justify-between items-center mb-4 transition-all duration-1000 ${
         stockListInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}>
@@ -382,28 +385,19 @@ const StockListComponent = ({
         
         {selectedStock && (
           <div
-            className={`shrink-0 ${getBasisClass()} border-bdsec border-[2px] dark:border-indigo-400 dark:from-indigo-500/10 dark:to-indigo-500/5 rounded-xl p-3 my-2 sm:p-3 flex flex-col justify-between transition-all duration-300 relative overflow-hidden z-10`}
+            className={`shrink-0 ${getBasisClass()} my-2 flex flex-col justify-between relative overflow-hidden z-10 rounded-xl bg-white dark:bg-gray-800 border-2 border-bdsec dark:border-indigo-400 `}
             style={{ minWidth: 160, maxWidth: 160, minHeight: 140, height: 140 }}
           >
-            {/* SVG Illumination Effect */}
-            <svg
-              className="absolute text-indigo-600 -top-1/4 -left-1/4 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-0 dark:opacity-80 pointer-events-none z-0"
-              width="300%"
-              height="300%"
-              viewBox="0 0 200 200"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fill="currentColor"
-                d="M50,-60C60,-40,70,-30,80,-10C90,10,80,30,60,50C40,70,20,90,-10,100C-40,110,-70,110,-90,90C-110,70,-110,40,-100,10C-90,-20,-60,-50,-40,-70C-20,-90,10,-110,30,-100C50,-90,50,-80,50,-60Z"
-                transform="translate(100 100)"
-              />
-            </svg>
-            <div className="flex items-start justify-between mb-1 z-10">
-              <h3 className="flex items-center justify-center font-medium text-xs text-white rounded-full h-7 w-7 bg-bdsec dark:bg-indigo-400">
-                {formatSymbolDisplay(selectedStock.Symbol)}
-              </h3>
-              <div className={`text-xs font-semibold px-1 py-0.5 rounded-md ${
+            {/* Subtle gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/60 via-white/20 to-transparent dark:from-indigo-950/40 dark:via-transparent pointer-events-none rounded-xl"></div>
+
+            {/* Content Container with z-index */}
+            <div className="relative z-10 p-3 flex flex-col justify-between h-full">
+              <div className="flex items-start justify-between mb-1">
+                <h3 className="flex items-center justify-center font-bold text-xs text-white rounded-full h-8 w-8 bg-bdsec dark:bg-indigo-500 ">
+                  {formatSymbolDisplay(selectedStock.Symbol)}
+                </h3>
+                <div className={`text-xs font-bold px-2 py-1 rounded-md ${
                 Math.abs(selectedStock.Changep || 0) < 0.01 
                   ? 'text-gray-600 bg-gray-100 dark:bg-gray-500/10 dark:text-gray-400'
                   : selectedStock.Changep >= 0 
@@ -416,29 +410,30 @@ const StockListComponent = ({
                 }%
               </div>
             </div>
-            <div className="mt-1 z-10">
-              <p className="font-normal text-gray-800 truncate text-xs dark:text-gray-200" title={getCompanyName(selectedStock)}>
-                {getCompanyName(selectedStock)}
-              </p>
-            </div>
-            <div className="mt-1 z-10">
-              <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Хаалт</div>
-              <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                {formatPrice(selectedStock.PreviousClose, isStockABond(selectedStock))} 
-                {formatPrice(selectedStock.PreviousClose, isStockABond(selectedStock)) !== '-' ? '₮' : ''}
+              <div className="mt-1">
+                <p className="font-normal text-gray-800 truncate text-xs dark:text-gray-200" title={getCompanyName(selectedStock)}>
+                  {getCompanyName(selectedStock)}
+                </p>
               </div>
+              <div className="mt-1">
+                <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Хаалт</div>
+                <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {formatPrice(selectedStock.PreviousClose, isStockABond(selectedStock))}
+                  {formatPrice(selectedStock.PreviousClose, isStockABond(selectedStock)) !== '-' ? '₮' : ''}
+                </div>
+              </div>
+              <MiniChart
+                historicalData={historicalData[selectedStock.Symbol] || []}
+                isPositive={selectedStock.Changep >= 0}
+                changePercent={selectedStock.Changep}
+                width={50}
+                height={25}
+              />
             </div>
-            <MiniChart 
-              historicalData={historicalData[selectedStock.Symbol] || []} 
-              isPositive={selectedStock.Changep >= 0} 
-              changePercent={selectedStock.Changep}
-              width={50} 
-              height={25} 
-            />
           </div>
         )}
         {/* Scrollable carousel for other cards */}
-        <div className="flex-1 min-w-0 overflow-hidden relative">
+        <div className="flex-1 min-w-0 overflow-hidden relative group">
           <Carousel
             opts={{
               align: "start",
@@ -468,15 +463,15 @@ const StockListComponent = ({
                   return (
                     <CarouselItem key={`stock-${stock.Symbol}`} className={`pl-2 md:pl-3 ${getBasisClass()}`} >
                       <div
-                        className={`relative w-full p-3 sm:p-3 overflow-hidden transition-all duration-700 border rounded-xl cursor-pointer transform hover:scale-105 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500 hover:border-bdsec/50 dark:hover:border-indigo-500/50 flex flex-col justify-between ${
-                          stockListInView 
-                            ? `opacity-100 ${index % 2 === 0 ? 'translate-x-0' : 'translate-x-0'}` 
+                        className={`relative w-full overflow-hidden cursor-pointer active:scale-[0.98] flex flex-col justify-between rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700  transition-transform duration-150 ${
+                          stockListInView
+                            ? `opacity-100 ${index % 2 === 0 ? 'translate-x-0' : 'translate-x-0'}`
                             : `opacity-0 ${index % 2 === 0 ? '-translate-x-8' : 'translate-x-8'}`
                         }`}
-                        style={{ 
-                          minWidth: 160, 
-                          maxWidth: 160, 
-                          minHeight: 140, 
+                        style={{
+                          minWidth: 160,
+                          maxWidth: 160,
+                          minHeight: 140,
                           height: 140,
                           transitionDelay: `${600 + index * 100}ms`
                         }}
@@ -485,56 +480,46 @@ const StockListComponent = ({
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                       >
-                        {/* SVG Illumination Effect */}
-                        <svg
-                          className="absolute text-indigo-500 -top-1/4 -left-1/4 transform -translate-x-1/2 -translate-y-1/2 blur-3xl opacity-0 dark:opacity-80 pointer-events-none z-0"
-                          width="200%"
-                          height="200%"
-                          viewBox="0 0 200 200"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            fill="currentColor"
-                            d="M50,-60C60,-40,70,-30,80,-10C90,10,80,30,60,50C40,70,20,90,-10,100C-40,110,-70,110,-90,90C-110,70,-110,40,-100,10C-90,-20,-60,-50,-40,-70C-20,-90,10,-110,30,-100C50,-90,50,-80,50,-60Z"
-                            transform="translate(100 100)"
+
+                        {/* Content Container with z-index */}
+                        <div className="relative z-10 p-3 flex flex-col justify-between h-full">
+                          <div className="flex items-start justify-between mb-1">
+                            <h3 className="flex items-center justify-center font-semibold text-xs text-white rounded-full h-7 w-7 bg-gray-700 dark:bg-gray-600 shadow-sm">
+                              {formatSymbolDisplay(stock.Symbol)}
+                            </h3>
+                            <div className={`text-xs font-semibold px-2 py-1 rounded-md ${
+                              Math.abs(stock.Changep || 0) < 0.01
+                                ? 'text-gray-600 bg-gray-100/80 dark:bg-gray-500/20 dark:text-gray-400'
+                                : isPositive
+                                  ? 'text-green-600 bg-green-100/80 dark:bg-green-500/20 dark:text-green-400'
+                                  : 'text-red-600 bg-red-100/80 dark:bg-red-500/20 dark:text-red-400'
+                            }`}>
+                              {Math.abs(stock.Changep || 0) < 0.01
+                                ? '0.00'
+                                : (isPositive ? '+' : '') + (stock.Changep || 0).toFixed(2)
+                              }%
+                            </div>
+                          </div>
+                          <div className="mt-1">
+                            <p className="font-normal text-gray-800 truncate text-xs dark:text-gray-200" title={getCompanyName(stock)}>
+                              {getCompanyName(stock)}
+                            </p>
+                          </div>
+                          <div className="mt-1">
+                            <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Хаалт</div>
+                            <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {formatPrice(stock.PreviousClose, isStockABond(stock))}
+                              {formatPrice(stock.PreviousClose, isStockABond(stock)) !== '-' ? '₮' : ''}
+                            </div>
+                          </div>
+                          <MiniChart
+                            historicalData={historicalData[stock.Symbol] || []}
+                            isPositive={isPositive}
+                            changePercent={stock.Changep}
+                            width={50}
+                            height={25}
                           />
-                        </svg>
-                        <div className="flex items-start justify-between mb-1 z-10">
-                          <h3 className="flex items-center justify-center font-medium text-xs text-white rounded-full h-7 w-7 bg-bdsec dark:bg-indigo-500">
-                            {formatSymbolDisplay(stock.Symbol)}
-                          </h3>
-                          <div className={`text-xs font-semibold px-1 py-0.5 rounded-md ${
-                            Math.abs(stock.Changep || 0) < 0.01 
-                              ? 'text-gray-600 bg-gray-100 dark:bg-gray-500/10 dark:text-gray-400'
-                              : isPositive 
-                                ? 'text-green-600 bg-green-100 dark:bg-green-500/10 dark:text-green-400' 
-                                : 'text-red-600 bg-red-100 dark:bg-red-500/10 dark:text-red-400'
-                          }`}>
-                            {Math.abs(stock.Changep || 0) < 0.01 
-                              ? '0.00' 
-                              : (isPositive ? '+' : '') + (stock.Changep || 0).toFixed(2)
-                            }%
-                          </div>
                         </div>
-                        <div className="mt-1 z-10">
-                          <p className="font-normal text-gray-800 truncate text-xs dark:text-gray-200" title={getCompanyName(stock)}>
-                            {getCompanyName(stock)}
-                          </p>
-                        </div>
-                        <div className="mt-1 z-10">
-                          <div className="text-xs font-normal text-gray-500 dark:text-gray-400">Хаалт</div>
-                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {formatPrice(stock.PreviousClose, isStockABond(stock))}
-                            {formatPrice(stock.PreviousClose, isStockABond(stock)) !== '-' ? '₮' : ''}
-                          </div>
-                        </div>
-                        <MiniChart 
-                          historicalData={historicalData[stock.Symbol] || []} 
-                          isPositive={isPositive} 
-                          changePercent={stock.Changep}
-                          width={50} 
-                          height={25} 
-                        />
                       </div>
                     </CarouselItem>
                   )
@@ -548,9 +533,9 @@ const StockListComponent = ({
               )}
             </CarouselContent>
             
-            {/* Navigation Buttons */}
-            <CarouselPrevious className="absolute  left-0 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 text-bdsec font-bold dark:text-bdsec-dark hover:text-gray-900 dark:hover:text-white transition-all duration-200 z-10" />
-            <CarouselNext className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 text-bdsec  font-bold dark:text-bdsec-dark hover:text-gray-900 dark:hover:text-white transition-all duration-200 z-10" />
+            {/* Minimal Glassy Navigation Buttons - Always Visible for Mobile */}
+            <CarouselPrevious className="absolute -left-1 top-[60%] -translate-y-1/2 h-8 w-8 rounded-full bg-white/5 dark:bg-gray-900/70 backdrop-blur-[0.8px] border-0 shadow-md active:scale-95 text-gray-600 dark:text-gray-400 transition-transform duration-150 z-20" />
+            <CarouselNext className="absolute -right-1 top-[60%] -translate-y-1/2 h-8 w-8 rounded-full bg-white/5 dark:bg-gray-900/70 backdrop-blur-[0.8px] border-0 shadow-md active:scale-95 text-gray-600 dark:text-gray-400 transition-transform duration-150 z-20" />
           </Carousel>
         </div>
       </div>
