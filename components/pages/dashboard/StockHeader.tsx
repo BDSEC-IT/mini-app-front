@@ -192,17 +192,17 @@ export const StockHeader = ({
 
           {/* Right: Quick Buy/Sell Buttons - Only show if user can trade */}
           {canTrade && selectedStockData && (
-            <div className="flex gap-2 flex-shrink-0">
+            <div className="flex gap-3 flex-shrink-0">
               {/* Buy Button with Best Ask Price */}
               <button
                 onClick={handleQuickBuy}
                 disabled={!bestAsk}
-                className="flex flex-col items-center justify-center px-5 py-3 rounded-lg bg-green-500 hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-colors duration-200 min-w-[95px]"
+                className="flex flex-col items-center justify-center px-5 py-2 rounded-lg bg-green-500 hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-colors duration-200 min-w-[95px]"
                 title={bestAsk ? `Авах - ${formatPrice(bestAsk, selectedStockData.Symbol)}₮` : 'Захиалга байхгүй'}
               >
-                <span className="text-sm font-bold">Авах</span>
+                <span className="text-lg font-bold">Авах</span>
                 {bestAsk && (
-                  <span className="text-xs font-semibold mt-0.5 opacity-90">
+                  <span className="text-sm mt-[-1px] font-semibold  opacity-90">
                     {formatPrice(bestAsk, selectedStockData.Symbol)}₮
                   </span>
                 )}
@@ -212,12 +212,12 @@ export const StockHeader = ({
               <button
                 onClick={handleQuickSell}
                 disabled={!bestBid}
-                className="flex flex-col items-center justify-center px-5 py-3 rounded-lg bg-red-500 hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-colors duration-200 min-w-[95px]"
+                className="flex flex-col items-center justify-center px-5 py-2 rounded-lg bg-red-500 hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-colors duration-200 min-w-[95px]"
                 title={bestBid ? `Зарах - ${formatPrice(bestBid, selectedStockData.Symbol)}₮` : 'Захиалга байхгүй'}
               >
-                <span className="text-sm font-bold">Зарах</span>
+                <span className="text-lg font-bold">Зарах</span>
                 {bestBid && (
-                  <span className="text-xs font-semibold mt-0.5 opacity-90">
+                  <span className="text-sm font-semibold mt-[-1px] opacity-90">
                     {formatPrice(bestBid, selectedStockData.Symbol)}₮
                   </span>
                 )}
