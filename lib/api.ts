@@ -2867,6 +2867,78 @@ export const checkCSDAgreement = async (token: string): Promise<{ success: boole
   }
 };
 
+// Create CSD agreement
+export const createCSDAgreement = async (accNumber: string, token: string): Promise<{ success: boolean; data?: any; message?: string }> => {
+  const url = `${BASE_URL}/istockApp/csd-agreement/new?accNumber=${accNumber}`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        message: responseData.message || `Failed to create CSD agreement: ${response.status}`
+      };
+    }
+    
+    return {
+      success: true,
+      data: responseData.data,
+      message: responseData.message
+    };
+  } catch (error) {
+    console.error('Error creating CSD agreement:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to create CSD agreement'
+    };
+  }
+};
+
+// Update CSD agreement
+export const updateCSDAgreement = async (accNumber: string, token: string): Promise<{ success: boolean; data?: any; message?: string }> => {
+  const url = `${BASE_URL}/istockApp/csd-agreement/update?accNumber=${accNumber}`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const responseData = await response.json();
+    
+    if (!response.ok) {
+      return {
+        success: false,
+        message: responseData.message || `Failed to update CSD agreement: ${response.status}`
+      };
+    }
+    
+    return {
+      success: true,
+      data: responseData.data,
+      message: responseData.message
+    };
+  } catch (error) {
+    console.error('Error updating CSD agreement:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to update CSD agreement'
+    };
+  }
+};
+
 export type { 
   StockData, 
   ApiResponse, 
