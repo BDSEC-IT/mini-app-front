@@ -19,7 +19,7 @@ export const CompletedOrders: React.FC<CompletedOrdersProps> = ({ completedOrder
       <div className="text-[10px] font-medium h-6 text-center text-gray-600 dark:text-gray-300">
         {t('exchange.completedTrades', 'Биелсэн захиалга')}
       </div>
-      <div className={`${completedOrders.length > 3 ? 'max-h-[88px] overflow-y-auto' : ''} space-y-0.5`}>
+      <div className={`${completedOrders.length > 3 ? 'max-h-[185px] overflow-y-auto' : ''} space-y-0.5`}>
         {completedOrders.length > 0 ? completedOrders.map((trade, index) => (
           <div key={index} className="text-[10px] py-1 bg-white dark:bg-gray-700/50 rounded">
             <div className="grid grid-cols-[minmax(20px,auto)_1fr_minmax(30px,auto)] gap-x-[2px] items-center">

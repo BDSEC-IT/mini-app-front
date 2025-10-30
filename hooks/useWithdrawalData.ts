@@ -9,6 +9,8 @@ import {
   createWithdrawalRequest,
   cancelWithdrawalRequest,
   addBankAccount,
+  createCSDAgreement,
+  updateCSDAgreement,
   type WithdrawalRequest,
   type BankAccount,
   type NominalBalance,
@@ -26,6 +28,7 @@ export const useWithdrawalData = () => {
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [loadingCancel, setLoadingCancel] = useState(false);
   const [loadingAddBank, setLoadingAddBank] = useState(false);
+  const [loadingAgreementAction, setLoadingAgreementAction] = useState(false);
 
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [banks, setBanks] = useState<BankAccount[]>([]);
@@ -235,6 +238,50 @@ export const useWithdrawalData = () => {
     }
   };
 
+  // Create CSD agreement
+  const handleCreateCSDAgreement = async (accNumber: string) => {
+    if (!token) return { success: false, message: 'No token available' };
+    
+    setLoadingAgreementAction(true);
+    try {
+      const result = await createCSDAgreement(accNumber, token);
+      if (result.success) {
+        // Refresh agreement after successful creation
+        await fetchAgreement();
+      }
+      return result;
+    } catch (err) {
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : 'Failed to create CSD agreement'
+      };
+    } finally {
+      setLoadingAgreementAction(false);
+    }
+  };
+
+  // Update CSD agreement
+  const handleUpdateCSDAgreement = async (accNumber: string) => {
+    if (!token) return { success: false, message: 'No token available' };
+    
+    setLoadingAgreementAction(true);
+    try {
+      const result = await updateCSDAgreement(accNumber, token);
+      if (result.success) {
+        // Refresh agreement after successful update
+        await fetchAgreement();
+      }
+      return result;
+    } catch (err) {
+      return {
+        success: false,
+        message: err instanceof Error ? err.message : 'Failed to update CSD agreement'
+      };
+    } finally {
+      setLoadingAgreementAction(false);
+    }
+  };
+
   // Get active withdrawal (new state)
   const getActiveWithdrawal = () => {
     return withdrawals.find(w => w.state === 'new');
@@ -288,6 +335,7 @@ export const useWithdrawalData = () => {
     loadingCreate,
     loadingCancel,
     loadingAddBank,
+    loadingAgreementAction,
     
     // Actions
     fetchWithdrawals,
@@ -298,6 +346,8 @@ export const useWithdrawalData = () => {
     createWithdrawal,
     cancelWithdrawal,
     addBank,
+    handleCreateCSDAgreement,
+    handleUpdateCSDAgreement,
     refreshData: fetchAllData,
     
     // Computed values

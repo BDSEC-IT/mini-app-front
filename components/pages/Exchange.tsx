@@ -85,7 +85,7 @@ const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen,
           <div className="flex justify-between">
             <span className="text-gray-600 dark:text-gray-400">{t('exchange.type', 'Төрөл')}:</span>
             <span className={`font-medium ${orderData.side === 'BUY' ? 'text-green-600' : 'text-red-600'}`}>
-              {orderData.side === 'BUY' ? t('exchange.buyAction', 'Худалдан авах') : t('exchange.sellAction', 'Худалдан зарах')}
+              {orderData.side === 'BUY' ? t('exchange.buyAction', 'Худалдан авах') : t('exchange.sellAction', 'Зарах')}
             </span>
           </div>
           <div className="flex justify-between">

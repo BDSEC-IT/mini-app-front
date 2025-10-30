@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, AlertTriangle, Plus, X, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Plus, X, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useWithdrawalData } from '@/hooks/useWithdrawalData';
 import { formatCurrency } from '@/utils/balanceUtils';
 import { MONGOLIAN_BANKS, type WithdrawalType } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 export default function BalanceWithdrawal() {
   // Get type from URL query parameter
   const [selectedType, setSelectedType] = useState<WithdrawalType>('NOMINAL');
-  const [currentView, setCurrentView] = useState<'main' | 'create' | 'addBank'>('main');
+  const [currentView, setCurrentView] = useState<'main' | 'create' | 'addBank' | 'createAgreement'>('main');
   const [selectedBank, setSelectedBank] = useState<string>('');
+  const [agreementBank, setAgreementBank] = useState<string>(''); // Bank for CSD agreement
   const [amount, setAmount] = useState<string>('');
   const [displayAmount, setDisplayAmount] = useState<string>(''); // Formatted display value
   const [description, setDescription] = useState<string>('');
@@ -18,6 +20,8 @@ export default function BalanceWithdrawal() {
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
   const [showBalance, setShowBalance] = useState(true);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 10;
 
   // New bank account form
   const [newBankData, setNewBankData] = useState({
@@ -37,9 +41,12 @@ export default function BalanceWithdrawal() {
     loadingCreate,
     loadingCancel,
     loadingAddBank,
+    loadingAgreementAction,
     createWithdrawal,
     cancelWithdrawal,
     addBank,
+    handleCreateCSDAgreement,
+    handleUpdateCSDAgreement,
     hasActiveWithdrawalForType,
     getAvailableBalance,
     getCSDAvailableBalance,
@@ -69,6 +76,11 @@ export default function BalanceWithdrawal() {
       return () => clearTimeout(timer);
     }
   }, [success]);
+
+  // Reset pagination when type changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedType]);
 
   // Handle amount input with formatting
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,12 +119,12 @@ export default function BalanceWithdrawal() {
   // Handle withdrawal creation
   const handleCreateWithdrawal = async () => {
     if (!selectedBank || !amount || !description) {
-      setError('Бүх талбарыг бөглөнө үү');
+      toast.error('Бүх талбарыг бөглөнө үү');
       return;
     }
 
     if (selectedType === 'CSD' && !selectedAssetCode) {
-      setError('CSD-ийн хувьд asset code сонгоно уу');
+      toast.error('CSD-ийн хувьд asset code сонгоно уу');
       return;
     }
 
@@ -122,16 +134,15 @@ export default function BalanceWithdrawal() {
       : getCSDAvailableBalance();
 
     if (amountNum <= 0) {
-      setError('Дүн 0-ээс их байх ёстой');
+      toast.error('Дүн 0-ээс их байх ёстой');
       return;
     }
 
     if (amountNum > availableBalance) {
-      setError(`Нийт үлдэгдэл: ${formatCurrency(availableBalance)} ₮`);
+      toast.error(`Нийт үлдэгдэл: ${formatCurrency(availableBalance)} ₮`);
       return;
     }
 
-    setError('');
     const result = await createWithdrawal(selectedType, {
       accountNumber: selectedBank,
       amount: amountNum,
@@ -141,7 +152,7 @@ export default function BalanceWithdrawal() {
     });
 
     if (result.success) {
-      setSuccess('Мөнгө хүсэх хүсэлт амжилттай илгээгдлээ');
+      toast.success('Мөнгө хүсэх хүсэлт амжилттай илгээгдлээ');
       setCurrentView('main');
       setAmount('');
       setDisplayAmount('');
@@ -149,7 +160,7 @@ export default function BalanceWithdrawal() {
       setSelectedBank('');
       setSelectedAssetCode('');
     } else {
-      setError(result.message || 'Алдаа гарлаа');
+      toast.error(result.message || 'Алдаа гарлаа');
     }
   };
 
@@ -157,27 +168,26 @@ export default function BalanceWithdrawal() {
   const handleCancelWithdrawal = async (withdrawalId: number) => {
     const result = await cancelWithdrawal(withdrawalId);
     if (result.success) {
-      setSuccess('Хүсэлт цуцлагдлаа');
+      toast.success('Хүсэлт цуцлагдлаа');
     } else {
-      setError(result.message || 'Цуцлах үед алдаа гарлаа');
+      toast.error(result.message || 'Цуцлах үед алдаа гарлаа');
     }
   };
 
   // Handle adding new bank account
   const handleAddBank = async () => {
     if (!newBankData.accNumber || !newBankData.accName || !newBankData.bankCode) {
-      setError('Бүх талбарыг бөглөнө үү');
+      toast.error('Бүх талбарыг бөглөнө үү');
       return;
     }
 
-    setError('');
     const result = await addBank(newBankData);
     if (result.success) {
-      setSuccess('Банкны данс амжилттай нэмэгдлээ');
+      toast.success('Банкны данс амжилттай нэмэгдлээ');
       setCurrentView('main');
       setNewBankData({ accNumber: '', accName: '', bankCode: '', currency: 'MNT' });
     } else {
-      setError(result.message || 'Банкны данс нэмэхэд алдаа гарлаа');
+      toast.error(result.message || 'Банкны данс нэмэхэд алдаа гарлаа');
     }
   };
 
@@ -240,26 +250,25 @@ export default function BalanceWithdrawal() {
   // CSD Agreement Alert (only for CSD) - TEMPORARILY DISABLED FOR TESTING
   const renderCSDAlert = () => {
     // Temporarily disabled for testing
-    return null;
+    // return null;
     
-    // if (selectedType !== 'CSD' || !csdAgreement || csdAgreement.hasContract) return null;
+    if (selectedType !== 'CSD' || !csdAgreement || csdAgreement.hasContract) return null;
 
-    // return (
-    //   <div className="mx-4 mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-    //     <div className="flex items-start space-x-3">
-    //       <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
-    //       <div>
-    //         <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
-    //           Гурвалсан гэрээ шаардлагатай
-    //         </h3>
-    //         <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-    //           ҮЦТХТ мөнгө хүсэхийн тулд танд идэвхитэй гурвалсан гэрээ байх ёстой. 
-    //           Гэрээ байгуулахын тулд манай мэргэжилтэй холбогдоно уу.
-    //         </p>
-    //       </div>
-    //     </div>
-    //   </div>
-    // );
+    return (
+      <div className="mx-4 mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div className="flex items-start space-x-3">
+          <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+              Гурвалсан гэрээ шаардлагатай
+            </h3>
+            <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+              ҮЦТХТ-ээс мөнгө хүсэхийн тулд танд идэвхитэй гурвалсан гэрээ байгуулна уу
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Balance Info Card
@@ -428,10 +437,10 @@ export default function BalanceWithdrawal() {
             </label>
             <button
               onClick={() => setCurrentView('addBank')}
-              className="flex items-center space-x-1 text-sm text-bdsec hover:text-bdsec/80"
+              className="flex items-center space-x-1 text-sm text-muted-foreground"
             >
               <Plus className="w-4 h-4" />
-              <span>Шинэ нэмэх</span>
+              <span>Шинэ данс нэмэх</span>
             </button>
           </div>
           <select
@@ -510,6 +519,66 @@ export default function BalanceWithdrawal() {
     </div>
   );
 
+  // Handle CSD Agreement
+  const handleCSDAgreement = async () => {
+    if (!agreementBank) {
+      toast.error('Банкны данс сонгоно уу');
+      return;
+    }
+    const result = await handleCreateCSDAgreement(agreementBank);
+    if (result.success) {
+      toast.success('Гурвалсан гэрээ амжилттай байгууллаа');
+      setCurrentView('main');
+      setAgreementBank('');
+    } else {
+      toast.error(result.message || 'Гэрээ байгуулахад алдаа гарлаа');
+    }
+  };
+
+  // CSD Agreement Form
+  const renderCSDAgreementForm = () => (
+    <div className="p-4">
+      <div className="space-y-4">
+        {/* Bank Selection */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Банкны данс
+            </label>
+            <button
+              onClick={() => setCurrentView('addBank')}
+              className="flex items-center space-x-1 text-sm text-muted-foreground"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Шинэ данс нэмэх</span>
+            </button>
+          </div>
+          <select
+            value={agreementBank}
+            onChange={(e) => setAgreementBank(e.target.value)}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-bdsec focus:border-transparent"
+          >
+            <option value="">Банкны данс сонгох</option>
+            {banks.filter(bank => bank.active).map((bank) => (
+              <option key={bank.resPartnerBankId} value={bank.accNumber}>
+                {bank.bankName} - {bank.accNumber} ({bank.accHolderName})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Submit Button */}
+        <button
+          onClick={handleCSDAgreement}
+          disabled={loadingAgreementAction || !agreementBank}
+          className="w-full bg-green-600 dark:bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        >
+          {loadingAgreementAction ? 'Байгуулж байна...' : 'Гурвалсан гэрээ байгуулах'}
+        </button>
+      </div>
+    </div>
+  );
+
   // Add Bank Form
   const renderAddBankForm = () => (
     <div className="p-4">
@@ -537,7 +606,7 @@ export default function BalanceWithdrawal() {
             type="text"
             value={newBankData.accName}
             onChange={(e) => setNewBankData({ ...newBankData, accName: e.target.value })}
-            placeholder="Бүтэн нэр оруулах"
+            placeholder="Дансан дахь овог нэрээ оруулна уу"
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec focus:border-transparent"
           />
         </div>
@@ -593,6 +662,12 @@ export default function BalanceWithdrawal() {
     const typeWithdrawals = getWithdrawalsByType(selectedType)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+    // Pagination
+    const totalPages = Math.ceil(typeWithdrawals.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedWithdrawals = typeWithdrawals.slice(startIndex, endIndex);
+
     return (
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -604,8 +679,9 @@ export default function BalanceWithdrawal() {
             <p className="text-gray-500 dark:text-gray-400">Хүсэлт байхгүй</p>
           </div>
         ) : (
+          <>
           <div className="space-y-3">
-            {typeWithdrawals.map((withdrawal) => {
+            {paginatedWithdrawals.map((withdrawal) => {
               const statusInfo = getWithdrawalStatusInfo(withdrawal.state);
               return (
                 <div key={withdrawal.withdrawalid} className="relative w-full p-4 overflow-hidden transition-all duration-300 border rounded-xl border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 dark:border-l-indigo-500 dark:border-t-indigo-500">
@@ -679,6 +755,30 @@ export default function BalanceWithdrawal() {
               );
             })}
           </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
+          </>
         )}
       </div>
     );
@@ -691,8 +791,8 @@ export default function BalanceWithdrawal() {
       <div className="space-y-3 mb-6">
         <button
           onClick={() => setCurrentView('create')}
-          disabled={hasActiveWithdrawalForType(selectedType)}
-          className="w-full bg-bdsec dark:bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-bdsec/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          disabled={hasActiveWithdrawalForType(selectedType) || (selectedType === 'CSD' && !csdAgreement?.hasContract)}
+          className={`w-full bg-bdsec dark:bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-bdsec/90 disabled:opacity-50 disabled:cursor-not-allowed transition ${selectedType === 'CSD' && !csdAgreement?.hasContract ? 'hidden' : ''}`}
         >
           Шинэ хүсэлт үүсгэх
         </button>
@@ -703,12 +803,18 @@ export default function BalanceWithdrawal() {
           </p>
         )}
         
-        {/* CSD Agreement check temporarily disabled for testing */}
-        {/* {selectedType === 'CSD' && !csdAgreement?.hasContract && (
-          <p className="text-sm text-red-600 dark:text-red-400 text-center">
-            Гурвалсан гэрээ шаардлагатай
-          </p>
-        )} */}
+        {/* CSD Agreement check */}
+        {selectedType === 'CSD' && !csdAgreement?.hasContract && (
+          <div className="space-y-2">
+      
+            <button
+              onClick={() => setCurrentView('createAgreement')}
+              className="w-full bg-green-600 dark:bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-700 dark:hover:bg-green-600 transition"
+            >
+              Гурвалсан гэрээ байгуулах
+            </button>
+          </div>
+        )}
       </div>
 
       {renderWithdrawalHistory()}
@@ -718,7 +824,7 @@ export default function BalanceWithdrawal() {
   // Render header for all views
   const renderHeader = () => {
     const handleBackClick = () => {
-      if (currentView === 'create' || currentView === 'addBank') {
+      if (currentView === 'create' || currentView === 'addBank' || currentView === 'createAgreement') {
         setCurrentView('main');
       } else {
         window.history.back();
@@ -726,7 +832,7 @@ export default function BalanceWithdrawal() {
     };
 
     const getBackText = () => {
-      if (currentView === 'create' || currentView === 'addBank') {
+      if (currentView === 'create' || currentView === 'addBank' || currentView === 'createAgreement') {
         return 'Буцах';
       }
       return 'Үлдэгдэл';
@@ -745,6 +851,7 @@ export default function BalanceWithdrawal() {
           <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
             {currentView === 'main' ? 'Мөнгө хүсэх' : 
              currentView === 'create' ? 'Шинэ хүсэлт' : 
+             currentView === 'createAgreement' ? 'Гурвалсан гэрээ байгуулах' :
              'Банкны данс нэмэх'}
           </h1>
           <div className="w-16"></div> {/* Spacer for centering */}
@@ -809,6 +916,7 @@ export default function BalanceWithdrawal() {
       {/* Content based on current view */}
       {currentView === 'main' && renderMainView()}
       {currentView === 'create' && renderCreateForm()}
+      {currentView === 'createAgreement' && renderCSDAgreementForm()}
       {currentView === 'addBank' && renderAddBankForm()}
     </div>
   );
