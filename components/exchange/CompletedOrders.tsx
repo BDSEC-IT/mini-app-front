@@ -21,21 +21,26 @@ export const CompletedOrders: React.FC<CompletedOrdersProps> = ({ completedOrder
       </div>
       <div className={`${completedOrders.length > 3 ? 'max-h-[88px] overflow-y-auto' : ''} space-y-0.5`}>
         {completedOrders.length > 0 ? completedOrders.map((trade, index) => (
-          <div key={index} className="text-[10px] py-1 px-1.5 bg-white dark:bg-gray-700/50 rounded">
-            <div className="grid grid-cols-3 gap-1 text-center">
-              <span className="text-gray-500 dark:text-gray-300">
+          <div key={index} className="text-[10px] py-1 bg-white dark:bg-gray-700/50 rounded">
+            <div className="grid grid-cols-[minmax(20px,auto)_1fr_minmax(30px,auto)] gap-x-[2px] items-center">
+              {/* Quantity - takes minimum space needed */}
+              <span className="text-gray-600 dark:text-gray-300 text-left tabular-nums">
+                {trade.mdentrySize}
+              </span>
+           
+              {/* Price - takes remaining space, centered */}
+              <span className="font-medium text-gray-900 dark:text-gray-100 text-center tabular-nums">
+                {trade.mdentryPx.toFixed(2)}₮
+              </span>
+              
+              {/* Time - fixed width for consistency */}
+              <span className="text-gray-500 dark:text-gray-300 text-right tabular-nums">
                 {trade.mdentryTime ? 
                   (trade.mdentryTime.includes(' ') ? 
                     trade.mdentryTime.split(' ')[1]?.slice(0,5) : 
                     trade.mdentryTime.slice(-8, -3)
                   ) : '--:--'
                 }
-              </span>
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                {trade.mdentryPx.toFixed(0)}₮
-              </span>
-              <span className="text-gray-600 dark:text-gray-300">
-                {trade.mdentrySize}
               </span>
             </div>
           </div>

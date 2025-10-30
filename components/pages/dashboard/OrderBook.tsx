@@ -3,6 +3,7 @@ import { Activity, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { useRef, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { OrderBookEntry } from '@/lib/api'
 
 // Custom hook for intersection observer
@@ -69,6 +70,7 @@ interface OrderBookProps {
     sell: OrderBookEntry[]
   }
   onRefresh?: () => void
+  canTrade?: boolean
 }
 
 const OrderBookComponent = ({
@@ -76,9 +78,11 @@ const OrderBookComponent = ({
   loading,
   lastUpdated,
   processedOrderBook,
-  onRefresh
+  onRefresh,
+  canTrade = false
 }: OrderBookProps) => {
   const { t } = useTranslation()
+  const router = useRouter()
   const { ref: orderBookRef, inView: orderBookInView } = useInView(0.1)
   
   // Sort orders by price
@@ -98,6 +102,51 @@ const OrderBookComponent = ({
 
   // Split the lastUpdated string into date and time parts
   const [datePart, timePart] = lastUpdated.split(' ');
+
+  // Get best bid (highest buy price) and best ask (lowest sell price) from orderbook
+  const bestBid = processedOrderBook.buy && processedOrderBook.buy.length > 0
+    ? Math.max(...processedOrderBook.buy.map(order => order.MDEntryPx || 0))
+    : null;
+
+  const bestAsk = processedOrderBook.sell && processedOrderBook.sell.length > 0
+    ? Math.min(...processedOrderBook.sell.map(order => order.MDEntryPx || 0))
+    : null;
+
+  // Format price function
+  const formatPrice = (price: number | undefined) => {
+    if (price === undefined || price === null) return '-';
+    const isBond = selectedSymbol.toUpperCase().includes('-BD');
+    const finalPrice = isBond ? price * 1000 : price;
+    return finalPrice.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  };
+
+  // Handler for quick buy (use best ask price)
+  const handleQuickBuy = () => {
+    if (!canTrade) return;
+
+    // Navigate to exchange page with query params
+    const params = new URLSearchParams({
+      symbol: selectedSymbol,
+      side: 'BUY',
+      ...(bestAsk && { price: bestAsk.toString() })
+    });
+
+    router.push(`/exchange?${params.toString()}`);
+  };
+
+  // Handler for quick sell (use best bid price)
+  const handleQuickSell = () => {
+    if (!canTrade) return;
+
+    // Navigate to exchange page with query params
+    const params = new URLSearchParams({
+      symbol: selectedSymbol,
+      side: 'SELL',
+      ...(bestBid && { price: bestBid.toString() })
+    });
+
+    router.push(`/exchange?${params.toString()}`);
+  };
 
   // Regular order book display for non-bond securities
   return (
@@ -127,18 +176,21 @@ const OrderBookComponent = ({
             </div>
           </div> */}
         </div>
-        {onRefresh && (
-          <Button
-            onClick={onRefresh}
-            disabled={loading}
-            size="icon"
-            variant="outline"
-            className="h-10 w-10 rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:ring-indigo-500"
-            title="Refresh order book"
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin text-gray-600 dark:text-gray-400' : 'text-gray-600 dark:text-gray-400'} />
-          </Button>
-        )}
+        
+        <div className="flex items-center gap-2">
+          {onRefresh && (
+            <Button
+              onClick={onRefresh}
+              disabled={loading}
+              size="icon"
+              variant="outline"
+              className="h-10 w-10 rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:ring-indigo-500"
+              title="Refresh order book"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin text-gray-600 dark:text-gray-400' : 'text-gray-600 dark:text-gray-400'} />
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mt-4">
@@ -219,6 +271,49 @@ const OrderBookComponent = ({
           </div>
         </div>
       </div>
+
+      {/* Quick Trade Buttons - Full Width at Bottom (Mobile Optimized) */}
+      {canTrade && (
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          {/* Buy Button with Best Ask Price */}
+          <button
+            onClick={handleQuickBuy}
+            disabled={!bestAsk}
+            className="flex flex-col items-center justify-center py-2 rounded-xl bg-green-500 hover:bg-green-600 active:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
+            style={{
+              maxHeight: '50px', // iOS recommended touch target
+              filter: bestAsk ? 'drop-shadow(0 4px 12px rgba(34, 197, 94, 0.4))' : 'none'
+            }}
+            title={bestAsk ? `Авах - ${formatPrice(bestAsk)}₮` : 'Захиалга байхгүй'}
+          >
+            <span className="text-md font-bold tracking-wide">АВАХ</span>
+            {bestAsk && (
+              <span className="text-sm mt-1 font-semibold opacity-95">
+                {formatPrice(bestAsk)}₮
+              </span>
+            )}
+          </button>
+
+          {/* Sell Button with Best Bid Price */}
+          <button
+            onClick={handleQuickSell}
+            disabled={!bestBid}
+            className="flex flex-col items-center justify-center py-2 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
+            style={{
+              maxHeight: '50px', // iOS recommended touch target
+              filter: bestBid ? 'drop-shadow(0 4px 12px rgba(239, 68, 68, 0.4))' : 'none'
+            }}
+            title={bestBid ? `Зарах - ${formatPrice(bestBid)}₮` : 'Захиалга байхгүй'}
+          >
+            <span className="text-md font-bold tracking-wide">ЗАРАХ</span>
+            {bestBid && (
+              <span className="text-sm mt-1 font-semibold opacity-95">
+                {formatPrice(bestBid)}₮
+              </span>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

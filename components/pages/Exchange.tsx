@@ -727,10 +727,36 @@ export default function Exchange() {
   };
 
   const adjustPriceByStep = (currentPrice: string, direction: 'up' | 'down') => {
-    const priceVal = parseFloat(currentPrice) || (selectedStock?.PreviousClose || 0);
-    const step = getPriceStep(priceVal);
-    const newPrice = direction === 'up' ? priceVal + step : priceVal - step;
-    return Math.max(0, newPrice).toString();
+    // Parse current price, fallback to stock's previous close if empty
+    let priceVal = parseFloat(currentPrice);
+    if (isNaN(priceVal) || priceVal <= 0) {
+      priceVal = selectedStock?.PreviousClose || 0;
+    }
+    
+    // Get the step based on the actual current price value
+    const currentStep = getPriceStep(priceVal);
+    
+    // Calculate new price by adding/subtracting the step
+    let newPrice = direction === 'up' ? priceVal + currentStep : priceVal - currentStep;
+    
+    // Ensure price doesn't go negative
+    if (newPrice < 0) {
+      newPrice = 0;
+    }
+    
+    // After calculating new price, get the step for that new price range
+    // This handles cases where incrementing crosses a threshold (e.g., 999 -> 1000)
+    const newPriceStep = getPriceStep(newPrice);
+    
+    // Round the new price to the nearest valid step for its price range
+    const roundedPrice = Math.round(newPrice / newPriceStep) * newPriceStep;
+    
+    // Format based on step size
+    if (newPriceStep >= 1) {
+      return Math.round(roundedPrice).toString();
+    } else {
+      return roundedPrice.toFixed(2);
+    }
   };
 
   const formatNumber = (num: number) => num.toLocaleString('mn-MN', { minimumFractionDigits: 2 });

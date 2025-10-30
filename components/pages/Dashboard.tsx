@@ -637,7 +637,7 @@ const DashboardContent = () => {
   }, [selectedSymbol])
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white pb-20 px-2.5 pt-2.5 flex flex-col gap-y-2.5 overflow-hidden overflow-x-hidden">
+    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24 p-3 px-2.5 pt-2.5 flex flex-col gap-y-2.5 overflow-hidden overflow-x-hidden">
       
       {/* Search Bar at Top */}
       <div className="w-full mb-1.5 h-[26px]">
@@ -736,21 +736,6 @@ const DashboardContent = () => {
         />
 
       
-          <div 
-            ref={headerRef}
-            className={`transition-all duration-1000 ${
-              headerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-          >
-            <StockHeader
-              selectedSymbol={selectedSymbol}
-              selectedStockData={displayStockData}
-              chartLoading={chartLoading}
-              isDataFresh={isDataFresh}
-              orderBook={processedOrderBook}
-              canTrade={canTrade}
-            />
-          </div>
           {/* Chart section: full-bleed, outside the padded container */}
       {!isBond && (
         <div 
@@ -768,11 +753,33 @@ const DashboardContent = () => {
                   theme={theme}
                   period="ALL"
                   onPriceHover={handlePriceHover}
+                  selectedStockData={displayStockData}
+                  chartLoading={chartLoading}
+                  isDataFresh={isDataFresh}
                 />
               )}
             </div>
           </div>
         </div>
+      )}
+      
+      {/* Bond info section - Keep StockHeader separate for bonds */}
+      {isBond && (
+        <>
+          <div 
+            ref={headerRef}
+            className={`transition-all duration-1000 ${
+              headerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            <StockHeader
+              selectedSymbol={selectedSymbol}
+              selectedStockData={displayStockData}
+              chartLoading={chartLoading}
+              isDataFresh={isDataFresh}
+            />
+          </div>
+        </>
       )}
       {/* Bond info section */}
       {isBond && displayStockData && (
@@ -847,6 +854,7 @@ const DashboardContent = () => {
           lastUpdated={lastUpdated}
           processedOrderBook={processedOrderBook}
           onRefresh={fetchOrderBookData}
+          canTrade={canTrade}
         />
       </div>
       

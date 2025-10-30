@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fetchTradingHistory, type TradingHistoryData } from '@/lib/api'
 import { ChevronDown } from 'lucide-react'
+import { StockHeader } from '../pages/dashboard/StockHeader'
 
 interface TradingViewChartProps {
   symbol?: string
@@ -12,6 +13,9 @@ interface TradingViewChartProps {
   onPriceHover?: (price: number | null, change?: number, changePercent?: number) => void
   showChartTypeToggle?: boolean
   defaultChartType?: ChartType
+  selectedStockData?: any
+  chartLoading?: boolean
+  isDataFresh?: boolean
 }
 
 interface Point {
@@ -40,7 +44,10 @@ export function TradingViewChart({
   period = 'ALL',
   onPriceHover,
   showChartTypeToggle = true,
-  defaultChartType = 'line'
+  defaultChartType = 'line',
+  selectedStockData,
+  chartLoading = false,
+  isDataFresh = true
 }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -394,6 +401,20 @@ export function TradingViewChart({
 
   return (
     <div className="w-full h-full flex flex-col transition-all duration-300 mb-8">
+      {/* Stock Header - Only show if selectedStockData is provided */}
+    
+    <div className='flex justify-between'>
+        {selectedStockData && (
+        <div className="mb-3">
+          <StockHeader
+            selectedSymbol={symbol.split('-')[0]}
+            selectedStockData={selectedStockData}
+            chartLoading={chartLoading}
+            isDataFresh={isDataFresh}
+          />
+        </div>
+      )}
+      
       {/* Conditional Header Bar for Chart Type Toggle */}
       {showChartTypeToggle && (
         <div className="h-[38px] flex justify-end items-center md:px-4 rounded-lg mb-2">
@@ -421,6 +442,7 @@ export function TradingViewChart({
           </div>
         </div>
       )}
+      </div>
       <div
         ref={containerRef}
         className={`w-full relative mb-2 ${

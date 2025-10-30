@@ -62,6 +62,49 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   const { t } = useTranslation('common');
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   
+  // Helper function to validate and round price to nearest valid step
+  const validateAndRoundPrice = (inputValue: string): string => {
+    if (!inputValue || inputValue === '') return '';
+    
+    const numericValue = parseFloat(inputValue);
+    if (isNaN(numericValue) || numericValue <= 0) return '';
+    
+    // Get the appropriate price step for this value
+    const step = getPriceStep(numericValue);
+    
+    // Round to nearest valid step
+    const roundedValue = Math.round(numericValue / step) * step;
+    
+    // Format based on step size
+    if (step >= 1) {
+      return roundedValue.toString();
+    } else {
+      return roundedValue.toFixed(2);
+    }
+  };
+  
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    
+    // Allow empty input
+    if (inputValue === '' || inputValue === '.') {
+      setPrice(inputValue);
+      return;
+    }
+    
+    // Only allow numbers with up to 2 decimal places
+    const regex = /^\d*\.?\d{0,2}$/;
+    if (regex.test(inputValue)) {
+      setPrice(inputValue);
+    }
+  };
+  
+  const handlePriceBlur = () => {
+    // Validate and round when user leaves the input field
+    const validatedPrice = validateAndRoundPrice(price);
+    setPrice(validatedPrice);
+  };
+  
   // Calculate min and max dates for date picker (today to 30 days from now)
   const today = new Date();
   const minDate = today.toISOString().split('T')[0];
@@ -254,7 +297,8 @@ export const OrderForm: React.FC<OrderFormProps> = ({
               <Input
                 type="number"
                 value={price}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
+                onChange={handlePriceChange}
+                onBlur={handlePriceBlur}
                 placeholder={t('exchange.price')}
                 className={`w-full rounded ${price ? 'pr-8' : ''}`}
                 step={selectedStock ? getPriceStep(selectedStock.PreviousClose || 0) : 0.01}
