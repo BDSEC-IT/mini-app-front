@@ -1,7 +1,8 @@
 import { AccountSetupFormData, mongolianBanks } from './schemas';
 
 // API base URL
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4040/apitest';
+// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
 export const BDSEC_MAIN =  'https://new.bdsec.mn'
 
 // Bank codes for Mongolia
@@ -1400,33 +1401,62 @@ interface UserProfileResponse {
   errorCode?: string;
 }
 
-interface KhanUser {
+interface RegistrationFeeItem {
   id: number;
-  phone: string;
-  lastName: string;
-  firstName: string;
-  lastNameEn: string;
-  firstNameEn: string;
-  email: string | null;
-  limitAmount: number | null;
-  userIdKhan: string;
+  digiId: string;
+  createdAt: string;
+  updatedAt: string;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
+  mcsdError?: string | null;
+  mcsdLogField?: string | null;
   register: string;
-  cif: string | null;
-  userId: number;
-  registrationFee: RegistrationFee | null;
-  MCSDStateRequest: string | null;
+  expiresAt?: string | null;
 }
-interface RegistrationFee{
-  id: number,
-  digiId: string,
-  khanUserId: 2,
-  createdAt: Date,
-  updatedAt: Date,
-  status: "PENDING" | "COMPLETED" | "ERROR",
-  mcsdError: string | null,
-  message?: string,
-  register: string,
-  expiresAt: Date
+
+interface MCSDStateRequestItem {
+  id: number;
+  RegistryNumber?: string | null;
+  FirstName?: string | null;
+  LastName?: string | null;
+  BirthDate?: string | null;
+  Country?: string | null;
+  Gender?: string | null;
+  HomePhone?: string | null;
+  MobilePhone?: string | null;
+  Occupation?: string | null;
+  HomeAddress?: string | null;
+  CustomerType?: number | null;
+  BankCode?: string | null;
+  BankName?: string | null;
+  BankAccountNumber?: string | null;
+  SuperAppAccountId?: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface SuperAppAccountItem {
+  id: number;
+  userId: number;
+  merchantType: 'DIGIPAY' | 'SOCIALPAY' | 'MONPAY';
+  externalUserId: string;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  refreshTokenExpiresAt?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  firstName: string;
+  lastName: string;
+  firstNameEn?: string | null;
+  lastNameEn?: string | null;
+  registerConfirmed: boolean;
+  register?: string | null;
+  MCSDAccountId?: number | null;
+  createdAt: string;
+  updatedAt: string;
+  kycMethod: 'NONE' | 'MCSD' | 'DIGIPAY' | 'SOCIALPAY' | 'MONPAY';
+  kycDate?: string | null;
+  registrationFees: RegistrationFeeItem[];
+  MCSDStateRequest: MCSDStateRequestItem[];
 }
 
 interface UserAccountResponse {
@@ -1438,12 +1468,7 @@ interface UserAccountResponse {
     createdAt: string;
     updatedAt: string;
     username: string | null;
-    refreshTokenExpiresAt: string | null;
-    MCSDAccount: any | null;
-    khanUser: KhanUser;
-    FeeEquity?: string;
-    FeeDebt?: string;
-    FeeCorpDebt?: string;
+    superAppAccounts: SuperAppAccountItem[];
   } | null;
   statusCode?: number;
   errorCode?: string;
@@ -1535,33 +1560,41 @@ export const getUserAccountInformation = async (token?: string): Promise<UserAcc
   } catch (error) {
     logDev('Using fallback mock account information data');
     
-    // Return mock data for development
+    // Return mock data for development aligned to new shape
     return {
       success: true,
       data: {
-        id: 3,
-        role: "USER",
-        createdAt: "2025-06-26T08:24:28.876Z",
-        updatedAt: "2025-06-26T08:24:28.876Z",
+        id: 24,
+        role: 'USER',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         username: null,
-        refreshTokenExpiresAt: null,
-        MCSDAccount: null,
-        khanUser: {
-          id: 2,
-          phone: "44444442",
-          lastName: "TEST",
-          firstName: "TESTT",
-          lastNameEn: "TEST",
-          firstNameEn: "TESTT",
-          email: "batbaatar.t@khanbank.com",
-          limitAmount: null,
-          userIdKhan: "102410030477058",
-          register: "УП02251010",
-          cif: null,
-          userId: 3,
-          registrationFee: null,
-          MCSDStateRequest: "SUBMITTED"
-        }
+        superAppAccounts: [
+          {
+            id: 1,
+            userId: 24,
+            merchantType: 'DIGIPAY',
+            externalUserId: 'MOCK_USER_123',
+            accessToken: null,
+            refreshToken: null,
+            refreshTokenExpiresAt: null,
+            phone: '999999',
+            email: 'mock@example.com',
+            firstName: 'TEST',
+            lastName: 'TEST',
+            firstNameEn: 'TEST',
+            lastNameEn: 'TEST',
+            registerConfirmed: true,
+            register: 'ТЕ03322252',
+            MCSDAccountId: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            kycMethod: 'NONE',
+            kycDate: null,
+            registrationFees: [],
+            MCSDStateRequest: []
+          }
+        ]
       }
     }
   }
@@ -1877,6 +1910,8 @@ export const checkInvoiceStatus = async (token: string) => {
 // Fetch news from BDS
 export const fetchNews = async (page: number = 1, limit: number = 100): Promise<NewsResponse> => {
   try {
+    console.log("BASE_URL", BASE_URL);
+    console.log("url", `${BASE_URL}/securities/news-of-bds?page=${page}&limit=${limit}`);
     const response = await fetchWithTimeout(`${BASE_URL}/securities/news-of-bds?page=${page}&limit=${limit}`, {
       method: 'GET',
       headers: {
@@ -1884,6 +1919,7 @@ export const fetchNews = async (page: number = 1, limit: number = 100): Promise<
         'Content-Type': 'application/json',
       },
     });
+    console.log("response", response);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

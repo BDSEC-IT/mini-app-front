@@ -205,8 +205,9 @@ export default function FeePaymentPage() {
   }, [router]);
 
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
         <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
           {t('profile.accountFee', 'Данс нээх хураамж')}
         </h1>
@@ -244,7 +245,7 @@ export default function FeePaymentPage() {
             {t('profile.paymentRequired', 'Нэхэмжлэл үүсгэх')}
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            {t('profile.paymentFeeDescription', 'Данс нээлтийн хураамж 8,000₮-ийн нэхэмжлэлийг үүсгэж, төлбөрөө төлнө үү.')}
+            {t('profile.paymentFeeDescription', 'Данс нээлтийн хураамж 8,000₮-ийн нэхэмжлэлийг үүсгэх')}
           </p>
           <button
             onClick={handlePayment}
@@ -258,6 +259,7 @@ export default function FeePaymentPage() {
           </button>
         </div>
         )}
+        </div>
       </div>
     </div>
   )

@@ -68,11 +68,18 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
       console.log("invoiceRes",invoiceRes)
       if (infoRes.success) setAccountInfo(prev => infoRes.data);
       
-      // Check if user already has an existing MCSD account
-      if(infoRes.data?.khanUser?.registrationFee?.status==="COMPLETED"){
+      // Super app accounts (multiple merchants supported)
+      const accounts = infoRes.data?.superAppAccounts || [];
+      const primary = accounts.find((a: any) => a.registerConfirmed) || accounts[0];
+
+      // Check if user already has paid registration fee (from registrationFees)
+      const paidFee = accounts.some((a: any) => a?.registrationFees?.some((f: any) => f?.status === 'COMPLETED'));
+      if (paidFee) {
         setHasPaidFeed(prev => true);
       }
-      const hasExistingMcsd = !!(infoRes.success && infoRes.data?.MCSDAccount);
+
+      // Check if user already has an existing MCSD account by Id
+      const hasExistingMcsd = !!(infoRes.success && accounts.some((a: any) => !!a.MCSDAccountId));
       setHasExistingMcsdAccount(prev => hasExistingMcsd);
       
       
@@ -80,7 +87,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
       let isGeneralComplete = false;
       
       // Check if we have account status data from the nested endpoint (user account info)
-      const mcsdRequest = infoRes.data?.khanUser?.MCSDStateRequest as any;
+      const mcsdRequest = (primary?.MCSDStateRequest && Array.isArray(primary.MCSDStateRequest) ? primary.MCSDStateRequest[0] : null) as any;
       const hasNestedAccountData = !!(infoRes.success && mcsdRequest && typeof mcsdRequest === 'object' && (
         (mcsdRequest.FirstName && mcsdRequest.LastName) ||
         mcsdRequest.RegistryNumber ||
@@ -127,7 +134,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   ]
   
   // Add Orders menu item for logged-in users with MCSD account
-  const accountOpened = accountInfo?.MCSDAccount && accountInfo.MCSDAccount.DGStatus === 'COMPLETED';
+  const accountOpened = !!accountInfo?.superAppAccounts?.some((a: any) => !!a.MCSDAccountId);
   const advancedMenuItems = accountOpened ? [
     { href: '/exchange', icon: ArrowUpDown, label: 'nav.orders' },
     { href: '/balance', icon: Wallet2, label: 'nav.balance' },
@@ -202,7 +209,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
               </li>
             )}
             
-            {isLoggedIn &&  accountInfo?.MCSDAccount?.DGStatus !== "COMPLETED" && (
+            {isLoggedIn &&  !accountOpened && (
               <li className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                 <div className="mb-2 px-2">
                   <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('profile.accountSetup')}</h3>

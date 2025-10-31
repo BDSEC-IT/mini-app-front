@@ -36,7 +36,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://*.bdsec.mn https://*.digipay.mn https://*.qpay.mn; img-src 'self' data: https://*; style-src 'self' 'unsafe-inline';"
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://*.bdsec.mn https://*.digipay.mn https://*.qpay.mn http://localhost:* http://127.0.0.1:* ws://localhost:* wss://*.bdsec.mn; img-src 'self' data: https://*; style-src 'self' 'unsafe-inline';"
           },
           {
             key: 'X-Content-Type-Options',

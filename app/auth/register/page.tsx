@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, AlertCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react'
-import { sendRegistrationNumber, digipayLogin, type RegistrationResponse, getRegistrationNumber } from '@/lib/api'
+import { sendRegistrationNumber, digipayLogin, type RegistrationResponse, getRegistrationNumber, BASE_URL } from '@/lib/api'
 import Cookies from 'js-cookie'
 
 export default function RegisterPage() {
@@ -30,7 +30,8 @@ export default function RegisterPage() {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const response = await fetch('https://miniapp.bdsec.mn/apitest/helper/countries')
+        const url = `${BASE_URL}/helper/countries`
+        const response = await fetch(url)
         const data = await response.json()
         const countriesData = data.data || []
         setCountries(countriesData)

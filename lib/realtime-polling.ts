@@ -8,7 +8,7 @@
  * - Regular stock data fetching with smart intervals
  */
 
-import { fetchAllStocks, type StockData } from './api'
+import { BASE_URL, fetchAllStocks, type StockData } from './api'
 
 export interface RealTimePollingService {
   connect(): Promise<boolean>
@@ -23,7 +23,7 @@ class RealTimePollingServiceImpl implements RealTimePollingService {
   private isConnected = false
   private intervalId: NodeJS.Timeout | null = null
   private token: string | null = null
-  private baseUrl = 'https://miniapp.bdsec.mn/apitest'
+  private baseUrl = BASE_URL
   private pollingInterval = 3000 // 3 seconds
   private callbacks: {
     tradingData?: (data: StockData[]) => void

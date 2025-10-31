@@ -94,7 +94,7 @@ const Profile = () => {
     )
   }
 
-  if (!accountInfo || !accountInfo.khanUser) {
+  if (!accountInfo || !accountInfo.superAppAccounts || accountInfo.superAppAccounts.length === 0) {
     return (
       <div className="text-center py-10">
         <p>{t('profile.noProfileFound')}</p>
@@ -102,9 +102,10 @@ const Profile = () => {
     )
   }
 
-  const { khanUser, MCSDAccount } = accountInfo;
-  const hasMcsdAccount = MCSDAccount !== null;
-  const hasActiveMcsdAccount = MCSDAccount?.DGStatus === 'COMPLETED';
+  const accounts = accountInfo.superAppAccounts || [];
+  const primary = accounts.find((a: any) => a.registerConfirmed) || accounts[0];
+  const hasMcsdAccount = accounts.some((a: any) => !!a.MCSDAccountId);
+  const hasActiveMcsdAccount = hasMcsdAccount;
 
   // Simplified completion checks - only use backend API data
   const isGeneralInfoComplete = () => {
@@ -120,8 +121,8 @@ const Profile = () => {
       accountStatusData.id // Has account status record ID
     );
     
-    // Check if we have account data from the nested structure (from accountInfo.khanUser.MCSDStateRequest)
-    const mcsdRequest = accountInfo?.khanUser?.MCSDStateRequest as any;
+    // Check if we have account data from the nested structure (from superAppAccounts[].MCSDStateRequest)
+    const mcsdRequest = (primary?.MCSDStateRequest && Array.isArray(primary.MCSDStateRequest) ? primary.MCSDStateRequest[0] : null) as any;
     const hasNestedAccountData = mcsdRequest && typeof mcsdRequest === 'object' && (
       (mcsdRequest.FirstName && mcsdRequest.LastName) ||
       mcsdRequest.RegistryNumber ||
@@ -164,9 +165,9 @@ const Profile = () => {
               </div>
               <div>
                 <h2 className="text-lg font-semibold">
-                  {khanUser.firstName} {khanUser.lastName}
+                  {primary?.firstName} {primary?.lastName}
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{khanUser.register}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{primary?.register}</p>
               </div>
             </div>
           </div>
@@ -233,14 +234,14 @@ const Profile = () => {
                 <Mail className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-3 mt-1" />
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{t('profile.email')}</p>
-                  <p className="font-medium">{khanUser.email || t('profile.notProvided')}</p>
+                  <p className="font-medium">{primary?.email || t('profile.notProvided')}</p>
                 </div>
               </div>
               <div className="flex items-start">
                 <Phone className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-3 mt-1" />
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{t('profile.phone')}</p>
-                  <p className="font-medium">{khanUser.phone || t('profile.notProvided')}</p>
+                  <p className="font-medium">{primary?.phone || t('profile.notProvided')}</p>
                 </div>
               </div>
               <div className="flex items-start">
