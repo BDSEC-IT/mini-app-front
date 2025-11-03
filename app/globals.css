@@ -10,9 +10,7 @@
     --background-start-rgb: 249, 250, 251;
     --background-end-rgb: 255, 255, 255;
     
-    /* BDSec Custom colors */
-    --primary: 33, 33, 79; /* #21214f */
-    --primary-dark: 28, 28, 67;
+    /* BDSec Custom colors - now handled via Tailwind config */
     --secondary: 88, 94, 114; /* #585E72 */
     --secondary-light: 88, 94, 114; /* #585E72 with opacity */
     --success-green: 34, 197, 94;
@@ -117,14 +115,6 @@ body {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
   
-  .bg-primary {
-    background-color: rgb(var(--primary));
-  }
-  
-  .bg-primary-dark {
-    background-color: rgb(var(--primary-dark));
-  }
-  
   .bg-secondary {
     background-color: rgb(var(--secondary));
   }
@@ -133,16 +123,8 @@ body {
     background-color: rgba(var(--secondary-light), 0.5);
   }
   
-  .text-primary {
-    color: rgb(var(--primary));
-  }
-  
   .text-secondary {
     color: rgb(var(--secondary));
-  }
-  
-  .border-primary {
-    border-color: rgb(var(--primary));
   }
   
   /* Line clamp utilities */
@@ -261,6 +243,78 @@ html {
   animation: fadeIn 0.6s ease-out;
 }
 
+/* Smooth flash animations for real-time stock updates */
+@keyframes flash-green {
+  0% {
+    background: rgb(220 252 231); /* green-100 */
+    box-shadow: 0 0 0 rgba(34, 197, 94, 0);
+  }
+  50% {
+    background: rgb(187 247 208); /* green-200 */
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+    transform: scale(1.01);
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 rgba(34, 197, 94, 0);
+    transform: scale(1);
+  }
+}
+
+@keyframes flash-red {
+  0% {
+    background: rgb(254 226 226); /* red-100 */
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    background: rgb(252 165 165); /* red-200 */
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+    transform: scale(1.01);
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+    transform: scale(1);
+  }
+}
+
+/* Dark mode flash animations */
+@media (prefers-color-scheme: dark) {
+  @keyframes flash-green {
+    0% {
+      background: rgba(20, 83, 45, 0.4); /* green-900/40 */
+      box-shadow: 0 0 0 rgba(34, 197, 94, 0);
+    }
+    50% {
+      background: rgba(22, 101, 52, 0.6); /* green-800/60 */
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+      transform: scale(1.01);
+    }
+    100% {
+      background: transparent;
+      box-shadow: 0 0 0 rgba(34, 197, 94, 0);
+      transform: scale(1);
+    }
+  }
+
+  @keyframes flash-red {
+    0% {
+      background: rgba(127, 29, 29, 0.4); /* red-900/40 */
+      box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+    }
+    50% {
+      background: rgba(153, 27, 27, 0.6); /* red-800/60 */
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+      transform: scale(1.01);
+    }
+    100% {
+      background: transparent;
+      box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+      transform: scale(1);
+    }
+  }
+}
+
 /* Mobile-first responsive design */
 @media (max-width: 640px) {
   .container {
@@ -277,6 +331,96 @@ a:focus-visible {
 
 /* Selection styles */
 ::selection {
-  background-color: rgba(var(--primary), 0.2);
+  background-color: rgba(33, 33, 79, 0.2); /* Using #21214f with opacity */
   color: rgb(15, 23, 42);
-} 
+}
+
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE 10+ */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+/* Premium Stock List Animations */
+@keyframes blob {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(20px, -20px) scale(1.1);
+  }
+  50% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  75% {
+    transform: translate(20px, 20px) scale(1.05);
+  }
+}
+
+@keyframes gradient-rotate {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.05);
+  }
+}
+
+.animate-blob {
+  animation: blob 20s ease-in-out infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+.animate-gradient-rotate {
+  background-size: 200% 200%;
+  animation: gradient-rotate 8s ease infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 6s ease-in-out infinite;
+}
+
+/* Selected Stock Card Glow - Mobile Mini-App Style */
+.glow-selected {
+  position: relative;
+}
+
+.glow-selected::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+  background: rgba(99, 102, 241, 0.5);
+  opacity: 0.6;
+  filter: blur(10px);
+  z-index: -1;
+}
+
+.dark .glow-selected::before {
+  background: rgba(129, 140, 248, 0.6);
+  opacity: 0.7;
+  filter: blur(12px);
+}

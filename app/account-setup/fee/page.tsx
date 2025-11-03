@@ -3,20 +3,20 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, CreditCard } from 'lucide-react'
+import { AlertCircle, ArrowRight, CheckCircle, CreditCard } from 'lucide-react'
 import Cookies from 'js-cookie'
-import { createOrRenewInvoice, getAccountStatusRequest } from '@/lib/api'
+import { checkInvoiceStatus, createOrRenewInvoice, getAccountStatusRequest } from '@/lib/api'
 
 export default function FeePaymentPage() {
   const { t } = useTranslation()
   const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
+  const [isPaid, setIsPaid] = useState(false)
   const handlePayment = async () => {
     setIsProcessing(true)
     setError(null)
-    const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token')
+    const token = Cookies.get('token')
 
     if (!token) {
       setError("Authentication token not found. Please log in again.")
@@ -96,10 +96,35 @@ export default function FeePaymentPage() {
 
       // If all validations pass, proceed with invoice creation
       const result = await createOrRenewInvoice(token)
+      console.log("resultInvoice",result)
       if (result.success) {
-        // Redirect to payment status page for polling
-        router.push('/account-setup/payment-status');
+        const digipayUrl = result.data?.data?.order?.digipayUrl;
+        
+        if (digipayUrl) {
+          // Ensure the URL uses HTTPS and redirect
+          let secureUrl = digipayUrl.startsWith('http:') ? digipayUrl.replace('http:', 'https:') : digipayUrl;
+          window.location.assign(secureUrl);
+        } else {
+          // Fallback if digipayUrl is missing
+          console.error("Failed to extract digipayUrl from invoice response:", result);
+          alert('Нэхэмжлэл амжилттай үүслээ, гэхдээ төлбөрийн хуудас олдсонгүй. Та банкны апп-аасаа төлбөрөө гүйцэтгэнэ үү.');
+          // router.push('/profile');
+        }
       } else {
+        let errorMessage = result?.message === "Invoice is already completed"
+        if(errorMessage){
+          alert("Төлбөр амжилттай төлөгдсөн байна.")
+          router.push('/account-setup/opening-process');
+          return;
+        }
+        errorMessage = result?.message === "MCSD Account already exists"
+        if(errorMessage){
+          alert("Таны дансны мэдээлэл амжилттай ҮЦТХТ рүү илгээгдсэн байна")
+          window.location.reload();
+
+          router.push('/')
+          return;
+        }
         setError(result.message || "Failed to create payment invoice.")
       }
     } catch (e: any) {
@@ -111,7 +136,7 @@ export default function FeePaymentPage() {
 
   useEffect(() => {
     const checkAccountStatus = async () => {
-      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+      const token = Cookies.get('token');
       if (!token) return;
       const statusResponse = await getAccountStatusRequest(token);
       if (!statusResponse.success || !statusResponse.data) {
@@ -154,13 +179,35 @@ export default function FeePaymentPage() {
           router.replace('/account-setup/general');
         }
       }
+      const userData=await checkInvoiceStatus(token)
+      console.log("userData",userData)
+      if (userData.message === "MCSD Account found") {
+        window.location.href = '/account-setup/opening-process';
+        return;
+      }
+      
+      // if(userData.message==="MCSD Account found"){
+      //   alert("Таны дансны мэдээлэл амжилттай ҮЦТХТ рүү илгээгдсэн байна")
+      //   router.push('/account-setup/opening-process');
+      //   return;
+      // }
+      if(userData&& userData.data?.data?.registrationFee?.status){
+        console.log("ISPAID red",userData.data.data.registrationFee?.status === 'COMPLETED')
+      console.log("userData",userData)
+        setIsPaid(userData.data.data.registrationFee?.status === 'COMPLETED')
+      }
+      console.log("INVuserData",userData)
+      // if(userData.success){
+      //   setIsPaid(userData.data.registrationFee?.status === 'COMPLETED')
+      // }
     };
     checkAccountStatus();
   }, [router]);
 
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
         <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
           {t('profile.accountFee', 'Данс нээх хураамж')}
         </h1>
@@ -173,13 +220,32 @@ export default function FeePaymentPage() {
             </div>
           </div>
         )}
-
+        {isPaid && (
+          <div>
+            <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+              <div className="flex">
+                <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                <p className="text-sm text-green-600 dark:text-green-400">Төлбөр амжилттай төлөгдсөн байна.</p>
+              </div>
+            
+            </div>
+            <div className='items-end place-items-end'>
+              <button onClick={()=>{
+                router.push('/account-setup/opening-process');
+              }} className="text-sm text-bdsec dark:text-indigo-400 hover:underline flex items-center gap-1">
+                <ArrowRight className="h-5 w-5" />
+                <span>Данс нээх процесс харах</span>
+              </button>
+            </div>
+          </div>
+        )}
+        {!isPaid && (
         <div className="text-center p-6 border-t border-gray-200 dark:border-gray-700 mt-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             {t('profile.paymentRequired', 'Нэхэмжлэл үүсгэх')}
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            {t('profile.paymentFeeDescription', 'Данс нээлтийн хураамж 5,000₮-ийн нэхэмжлэлийг үүсгэж, төлбөрөө төлнө үү.')}
+            {t('profile.paymentFeeDescription', 'Данс нээлтийн хураамж 8,000₮-ийн нэхэмжлэлийг үүсгэх')}
           </p>
           <button
             onClick={handlePayment}
@@ -189,8 +255,10 @@ export default function FeePaymentPage() {
             <CreditCard className="h-5 w-5" />
             {isProcessing 
               ? t('profile.processing', 'Боловсруулж байна...') 
-              : t('profile.createInvoice', 'Нэхэмжлэл үүсгэх (5,000₮)')}
+              : t('profile.createInvoice', 'Нэхэмжлэл үүсгэх (8,000₮)')}
           </button>
+        </div>
+        )}
         </div>
       </div>
     </div>

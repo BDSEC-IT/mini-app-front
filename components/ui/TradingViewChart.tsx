@@ -2,147 +2,20 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { fetchTradingHistory, type TradingHistoryData, type TradingHistoryResponse } from '@/lib/api'
-
-// Define the TradingHistoryData interface to match the API response
-// interface TradingHistoryData {
-//   id: number
-//   Symbol: string
-//   MDSubOrderBookType: string
-//   OpeningPrice: number
-//   ClosingPrice: number
-//   HighPrice: number
-//   LowPrice: number
-//   VWAP: number
-//   Volume: number
-//   HighestBidPrice: number
-//   LowestOfferPrice: number
-//   PreviousClose: number
-//   BuyOrderQty: number
-//   SellOrderQty: number
-//   Turnover: number
-//   Trades: number
-//   MDEntryTime: string
-//   companycode: number
-//   MarketSegmentID: string
-//   securityType: string
-//   dates: string
-// }
-
-// Define the response interface for the API
-// interface TradingHistoryResponse {
-//   success: boolean
-//   data: TradingHistoryData[]
-//   pagination: {
-//     total: number
-//     totalPages: number
-//     currentPage: number
-//     limit: number
-//   }
-// }
-
-// Function to fetch trading history data
-// async function fetchTradingHistory(symbol: string, page: number = 1, limit: number = 100): Promise<TradingHistoryResponse> {
-//   const BASE_URL = 'https://miniapp.bdsec.mn/apitest'
-//   const url = `${BASE_URL}/securities/trading-history?page=${page}&limit=${limit}&sortField&sortOrder=desc&symbol=${symbol}`
-//   
-//   try {
-//     // Create an abort controller with a timeout
-//     const controller = new AbortController()
-//     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-//     
-//     const response = await fetch(url, { 
-//       method: 'GET',
-//       headers: {
-//         'Accept': 'application/json',
-//         'Content-Type': 'application/json',
-//       },
-//       signal: controller.signal
-//     })
-//     
-//     // Clear the timeout since we got a response
-//     clearTimeout(timeoutId)
-//     
-//     if (!response.ok) {
-//       console.error(`API error: ${response.status} ${response.statusText}`)
-//       throw new Error(`Failed to fetch trading history data: ${response.status}`)
-//     }
-//     
-//     return response.json()
-//   } catch (error) {
-//     console.error('Fetch error:', error)
-//     
-//     // Return mock data as fallback when API is unavailable
-//     console.log('Using fallback mock data for symbol:', symbol)
-//     return generateMockHistoryResponse(symbol, page, limit)
-//   }
-// }
-
-// Function to generate mock history data as fallback
-// function generateMockHistoryResponse(symbol: string, page: number, limit: number): TradingHistoryResponse {
-//   // Generate mock data for the requested symbol
-//   const mockData: TradingHistoryData[] = []
-//   const today = new Date()
-//   const basePrice = 10000 + Math.random() * 5000 // Random base price between 10,000 and 15,000
-//   
-//   // Generate data points for the last 100 days
-//   for (let i = 100; i >= 0; i--) {
-//     const date = new Date(today)
-//     date.setDate(date.getDate() - i)
-//     
-//     // Generate realistic price movements
-//     const dailyVolatility = 0.02 // 2% daily volatility
-//     const priceChange = basePrice * dailyVolatility * (Math.random() * 2 - 1)
-//     const dayPrice = basePrice + (priceChange * (100 - i) / 10) // Slight trend over time
-//     
-//     // Create mock data point
-//     mockData.push({
-//       id: i,
-//       Symbol: symbol,
-//       MDSubOrderBookType: "0",
-//       OpeningPrice: dayPrice * (0.98 + Math.random() * 0.04),
-//       ClosingPrice: dayPrice,
-//       HighPrice: dayPrice * (1 + Math.random() * 0.03),
-//       LowPrice: dayPrice * (0.97 + Math.random() * 0.03),
-//       VWAP: dayPrice * (0.99 + Math.random() * 0.02),
-//       Volume: Math.floor(Math.random() * 10000) + 1000,
-//       HighestBidPrice: dayPrice * 0.99,
-//       LowestOfferPrice: dayPrice * 1.01,
-//       PreviousClose: dayPrice * (0.99 + Math.random() * 0.02),
-//       BuyOrderQty: Math.floor(Math.random() * 5000) + 500,
-//       SellOrderQty: Math.floor(Math.random() * 5000) + 500,
-//       Turnover: Math.floor(Math.random() * 100000000) + 10000000,
-//       Trades: Math.floor(Math.random() * 100) + 10,
-//       MDEntryTime: "14:00:00",
-//       companycode: 123,
-//       MarketSegmentID: "MAIN",
-//       securityType: "STOCK",
-//       dates: date.toISOString().split('T')[0]
-//     })
-//   }
-//   
-//   // Calculate pagination
-//   const startIndex = (page - 1) * limit
-//   const endIndex = startIndex + limit
-//   const paginatedData = mockData.slice(startIndex, endIndex)
-//   
-//   return {
-//     success: true,
-//     data: paginatedData,
-//     pagination: {
-//       total: mockData.length,
-//       totalPages: Math.ceil(mockData.length / limit),
-//       currentPage: page,
-//       limit: limit
-//     }
-//   }
-// }
+import { fetchTradingHistory, type TradingHistoryData } from '@/lib/api'
+import { ChevronDown } from 'lucide-react'
+import { StockHeader } from '../pages/dashboard/StockHeader'
 
 interface TradingViewChartProps {
   symbol?: string
   theme?: string
   period?: string
   onPriceHover?: (price: number | null, change?: number, changePercent?: number) => void
+  showChartTypeToggle?: boolean
+  defaultChartType?: ChartType
+  selectedStockData?: any
+  chartLoading?: boolean
+  isDataFresh?: boolean
 }
 
 interface Point {
@@ -152,467 +25,360 @@ interface Point {
   value: number
   change: number
   changePercent: number
+  entryTime: string
+  open: number
+  high: number
+  low: number
+  close: number
 }
 
-export function TradingViewChart({ 
-  symbol = 'BDS-O-0000', 
-  theme = 'light', 
+type ChartType = 'line' | 'candlestick';
+
+
+// Fixed candle colors: green-500 for up, red-500 for down
+const candleColors = { up: '#22c55e', down: '#ef4444' }; // Tailwind green-500/red-500
+
+export function TradingViewChart({
+  symbol = 'BDS-O-0000',
+  theme = 'light',
   period = 'ALL',
-  onPriceHover 
+  onPriceHover,
+  showChartTypeToggle = true,
+  defaultChartType = 'line',
+  selectedStockData,
+  chartLoading = false,
+  isDataFresh = true
 }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const svgRef = useRef<SVGSVGElement>(null)
+  const tooltipRef = useRef<HTMLDivElement>(null)
+  const crosshairRef = useRef<SVGLineElement>(null)
   const [mounted, setMounted] = useState(false)
-  const [chartData, setChartData] = useState<TradingHistoryData[]>([])
+  const [allChartData, setAllChartData] = useState<TradingHistoryData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isFallbackData, setIsFallbackData] = useState(false);
-  const [tooltip, setTooltip] = useState<{
-    visible: boolean, 
-    x: number, 
-    y: number, 
-    date: Date, 
-    value: number, 
-    change: number, 
-    changePercent: number
-  }>({
-    visible: false,
-    x: 0,
-    y: 0,
-    date: new Date(),
-    value: 0,
-    change: 0,
-    changePercent: 0,
-  })
-  // Track if we've ever shown a tooltip
-  const [hasInteracted, setHasInteracted] = useState(false)
-  // Store the last valid tooltip
-  const lastValidTooltipRef = useRef<{x: number, y: number, date: Date, value: number, change: number, changePercent: number} | null>(null)
-  
+  const [isFallbackData, setIsFallbackData] = useState(false)
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
   const pointsRef = useRef<Point[]>([])
   const { t } = useTranslation()
   const [isMobile, setIsMobile] = useState(false)
   const [activePeriod, setActivePeriod] = useState(period)
-  
-  // Cache for filtered data by period
-  const dataCache = useRef<{[key: string]: TradingHistoryData[]}>({})
-  // Reference to store all fetched data
-  const allDataRef = useRef<TradingHistoryData[]>([])
-  // Track if data has been fetched
-  const dataFetchedRef = useRef(false)
+  const [chartType, setChartType] = useState<ChartType>(defaultChartType);
+  // Removed colorTheme state
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
 
-  // Store the latest price in a ref to maintain it across renders
-  const latestPriceRef = useRef<number | null>(null)
-  
-  // Check if we're on a mobile device
+  // Check if mobile
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-    
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Update active period when prop changes
+  // Fetch all data once
   useEffect(() => {
-    setActivePeriod(period)
-  }, [period])
-
-  // Update latest price when chart data changes
-  useEffect(() => {
-    if (chartData.length > 0) {
-      const sortedData = [...chartData].sort((a, b) => new Date(b.dates).getTime() - new Date(a.dates).getTime())
-      const latestData = sortedData[0];
-      
-      latestPriceRef.current = latestData.ClosingPrice
-      
-      if (onPriceHover && !tooltip.visible) {
-        onPriceHover(latestData.ClosingPrice, undefined, undefined)
-      }
-    }
-  }, [chartData, onPriceHover, tooltip.visible])
-
-  // Filter data based on the selected time period
-  const filterDataByPeriod = useCallback((data: TradingHistoryData[], period: string): TradingHistoryData[] => {
-    if (!data.length) {
-      setIsFallbackData(false);
-      return [];
-    }
-    
-    if (period === 'ALL') {
-      setIsFallbackData(false);
-      dataCache.current[period] = data
-      return data
-    }
-    
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    let startDate: Date;
-    
-    // Calculate start date based on period
-    switch (period) {
-      case '1W':
-        startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
-        break
-      case '1M':
-        startDate = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
-        break
-      case '3M':
-        startDate = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
-        break
-      case '1Y':
-        startDate = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
-        break
-      default:
-        startDate = new Date(0) // Beginning of time for 'ALL'
-    }
-    
-    const filteredData = data.filter(point => {
-      const pointDate = new Date(point.dates);
-      const normalizedPointDate = new Date(pointDate.getFullYear(), pointDate.getMonth(), pointDate.getDate());
-      return normalizedPointDate >= startDate;
-    });
-    
-    // If filtering results in no data, fall back to the 30 most recent data points
-    if (filteredData.length === 0 && data.length > 0) {
-      setIsFallbackData(true);
-      return data.slice(0, 30);
-    }
-    
-    setIsFallbackData(false);
-    dataCache.current[period] = filteredData
-    
-    return filteredData
-  }, [])
-
-  // Fetch all data at once
-  const fetchAllData = async () => {
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      // If we've already fetched data, use it
-      if (dataFetchedRef.current && allDataRef.current.length > 0) {
-        // Filter the already fetched data based on the selected period
-        const filteredData = filterDataByPeriod(allDataRef.current, activePeriod)
-        setChartData(filteredData)
+    const fetchAllData = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await fetchTradingHistory(symbol, 1, 1000)
+        if (response.success && response.data.length > 0) {
+          setAllChartData(response.data.sort((a, b) => new Date(a.dates).getTime() - new Date(b.dates).getTime()))
+        } else {
+          setError('No data available')
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err)
+        setError('Failed to load data')
+      } finally {
         setIsLoading(false)
-        return
       }
-      
-      // Fetch data from API
-      const response = await fetchTradingHistory(symbol, 1, 500)
-      
-      if (response.success && response.data) {
-        // Store all data in ref
-        allDataRef.current = response.data
-        dataFetchedRef.current = true
-        
-        // Filter based on selected period
-        const filteredData = filterDataByPeriod(response.data, activePeriod)
-        setChartData(filteredData)
-        
-        // Check if we're using fallback data
-        setIsFallbackData(response.data.length > 0 && !response.data[0].dates.includes('-'))
-      } else {
-        console.error('Failed to fetch trading history data')
-        setError('Failed to load chart data')
-        setIsFallbackData(true)
-      }
-    } catch (err) {
-      console.error('Error fetching chart data:', err)
-      setError('Failed to load chart data')
-      setIsFallbackData(true)
-    } finally {
-      setIsLoading(false)
     }
-  }
-
-  // Fetch data when component mounts or symbol/period changes
-  useEffect(() => {
     if (mounted) {
-      console.log(`Symbol or period changed: ${symbol}, ${activePeriod}`)
-      
-      // If symbol changes, clear the cache and fetch new data
-      if (symbol !== allDataRef.current[0]?.Symbol) {
-        console.log('Symbol changed, clearing cache')
-        dataFetchedRef.current = false
-        dataCache.current = {}
-        allDataRef.current = []
-      }
-      
       fetchAllData()
     }
-  }, [symbol, activePeriod, mounted])
+  }, [symbol, mounted])
 
-  // Set up the chart when data changes
+  // Update container size
   useEffect(() => {
-    if (!mounted || !canvasRef.current || chartData.length === 0) return
-    
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    
-    const rect = canvas.getBoundingClientRect()
-    canvas.width = rect.width * window.devicePixelRatio
-    canvas.height = rect.height * window.devicePixelRatio
-    
-    // Scale context to match device pixel ratio
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
-    
-    // Clear canvas and set transparent background
-    ctx.clearRect(0, 0, rect.width, rect.height)
-    
-    // Sort data by date
-    const sortedData = [...chartData].sort((a, b) => {
-      return new Date(a.dates).getTime() - new Date(b.dates).getTime()
-    })
-    
-    if (sortedData.length === 0) return
-    
-    // Find min and max values for scaling
-    const prices = sortedData.map(d => d.ClosingPrice)
-    const minPrice = Math.min(...prices) * 0.99 // Add some padding
-    const maxPrice = Math.max(...prices) * 1.01 // Add some padding
-    const priceRange = maxPrice - minPrice
-    
-    // Create points for the chart
-    const points: Point[] = sortedData.map((d, i) => {
-      const date = new Date(d.dates)
-      const x = sortedData.length > 1 ? (i / (sortedData.length - 1)) * rect.width : rect.width / 2
-      const y = rect.height - ((d.ClosingPrice - minPrice) / priceRange) * (rect.height * 0.8) - (rect.height * 0.1)
-      
-      const change = i > 0 ? d.ClosingPrice - sortedData[i - 1].ClosingPrice : 0;
-      const changePercent = i > 0 && sortedData[i - 1].ClosingPrice !== 0
-        ? (change / sortedData[i - 1].ClosingPrice) * 100
-        : 0;
-        
-      return { x, y, date, value: d.ClosingPrice, change, changePercent }
-    })
-    
-    // Store points for interaction
-    pointsRef.current = points
-    
-    // Draw grid lines
-    ctx.strokeStyle = theme === 'dark' ? 'rgba(100, 116, 139, 0.2)' : 'rgba(148, 163, 184, 0.2)'
-    ctx.lineWidth = 1
-    
-    // Horizontal grid lines - responsive to screen size
-    const numHLines = rect.width < 400 ? 3 : 4
-    for (let i = 0; i <= numHLines; i++) {
-      const y = rect.height * 0.1 + (rect.height * 0.8 * i) / numHLines
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(rect.width, y)
-      ctx.stroke()
-      
-      // Price labels
-      const price = maxPrice - (priceRange * i) / numHLines
-      ctx.fillStyle = theme === 'dark' ? 'rgba(203, 213, 225, 0.8)' : 'rgba(71, 85, 105, 0.8)'
-      ctx.font = rect.width < 400 ? '9px sans-serif' : '10px sans-serif'
-      ctx.textAlign = 'left'
-      
-      // Format price based on screen size
-      const priceText = rect.width < 400 
-        ? price.toLocaleString(undefined, { maximumFractionDigits: 0 })
-        : price.toLocaleString()
-      
-      ctx.fillText(priceText, 5, y - 3)
-    }
-    
-    // Vertical grid lines - responsive to screen size
-    if (sortedData.length > 5) {
-      // Determine number of vertical lines based on screen width
-      const maxVLines = rect.width < 400 ? 3 : rect.width < 600 ? 4 : 6
-      const numVLines = Math.min(sortedData.length, maxVLines)
-      
-      for (let i = 0; i <= numVLines; i++) {
-        const x = (rect.width * i) / numVLines
-        ctx.beginPath()
-        ctx.moveTo(x, 0)
-        ctx.lineTo(x, rect.height)
-        ctx.stroke()
-        
-        // Date labels - only show on selected lines to prevent stacking
-        if (i < numVLines && i % (rect.width < 400 ? 1 : 1) === 0) {
-          const dataIndex = Math.floor((sortedData.length - 1) * i / numVLines)
-          const date = new Date(sortedData[dataIndex].dates)
-          ctx.fillStyle = theme === 'dark' ? 'rgba(203, 213, 225, 0.8)' : 'rgba(71, 85, 105, 0.8)'
-          ctx.font = rect.width < 400 ? '9px sans-serif' : '10px sans-serif'
-          ctx.textAlign = 'center'
-          
-          // Format date based on screen size
-          const dateText = rect.width < 400 
-            ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-            : date.toLocaleDateString()
-          
-          ctx.fillText(dateText, x, rect.height - 5)
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        if (rect.width > 0) {
+          setContainerSize({ width: rect.width, height: rect.height })
         }
       }
     }
-    
-    // Draw price line with purple/indigo color
-    if (points.length > 1) {
-      ctx.strokeStyle = theme === 'dark' ? '#818cf8' : '#4f46e5'
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.moveTo(points[0].x, points[0].y)
-      
-      for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y)
-      }
-      
-      ctx.stroke()
-      
-      // Fill area under the line
-      const gradient = ctx.createLinearGradient(0, 0, 0, rect.height)
-      if (theme === 'dark') {
-        gradient.addColorStop(0, 'rgba(129, 140, 248, 0.4)')
-        gradient.addColorStop(1, 'rgba(129, 140, 248, 0)')
-      } else {
-        gradient.addColorStop(0, 'rgba(79, 70, 229, 0.3)')
-        gradient.addColorStop(1, 'rgba(79, 70, 229, 0)')
-      }
-      ctx.fillStyle = gradient
-      ctx.beginPath()
-      ctx.moveTo(points[0].x, points[0].y)
-      
-      for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y)
-      }
-      
-      ctx.lineTo(points[points.length - 1].x, rect.height)
-      ctx.lineTo(points[0].x, rect.height)
-      ctx.closePath()
-      ctx.fill()
-    } else if (points.length === 1) {
-        // Draw a single dot for a single data point
-        ctx.beginPath()
-        ctx.arc(points[0].x, points[0].y, 4, 0, Math.PI * 2)
-        ctx.fillStyle = theme === 'dark' ? '#818cf8' : '#4f46e5'
-        ctx.fill()
+    updateSize()
+    const resizeObserver = new ResizeObserver(updateSize)
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current)
     }
-    
-  }, [chartData, theme, mounted])
+    return () => resizeObserver.disconnect()
+  }, [allChartData]) // Rerun on data change
 
-  // Set up mouse interaction
+  const drawCandlestickChart = useCallback((svg: SVGSVGElement, points: Point[], options: any) => {
+    const { width, height, padding, minPrice, maxPrice, theme } = options;
+    const chartHeight = height - padding.top - padding.bottom;
+    const bandwidth = (width - padding.left - padding.right) / points.length;
+    const candleWidth = Math.max(2, bandwidth * 0.7);
+
+    points.forEach(p => {
+      const x = p.x;
+      const openY = padding.top + chartHeight - ((p.open - minPrice) / (maxPrice - minPrice)) * chartHeight;
+      const highY = padding.top + chartHeight - ((p.high - minPrice) / (maxPrice - minPrice)) * chartHeight;
+      const lowY = padding.top + chartHeight - ((p.low - minPrice) / (maxPrice - minPrice)) * chartHeight;
+      const closeY = padding.top + chartHeight - ((p.close - minPrice) / (maxPrice - minPrice)) * chartHeight;
+
+      const isBullish = p.close >= p.open;
+      const color = isBullish ? candleColors.up : candleColors.down;
+
+      // Wick
+      const wick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      wick.setAttribute('x1', x.toString());
+      wick.setAttribute('y1', highY.toString());
+      wick.setAttribute('x2', x.toString());
+      wick.setAttribute('y2', lowY.toString());
+      wick.setAttribute('stroke', color);
+      wick.setAttribute('stroke-width', '1');
+      svg.appendChild(wick);
+
+      // Candle body
+      const body = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      body.setAttribute('x', (x - candleWidth / 2).toString());
+      body.setAttribute('y', Math.min(openY, closeY).toString());
+      body.setAttribute('width', candleWidth.toString());
+      body.setAttribute('height', Math.abs(openY - closeY).toString());
+      body.setAttribute('fill', color);
+      svg.appendChild(body);
+    });
+  }, []);
+
+  // Draw chart using SVG
   useEffect(() => {
-    if (!mounted || !containerRef.current) return
+    if (!mounted || !svgRef.current || allChartData.length === 0 || containerSize.width === 0) return
+
+    const now = new Date()
+    const periodMap: { [key: string]: number } = { '1M': 30, '3M': 90, '1Y': 365, 'ALL': Infinity }
     
-    const container = containerRef.current
+    let filteredData = allChartData
+    if (activePeriod !== 'ALL') {
+      const days = periodMap[activePeriod]
+      const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+      filteredData = allChartData.filter(item => new Date(item.dates) >= cutoffDate)
+    }
+
+    setIsFallbackData(filteredData.length === 0)
+    if (filteredData.length === 0) {
+      filteredData = allChartData.slice(-30)
+    }
+
+    const svg = svgRef.current
+    const { width, height } = containerSize
+    const padding = { top: 20, right: 50, bottom: 30, left: 20 }; // Adjusted padding
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
     
-    const handleResize = () => {
-      if (canvasRef.current) {
-        const canvas = canvasRef.current
-        const rect = canvas.getBoundingClientRect()
-        canvas.width = rect.width * window.devicePixelRatio
-        canvas.height = rect.height * window.devicePixelRatio
+    svg.innerHTML = ''
+
+    const selectedColor = '#3b82f6'; // blue-500 for line chart (unchanged)
+    
+    const prices = filteredData.map(d => d.ClosingPrice)
+    const minPrice = Math.min(...prices)
+    const maxPrice = Math.max(...prices)
+    
+    pointsRef.current = filteredData.map((d, i) => {
+      const x = padding.left + (i / (filteredData.length - 1)) * chartWidth;
+      const y = padding.top + chartHeight - ((d.ClosingPrice - minPrice) / (maxPrice - minPrice)) * chartHeight;
+      const change = i > 0 ? d.ClosingPrice - filteredData[i - 1].ClosingPrice : 0
+      const changePercent = i > 0 && filteredData[i - 1].ClosingPrice !== 0 ? (change / filteredData[i - 1].ClosingPrice) * 100 : 0
+      return { 
+        x, y, 
+        date: new Date(d.dates), 
+        value: d.ClosingPrice, 
+        change, 
+        changePercent, 
+        entryTime: d.MDEntryTime,
+        open: d.OpeningPrice,
+        high: d.HighPrice,
+        low: d.LowPrice,
+        close: d.ClosingPrice
+      }
+    })
+    
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs')
+    const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient')
+    gradient.setAttribute('id', 'chartGradient')
+    gradient.setAttribute('x1', '0%')
+    gradient.setAttribute('y1', '0%')
+    gradient.setAttribute('x2', '0%')
+    gradient.setAttribute('y2', '100%')
+    const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop')
+    stop1.setAttribute('offset', '0%')
+    stop1.setAttribute('stop-color', selectedColor)
+    stop1.setAttribute('stop-opacity', '0.4')
+    const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop')
+    stop2.setAttribute('offset', '100%')
+    stop2.setAttribute('stop-color', selectedColor)
+    stop2.setAttribute('stop-opacity', '0')
+    gradient.appendChild(stop1)
+    gradient.appendChild(stop2)
+    defs.appendChild(gradient)
+    svg.appendChild(defs)
+
+    const points = pointsRef.current
+    if (chartType === 'line' && points.length > 1) {
+      const areaPath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      let pathData = `M ${points[0].x} ${points[0].y}`
+      for (let i = 1; i < points.length; i++) pathData += ` L ${points[i].x} ${points[i].y}`
+      pathData += ` L ${points[points.length - 1].x} ${height - padding.bottom} L ${points[0].x} ${height - padding.bottom} Z`
+      areaPath.setAttribute('d', pathData)
+      areaPath.setAttribute('fill', 'url(#chartGradient)')
+      svg.appendChild(areaPath)
+
+      const linePath = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      pathData = `M ${points[0].x} ${points[0].y}`
+      for (let i = 1; i < points.length; i++) pathData += ` L ${points[i].x} ${points[i].y}`
+      linePath.setAttribute('d', pathData)
+      linePath.setAttribute('stroke', selectedColor)
+      linePath.setAttribute('stroke-width', '2')
+      linePath.setAttribute('fill', 'none')
+      svg.appendChild(linePath)
+    } else if (chartType === 'candlestick') {
+      drawCandlestickChart(svg, points, { width, height, padding, minPrice, maxPrice, theme });
+    }
+    
+    const crosshair = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    crosshair.setAttribute('stroke', theme === 'dark' ? '#9ca3af' : '#6b7280');
+    crosshair.setAttribute('stroke-width', '1');
+    crosshair.setAttribute('stroke-dasharray', '4 4');
+    crosshair.style.display = 'none';
+    svg.appendChild(crosshair);
+    (crosshairRef as React.MutableRefObject<SVGLineElement>).current = crosshair;
+
+    const xLabelCount = 4;
+    const xStep = Math.max(1, Math.floor(points.length / xLabelCount))
+    for (let i = 0; i < points.length; i += xStep) {
+      const point = points[i]
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+      text.setAttribute('x', point.x.toString())
+      text.setAttribute('y', (height - padding.bottom + 20).toString())
+      text.setAttribute('text-anchor', 'middle')
+      text.setAttribute('font-size', isMobile ? '9px' : '11px')
+      text.setAttribute('fill', theme === 'dark' ? '#9ca3af' : '#6b7280')
+      text.textContent = point.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      svg.appendChild(text)
+    }
+
+    const yLabelCount = 4;
+    const priceStep = (maxPrice - minPrice) / (yLabelCount > 1 ? yLabelCount - 1 : 1);
+    for (let i = 0; i < yLabelCount; i++) {
+        const price = minPrice + (i * priceStep);
+        const y = padding.top + chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
         
-        // Redraw chart
-        const event = new Event('resize')
-        window.dispatchEvent(event)
-      }
+        const gridLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        gridLine.setAttribute('x1', padding.left.toString());
+        gridLine.setAttribute('y1', y.toString());
+        gridLine.setAttribute('x2', (width - padding.right).toString());
+        gridLine.setAttribute('y2', y.toString());
+        gridLine.setAttribute('stroke', theme === 'dark' ? '#374151' : '#e5e7eb');
+        gridLine.setAttribute('stroke-dasharray', '2 2');
+        svg.appendChild(gridLine);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', (width - padding.right + 10).toString());
+        text.setAttribute('y', y.toString());
+        text.setAttribute('text-anchor', 'start');
+        text.setAttribute('alignment-baseline', 'middle');
+        text.setAttribute('font-size', isMobile ? '9px' : '11px');
+        text.setAttribute('fill', theme === 'dark' ? '#9ca3af' : '#6b7280');
+        text.textContent = price.toFixed(2);
+        svg.appendChild(text);
     }
     
-    const handleMouseMove = (e: MouseEvent) => {
-      if (pointsRef.current.length === 0) return
-      
-      const rect = container.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      
-      // Find closest point
-      let closestPoint = pointsRef.current[0]
-      let minDistance = Math.abs(closestPoint.x - x)
-      
-      for (let i = 1; i < pointsRef.current.length; i++) {
-        const distance = Math.abs(pointsRef.current[i].x - x)
-        if (distance < minDistance) {
-          minDistance = distance
-          closestPoint = pointsRef.current[i]
+  }, [mounted, svgRef, allChartData, containerSize, theme, activePeriod, chartType, drawCandlestickChart]);
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg || pointsRef.current.length === 0) return;
+
+    const handleInteraction = (clientX: number) => {
+        const rect = svg.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const closestPoint = pointsRef.current.reduce((prev, curr) => (Math.abs(curr.x - x) < Math.abs(prev.x - x) ? curr : prev));
+
+        if (tooltipRef.current) {
+            const tooltip = tooltipRef.current;
+            tooltip.style.display = 'block';
+            tooltip.innerHTML = `
+                <div class="font-semibold text-sm">${closestPoint.value.toLocaleString()} ₮</div>
+                <div class="flex items-center text-xs ${closestPoint.change >= 0 ? 'text-green-400' : 'text-red-400'}">
+                    <span class="mr-1">${closestPoint.change >= 0 ? '▲' : '▼'}</span>
+                    <span>${closestPoint.change.toFixed(2)} (${closestPoint.changePercent.toFixed(2)}%)</span>
+                </div>
+                <div class="text-gray-400 text-xs font-normal mt-1">${closestPoint.date.toLocaleDateString()}</div>
+            `;
+
+            const tooltipWidth = tooltip.offsetWidth;
+            const tooltipHeight = tooltip.offsetHeight;
+            const containerHeight = rect.height;
+            const containerWidth = rect.width;
+
+            let top = closestPoint.y - tooltipHeight / 2;
+            if (top < 5) top = 5;
+            if (top + tooltipHeight > containerHeight - 5) top = containerHeight - tooltipHeight - 5;
+
+            const gap = 15;
+            let left;
+            if (closestPoint.x < containerWidth / 2) {
+                left = closestPoint.x + gap;
+            } else {
+                left = closestPoint.x - tooltipWidth - gap;
+            }
+
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
         }
-      }
-      
-      // Update tooltip with full data
-      setTooltip({
-        visible: true,
-        x: closestPoint.x,
-        y: closestPoint.y,
-        date: closestPoint.date,
-        value: closestPoint.value,
-        change: closestPoint.change,
-        changePercent: closestPoint.changePercent
-      })
-      
-      // Store last valid tooltip
-      lastValidTooltipRef.current = {
-        x: closestPoint.x,
-        y: closestPoint.y,
-        date: closestPoint.date,
-        value: closestPoint.value,
-        change: closestPoint.change,
-        changePercent: closestPoint.changePercent
-      }
-      
-      // Mark that we've interacted with the chart
-      setHasInteracted(true)
-      
-      // Notify parent component of price hover
-      if (onPriceHover) {
-        onPriceHover(closestPoint.value, closestPoint.change, closestPoint.changePercent)
-      }
-    }
-    
-    const handleMouseLeave = () => {
-      setTooltip(prev => ({ ...prev, visible: false }))
-      
-      // Reset to latest price when not hovering
-      if (onPriceHover && latestPriceRef.current !== null) {
-        onPriceHover(null)
-      }
-    }
-    
-    const handleClick = (e: MouseEvent) => {
-      // Implement click handling if needed
-    }
-    
-    // Add event listeners
-    window.addEventListener('resize', handleResize)
-    container.addEventListener('mousemove', handleMouseMove)
-    container.addEventListener('mouseleave', handleMouseLeave)
-    container.addEventListener('click', handleClick)
-    
-    // Clean up
+        if (crosshairRef.current) {
+            crosshairRef.current.setAttribute('x1', closestPoint.x.toString());
+            crosshairRef.current.setAttribute('y1', '20');
+            crosshairRef.current.setAttribute('x2', closestPoint.x.toString());
+            crosshairRef.current.setAttribute('y2', (svg.clientHeight - 30).toString());
+            crosshairRef.current.style.display = 'block';
+        }
+    };
+
+    const handleLeave = () => {
+        if (tooltipRef.current) tooltipRef.current.style.display = 'none';
+        if (crosshairRef.current) crosshairRef.current.style.display = 'none';
+    };
+
+    const handleMouseMove = (e: MouseEvent) => handleInteraction(e.clientX);
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length > 0) handleInteraction(e.touches[0].clientX);
+    };
+
+    svg.addEventListener('mousemove', handleMouseMove);
+    svg.addEventListener('touchmove', handleTouchMove, { passive: false });
+    svg.addEventListener('mouseleave', handleLeave);
+    svg.addEventListener('touchend', handleLeave);
+
     return () => {
-      window.removeEventListener('resize', handleResize)
-      container.removeEventListener('mousemove', handleMouseMove)
-      container.removeEventListener('mouseleave', handleMouseLeave)
-      container.removeEventListener('click', handleClick)
-    }
-  }, [mounted, onPriceHover])
+        svg.removeEventListener('mousemove', handleMouseMove);
+        svg.removeEventListener('touchmove', handleTouchMove);
+        svg.removeEventListener('mouseleave', handleLeave);
+        svg.removeEventListener('touchend', handleLeave);
+    };
+  }, [allChartData, activePeriod, containerSize]);
 
-  // Set mounted state when component mounts
-  useEffect(() => {
-    setMounted(true)
-    return () => setMounted(false)
-  }, [])
+  useEffect(() => setMounted(true), [])
 
-  // Handle period change
-  const handlePeriodChange = (newPeriod: string) => {
-    setActivePeriod(newPeriod)
-  }
-
-  // Return null if not mounted yet
-  if (!mounted) return null
-
-  // Render the chart or error message
   if (isLoading) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-md">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700 mx-auto"></div>
+          <div className="animate-spin rounded-md h-12 w-12 border-b-2 border-indigo-700 mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">{t('common.loading')}</p>
         </div>
       </div>
@@ -626,62 +392,83 @@ export function TradingViewChart({
           <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p className="mt-4 text-lg font-medium text-gray-700 dark:text-gray-200">{t('chart.noData')}</p>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t('chart.tryAnother')}</p>
+          <p className="mt-4 text-base font-medium text-gray-700 dark:text-gray-100">{t('chart.noData')}</p>
+          <p className="mt-2 text-sm font-normal text-gray-500 dark:text-gray-400">{t('chart.tryAnother')}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
-      {/* Chart container - take most of the height, with no horizontal padding */}
-      <div ref={containerRef} className="w-full h-[calc(100%-50px)] relative">
-        <canvas ref={canvasRef} className="w-full h-full"></canvas>
-        
+    <div className="w-full h-full flex flex-col transition-all duration-300 mb-8">
+      {/* Stock Header - Only show if selectedStockData is provided */}
+    
+    <div className='flex justify-between'>
+        {selectedStockData && (
+        <div className="mb-3">
+          <StockHeader
+            selectedSymbol={symbol.split('-')[0]}
+            selectedStockData={selectedStockData}
+            chartLoading={chartLoading}
+            isDataFresh={isDataFresh}
+          />
+        </div>
+      )}
+      
+      {/* Conditional Header Bar for Chart Type Toggle */}
+      {showChartTypeToggle && (
+        <div className="h-[38px] flex justify-end items-center md:px-4 rounded-lg mb-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setChartType('line')}
+              className={`text-center text-sm font-medium px-4 py-2 rounded-full transition-colors ${
+                chartType === 'line'
+                  ? 'bg-bdsec dark:bg-indigo-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              {t('chart.line')}
+            </button>
+            <button
+              onClick={() => setChartType('candlestick')}
+              className={`text-sm font-medium px-4 py-2 rounded-full transition-colors ${
+                chartType === 'candlestick'
+                  ? 'bg-bdsec dark:bg-indigo-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              {t('chart.candlestick')}
+            </button>
+          </div>
+        </div>
+      )}
+      </div>
+      <div
+        ref={containerRef}
+        className={`w-full relative mb-2 ${
+          showChartTypeToggle ? 'h-[calc(100%-80px)]' : 'h-[calc(100%-50px)]'
+        }`}
+      >
+        <svg 
+          ref={svgRef} 
+          className="w-full h-full"
+          style={{ transform: 'translate3d(0, 0, 0)' }}
+          viewBox={`0 0 ${containerSize.width || 400} ${containerSize.height || 300}`}
+          preserveAspectRatio="xMidYMid meet"
+        />
         {isFallbackData && (
-          <div className="absolute top-2 left-2 bg-yellow-100 text-yellow-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full dark:bg-yellow-900 dark:text-yellow-300 z-20">
+          <div className="absolute top-2 left-2 bg-yellow-100 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-md dark:bg-yellow-900 dark:text-yellow-300 z-20">
             No data for this period. Showing most recent data.
           </div>
         )}
-        
-        {/* Updated Tooltip */}
-        {(tooltip.visible || (hasInteracted && lastValidTooltipRef.current)) && (
-          <div 
-            className="absolute pointer-events-none bg-white dark:bg-gray-800 border border-soft border-opacity-50 rounded-md px-3 py-2 z-10 transform -translate-x-1/2 -translate-y-full text-xs"
-            style={{ 
-              left: tooltip.visible ? tooltip.x : (lastValidTooltipRef.current?.x || 0), 
-              top: (tooltip.visible ? tooltip.y : (lastValidTooltipRef.current?.y || 0)) - 8,
-              transform: 'translate(-50%, -100%)'
-            }}
-          >
-            <div className="font-bold text-base text-gray-900 dark:text-white">
-              {((tooltip.visible ? tooltip.value : lastValidTooltipRef.current?.value) ?? 0).toLocaleString()} ₮
-            </div>
-            <div className={`flex items-center text-sm ${
-              ((tooltip.visible ? tooltip.change : lastValidTooltipRef.current?.change) ?? 0) >= 0 
-                ? 'text-green-500' 
-                : 'text-red-500'
-            }`}>
-              <span className="mr-1">
-                {((tooltip.visible ? tooltip.change : lastValidTooltipRef.current?.change) ?? 0) >= 0 ? '▲' : '▼'}
-              </span>
-              <span>
-                {((tooltip.visible ? tooltip.change : lastValidTooltipRef.current?.change) ?? 0).toFixed(2)}
-                &nbsp;
-                ({((tooltip.visible ? tooltip.changePercent : lastValidTooltipRef.current?.changePercent) ?? 0).toFixed(2)}%)
-              </span>
-            </div>
-            <div className="text-gray-500 dark:text-gray-400 text-xs mt-1">
-              {(tooltip.visible ? tooltip.date : (lastValidTooltipRef.current?.date || new Date())).toLocaleDateString()}
-            </div>
-          </div>
-        )}
+        <div 
+          ref={tooltipRef} 
+          className="absolute pointer-events-none bg-black bg-opacity-75 text-white rounded-md px-2 py-1 z-10 text-xs shadow-lg"
+          style={{ display: 'none' }}
+        />
       </div>
-      
-      {/* Time filter buttons at bottom - with fixed height and prominent styling */}
-      <div className="h-[50px] flex justify-center items-center border-t border-soft border-opacity-50 pt-2 pb-2 bg-white dark:bg-gray-900 rounded-b-lg">
-        <div className="flex justify-center items-center gap-1 sm:gap-2">
+      <div className="h-[50px] flex justify-center items-center border-t border-gray-200 dark:border-gray-700 border-opacity-70 pt-2 pb-2 rounded-md mt-2">
+        <div className="flex justify-center items-center gap-2 sm:gap-2">
           {[
             { id: '1M', label: '1M' },
             { id: '3M', label: '3M' },
@@ -690,12 +477,12 @@ export function TradingViewChart({
           ].map((periodOption) => (
             <button
               key={periodOption.id}
-              className={`px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-colors ${
+              className={` text-xs font-medium px-5 py-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
                 activePeriod === periodOption.id 
-                  ? 'bg-indigo-900 text-white border border-soft border-opacity-50' 
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 border border-soft border-opacity-30'
+                  ? 'bg-bdsec dark:bg-indigo-500 text-white   ' 
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700  '
               }`}
-              onClick={() => handlePeriodChange(periodOption.id)}
+              onClick={() => setActivePeriod(periodOption.id)}
             >
               {periodOption.label}
             </button>

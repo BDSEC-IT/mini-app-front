@@ -151,7 +151,7 @@ const HighLow = () => {
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-24">
       <div className="px-4 md:px-6 py-6">
-        <h1 className="text-xl font-bold mb-6">{t('highLow.title', '52-Week High/Low')}</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('highLow.title', '52-Week High/Low')}</h1>
         
         {/* Search and filters */}
         <div className="mb-6">
@@ -226,7 +226,7 @@ const HighLow = () => {
             </div>
           ) : (
             <table className="w-full text-sm text-left">
-              <thead className="text-xs uppercase bg-gray-100 dark:bg-gray-800">
+              <thead className="text-xs uppercase bg-white dark:bg-gray-800">
                 <tr>
                   <th className="px-4 py-3 cursor-pointer" onClick={() => handleSort('Symbol')}>
                     <div className="flex items-center">

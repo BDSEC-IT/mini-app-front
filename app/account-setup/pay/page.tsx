@@ -14,7 +14,7 @@ export default function PayPage() {
 
   useEffect(() => {
     const processPayment = async () => {
-      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token');
+      const token = Cookies.get('token');
       if (!token) {
         setError("Та нэвтрээгүй байна. Нэвтэрч дахин оролдоно уу.");
         setTimeout(() => router.push('/auth/nationality'), 3000);
@@ -67,7 +67,7 @@ export default function PayPage() {
   }, [router]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 text-center p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-gray-900 text-center p-4">
       {error ? (
         <div className="w-full max-w-md">
             <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">

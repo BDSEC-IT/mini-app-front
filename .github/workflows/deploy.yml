@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     env:
       DEPLOY_SCRIPT: |
@@ -30,6 +31,23 @@ jobs:
 
         echo "🧹 Stopping and removing existing container..."
         docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+
+        echo "🧹 Cleaning up old Docker images..."
+        
+        # Only remove images related to this specific frontend app
+        if [ "$BRANCH_NAME" = "test" ]; then
+          # Remove only test branch images
+          docker images | grep "mini-app-test" | awk '{print $3}' | xargs -r docker rmi -f
+        else
+          # Remove only main branch images  
+          docker images | grep "mini-app" | grep -v "mini-app-test" | awk '{print $3}' | xargs -r docker rmi -f
+        fi
+        
+        # Clean up dangling images (safe to remove)
+        docker image prune -f
+        
+        # Clean up build cache for this specific image
+        docker builder prune -f --filter type=exec.cachemount --filter=unused-for=24h
 
         echo "🐳 Building Docker image..."
         docker build --pull -t "$CONTAINER_NAME" .
@@ -54,3 +72,5 @@ jobs:
           username: damdinsuren
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: ${{ env.DEPLOY_SCRIPT }}
+          timeout: 60m           # total SSH session timeout
+          command_timeout: 60m   # per-command timeout

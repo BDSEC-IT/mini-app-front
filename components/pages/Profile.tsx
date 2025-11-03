@@ -23,13 +23,13 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         setLoading(true)
-        const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token') || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDYyOTR9.y4IGXd76fqQcHQlve00vADg_sfuOvL3PKrH0W-05Y4E"
+        const token = Cookies.get('token')
         
         // Fetch account info, status request, and invoice status in parallel
         const [accountResponse, statusResponse, invoiceResponse] = await Promise.all([
           getUserAccountInformation(token),
-          getAccountStatusRequest(token),
-          checkInvoiceStatus(token)
+          getAccountStatusRequest(token!),
+          checkInvoiceStatus(token!)
         ]);
         
         if (accountResponse.success && accountResponse.data) {
@@ -62,8 +62,8 @@ const Profile = () => {
   const handleCheckInvoice = async () => {
     setIsCheckingInvoice(true)
     try {
-      const token = Cookies.get('jwt') || Cookies.get('auth_token') || Cookies.get('token') || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDYyOTR9.y4IGXd76fqQcHQlve00vADg_sfuOvL3PKrH0W-05Y4E"
-      const response = await checkInvoiceStatus(token)
+      const token = Cookies.get('token')
+      const response = await checkInvoiceStatus(token!)
       
       if (response.success && response.data) {
         setInvoiceData(response.data)
@@ -94,7 +94,7 @@ const Profile = () => {
     )
   }
 
-  if (!accountInfo || !accountInfo.khanUser) {
+  if (!accountInfo || !accountInfo.superAppAccounts || accountInfo.superAppAccounts.length === 0) {
     return (
       <div className="text-center py-10">
         <p>{t('profile.noProfileFound')}</p>
@@ -102,8 +102,10 @@ const Profile = () => {
     )
   }
 
-  const { khanUser, MCSDAccount } = accountInfo;
-  const hasMcsdAccount = MCSDAccount !== null;
+  const accounts = accountInfo.superAppAccounts || [];
+  const primary = accounts.find((a: any) => a.registerConfirmed) || accounts[0];
+  const hasMcsdAccount = accounts.some((a: any) => !!a.MCSDAccountId);
+  const hasActiveMcsdAccount = hasMcsdAccount;
 
   // Simplified completion checks - only use backend API data
   const isGeneralInfoComplete = () => {
@@ -119,8 +121,8 @@ const Profile = () => {
       accountStatusData.id // Has account status record ID
     );
     
-    // Check if we have account data from the nested structure (from accountInfo.khanUser.MCSDStateRequest)
-    const mcsdRequest = accountInfo?.khanUser?.MCSDStateRequest as any;
+    // Check if we have account data from the nested structure (from superAppAccounts[].MCSDStateRequest)
+    const mcsdRequest = (primary?.MCSDStateRequest && Array.isArray(primary.MCSDStateRequest) ? primary.MCSDStateRequest[0] : null) as any;
     const hasNestedAccountData = mcsdRequest && typeof mcsdRequest === 'object' && (
       (mcsdRequest.FirstName && mcsdRequest.LastName) ||
       mcsdRequest.RegistryNumber ||
@@ -143,7 +145,9 @@ const Profile = () => {
 
   const isPaymentComplete = () => {
     // Only complete if invoice is actually paid
-    return invoiceData && invoiceData.status === 'PAID';
+    console.log('invoiceData', invoiceData);
+    //console.log("rad",invoiceData.data.registrationFee?.status)
+    return invoiceData && invoiceData.data && invoiceData.data.registrationFee?.status === 'COMPLETED';
   }
 
   return (
@@ -161,9 +165,9 @@ const Profile = () => {
               </div>
               <div>
                 <h2 className="text-lg font-semibold">
-                  {khanUser.firstName} {khanUser.lastName}
+                  {primary?.firstName} {primary?.lastName}
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{khanUser.register}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{primary?.register}</p>
               </div>
             </div>
           </div>
@@ -197,10 +201,28 @@ const Profile = () => {
                 </div>
               </div>
             ) : (
+              hasActiveMcsdAccount ? (
               <div className="flex items-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
                 <CheckCircle className="h-5 w-5 mr-3 flex-shrink-0" />
                 <p className="font-medium text-sm">{t('profile.mcsdAccountActiveDetail')}</p>
               </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                <div className="flex items-center p-4 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800">
+                  <AlertTriangle className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <p className="font-medium text-sm">Таны мэдээлэл ҮЦТХТ-д шалгагдаж байна</p>
+                </div>
+                <div className="flex justify-end">
+                  <Link
+                  href="/account-setup/opening-process"
+                    className="text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded"
+                  >
+                    Данс нээх үйл явцийг харах
+                  </Link>
+                </div>
+              </div>
+              
+              )
             )}
           </div>
           
@@ -212,14 +234,14 @@ const Profile = () => {
                 <Mail className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-3 mt-1" />
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{t('profile.email')}</p>
-                  <p className="font-medium">{khanUser.email || t('profile.notProvided')}</p>
+                  <p className="font-medium">{primary?.email || t('profile.notProvided')}</p>
                 </div>
               </div>
               <div className="flex items-start">
                 <Phone className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-3 mt-1" />
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{t('profile.phone')}</p>
-                  <p className="font-medium">{khanUser.phone || t('profile.notProvided')}</p>
+                  <p className="font-medium">{primary?.phone || t('profile.notProvided')}</p>
                 </div>
               </div>
               <div className="flex items-start">

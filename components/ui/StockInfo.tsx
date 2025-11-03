@@ -12,7 +12,6 @@ interface StockDetails {
   listedShares: string;
   marketCap: string;
   listingDate: string;
-  email: string;
 }
 
 interface StockInfoProps {
@@ -32,7 +31,14 @@ export default function StockInfo({
   changePercent,
   details
 }: StockInfoProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.language || 'mn';
+  
+  // Helper function to get company name based on current language
+  const getCompanyName = (stock: StockData) => {
+    return currentLanguage === 'mn' ? stock.mnName : stock.enName;
+  };
+
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [allStocks, setAllStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +73,7 @@ export default function StockInfo({
     if (isMobile) {
       return `${baseSymbol}`;
     }
-    return `${baseSymbol} - ${stock.mnName || stock.enName}`;
+    return `${baseSymbol} - ${getCompanyName(stock)}`;
   };
 
   const fetchData = useCallback(async () => {
@@ -152,7 +158,7 @@ export default function StockInfo({
           </select>
           {stockData && isMobile && (
             <span className="text-xs bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 px-2 py-1 rounded-full truncate max-w-[100px]">
-              {stockData.mnName || stockData.enName}
+              {getCompanyName(stockData)}
             </span>
           )}
         </div>
@@ -215,10 +221,6 @@ export default function StockInfo({
                 <span>{t('dashboard.companyCode')}</span>
                 <span className="font-semibold">{details.companyCode}</span>
               </div>
-              <div className="flex justify-between">
-                <span>{t('dashboard.email')}</span>
-                <span className="font-semibold">{details.email}</span>
-              </div>
             </div>
           </div>
 
@@ -226,16 +228,16 @@ export default function StockInfo({
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>{t('dashboard.totalShares')}</span>
-                <span className="font-semibold">{details.totalShares}</span>
+                <span className="font-semibold">{parseInt(details.totalShares, 10).toLocaleString('en-US')}</span>
               </div>
               <div className="flex justify-between">
                 <span>{t('dashboard.listedShares')}</span>
                 <span className="font-semibold">{details.listedShares}</span>
               </div>
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <span>{t('dashboard.listingDate')}</span>
                 <span className="font-semibold">{details.listingDate}</span>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, AlertCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react'
-import { sendRegistrationNumber, digipayLogin, type RegistrationResponse, getRegistrationNumber } from '@/lib/api'
+import { sendRegistrationNumber, digipayLogin, type RegistrationResponse, getRegistrationNumber, BASE_URL } from '@/lib/api'
 import Cookies from 'js-cookie'
 
 export default function RegisterPage() {
@@ -16,50 +16,51 @@ export default function RegisterPage() {
   const [registerNumber, setRegisterNumber] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [token, setToken] = useState<string | null>(null)
   const [responseStatus, setResponseStatus] = useState<{
     type: 'error' | 'success' | 'warning' | null;
     message: string | null;
     details?: string | null;
   }>({ type: null, message: null })
+  const [countries, setCountries] = useState<{ countryCode: string, countryName: string }[]>([])
+  const [selectedCountry, setSelectedCountry] = useState<{ countryCode: string, countryName: string } | null>(null)
   
   // Get token on component mount if it doesn't exist
+
+  // Fetch countries data
   useEffect(() => {
-    const authToken = Cookies.get('auth_token')
-    if (authToken) {
-      setToken(authToken)
-    } else {
-      // Get token if it doesn't exist
-      const getToken = async () => {
-        try {
-          const response = await digipayLogin('demo_user_id')
-          if (response.success && response.data?.token) {
-            Cookies.set('auth_token', response.data.token, { expires: 7 })
-            setToken(response.data.token)
-          } else {
-            // Set a fallback demo token for testing purposes
-            const demoToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDYyOTR9.y4IGXd76fqQcHQlve00vADg_sfuOvL3PKrH0W-05Y4E"
-            Cookies.set('auth_token', demoToken, { expires: 7 })
-            setToken(demoToken)
-            console.log('Using fallback demo token for testing')
-          }
-        } catch (error) {
-          console.error('Error getting token:', error)
-          // Set a fallback demo token for testing purposes
-          const demoToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IlVTRVIiLCJ1c2VybmFtZSI6ImRpZ2lwYXkiLCJpYXQiOjE3NTE0NDYyOTR9.y4IGXd76fqQcHQlve00vADg_sfuOvL3PKrH0W-05Y4E"
-          Cookies.set('auth_token', demoToken, { expires: 7 })
-          setToken(demoToken)
-          console.log('Using fallback demo token for testing')
-        }
+    const fetchCountries = async () => {
+      try {
+        const url = `${BASE_URL}/helper/countries`
+        const response = await fetch(url)
+        const data = await response.json()
+        const countriesData = data.data || []
+        setCountries(countriesData)
+        
+        // Find the selected country
+        const country = countriesData.find((c: any) => c.countryCode === nationality)
+        setSelectedCountry(country || null)
+      } catch (error) {
+        console.error('Error fetching countries:', error)
       }
-      
-      getToken()
     }
-  }, [])
+    
+    fetchCountries()
+  }, [nationality])
+
+  // Function to get appropriate placeholder based on nationality
+  const getPlaceholder = () => {
+    if (nationality === '496') {
+      // Mongolia - use Mongolian registration number format
+      return 'ӨӨ000000'
+    } else {
+      // Other countries - use descriptive text
+      return t('auth.enterRegisterNumber', 'Enter your register number')
+    }
+  }
   
   // Handle registration number input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRegisterNumber(e.target.value)
+    setRegisterNumber(e.target.value.toUpperCase())
     setError(null)
     setResponseStatus({ type: null, message: null })
   }
@@ -77,8 +78,16 @@ export default function RegisterPage() {
     setError(null)
     setResponseStatus({ type: null, message: null })
     
+    // Always get the token from the cookie right before the API call
+    const cookieToken = Cookies.get('token');
+    console.log('Token from cookie:', cookieToken);
+    if (!cookieToken) {
+      setError('No token found in cookies. Please log in again.');
+      setIsLoading(false);
+      return;
+    }
     try {
-      const response = await sendRegistrationNumber(registerNumber, nationality, token || undefined)
+      const response = await sendRegistrationNumber(registerNumber, cookieToken)
       
       if (response.success) {
         // Handle different success cases
@@ -110,6 +119,8 @@ export default function RegisterPage() {
         
         // Wait for 2 seconds before redirecting to profile page
         setTimeout(() => {
+            window.location.href = '/profile';
+            return;
           router.push('/profile')
         }, 2000)
       } else {
@@ -207,7 +218,7 @@ export default function RegisterPage() {
   
   useEffect(() => {
     const checkRegister = async () => {
-      const token = Cookies.get('auth_token');
+      const token = Cookies.get('token');
       if (token) {
         const regRes = await getRegistrationNumber(token);
         if (regRes.registerNumber) {
@@ -234,7 +245,7 @@ export default function RegisterPage() {
         </h1>
         
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          {t('auth.registerHelpText', { country: nationality })}
+          {t('auth.registerHelpText', { country: selectedCountry?.countryName || nationality })}
         </p>
         
         {renderStatusMessage()}
@@ -252,7 +263,7 @@ export default function RegisterPage() {
               className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${
                 error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec dark:focus:ring-indigo-500'
               }`}
-              placeholder="ӨӨ000000"
+              placeholder={getPlaceholder()}
               disabled={isLoading || responseStatus.type === 'success'}
             />
             {error && (

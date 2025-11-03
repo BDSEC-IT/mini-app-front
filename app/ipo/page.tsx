@@ -8,7 +8,7 @@ export default function IpoPage() {
   const { t } = useTranslation()
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
+    <div className="min-h-screen bg-white dark:bg-gray-900 py-8 px-4">
       <div className="max-w-md mx-auto">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
           <div className="mb-6">

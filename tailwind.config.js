@@ -13,12 +13,12 @@ module.exports = {
   ],
   theme: {
     container: {
-      center: 'true',
+      center: true,
       padding: {
-        DEFAULT: '0.5rem',  // 8px for smallest screens
-        sm: '1rem',         // 16px for small screens
-        md: '1.5rem',       // 24px for medium screens
-        lg: '2rem',         // 32px for large screens
+        DEFAULT: '0.5rem',
+        sm: '1rem',
+        md: '1.5rem',
+        lg: '2rem',
       },
       screens: {
         '2xl': '1400px'
@@ -29,16 +29,14 @@ module.exports = {
         'sans': ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
       fontSize: {
-        'xs': ['12px', { lineHeight: '16px', letterSpacing: '0.01em' }],
-        'sm': ['14px', { lineHeight: '20px', letterSpacing: '0.01em' }],
-        'base': ['16px', { lineHeight: '24px', letterSpacing: '0.005em' }],
-        'lg': ['18px', { lineHeight: '28px', letterSpacing: '0.005em' }],
-        'xl': ['20px', { lineHeight: '32px', letterSpacing: '0.005em' }],
-        '2xl': ['24px', { lineHeight: '36px', letterSpacing: '0.005em' }],
-        '3xl': ['30px', { lineHeight: '40px', letterSpacing: '0.005em' }],
-        '4xl': ['36px', { lineHeight: '48px', letterSpacing: '0.005em' }],
-        '2xs': ['10px', { lineHeight: '14px', letterSpacing: '0.01em' }],
-        '3xs': ['8px', { lineHeight: '12px', letterSpacing: '0.01em' }],
+        'xs': ['10px', { lineHeight: '14px', letterSpacing: '0.01em' }],
+        'sm': ['12px', { lineHeight: '16px', letterSpacing: '0.01em' }],
+        'base': ['14px', { lineHeight: '20px', letterSpacing: '0.005em' }],
+        'lg': ['16px', { lineHeight: '22px', letterSpacing: '0.005em' }],
+        'xl': ['18px', { lineHeight: '26px', letterSpacing: '0.005em' }],
+        '2xl': ['20px', { lineHeight: '28px', letterSpacing: '0.005em' }],
+        '3xl': ['24px', { lineHeight: '32px', letterSpacing: '0.005em' }],
+        '4xl': ['28px', { lineHeight: '36px', letterSpacing: '0.005em' }],
       },
       spacing: {
         'default': '16px',
@@ -50,35 +48,33 @@ module.exports = {
         '2xl': '32px',
       },
       colors: {
-        // BDSEC Brand Colors
-        'bdsec': {
+        bdsec: {
           DEFAULT: '#21214f',
-          dark: '#6366f1' // Indigo-500 for dark mode
+          dark: '#6366f1'
         },
-        'soft': {
+        soft: {
           DEFAULT: '#585E72',
           dark: '#6B7280'
         },
-        'green': {
-          DEFAULT: '#2E8B57', // Darker sea green
-          light: '#4ECCA3',   // Original color
-          dark: '#2D8659'     // Dark mode variant
+        green: {
+          DEFAULT: '#2E8B57',
+          light: '#4ECCA3',
+          dark: '#2D8659'
         },
-        'red': {
-          DEFAULT: '#CF3A47', // Darker red
-          light: '#E63946',   // Original color
-          dark: '#BF2F3C'     // Dark mode variant
+        red: {
+          DEFAULT: '#CF3A47',
+          light: '#E63946',
+          dark: '#BF2F3C'
         },
-        'label': {
+        label: {
           DEFAULT: '#4A4A4A',
           dark: '#D1D5DB'
         },
-        'placeholder': {
+        placeholder: {
           DEFAULT: '#A0A0A0',
           dark: '#9CA3AF'
         },
-        // Indigo colors for dark mode
-        'indigo': {
+        indigo: {
           50: '#eef2ff',
           100: '#e0e7ff',
           200: '#c7d2fe',
@@ -91,16 +87,16 @@ module.exports = {
           900: '#312e81',
           950: '#1e1b4b',
         },
-        // Dark theme colors
-        'dark': {
-          'bg': '#0F172A',
+        dark: {
+          bg: '#0F172A',
           'bg-secondary': '#1E293B',
           'bg-tertiary': '#334155',
-          'text': '#F8FAFC',
+          text: '#F8FAFC',
           'text-secondary': '#CBD5E1',
-          'border': '#475569'
+          border: '#475569'
         },
-        border: 'hsl(var(--border))',
+        'brand-primary': '#21214f',
+        border: "hsl(var(--border))",
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
@@ -151,28 +147,73 @@ module.exports = {
       },
       keyframes: {
         'accordion-down': {
-          from: {
-            height: '0'
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)'
-          }
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' }
         },
         'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)'
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' }
+        },
+        'gradient-x': {
+          '0%, 100%': {
+            'background-size': '200% 200%',
+            'background-position': 'left center'
           },
-          to: {
-            height: '0'
+          '50%': {
+            'background-size': '200% 200%',
+            'background-position': 'right center'
           }
+        },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' }
+        },
+        'shimmer': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' }
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out'
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'gradient-x': 'gradient-x 15s ease infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'shimmer': 'shimmer 4s ease-in-out infinite'
       }
     }
   },
   darkMode: "class",
-  plugins: [heroui(), require('tailwindcss-animate')]
+  plugins: [
+    heroui(), 
+    require('tailwindcss-animate'),
+    function({ addUtilities, theme }) {
+      const newUtilities = {
+        '.border-dim': {
+          'border-color': '#d1d5db', // light mode - gray-300
+          '@media (prefers-color-scheme: dark)': {
+            'border-color': '#4b5563' // dark mode - gray-600
+          }
+        },
+        '.border-soft': {
+          'border-color': theme('colors.soft.DEFAULT'),
+          '@media (prefers-color-scheme: dark)': {
+            'border-color': theme('colors.soft.dark')
+          }
+        },
+        '.border-subtle': {
+          'border-color': '#e5e7eb', // light mode - gray-200
+          '@media (prefers-color-scheme: dark)': {
+            'border-color': '#374151' // dark mode - gray-700
+          }
+        },
+        '.border-muted': {
+          'border-color': '#f3f4f6', // light mode - gray-100
+          '@media (prefers-color-scheme: dark)': {
+            'border-color': '#1f2937' // dark mode - gray-800
+          }
+        }
+      }
+      addUtilities(newUtilities, ['responsive', 'dark'])
+    }
+  ]
 };
