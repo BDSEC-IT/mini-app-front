@@ -95,45 +95,45 @@ export default function AccountOpeningProcess() {
       try {
         const data = await getUserAccountInformation(token)
         console.log('Fetched Account Data:', data)
-        console.log('MCSD Account:', data.data?.MCSDAccount)
+        console.log('MCSD Accounts:', data.data?.superAppAccounts)
         setAccountData(data.data)
-        if (!data.data?.khanUser?.registrationFee) {
+        const accounts = data.data?.superAppAccounts || [];
+        const primary = accounts.find((a: any) => a.registerConfirmed) || accounts[0];
+        const latestFee = primary?.registrationFees?.[0];
+        if (!primary || !primary?.registrationFees || primary.registrationFees.length === 0) {
           router.replace('/account-setup/general')
           return
         }
-        if(data.data?.MCSDAccount?.DGOrder === "COMPLETED"){
+        if(accounts.some((a: any) => !!a.MCSDAccountId)){
           window.alert(t('profile.accountCreatedSuccess', 'Таны данс амжилттай үүссэн байна'))
           router.push('/')
           return
         }
 
         // ҮЦТХТ-д илгээгдэлгүй алдаа заасан
-        if (!data.data?.MCSDAccount  && data.data?.khanUser?.registrationFee?.mcsdError ) {
+        if (!accounts.some((a: any) => !!a.MCSDAccountId) && latestFee?.mcsdError ) {
           
           setStatus('error')
-          setErrorMessage(data.data.khanUser.registrationFee.mcsdError || t('common.error.generic'))
+          setErrorMessage(latestFee.mcsdError || t('common.error.generic'))
           return
         }
-        if(!data.data?.MCSDAccount&&data.data?.khanUser?.registrationFee?.status === "COMPLETED"){
+        if(!accounts.some((a: any) => !!a.MCSDAccountId) && latestFee?.status === "COMPLETED"){
           alert(t('profile.sendingToMCSD', 'Таны мэдээллийг ҮЦТХТ-рүү илгээж байна. Түр хүлээгээд дахин оролдоно уу.'))
           router.push('/account-setup/fee')
           return
         }
         // Success case: Account is approved
-        if (data.data?.MCSDAccount?.DGStatus === "COMPLETED") {
-          setStatus('success')
-          return
-        }
+        // If accountId exists we already returned; otherwise continue
 
         // Step 1: Fee paid but not sent to MCSD
-        if (data.data?.khanUser?.registrationFee?.status === 'COMPLETED' && !data.data?.MCSDAccount) {
+        if (latestFee?.status === 'COMPLETED' && !accounts.some((a: any) => !!a.MCSDAccountId)) {
        
           setStatus('waiting_submission')
           return
         }
 
-        // Step 2: Sent to MCSD but waiting approval
-        if (data.data?.MCSDAccount && data.data?.MCSDAccount?.DGStatus === "PENDING") {
+        // Step 2: Try updating from backend status endpoint
+        if (!accounts.some((a: any) => !!a.MCSDAccountId)) {
           const mcsdStatus=await getUpdateMCSDStatus(token!)
           console.log("mcsdStatus",mcsdStatus)
           if(mcsdStatus.success){
@@ -144,7 +144,7 @@ export default function AccountOpeningProcess() {
               return
             }
             else{
-              const mcsdIsErrorValue = data.data.MCSDAccount.Status===2
+              const mcsdIsErrorValue = false
               
               console.log("mcsdIsError",mcsdIsErrorValue)
               setMcsdIsError(mcsdIsErrorValue)
@@ -404,7 +404,7 @@ export default function AccountOpeningProcess() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="max-w-2xl min-h-screen mx-auto p-4 sm:p-6 lg:p-8">
       <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
           {t('profile.accountOpeningProcess')}

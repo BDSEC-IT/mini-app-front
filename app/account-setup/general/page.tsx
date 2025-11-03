@@ -457,7 +457,7 @@ export default function GeneralInfoPage() {
             getRegistrationNumber(existingToken),
             getUserAccountInformation(existingToken)
           ]);
-          if(accountRes.data?.MCSDAccount?.DGStatus==="COMPLETED"){
+          if(accountRes.data?.superAppAccounts?.some((a: any) => a.merchantType === 'DIGIPAY' && a.MCSDAccountId)){
             alert(
               "Та аль хэдийн ҮЦТХТ-д данстай байна. Бүртгэл үүсгэх шаардлагагүй"
               )
@@ -482,14 +482,16 @@ export default function GeneralInfoPage() {
             setRegisterNumber(regRes.registerNumber);
             
             // Set name data from account info
-            if (accountRes.success && accountRes.data?.khanUser) {
-              const { firstName, lastName } = accountRes.data.khanUser;
+            if (accountRes.success && accountRes.data?.superAppAccounts) {
+              const accounts = accountRes.data.superAppAccounts;
+              const primary = accounts.find((a: any) => a.registerConfirmed) || accounts[0];
+              const { firstName, lastName } = primary || {} as any;
               setFormData(prev => ({
                 ...prev,
                 firstName,
                 lastName
               }));
-              console.log('[DEBUG] setFormData (from khanUser):', { firstName, lastName });
+              console.log('[DEBUG] setFormData (from superApp):', { firstName, lastName });
             }
           }
           
@@ -548,8 +550,8 @@ export default function GeneralInfoPage() {
               registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber || '',
               childRegisterNumber: existingData.childRegisterNumber || '',
               parentRegisterNumber: existingData.parentRegisterNumber || '',
-              firstName: existingData.FirstName || existingData.firstName || accountRes.data?.khanUser?.firstName || '',
-              lastName: existingData.LastName || existingData.lastName || accountRes.data?.khanUser?.lastName || '',
+              firstName: existingData.FirstName || existingData.firstName || ((accountRes.data?.superAppAccounts || []).find((a: any) => a.registerConfirmed) || accountRes.data?.superAppAccounts?.[0])?.firstName || '',
+              lastName: existingData.LastName || existingData.lastName || ((accountRes.data?.superAppAccounts || []).find((a: any) => a.registerConfirmed) || accountRes.data?.superAppAccounts?.[0])?.lastName || '',
               phoneNumber: existingData.MobilePhone || existingData.phoneNumber || '',
               homePhone: existingData.HomePhone || existingData.homePhone || '',
               gender: existingData.Gender || existingData.gender || '',
@@ -562,15 +564,16 @@ export default function GeneralInfoPage() {
               countryCode: existingData.Country || existingData.countryCode || nationality
             };
             setFormData(mappedData);
-            existingData.data.invoiceStatus=accountRes.data?.khanUser?.registrationFee?.status==="COMPLETED"?"PAID":"PENDING"
-            if(accountRes.data?.MCSDAccount?.DGStatus==="COMPLETED"){
+            const paidFee = !!accountRes.data?.superAppAccounts?.some((a: any) => a?.registrationFees?.some((f: any) => f?.status === 'COMPLETED'));
+            existingData.data.invoiceStatus = paidFee ? 'PAID' : 'PENDING'
+            if(accountRes.data?.superAppAccounts?.some((a: any) => a.merchantType === 'DIGIPAY' && a.MCSDAccountId)){
             alert(
             "Та аль хэдийн ҮЦТХТ-д данстай байна. Бүртгэл үүсгэх шаардлагагүй"
             )
             router.push('/')
             return
             }
-              existingData.data.isMCSDUsed=accountRes.data?.MCSDAccount?.DGStatus==="COMPLETED"
+              existingData.data.isMCSDUsed=accountRes.data?.superAppAccounts?.some((a: any) => a.merchantType === 'DIGIPAY' && a.MCSDAccountId)
           
             setSummaryData(existingData);
             setViewMode('summary');
@@ -582,8 +585,8 @@ export default function GeneralInfoPage() {
               registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber || '',
               childRegisterNumber: existingData.childRegisterNumber || '',
               parentRegisterNumber: existingData.parentRegisterNumber || '',
-              firstName: existingData.FirstName || existingData.firstName || accountRes.data?.khanUser?.firstName || '',
-              lastName: existingData.LastName || existingData.lastName || accountRes.data?.khanUser?.lastName || '',
+              firstName: existingData.FirstName || existingData.firstName || ((accountRes.data?.superAppAccounts || []).find((a: any) => a.registerConfirmed) || accountRes.data?.superAppAccounts?.[0])?.firstName || '',
+              lastName: existingData.LastName || existingData.lastName || ((accountRes.data?.superAppAccounts || []).find((a: any) => a.registerConfirmed) || accountRes.data?.superAppAccounts?.[0])?.lastName || '',
               phoneNumber: existingData.MobilePhone || existingData.phoneNumber || '',
               homePhone: existingData.HomePhone || existingData.homePhone || '',
               gender: existingData.Gender || existingData.gender || '',
@@ -608,14 +611,16 @@ export default function GeneralInfoPage() {
             }
             
             // Set initial form data with name from account info
-            if (accountRes.success && accountRes.data?.khanUser) {
-              const { firstName, lastName } = accountRes.data.khanUser;
+            if (accountRes.success && accountRes.data?.superAppAccounts) {
+              const accounts2 = accountRes.data.superAppAccounts;
+              const primary2 = accounts2.find((a: any) => a.registerConfirmed) || accounts2[0];
+              const { firstName, lastName } = primary2 || {} as any;
               setFormData(prev => ({
                 ...prev,
                 firstName,
                 lastName
               }));
-              console.log('[DEBUG] setFormData (from khanUser):', { firstName, lastName });
+              console.log('[DEBUG] setFormData (from superApp):', { firstName, lastName });
             }
             
             setViewMode('form');
@@ -910,7 +915,7 @@ export default function GeneralInfoPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 pb-24">
+    <div className=" min-h-screen max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 pb-24">
       <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
           {t('profile.accountSetupGeneral')}

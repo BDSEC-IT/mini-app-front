@@ -45,7 +45,7 @@ const BottomNavigation = () => {
     checkAccountStatus()
   }, [])
   
-  const accountOpened = accountInfo?.MCSDAccount && accountInfo.MCSDAccount.DGStatus === 'COMPLETED';
+  const accountOpened = !!accountInfo?.superAppAccounts?.some((a: any) => !!a.MCSDAccountId);
 
   const handleMenuClick = (e: React.MouseEvent, type: 'balance' | 'portfolio' | 'news' | 'exchange') => {
     if (!isLoggedIn || !accountOpened) {

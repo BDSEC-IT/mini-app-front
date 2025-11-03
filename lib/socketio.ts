@@ -9,6 +9,7 @@
  */
 
 import { io, Socket } from 'socket.io-client';
+import { BASE_URL } from './api';
 
 export interface SocketConnectionStatus {
   success: boolean;
@@ -36,7 +37,8 @@ class SocketIOService {
   } = {}
 
   constructor() {
-    this.baseUrl = 'https://miniapp.bdsec.mn/apitest'
+    // this.baseUrl = 'https://miniapp.bdsec.mn/apitest'
+    this.baseUrl = BASE_URL
     // Socket.IO server - use base domain with /apitest/socket path
     this.socketUrl = 'https://miniapp.bdsec.mn'
   }

@@ -44,7 +44,7 @@ class WebSocketService {
   } = {}
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest'
+    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apites'
   }
 
   // Try different WebSocket endpoint paths
