@@ -295,9 +295,8 @@ const DashboardContent = () => {
       try {
         const accountInfo = await getUserAccountInformation(token);
         if (accountInfo.success && accountInfo.data) {
-          // Check if user has MCSD account with COMPLETED status
-          const hasActiveAccount = accountInfo.data.MCSDAccount &&
-                                   accountInfo.data.MCSDAccount.DGStatus === 'COMPLETED';
+          // Check across all super app accounts: trading allowed if any has an MCSDAccountId
+          const hasActiveAccount = !!accountInfo.data.superAppAccounts?.some((a: any) => !!a.MCSDAccountId);
           setCanTrade(hasActiveAccount);
         }
       } catch (error) {

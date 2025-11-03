@@ -298,9 +298,10 @@ export default function Exchange() {
       console.log('Account information API result:', result);
       
       if (result.success && result.data) {
-        const feeEquityValue = result.data.FeeEquity || '1';
+        // Backend no longer returns FeeEquity here; default to 1%
+        const feeEquityValue = '1';
         setFeeEquity(feeEquityValue);
-        console.log('Set fee equity to:', feeEquityValue);
+        console.log('Set fee equity to default:', feeEquityValue);
       }
     } catch (error) {
       console.error('Error fetching fee information:', error);

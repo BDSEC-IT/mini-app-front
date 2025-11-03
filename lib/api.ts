@@ -1,8 +1,7 @@
 import { AccountSetupFormData, mongolianBanks } from './schemas';
 
 // API base URL
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4040/apitest';
-// export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
 export const BDSEC_MAIN =  'https://new.bdsec.mn'
 
 // Bank codes for Mongolia

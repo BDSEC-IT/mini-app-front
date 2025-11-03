@@ -8,6 +8,12 @@ RUN addgroup -S app && adduser -S app -G app
 
 WORKDIR /app
 
+# Build-time public environment variables (provided via --build-arg)
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_BASE_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
+
 # Copy only the package files first (better caching)
 COPY package*.json ./
 
