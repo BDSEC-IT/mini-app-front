@@ -1,5 +1,7 @@
-import { BarChart3 } from 'lucide-react'
+import { BarChart3, FileText, ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useState, useEffect } from 'react'
+import { fetchMSEReport, type MSEReportData, type MSEReportRow } from '@/lib/api'
 
 interface StockDetailsProps {
   selectedSymbol: string
@@ -9,6 +11,88 @@ interface StockDetailsProps {
 
 export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetailsProps) => {
   const { t } = useTranslation()
+  const [selectedYear, setSelectedYear] = useState('2023')
+  const [selectedQuarter, setSelectedQuarter] = useState('2')
+  const [reportData, setReportData] = useState<MSEReportData | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showFinancials, setShowFinancials] = useState(false)
+
+  // Generate year options (last 5 years)
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
+  const quarters = ['1', '2', '3', '4']
+
+  // Fetch report when company code, year, or quarter changes
+  useEffect(() => {
+    if (details?.companycode && showFinancials) {
+      fetchReport()
+    }
+  }, [details?.companycode, selectedYear, selectedQuarter, showFinancials])
+
+  const fetchReport = async () => {
+    if (!details?.companycode) return
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetchMSEReport(details.companycode, selectedYear, selectedQuarter)
+      if (response.success) {
+        setReportData(response.data)
+      } else {
+        setError('Санхүүгийн тайлан олдсонгүй')
+      }
+    } catch (err) {
+      setError('Санхүүгийн тайлан татахад алдаа гарлаа')
+      console.error('Error fetching MSE report:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const renderFinancialTable = (data: MSEReportRow[], title: string) => {
+    if (!data || data.length === 0) return null
+
+    return (
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold mb-3 text-gray-900 dark:text-white">{title}</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-gray-100 dark:bg-gray-800">
+              {data.filter(row => row.type === 'header').map((header, idx) => (
+                <tr key={idx}>
+                  <th className="px-2 py-2 text-left font-medium text-gray-600 dark:text-gray-300 w-12">{header.data.number}</th>
+                  <th className="px-2 py-2 text-left font-medium text-gray-600 dark:text-gray-300">{header.data.indicator}</th>
+                  <th className="px-2 py-2 text-right font-medium text-gray-600 dark:text-gray-300">{header.data.initialBalance}</th>
+                  <th className="px-2 py-2 text-right font-medium text-gray-600 dark:text-gray-300">{header.data.finalBalance}</th>
+                </tr>
+              ))}
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {data.filter(row => row.type === 'data').map((row, idx) => {
+                const isSubtotal = row.data.indicator.includes('дүн') || row.data.indicator.includes('ХӨРӨНГӨ') || row.data.indicator.includes('ӨР ТӨЛБӨР')
+                return (
+                  <tr key={idx} className={`${isSubtotal ? 'bg-gray-50 dark:bg-gray-800 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                    <td className="px-2 py-2 text-gray-600 dark:text-gray-400">{row.data.number}</td>
+                    <td className="px-2 py-2 text-gray-900 dark:text-white">{row.data.indicator}</td>
+                    <td className="px-2 py-2 text-right tabular-nums text-gray-900 dark:text-white">
+                      {row.data.initialBalance ? parseFloat(row.data.initialBalance).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '-'}
+                    </td>
+                    <td className="px-2 py-2 text-right tabular-nums text-gray-900 dark:text-white">
+                      {row.data.finalBalance && !row.data.finalBalance.includes('/') && !row.data.finalBalance.includes('...') 
+                        ? parseFloat(row.data.finalBalance).toLocaleString(undefined, { maximumFractionDigits: 2 }) 
+                        : row.data.finalBalance || '-'}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
 
   if (!details) {
     return <div>Loading...</div>
@@ -21,7 +105,7 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
         {infoLabel || t('dashboard.stockDetails')} - {selectedSymbol.split('-')[0]}
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="overflow-hidden">
           <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
             <div className="flex justify-between items-center p-3">
@@ -45,17 +129,95 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
                 {parseInt(details.issued_shares, 10).toLocaleString('en-US')}
               </span>
             </div>
-            {/* <div className="flex justify-between items-center p-3">
-              <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.listedShares')}:</span>
-              <span className="text-xs sm:text-sm font-medium">{details.outstanding_shares}</span>
-            </div> */}
-            {/* <div className="flex justify-between items-center p-3">
-              <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.listingDate')}:</span>
-              <span className="text-xs sm:text-sm font-medium">{details.changedate}</span>
-            </div> */}
           </div>
         </div>
       </div>
+
+      {/* Financial Reports Section */}
+      {details.companycode && (
+        <div className="mt-6">
+          <button
+            onClick={() => setShowFinancials(!showFinancials)}
+            className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+            <div className="flex items-center">
+              <FileText size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
+              <span className="text-sm font-medium">Санхүүгийн тайлан</span>
+            </div>
+            <ChevronDown 
+              size={18} 
+              className={`transition-transform ${showFinancials ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {showFinancials && (
+            <div className="mt-4 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+              {/* Period Selection */}
+              <div className="flex flex-wrap gap-3 mb-4">
+                <div className="flex-1 min-w-[120px]">
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Он</label>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  >
+                    {years.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1 min-w-[120px]">
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Улирал</label>
+                  <select
+                    value={selectedQuarter}
+                    onChange={(e) => setSelectedQuarter(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  >
+                    {quarters.map(quarter => (
+                      <option key={quarter} value={quarter}>{quarter}-р улирал</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Report Content */}
+              {loading && (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bdsec dark:border-indigo-500"></div>
+                </div>
+              )}
+
+              {error && (
+                <div className="text-center py-8 text-sm text-red-500">{error}</div>
+              )}
+
+              {reportData && !loading && !error && (
+                <div>
+                  {/* Company Info */}
+                  <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{reportData.companyInfo.companyName}</h3>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      Регистр: {reportData.companyInfo.registryNumber}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      {reportData.currency}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      {selectedYear} оны {selectedQuarter}-р улирал
+                    </p>
+                  </div>
+
+                  {/* Balance Sheet */}
+                  {renderFinancialTable(reportData.balanceData, 'Баланс')}
+
+                  {/* Income Statement */}
+                  {renderFinancialTable(reportData.incomeData, 'Орлогын тайлан')}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

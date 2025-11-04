@@ -175,7 +175,11 @@ const getStockCategory = (stock: StockData): string => {
   if (stock.securityType === 'IABS') {
     return 'IABS';
   }
+  if(stock.securityType === 'BOND' || stock.securityType === 'TBOND'){
+    return 'BOND';
+  }
 
+  // console.log(stock);
   if (!stock.MarketSegmentID) return '';
 
   // Case-insensitive check with string comparison
@@ -203,7 +207,7 @@ const getStockCategory = (stock: StockData): string => {
   }
   else if (segment === 'MAIN' || segment === 'MAIN MARKET' || segment.includes('MAIN')) {
     // MAIN market segment - treat as category I by default
-    return 'I';
+    return 'BOND';
   }
   else if (segment === 'N/A' || segment === 'NA' || segment === '' || segment === 'NULL') {
     // Unknown/undefined market segment - treat as category I by default

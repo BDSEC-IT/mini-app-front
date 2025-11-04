@@ -2974,6 +2974,65 @@ export const updateCSDAgreement = async (accNumber: string, token: string): Prom
   }
 };
 
+// MSE Financial Report Types
+export interface MSEReportRow {
+  type: 'header' | 'data';
+  rowNumber?: number;
+  data: {
+    number: string;
+    indicator: string;
+    initialBalance: string;
+    finalBalance: string;
+  };
+}
+
+export interface MSEReportData {
+  companyInfo: {
+    companyName: string;
+    registryNumber: string;
+  };
+  currency: string;
+  balanceData: MSEReportRow[];
+  incomeData: MSEReportRow[];
+  companyCode: string;
+  year: string;
+  quarter: string;
+}
+
+export interface MSEReportResponse {
+  success: boolean;
+  message: string;
+  data: MSEReportData;
+}
+
+// Fetch MSE Financial Report
+export const fetchMSEReport = async (
+  companyCode: string,
+  year: string,
+  quarter: string
+): Promise<MSEReportResponse> => {
+  const url = `${BASE_URL}/helper/mse-report?companyCode=${companyCode}&year=${year}&quarter=${quarter}`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching MSE report:', error);
+    throw error;
+  }
+};
+
 export type { 
   StockData, 
   ApiResponse, 
