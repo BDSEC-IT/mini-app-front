@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Search, ChevronDown } from 'lucide-react'
 import { TradingViewChart } from '../ui/TradingViewChart'
 import { useTheme } from '@/contexts/ThemeContext'
-import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, getUserAccountInformation, type OrderBookEntry, type StockData, BASE_URL } from '@/lib/api'
+import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, getUserAccountInformation, hasActiveMCSDAccount, type OrderBookEntry, type StockData, BASE_URL } from '@/lib/api'
 import socketIOService from '@/lib/socketio'
 import { StockHeader } from './dashboard/StockHeader'
 import { OrderBook } from './dashboard/OrderBook'
@@ -295,8 +295,8 @@ const DashboardContent = () => {
       try {
         const accountInfo = await getUserAccountInformation(token);
         if (accountInfo.success && accountInfo.data) {
-          // Check across all super app accounts: trading allowed if any has an MCSDAccountId
-          const hasActiveAccount = !!accountInfo.data.superAppAccounts?.some((a: any) => !!a.MCSDAccountId);
+          // CRITICAL: Trading allowed only if MCSDAccount exists and DGStatus === 'COMPLETED'
+          const hasActiveAccount = hasActiveMCSDAccount(accountInfo.data);
           setCanTrade(hasActiveAccount);
         }
       } catch (error) {

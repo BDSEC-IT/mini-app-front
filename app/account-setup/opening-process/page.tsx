@@ -95,45 +95,42 @@ export default function AccountOpeningProcess() {
       try {
         const data = await getUserAccountInformation(token)
         console.log('Fetched Account Data:', data)
-        console.log('MCSD Accounts:', data.data?.superAppAccounts)
+        console.log('MCSD Account:', data.data?.superAppAccount)
         setAccountData(data.data)
-        const accounts = data.data?.superAppAccounts || [];
-        const primary = accounts.find((a: any) => a.registerConfirmed) || accounts[0];
-        const latestFee = primary?.registrationFees?.[0];
-        if (!primary || !primary?.registrationFees || primary.registrationFees.length === 0) {
+        const acc = data.data?.superAppAccount;
+        const latestFee = acc?.registrationFee;
+        
+        // Only redirect to general if no fee payment exists at all
+        if (!acc || !latestFee) {
           router.replace('/account-setup/general')
           return
         }
-        if(accounts.some((a: any) => !!a.MCSDAccountId)){
+        
+        // CRITICAL: Only redirect if account is COMPLETED (not just exists)
+        // If fee is paid but account not completed, stay on this page and show status
+        if(acc.MCSDAccount?.DGStatus === 'COMPLETED'){
           window.alert(t('profile.accountCreatedSuccess', 'Таны данс амжилттай үүссэн байна'))
           router.push('/')
           return
         }
 
         // ҮЦТХТ-д илгээгдэлгүй алдаа заасан
-        if (!accounts.some((a: any) => !!a.MCSDAccountId) && latestFee?.mcsdError ) {
-          
+        if (!acc.MCSDAccountId && latestFee?.mcsdError ) {
           setStatus('error')
           setErrorMessage(latestFee.mcsdError || t('common.error.generic'))
           return
         }
-        if(!accounts.some((a: any) => !!a.MCSDAccountId) && latestFee?.status === "COMPLETED"){
-          alert(t('profile.sendingToMCSD', 'Таны мэдээллийг ҮЦТХТ-рүү илгээж байна. Түр хүлээгээд дахин оролдоно уу.'))
-          router.push('/account-setup/fee')
-          return
-        }
-        // Success case: Account is approved
-        // If accountId exists we already returned; otherwise continue
-
-        // Step 1: Fee paid but not sent to MCSD
-        if (latestFee?.status === 'COMPLETED' && !accounts.some((a: any) => !!a.MCSDAccountId)) {
-       
+        
+        // Fee paid but account not created yet - show waiting status, don't redirect
+        // This allows user to see the status page with red indicator
+        if(!acc.MCSDAccountId && latestFee?.status === "COMPLETED"){
+          // Don't redirect - let user stay and see the status
           setStatus('waiting_submission')
           return
         }
 
         // Step 2: Try updating from backend status endpoint
-        if (!accounts.some((a: any) => !!a.MCSDAccountId)) {
+        if (!acc.MCSDAccountId) {
           const mcsdStatus=await getUpdateMCSDStatus(token!)
           console.log("mcsdStatus",mcsdStatus)
           if(mcsdStatus.success){

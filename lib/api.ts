@@ -1433,6 +1433,17 @@ interface MCSDStateRequestItem {
   updatedAt: string;
 }
 
+interface MCSDAccountItem {
+  id: number;
+  BDCAccountID: string;
+  BDCAccountNumber: string;
+  RegistryNumber: string;
+  FirstName: string;
+  LastName: string;
+  DGStatus: 'PENDING' | 'COMPLETED';
+  [key: string]: any; // Allow other fields from backend
+}
+
 interface SuperAppAccountItem {
   id: number;
   userId: number;
@@ -1450,12 +1461,13 @@ interface SuperAppAccountItem {
   registerConfirmed: boolean;
   register?: string | null;
   MCSDAccountId?: number | null;
+  MCSDAccount?: MCSDAccountItem | null;
   createdAt: string;
   updatedAt: string;
   kycMethod: 'NONE' | 'MCSD' | 'DIGIPAY' | 'SOCIALPAY' | 'MONPAY';
   kycDate?: string | null;
-  registrationFees: RegistrationFeeItem[];
-  MCSDStateRequest: MCSDStateRequestItem[];
+  registrationFee?: RegistrationFeeItem | null;
+  MCSDStateRequest?: MCSDStateRequestItem | null;
 }
 
 interface UserAccountResponse {
@@ -1467,11 +1479,80 @@ interface UserAccountResponse {
     createdAt: string;
     updatedAt: string;
     username: string | null;
-    superAppAccounts: SuperAppAccountItem[];
+    superAppAccount: SuperAppAccountItem | null;
   } | null;
   statusCode?: number;
   errorCode?: string;
 }
+
+/**
+ * DRY Helper Functions for Account Status Checks
+ * 
+ * These functions centralize all account status logic to avoid repetition.
+ */
+
+/**
+ * Condition 1: Check if user has completed the account setup forms
+ * Returns true if MCSDStateRequest exists with valid data
+ */
+export const hasCompletedForms = (accountData: UserAccountResponse['data']): boolean => {
+  if (!accountData?.superAppAccount) return false;
+  const req: any = accountData.superAppAccount.MCSDStateRequest;
+  return !!(req && typeof req === 'object' && (
+    (req.FirstName && req.LastName) || req.RegistryNumber || req.id
+  ));
+};
+
+/**
+ * Condition 2: Check if user has paid registration fee
+ * Returns true if any registrationFee has status === 'COMPLETED'
+ */
+export const hasPaidRegistrationFee = (accountData: UserAccountResponse['data']): boolean => {
+  if (!accountData?.superAppAccount) return false;
+  return accountData.superAppAccount.registrationFee?.status === 'COMPLETED';
+};
+
+/**
+ * Condition 3: Check if user has an active (COMPLETED) MCSD account
+ * 
+ * CRITICAL: An account is only considered "active" or "opened" if:
+ * 1. MCSDAccount object exists (not just MCSDAccountId)
+ * 2. MCSDAccount.DGStatus === 'COMPLETED'
+ * 
+ * DO NOT use MCSDAccountId alone - it only indicates a relationship exists,
+ * but the account may still be PENDING and not usable for trading.
+ * 
+ * @param accountData - The user account data from getUserAccountInformation
+ * @returns true only if at least one superAppAccount has a COMPLETED MCSD account
+ */
+export const hasActiveMCSDAccount = (accountData: UserAccountResponse['data']): boolean => {
+  if (!accountData?.superAppAccount) return false;
+  return accountData.superAppAccount.MCSDAccount?.DGStatus === 'COMPLETED';
+};
+
+/**
+ * Get MCSD account error message if account exists but is not COMPLETED
+ * Returns the error message from MCSDAccount or registrationFee if available
+ */
+export const getMCSDAccountError = (accountData: UserAccountResponse['data']): string | null => {
+  if (!accountData?.superAppAccount) return null;
+  const acc = accountData.superAppAccount;
+  if (acc.MCSDAccount && acc.MCSDAccount.DGStatus !== 'COMPLETED') {
+    return acc.MCSDAccount.ErrorMessage || 'Account is pending approval';
+  }
+  if (acc.registrationFee?.mcsdError) return acc.registrationFee.mcsdError;
+  return null;
+};
+
+/**
+ * Check if user has MCSD account that is NOT completed (PENDING state)
+ * Used to show error status in UI
+ */
+export const hasPendingMCSDAccount = (accountData: UserAccountResponse['data']): boolean => {
+  if (!accountData?.superAppAccount) return false;
+  const acc = accountData.superAppAccount;
+  return !!(acc.MCSDAccount && acc.MCSDAccount.DGStatus === 'PENDING');
+};
 
 // Get user profile information with enhanced error handling
 export const getUserProfile = async (token?: string): Promise<UserProfileResponse> => {
@@ -1568,32 +1649,30 @@ export const getUserAccountInformation = async (token?: string): Promise<UserAcc
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         username: null,
-        superAppAccounts: [
-          {
-            id: 1,
-            userId: 24,
-            merchantType: 'DIGIPAY',
-            externalUserId: 'MOCK_USER_123',
-            accessToken: null,
-            refreshToken: null,
-            refreshTokenExpiresAt: null,
-            phone: '999999',
-            email: 'mock@example.com',
-            firstName: 'TEST',
-            lastName: 'TEST',
-            firstNameEn: 'TEST',
-            lastNameEn: 'TEST',
-            registerConfirmed: true,
-            register: 'ТЕ03322252',
-            MCSDAccountId: null,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            kycMethod: 'NONE',
-            kycDate: null,
-            registrationFees: [],
-            MCSDStateRequest: []
-          }
-        ]
+        superAppAccount: {
+          id: 1,
+          userId: 24,
+          merchantType: 'DIGIPAY',
+          externalUserId: 'MOCK_USER_123',
+          accessToken: null,
+          refreshToken: null,
+          refreshTokenExpiresAt: null,
+          phone: '999999',
+          email: 'mock@example.com',
+          firstName: 'TEST',
+          lastName: 'TEST',
+          firstNameEn: 'TEST',
+          lastNameEn: 'TEST',
+          registerConfirmed: true,
+          register: 'ТЕ03322252',
+          MCSDAccountId: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          kycMethod: 'NONE',
+          kycDate: null,
+          registrationFee: null,
+          MCSDStateRequest: null
+        }
       }
     }
   }

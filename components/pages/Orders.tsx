@@ -57,10 +57,11 @@ export default function Orders() {
 
     try {
       const result = await getUserAccountInformation(token);
-      if (result.success && result.data?.superAppAccounts) {
-        const accounts = result.data.superAppAccounts;
-        const anyAccountId = accounts.find((a: any) => !!a.MCSDAccountId)?.MCSDAccountId || null;
-        if (anyAccountId) setAccountId(anyAccountId as number);
+      if (result.success && result.data?.superAppAccount) {
+        const acc = result.data.superAppAccount;
+        if (acc.MCSDAccount?.DGStatus === 'COMPLETED' && acc.MCSDAccountId) {
+          setAccountId(acc.MCSDAccountId as number);
+        }
       }
     } catch (error) {
       console.error('Error fetching account info:', error);

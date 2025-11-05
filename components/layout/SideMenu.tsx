@@ -27,7 +27,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from '@/contexts/ThemeContext'
 import LanguageToggle from '../ui/LanguageToggle'
-import { getUserAccountInformation, checkInvoiceStatus, type UserAccountResponse } from '@/lib/api'
+import { getUserAccountInformation, checkInvoiceStatus, hasCompletedForms, hasPaidRegistrationFee, hasActiveMCSDAccount, hasPendingMCSDAccount, getMCSDAccountError, type UserAccountResponse } from '@/lib/api'
 
 interface SideMenuProps {
   isOpen: boolean
@@ -45,6 +45,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   const [feeInfoCompleted, setFeeInfoCompleted] = useState<boolean | null>(null);
   const [hasExistingMcsdAccount, setHasExistingMcsdAccount] = useState(false);
   const [hasPaidFee, setHasPaidFeed] = useState<boolean>(false);
+  const [mcsdError, setMcsdError] = useState<string | null>(null);
   
 
 
@@ -68,37 +69,19 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
       console.log("invoiceRes",invoiceRes)
       if (infoRes.success) setAccountInfo(prev => infoRes.data);
       
-      // Super app accounts (multiple merchants supported)
-      const accounts = infoRes.data?.superAppAccounts || [];
-      const primary = accounts.find((a: any) => a.registerConfirmed) || accounts[0];
+      // Use DRY helper functions for all status checks
+      const formsComplete = hasCompletedForms(infoRes.data);
+      const feePaid = hasPaidRegistrationFee(infoRes.data);
+      const accountActive = hasActiveMCSDAccount(infoRes.data);
+      const accountPending = hasPendingMCSDAccount(infoRes.data);
+      const errorMessage = getMCSDAccountError(infoRes.data);
+      
+      setIsGeneralInfoComplete(prev => formsComplete);
+      setHasPaidFeed(prev => feePaid);
+      setHasExistingMcsdAccount(prev => accountActive);
+      setMcsdError(prev => errorMessage);
 
-      // Check if user already has paid registration fee (from registrationFees)
-      const paidFee = accounts.some((a: any) => a?.registrationFees?.some((f: any) => f?.status === 'COMPLETED'));
-      if (paidFee) {
-        setHasPaidFeed(prev => true);
-      }
-
-      // Check if user already has an existing MCSD account by Id
-      const hasExistingMcsd = !!(infoRes.success && accounts.some((a: any) => !!a.MCSDAccountId));
-      setHasExistingMcsdAccount(prev => hasExistingMcsd);
-      
-      
-      // Enhanced general info completion detection
-      let isGeneralComplete = false;
-      
-      // Check if we have account status data from the nested endpoint (user account info)
-      const mcsdRequest = (primary?.MCSDStateRequest && Array.isArray(primary.MCSDStateRequest) ? primary.MCSDStateRequest[0] : null) as any;
-      const hasNestedAccountData = !!(infoRes.success && mcsdRequest && typeof mcsdRequest === 'object' && (
-        (mcsdRequest.FirstName && mcsdRequest.LastName) ||
-        mcsdRequest.RegistryNumber ||
-        mcsdRequest.id
-      ));
-      
-      isGeneralComplete = hasNestedAccountData;
-      
-      setIsGeneralInfoComplete(prev => isGeneralComplete);
-
-      // Fee completion detection
+      // Fee completion detection from invoice endpoint
       const invoiceStatus = invoiceRes?.data?.status;
       const feeCompleted = invoiceRes.success && invoiceStatus === 'PAID';
       setFeeInfoCompleted(prev => feeCompleted);
@@ -134,7 +117,8 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   ]
   
   // Add Orders menu item for logged-in users with MCSD account
-  const accountOpened = !!accountInfo?.superAppAccounts?.some((a: any) => !!a.MCSDAccountId);
+  // CRITICAL: Only consider account opened if DGStatus === 'COMPLETED'
+  const accountOpened = hasActiveMCSDAccount(accountInfo);
   const advancedMenuItems = accountOpened ? [
     { href: '/exchange', icon: ArrowUpDown, label: 'nav.orders' },
     { href: '/balance', icon: Wallet2, label: 'nav.balance' },
@@ -222,10 +206,28 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
                   <div className="mr-2.5">{renderStatusIcon(hasPaidFee)}</div>
                   <span className="text-sm">{t('profile.accountFee')}</span>
                 </Link>
-                {hasPaidFee && (
+                {/* Third link: Show if fee paid OR if account exists (even if pending) */}
+                {/* Always show if fee is paid, even if account not completed yet - this shows red status */}
+                {(hasPaidFee || hasExistingMcsdAccount || mcsdError) && (
                   <Link href="/account-setup/opening-process" onClick={onClose} className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === '/account-setup/opening-process' ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}> 
-                    <div className="mr-2.5"><CircleDashed size={18} /></div>
+                    <div className="mr-2.5">
+                      {hasExistingMcsdAccount ? (
+                        // Green: Account is COMPLETED
+                        <CircleCheck size={18} className="text-green-500" />
+                      ) : (hasPaidFee && !hasExistingMcsdAccount) || mcsdError ? (
+                        // Red: Fee paid but account not completed, OR has error
+                        <CircleAlert size={18} className="text-red-500" />
+                      ) : (
+                        // Gray: Pending
+                        <CircleDashed size={18} className="text-gray-400" />
+                      )}
+                    </div>
                     <span className="text-sm">{t('profile.accountProcess')}</span>
+                    {(mcsdError || (hasPaidFee && !hasExistingMcsdAccount)) && (
+                      <span className="ml-auto text-xs text-red-500" title={mcsdError || 'Waiting for account activation'}>
+                        ⚠️
+                      </span>
+                    )}
                   </Link>
                 )}
               </li>

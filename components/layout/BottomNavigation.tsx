@@ -6,7 +6,7 @@ import { Home, Wallet, TrendingUp, Building, Lock, Landmark, Newspaper, BarChart
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
-import { getUserAccountInformation, type UserAccountResponse } from '@/lib/api'
+import { getUserAccountInformation, hasActiveMCSDAccount, type UserAccountResponse } from '@/lib/api'
 import Cookies from 'js-cookie'
 
 const BottomNavigation = () => {
@@ -45,7 +45,8 @@ const BottomNavigation = () => {
     checkAccountStatus()
   }, [])
   
-  const accountOpened = !!accountInfo?.superAppAccounts?.some((a: any) => !!a.MCSDAccountId);
+  // CRITICAL: Only consider account opened if DGStatus === 'COMPLETED'
+  const accountOpened = hasActiveMCSDAccount(accountInfo);
 
   const handleMenuClick = (e: React.MouseEvent, type: 'balance' | 'portfolio' | 'news' | 'exchange') => {
     if (!isLoggedIn || !accountOpened) {

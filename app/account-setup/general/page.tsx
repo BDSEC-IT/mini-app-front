@@ -38,6 +38,7 @@ export default function GeneralInfoPage() {
   const [registerInput, setRegisterInput] = useState('');
   const [countries, setCountries] = useState<{ countryCode: string, countryName: string }[]>([]);
   const [banks, setBanks] = useState<{ BankCode: string, BankName: string }[]>([]);
+  const [isFeePaid, setIsFeePaid] = useState(false);
 
   useEffect(() => {
     // Fetch countries
@@ -109,7 +110,7 @@ export default function GeneralInfoPage() {
   }
 
   // Step 2: Adult information
-  const Step2Adult = ({ onNext, onBack, registerNumber, existingData }: { onNext: (data: AdultInfoFormData) => void, onBack: () => void, registerNumber?: string, existingData?: Partial<AdultInfoFormData> }) => {
+  const Step2Adult = ({ onNext, onBack, registerNumber, existingData, isFeePaid }: { onNext: (data: AdultInfoFormData) => void, onBack: () => void, registerNumber?: string, existingData?: Partial<AdultInfoFormData>, isFeePaid: boolean }) => {
     const { t } = useTranslation()
     const searchParams = useSearchParams()
     const nationality = searchParams.get('nationality') || '496'
@@ -124,19 +125,16 @@ export default function GeneralInfoPage() {
         homePhone: existingData?.homePhone || '', 
         gender: existingData?.gender || undefined, 
         birthDate: existingData?.birthDate || '', 
-        occupation: existingData?.occupation || '', 
+        occupation: (existingData as any)?.occupation || '', 
         homeAddress: existingData?.homeAddress || '', 
-        bankCode: existingData?.bankCode || '', 
+        bankCode: (existingData as any)?.bankCode || '', 
         accountNumber: existingData?.accountNumber || '',
-        countryCode: existingData?.countryCode || nationality
+        countryCode: (existingData as any)?.countryCode || nationality
       }
     })
     
     // Debug: Log existingData every time it changes
     useEffect(() => {
-      console.log('[DEBUG] Step2Adult existingData:', existingData);
-      console.log('[DEBUG] Step2Adult existingData keys:', existingData ? Object.keys(existingData) : 'null');
-      console.log('[DEBUG] Step2Adult form values before reset:', methods.getValues());
       if (existingData) {
         methods.reset({
           registerNumber: existingData.registerNumber || registerNumber || '',
@@ -146,13 +144,12 @@ export default function GeneralInfoPage() {
           homePhone: existingData.homePhone || '',
           gender: existingData.gender || undefined,
           birthDate: existingData.birthDate || '',
-          occupation: existingData.occupation || '',
+          occupation: (existingData as any)?.occupation || '',
           homeAddress: existingData.homeAddress || '',
-          bankCode: existingData.bankCode || '',
+          bankCode: (existingData as any)?.bankCode || '',
           accountNumber: existingData.accountNumber || '',
-          countryCode: existingData?.countryCode || nationality
+          countryCode: (existingData as any)?.countryCode || nationality
         });
-        console.log('[DEBUG] Step2Adult form values after reset:', methods.getValues());
       }
     }, [existingData, registerNumber, methods, nationality])
     
@@ -168,7 +165,7 @@ export default function GeneralInfoPage() {
             label={t('profile.registerNumber')} 
             placeholder={nationality === '496' ? 'ӨӨ000000' : t('profile.enterRegisterNumber', 'Enter your register number')} 
             required 
-            disabled={!!registerNumber} 
+            disabled={true} 
           />
           <FormField 
             name="lastName" 
@@ -457,7 +454,9 @@ export default function GeneralInfoPage() {
             getRegistrationNumber(existingToken),
             getUserAccountInformation(existingToken)
           ]);
-          if(accountRes.data?.superAppAccounts?.some((a: any) => a.merchantType === 'DIGIPAY' && a.MCSDAccountId)){
+          // CRITICAL: Check if account is COMPLETED (not just exists)
+          const hasCompleted = accountRes.data?.superAppAccount?.MCSDAccount?.DGStatus === 'COMPLETED';
+          if(hasCompleted){
             alert(
               "Та аль хэдийн ҮЦТХТ-д данстай байна. Бүртгэл үүсгэх шаардлагагүй"
               )
@@ -481,18 +480,29 @@ export default function GeneralInfoPage() {
             setShowRegisterInput(false);
             setRegisterNumber(regRes.registerNumber);
             
-            // Set name data from account info
-            if (accountRes.success && accountRes.data?.superAppAccounts) {
-              const accounts = accountRes.data.superAppAccounts;
-              const primary = accounts.find((a: any) => a.registerConfirmed) || accounts[0];
-              const { firstName, lastName } = primary || {} as any;
-              setFormData(prev => ({
-                ...prev,
-                firstName,
-                lastName
-              }));
-              console.log('[DEBUG] setFormData (from superApp):', { firstName, lastName });
+            // Prefill from account info (superAppAccount and MCSDStateRequest)
+            if (accountRes.success && accountRes.data?.superAppAccount) {
+              const acc = accountRes.data.superAppAccount as any;
+              const req = acc.MCSDStateRequest || {};
+              const prefill = {
+                firstName: acc.firstName || req.FirstName || '',
+                lastName: acc.lastName || req.LastName || '',
+                registerNumber: req.RegistryNumber || '',
+                phoneNumber: req.MobilePhone || '',
+                homePhone: req.HomePhone || '',
+                gender: req.Gender || undefined,
+                birthDate: req.BirthDate || '',
+                occupation: req.Occupation || '',
+                homeAddress: req.HomeAddress || '',
+                bankCode: req.BankCode || '',
+                accountNumber: req.BankAccountNumber || '',
+                countryCode: req.Country || (formData as any)?.countryCode || nationality
+              } as any;
+              setFormData(prev => ({ ...prev, ...prefill }));
+              console.log('[DEBUG] setFormData (from superApp/MCSDStateRequest):', prefill);
             }
+            // fee paid state
+            setIsFeePaid(!!(accountRes.data?.superAppAccount?.registrationFee?.status === 'COMPLETED'))
           }
           
           // Now check account status
@@ -544,36 +554,39 @@ export default function GeneralInfoPage() {
           
           if (hasSubmittedData && isDataComplete) {
             const existingData = statusResponse.data;
+            console.log("accountRes.data?.superAppAccount",accountRes.data?.superAppAccount)
             const mappedData = {
               isAdult: existingData.isAdult || (existingData.CustomerType === 1) || 
                       (existingData.Occupation || existingData.occupation ? true : undefined),
               registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber || '',
               childRegisterNumber: existingData.childRegisterNumber || '',
               parentRegisterNumber: existingData.parentRegisterNumber || '',
-              firstName: existingData.FirstName || existingData.firstName || ((accountRes.data?.superAppAccounts || []).find((a: any) => a.registerConfirmed) || accountRes.data?.superAppAccounts?.[0])?.firstName || '',
-              lastName: existingData.LastName || existingData.lastName || ((accountRes.data?.superAppAccounts || []).find((a: any) => a.registerConfirmed) || accountRes.data?.superAppAccounts?.[0])?.lastName || '',
-              phoneNumber: existingData.MobilePhone || existingData.phoneNumber || '',
-              homePhone: existingData.HomePhone || existingData.homePhone || '',
-              gender: existingData.Gender || existingData.gender || '',
-              birthDate: existingData.BirthDate || existingData.birthDate || '',
-              occupation: existingData.Occupation || existingData.occupation || '',
-              homeAddress: existingData.HomeAddress || existingData.homeAddress || '',
-              bankCode: existingData.BankCode || existingData.bankCode || '',
-              accountNumber: existingData.BankAccountNumber || existingData.bankAccountNumber || existingData.accountNumber || '',
+              firstName: existingData.FirstName || existingData.firstName || accountRes.data?.superAppAccount?.firstName || accountRes.data?.superAppAccount?.MCSDStateRequest?.FirstName || '',
+              lastName: existingData.LastName || existingData.lastName || accountRes.data?.superAppAccount?.lastName || accountRes.data?.superAppAccount?.MCSDStateRequest?.LastName || '',
+              phoneNumber: existingData.MobilePhone || existingData.phoneNumber || accountRes.data?.superAppAccount?.MCSDStateRequest?.MobilePhone || '',
+              homePhone: existingData.HomePhone || existingData.homePhone || accountRes.data?.superAppAccount?.MCSDStateRequest?.HomePhone || '',
+              gender: existingData.Gender || existingData.gender || accountRes.data?.superAppAccount?.MCSDStateRequest?.Gender || '',
+              birthDate: existingData.BirthDate || existingData.birthDate || accountRes.data?.superAppAccount?.MCSDStateRequest?.BirthDate || '',
+              occupation: existingData.Occupation || existingData.occupation || accountRes.data?.superAppAccount?.MCSDStateRequest?.Occupation || '',
+              homeAddress: existingData.HomeAddress || existingData.homeAddress || accountRes.data?.superAppAccount?.MCSDStateRequest?.HomeAddress || '',
+              bankCode: existingData.BankCode || existingData.bankCode || accountRes.data?.superAppAccount?.MCSDStateRequest?.BankCode || '',
+              accountNumber: existingData.BankAccountNumber || existingData.bankAccountNumber || existingData.accountNumber || accountRes.data?.superAppAccount?.MCSDStateRequest?.BankAccountNumber || '',
               customerType: existingData.CustomerType || existingData.customerType || '0',
-              countryCode: existingData.Country || existingData.countryCode || nationality
+              countryCode: existingData.Country || existingData.countryCode || accountRes.data?.superAppAccount?.MCSDStateRequest?.Country || nationality
             };
             setFormData(mappedData);
-            const paidFee = !!accountRes.data?.superAppAccounts?.some((a: any) => a?.registrationFees?.some((f: any) => f?.status === 'COMPLETED'));
+            const paidFee = accountRes.data?.superAppAccount?.registrationFee?.status === 'COMPLETED';
             existingData.data.invoiceStatus = paidFee ? 'PAID' : 'PENDING'
-            if(accountRes.data?.superAppAccounts?.some((a: any) => a.merchantType === 'DIGIPAY' && a.MCSDAccountId)){
+            setIsFeePaid(!!paidFee)
+          const hasCompleted = accountRes.data?.superAppAccount?.MCSDAccount?.DGStatus === 'COMPLETED';
+          if(hasCompleted){
             alert(
             "Та аль хэдийн ҮЦТХТ-д данстай байна. Бүртгэл үүсгэх шаардлагагүй"
             )
             router.push('/')
             return
             }
-              existingData.data.isMCSDUsed=accountRes.data?.superAppAccounts?.some((a: any) => a.merchantType === 'DIGIPAY' && a.MCSDAccountId)
+              existingData.data.isMCSDUsed=!!accountRes.data?.superAppAccount?.MCSDAccountId
           
             setSummaryData(existingData);
             setViewMode('summary');
@@ -585,18 +598,18 @@ export default function GeneralInfoPage() {
               registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber || '',
               childRegisterNumber: existingData.childRegisterNumber || '',
               parentRegisterNumber: existingData.parentRegisterNumber || '',
-              firstName: existingData.FirstName || existingData.firstName || ((accountRes.data?.superAppAccounts || []).find((a: any) => a.registerConfirmed) || accountRes.data?.superAppAccounts?.[0])?.firstName || '',
-              lastName: existingData.LastName || existingData.lastName || ((accountRes.data?.superAppAccounts || []).find((a: any) => a.registerConfirmed) || accountRes.data?.superAppAccounts?.[0])?.lastName || '',
-              phoneNumber: existingData.MobilePhone || existingData.phoneNumber || '',
-              homePhone: existingData.HomePhone || existingData.homePhone || '',
-              gender: existingData.Gender || existingData.gender || '',
-              birthDate: existingData.BirthDate || existingData.birthDate || '',
-              occupation: existingData.Occupation || existingData.occupation || '',
-              homeAddress: existingData.HomeAddress || existingData.homeAddress || '',
-              bankCode: existingData.BankCode || existingData.bankCode || '',
-              accountNumber: existingData.BankAccountNumber || existingData.bankAccountNumber || existingData.accountNumber || '',
+              firstName: existingData.FirstName || existingData.firstName || accountRes.data?.superAppAccount?.firstName || accountRes.data?.superAppAccount?.MCSDStateRequest?.FirstName || '',
+              lastName: existingData.LastName || existingData.lastName || accountRes.data?.superAppAccount?.lastName || accountRes.data?.superAppAccount?.MCSDStateRequest?.LastName || '',
+              phoneNumber: existingData.MobilePhone || existingData.phoneNumber || accountRes.data?.superAppAccount?.MCSDStateRequest?.MobilePhone || '',
+              homePhone: existingData.HomePhone || existingData.homePhone || accountRes.data?.superAppAccount?.MCSDStateRequest?.HomePhone || '',
+              gender: existingData.Gender || existingData.gender || accountRes.data?.superAppAccount?.MCSDStateRequest?.Gender || '',
+              birthDate: existingData.BirthDate || existingData.birthDate || accountRes.data?.superAppAccount?.MCSDStateRequest?.BirthDate || '',
+              occupation: existingData.Occupation || existingData.occupation || accountRes.data?.superAppAccount?.MCSDStateRequest?.Occupation || '',
+              homeAddress: existingData.HomeAddress || existingData.homeAddress || accountRes.data?.superAppAccount?.MCSDStateRequest?.HomeAddress || '',
+              bankCode: existingData.BankCode || existingData.bankCode || accountRes.data?.superAppAccount?.MCSDStateRequest?.BankCode || '',
+              accountNumber: existingData.BankAccountNumber || existingData.bankAccountNumber || existingData.accountNumber || accountRes.data?.superAppAccount?.MCSDStateRequest?.BankAccountNumber || '',
               customerType: existingData.CustomerType || existingData.customerType || '0',
-              countryCode: existingData.Country || existingData.countryCode || nationality
+              countryCode: existingData.Country || existingData.countryCode || accountRes.data?.superAppAccount?.MCSDStateRequest?.Country || nationality
             };
             
             setFormData(mappedData);
@@ -611,10 +624,8 @@ export default function GeneralInfoPage() {
             }
             
             // Set initial form data with name from account info
-            if (accountRes.success && accountRes.data?.superAppAccounts) {
-              const accounts2 = accountRes.data.superAppAccounts;
-              const primary2 = accounts2.find((a: any) => a.registerConfirmed) || accounts2[0];
-              const { firstName, lastName } = primary2 || {} as any;
+            if (accountRes.success && accountRes.data?.superAppAccount) {
+              const { firstName, lastName } = accountRes.data.superAppAccount as any;
               setFormData(prev => ({
                 ...prev,
                 firstName,
@@ -853,9 +864,21 @@ export default function GeneralInfoPage() {
                 }
             }} onPay={handleCreateInvoice} />
         case 'form':
+            if (isFeePaid) {
+              return (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
+                    <p className="text-sm">Төлбөр төлөгдсөн тул таньд мэдээллээ өөрчлөх боломжгүй. Данс нээх үйл явцын мэдээллийг доорх товчоор орж шалгана уу.</p>
+                  </div>
+                  <div className="flex justify-end">
+                    <Link href="/account-setup/opening-process" className="text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">Данс нээх үйл явцыг харах</Link>
+                  </div>
+                </div>
+              )
+            }
             console.log('[DEBUG] Rendering form view, step:', step, 'isAdult:', formData.isAdult);
             if (step === 1) return <Step1 onNext={handleStep1Submit} existingData={formData} />
-            if (step === 2 && formData.isAdult === true) return <Step2Adult onNext={submitAllData} onBack={handleBack} registerNumber={registerNumber || undefined} existingData={formData} />
+            if (step === 2 && formData.isAdult === true) return <Step2Adult onNext={submitAllData} onBack={handleBack} registerNumber={registerNumber || undefined} existingData={formData} isFeePaid={isFeePaid} />
             if (step === 2 && formData.isAdult === false) return <Step2Child onNext={submitAllData} onBack={handleBack} registerNumber={registerNumber || undefined} existingData={formData} />
             // Fallback to step 1 if state is inconsistent
             console.log('[DEBUG] Falling back to Step1');

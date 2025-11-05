@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, ArrowRight, CheckCircle, CreditCard } from 'lucide-react'
 import Cookies from 'js-cookie'
-import { checkInvoiceStatus, createOrRenewInvoice, getAccountStatusRequest } from '@/lib/api'
+import { checkInvoiceStatus, createOrRenewInvoice, getAccountStatusRequest, getUserAccountInformation } from '@/lib/api'
 
 export default function FeePaymentPage() {
   const { t } = useTranslation()
@@ -138,45 +138,29 @@ export default function FeePaymentPage() {
     const checkAccountStatus = async () => {
       const token = Cookies.get('token');
       if (!token) return;
-      const statusResponse = await getAccountStatusRequest(token);
-      if (!statusResponse.success || !statusResponse.data) {
-        alert('Та эхлээд ерөнхий мэдээллээ бүрэн бөглөнө үү.');
-        router.replace('/account-setup/general');
-        return;
-      }
-      const accountData = statusResponse.data;
       
-      // Trust the backend's validation if it exists
-      const backendValidation = (statusResponse.data as any)?.validation;
-      if (backendValidation && backendValidation.isValid === false) {
-        alert('Та эхлээд ерөнхий мэдээллээ бүрэн бөглөнө үү.');
-        router.replace('/account-setup/general');
-        return;
-      }
-      
-      // Fallback validation only if backend doesn't provide validation
-      if (!backendValidation) {
-        const requiredFields = [
-          { pascalCase: 'FirstName', camelCase: 'firstName' },
-          { pascalCase: 'LastName', camelCase: 'lastName' },
-          { pascalCase: 'RegistryNumber', camelCase: 'registryNumber' },
-          { pascalCase: 'MobilePhone', camelCase: 'mobilePhone' },
-          { pascalCase: 'Gender', camelCase: 'gender' },
-          { pascalCase: 'BirthDate', camelCase: 'birthDate' },
-          { pascalCase: 'HomeAddress', camelCase: 'homeAddress' },
-          { pascalCase: 'BankCode', camelCase: 'bankCode' },
-          { pascalCase: 'BankAccountNumber', camelCase: 'bankAccountNumber' },
-          { pascalCase: 'Country', camelCase: 'country' }
-        ];
-        const missingFields = requiredFields.filter(field => {
-          const pascalValue = accountData[field.pascalCase];
-          const camelValue = accountData[field.camelCase];
-          const value = pascalValue !== undefined ? pascalValue : camelValue;
-          return value === null || value === undefined || value === '';
-        });
-        if (missingFields.length > 0) {
+      // Check account info first - if forms are completed, allow access
+      const accountInfo = await getUserAccountInformation(token);
+      if (accountInfo.success && accountInfo.data) {
+        const acc = accountInfo.data.superAppAccount;
+        const hasMCSDStateRequest = acc?.MCSDStateRequest;
+        
+        // If forms are completed (has MCSDStateRequest), allow access to fee page
+        if (hasMCSDStateRequest && (hasMCSDStateRequest.FirstName || hasMCSDStateRequest.RegistryNumber || hasMCSDStateRequest.id)) {
+          // Forms are complete, continue to check invoice status
+        } else {
+          // Forms not complete, redirect to general
           alert('Та эхлээд ерөнхий мэдээллээ бүрэн бөглөнө үү.');
           router.replace('/account-setup/general');
+          return;
+        }
+      } else {
+        // No account info, check via status request as fallback
+        const statusResponse = await getAccountStatusRequest(token);
+        if (!statusResponse.success || !statusResponse.data) {
+          alert('Та эхлээд ерөнхий мэдээллээ бүрэн бөглөнө үү.');
+          router.replace('/account-setup/general');
+          return;
         }
       }
       const userData=await checkInvoiceStatus(token)

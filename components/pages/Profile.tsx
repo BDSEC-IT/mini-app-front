@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { getUserAccountInformation, getAccountStatusRequest, checkInvoiceStatus, type UserAccountResponse } from '@/lib/api'
+import { getUserAccountInformation, getAccountStatusRequest, checkInvoiceStatus, hasActiveMCSDAccount, type UserAccountResponse } from '@/lib/api'
 import { User, X, Mail, Phone, Flag, Calendar, AlertTriangle, CheckCircle, XCircle, CreditCard, Clock, RefreshCw } from 'lucide-react'
 import Cookies from 'js-cookie'
 import Link from 'next/link'
@@ -94,7 +94,7 @@ const Profile = () => {
     )
   }
 
-  if (!accountInfo || !accountInfo.superAppAccounts || accountInfo.superAppAccounts.length === 0) {
+  if (!accountInfo || !accountInfo.superAppAccount) {
     return (
       <div className="text-center py-10">
         <p>{t('profile.noProfileFound')}</p>
@@ -102,9 +102,9 @@ const Profile = () => {
     )
   }
 
-  const accounts = accountInfo.superAppAccounts || [];
-  const primary = accounts.find((a: any) => a.registerConfirmed) || accounts[0];
-  const hasMcsdAccount = accounts.some((a: any) => !!a.MCSDAccountId);
+  const primary = accountInfo.superAppAccount;
+  // CRITICAL: Only consider account active if DGStatus === 'COMPLETED'
+  const hasMcsdAccount = hasActiveMCSDAccount(accountInfo);
   const hasActiveMcsdAccount = hasMcsdAccount;
 
   // Simplified completion checks - only use backend API data
@@ -121,8 +121,8 @@ const Profile = () => {
       accountStatusData.id // Has account status record ID
     );
     
-    // Check if we have account data from the nested structure (from superAppAccounts[].MCSDStateRequest)
-    const mcsdRequest = (primary?.MCSDStateRequest && Array.isArray(primary.MCSDStateRequest) ? primary.MCSDStateRequest[0] : null) as any;
+    // Check if we have account data from the nested structure (from superAppAccount.MCSDStateRequest)
+    const mcsdRequest = primary?.MCSDStateRequest as any;
     const hasNestedAccountData = mcsdRequest && typeof mcsdRequest === 'object' && (
       (mcsdRequest.FirstName && mcsdRequest.LastName) ||
       mcsdRequest.RegistryNumber ||
