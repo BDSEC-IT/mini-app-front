@@ -743,7 +743,7 @@ const DashboardContent = () => {
             chartInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
         >
-          <div className="h-[400px] sm:h-[400px] md:h-[420px] lg:h-[440px] rounded-md bg-transparent">
+          <div className="h-[400px] sm:h-[400px] md:h-[420px] lg:h-[440px] rounded-md bg-transparent mb-6 md:mb-8">
             <div className="relative w-full h-full  ">
               {displayStockData && (
                 <TradingViewChart 
@@ -846,7 +846,7 @@ const DashboardContent = () => {
       
       )}
     
-      <div ref={orderBookRef}>
+      <div ref={orderBookRef} className="relative mt-6 md:mt-10 lg:mt-12">
         <OrderBook
           selectedSymbol={selectedSymbol}
           loading={orderBookLoading}

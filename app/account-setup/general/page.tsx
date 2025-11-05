@@ -163,7 +163,7 @@ export default function GeneralInfoPage() {
           <FormField 
             name="registerNumber" 
             label={t('profile.registerNumber')} 
-            placeholder={nationality === '496' ? 'ӨӨ000000' : t('profile.enterRegisterNumber', 'Enter your register number')} 
+            placeholder={nationality === '496' ? 'AX01234567' : t('profile.enterRegisterNumber', 'Enter your register number')} 
             required 
             disabled={true} 
           />
@@ -283,8 +283,8 @@ export default function GeneralInfoPage() {
     return (
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onNext)} className="space-y-6">
-          <FormField name="childRegisterNumber" label={t('profile.childRegisterNumber')} placeholder={nationality === '496' ? 'ӨӨ000000' : t('profile.enterRegisterNumber', 'Enter your register number')} required disabled={!!registerNumber} />
-          <FormField name="parentRegisterNumber" label={t('profile.parentRegisterNumber')} placeholder={nationality === '496' ? 'ӨӨ000000' : t('profile.enterRegisterNumber', 'Enter your register number')} required />
+          <FormField name="childRegisterNumber" label={t('profile.childRegisterNumber')} placeholder={nationality === '496' ? 'AX01234567' : t('profile.enterRegisterNumber', 'Enter your register number')} required disabled={!!registerNumber} />
+          <FormField name="parentRegisterNumber" label={t('profile.parentRegisterNumber')} placeholder={nationality === '496' ? 'AX01234567' : t('profile.enterRegisterNumber', 'Enter your register number')} required />
           <FormField name="lastName" label={t('profile.lastName')} placeholder={t('profile.enterLastName')} required />
           <FormField name="firstName" label={t('profile.firstName')} placeholder={t('profile.enterFirstName')} required />
           <div className="mb-4">
@@ -921,7 +921,7 @@ export default function GeneralInfoPage() {
             <input
               id="registerNumber"
               type="text"
-              placeholder={nationality === '496' ? 'ӨӨ000000' : t('profile.enterRegisterNumber', 'Enter your register number')}
+              placeholder={nationality === '496' ? 'AX01234567' : t('profile.enterRegisterNumber', 'Enter your register number')}
               required
               value={registerInput}
               onChange={e => setRegisterInput(e.target.value)}

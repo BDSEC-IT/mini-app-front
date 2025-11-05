@@ -21,7 +21,7 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
   // Generate year options (last 5 years)
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
-  const quarters = ['1', '2', '3', '4']
+  const quarters = [ '2',  '4']
 
   // Fetch report when company code, year, or quarter changes
   useEffect(() => {
@@ -44,7 +44,7 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
         setError('Санхүүгийн тайлан олдсонгүй')
       }
     } catch (err) {
-      setError('Санхүүгийн тайлан татахад алдаа гарлаа')
+      setError('Санхүүгийн тайлан олдсонгүй')
       console.error('Error fetching MSE report:', err)
     } finally {
       setLoading(false)
@@ -174,7 +174,9 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
                     className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   >
                     {quarters.map(quarter => (
-                      <option key={quarter} value={quarter}>{quarter}-р улирал</option>
+                      <option key={quarter} value={quarter}>
+                        {quarter === '2' ? '1-р хагас жил' : quarter === '4' ? '2-р хагас жил' : `${quarter}`}
+                      </option>
                     ))}
                   </select>
                 </div>

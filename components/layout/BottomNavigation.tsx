@@ -24,6 +24,7 @@ const BottomNavigation = () => {
   const [accountInfo, setAccountInfo] = useState<UserAccountResponse['data'] | null>(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [safeInsetBottom, setSafeInsetBottom] = useState<number>(0)
   const [showTooltip, setShowTooltip] = useState<'balance' | 'portfolio' | 'news' | 'exchange' | null>(null)
   
   useEffect(() => {
@@ -43,6 +44,28 @@ const BottomNavigation = () => {
       setIsLoading(false)
     }
     checkAccountStatus()
+  }, [])
+
+  // Freeze safe-area inset bottom on mount to prevent bouncing on iOS/SuperApp webviews
+  useEffect(() => {
+    const measureInset = () => {
+      try {
+        const el = document.createElement('div')
+        el.style.cssText = 'position:fixed;pointer-events:none;visibility:hidden;padding-bottom:env(safe-area-inset-bottom);'
+        document.body.appendChild(el)
+        const val = parseFloat(getComputedStyle(el).paddingBottom || '0') || 0
+        document.body.removeChild(el)
+        // Clamp to reasonable range
+        setSafeInsetBottom(Math.max(0, Math.min(40, val)))
+      } catch (_) {
+        setSafeInsetBottom(0)
+      }
+    }
+    measureInset()
+    // Recompute only on orientation change which genuinely alters inset
+    const onOrient = () => measureInset()
+    window.addEventListener('orientationchange', onOrient)
+    return () => window.removeEventListener('orientationchange', onOrient)
   }, [])
   
   // CRITICAL: Only consider account opened if DGStatus === 'COMPLETED'
@@ -181,7 +204,7 @@ const BottomNavigation = () => {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-none" style={{ paddingBottom: 'env(safe-area-inset-bottom)', minHeight: BAR_H }}>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-none will-change-transform" style={{ paddingBottom: `${safeInsetBottom}px`, minHeight: BAR_H, transform: 'translateZ(0)' }}>
       <div className="relative" style={{ height: BAR_H }}>
         {pathname === '/exchange' ? (
           // Simple flat background for exchange page

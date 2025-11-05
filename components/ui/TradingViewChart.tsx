@@ -468,7 +468,7 @@ export function TradingViewChart({
         />
       </div>
       <div className="h-[50px] flex justify-center items-center border-t border-gray-200 dark:border-gray-700 border-opacity-70 pt-2 pb-2 rounded-md mt-2">
-        <div className="flex justify-center items-center gap-2 sm:gap-2">
+   <div className="flex justify-center items-center gap-2 sm:gap-2 relative z-10 overflow-visible w-full py-2">
           {[
             { id: '1M', label: '1M' },
             { id: '3M', label: '3M' },

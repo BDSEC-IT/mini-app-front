@@ -94,14 +94,14 @@ export default function AccountOpeningProcess() {
     const fetchData = async () => {
       try {
         const data = await getUserAccountInformation(token)
-        console.log('Fetched Account Data:', data)
-        console.log('MCSD Account:', data.data?.superAppAccount)
         setAccountData(data.data)
         const acc = data.data?.superAppAccount;
         const latestFee = acc?.registrationFee;
+        const hasForm = !!acc?.MCSDStateRequest;
+        const feePaid = (latestFee?.status || '').toUpperCase() === 'COMPLETED';
         
-        // Only redirect to general if no fee payment exists at all
-        if (!acc || !latestFee) {
+        // Only redirect to general if neither form nor fee exists
+        if (!acc) {
           router.replace('/account-setup/general')
           return
         }
@@ -114,8 +114,8 @@ export default function AccountOpeningProcess() {
           return
         }
 
-        // ҮЦТХТ-д илгээгдэлгүй алдаа заасан
-        if (!acc.MCSDAccountId && latestFee?.mcsdError ) {
+        // Registration process error from fee (e.g., duplicated RegistryNumber)
+        if (latestFee?.mcsdError) {
           setStatus('error')
           setErrorMessage(latestFee.mcsdError || t('common.error.generic'))
           return
@@ -132,7 +132,6 @@ export default function AccountOpeningProcess() {
         // Step 2: Try updating from backend status endpoint
         if (!acc.MCSDAccountId) {
           const mcsdStatus=await getUpdateMCSDStatus(token!)
-          console.log("mcsdStatus",mcsdStatus)
           if(mcsdStatus.success){
             if(mcsdStatus.accountOpened){
             setStatus('success')
@@ -142,26 +141,22 @@ export default function AccountOpeningProcess() {
             }
             else{
               const mcsdIsErrorValue = false
-              
-              console.log("mcsdIsError",mcsdIsErrorValue)
               setMcsdIsError(mcsdIsErrorValue)
-              // alert(mcsdStatus.message)
               setStatus('waiting_approval')
               return
             }
           }
           else{
-
             alert(mcsdStatus.message)
             router.push('/account-setup/general')
             return
-            // setStatus('error')
           }
           return
         }
      
 
-        router.replace('/account-setup/general')
+        // Fallback: stay and show current status
+        setStatus('waiting_approval')
       } catch (error) {
         console.error('Error fetching account status:', error)
         setStatus('error')
@@ -269,7 +264,7 @@ export default function AccountOpeningProcess() {
         //1. Registry number is duplicated. Add an quickform to change the registry number
         //2. BDCId and BDCAcc is duplicated. We already tried 10times of sending it. so for now it is a dead-end we can't fix. Please manually check it.
       case 'error':
-       {const ResponseMessage=accountData?.khanUser?.registrationFee?.mcsdError
+       {const ResponseMessage=accountData?.superAppAccount?.registrationFee?.mcsdError || errorMessage || ''
         const match = ResponseMessage.match(/"([A-Za-z]+)"/);
         const isRegistryError=(match&&match[1]==="RegistryNumber")
         let regId = null
@@ -290,7 +285,7 @@ export default function AccountOpeningProcess() {
                   {isRegistryError&&regId ? `${regId} дугаартай регистер өмнө нь илгээгдсэн байна.` : t('profile.accountOpeningError')}
                 </h3>
                 <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-                  {errorMessage || t('common.error.generic')}
+                  {ResponseMessage || t('common.error.generic')}
                 </p>
                 <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>{isRegistryError&&regId ? `${regId} дугаартай регистер өмнө нь илгээгдсэн байна. Та регистрийн дугаараа зөв оруулсан эсэхээ шалгаарай. Хэрэв буруу оруулсан бол регистрийн дугаараа зөв оруулна уу. Регистрийн дугаар зөв бол та аль хэдийн БиДиСЕК үнэт цаасны компанитай холбогдоно уу.` : `Дахин оролдоно уу.`}</p>
                {regId&& isRegistryError&& <div>

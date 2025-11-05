@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, AlertCircle, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { ArrowLeft, AlertCircle, CheckCircle, XCircle, Loader2, ShieldCheck } from 'lucide-react'
 import { sendRegistrationNumber, digipayLogin, type RegistrationResponse, getRegistrationNumber, BASE_URL } from '@/lib/api'
 import Cookies from 'js-cookie'
 
@@ -51,7 +51,7 @@ export default function RegisterPage() {
   const getPlaceholder = () => {
     if (nationality === '496') {
       // Mongolia - use Mongolian registration number format
-      return 'ӨӨ000000'
+      return 'AX01234567'
     } else {
       // Other countries - use descriptive text
       return t('auth.enterRegisterNumber', 'Enter your register number')
@@ -230,65 +230,75 @@ export default function RegisterPage() {
   }, []);
   
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 p-4">
-      <div className="max-w-md mx-auto pt-8">
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Ambient background accents */}
+      <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-bdsec/20 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/3 -right-20 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-purple-500/10 blur-3xl" />
+
+      <div className="relative z-10 max-w-md mx-auto p-4 sm:p-6 lg:p-8">
         <button 
           onClick={() => router.back()} 
-          className="flex items-center text-gray-600 dark:text-gray-400 mb-6"
+          className="flex items-center text-gray-600 dark:text-gray-400 mb-5"
         >
           <ArrowLeft size={18} className="mr-2" />
           {t('common.back')}
         </button>
-        
-        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-          {t('auth.enterYourRegisterNumber')}
-        </h1>
-        
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          {t('auth.registerHelpText', { country: selectedCountry?.countryName || nationality })}
-        </p>
-        
-        {renderStatusMessage()}
-        
-        <form onSubmit={handleSubmit}>
-          <div className="mb-6">
-            <label htmlFor="registerNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t('auth.registerNumber')}
-            </label>
-            <input
-              type="text"
-              id="registerNumber"
-              value={registerNumber}
-              onChange={handleInputChange}
-              className={`w-full px-4 py-3 border rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${
-                error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec dark:focus:ring-indigo-500'
-              }`}
-              placeholder={getPlaceholder()}
-              disabled={isLoading || responseStatus.type === 'success'}
-            />
-            {error && (
-              <p className="mt-2 text-sm text-red-600 dark:text-red-500">{error}</p>
-            )}
+
+        {/* Header */}
+        <div className="text-center mb-5">
+          <div className="mx-auto mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/70 dark:bg-gray-800/70 shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+            <ShieldCheck className="h-6 w-6 text-bdsec dark:text-indigo-400" />
           </div>
-          
-          <button
-            type="submit"
-            disabled={isLoading || responseStatus.type === 'success'}
-            className="w-full px-4 py-3 bg-bdsec dark:bg-indigo-600 text-white rounded-lg font-medium
-                     hover:bg-bdsec/90 dark:hover:bg-indigo-700 focus:outline-none focus:ring-2 
-                     focus:ring-offset-2 focus:ring-bdsec dark:focus:ring-indigo-500
-                     disabled:bg-gray-400 dark:disabled:bg-gray-600 transition-colors"
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <Loader2 className="animate-spin h-5 w-5 mr-2" />
-                {t('common.loading')}
-              </div>
-            ) : (
-              t('auth.verifyAccount')
-            )}
-          </button>
-        </form>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            {t('auth.enterYourRegisterNumber')}
+          </h1>
+          <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+            {t('auth.registerHelpText', { country: selectedCountry?.countryName || nationality })}
+          </p>
+        </div>
+
+        {/* Card */}
+        <div className="rounded-2xl border border-gray-200/70 dark:border-gray-800/70 bg-white/70 dark:bg-gray-900/60 shadow-xl backdrop-blur-md p-4 sm:p-6">
+          {renderStatusMessage()}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="registerNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('auth.registerNumber')}
+              </label>
+              <input
+                type="text"
+                id="registerNumber"
+                value={registerNumber}
+                onChange={handleInputChange}
+                className={`w-full px-4 py-3 border rounded-lg bg-white/90 dark:bg-gray-900/90 text-gray-900 dark:text-white focus:outline-none focus:ring-2 ${
+                  error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 dark:border-gray-700 focus:ring-bdsec dark:focus:ring-indigo-500'
+                }`}
+                placeholder={getPlaceholder()}
+                disabled={isLoading || responseStatus.type === 'success'}
+              />
+              {error && (
+                <p className="mt-2 text-sm text-red-600 dark:text-red-500">{error}</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading || responseStatus.type === 'success'}
+              className="w-full px-4 py-3 bg-bdsec dark:bg-indigo-600 text-white rounded-lg font-medium hover:bg-bdsec/90 dark:hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bdsec dark:focus:ring-indigo-500 disabled:bg-gray-400 dark:disabled:bg-gray-600 transition-colors"
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <Loader2 className="animate-spin h-5 w-5 mr-2" />
+                  {t('common.loading')}
+                </div>
+              ) : (
+                t('auth.verifyAccount')
+              )}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   )
