@@ -50,7 +50,7 @@ export default function WithdrawalsPage({
             <div className="p-4 text-gray-900 dark:text-white">Гүйлгээний утга (Заавал биш)</div>
           </div>
           
-          <button className="w-full bg-bdsec dark:bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-bdsec/90">
+          <button className="w-full bg-bdsec dark:bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-bdsec/90">
             Мөнгөн дүн
           </button>
         </div>

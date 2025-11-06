@@ -99,10 +99,10 @@ export default function OrderBookDisplay({ symbol = 'KHAN', onPriceSelect }: Ord
       {/* Bottom Buttons */}
       <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
         <div className="grid grid-cols-2 gap-2">
-          <button className="py-2 px-4 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-lg text-sm font-medium hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors">
+          <button className="py-2 px-4 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-lg text-sm font-bold hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors">
             {t('dashboard.buy', 'Авах')}
           </button>
-          <button className="py-2 px-4 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 dark:hover:bg-red-800/30 transition-colors">
+          <button className="py-2 px-4 bg-red-50 dark:bg-red-900/20 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 dark:hover:bg-red-800/30 transition-colors">
             {t('dashboard.sell', 'Зарах')}
           </button>
         </div>

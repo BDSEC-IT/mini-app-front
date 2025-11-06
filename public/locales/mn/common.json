@@ -14,7 +14,14 @@
   },
   "balance": {
     "totalAssets": "Нийт хөрөнгө",
-    "nominalBalance": "Бэлэн мөнгөний үлдэгдэл (9995)"
+    "nominalBalance": "Бэлэн мөнгөний үлдэгдэл (9995)",
+    "securitiesTooltip": "Таны эзэмшиж буй үнэт цаасны жагсаалт",
+    "nominalTooltip": "Таны арилжаанд ашиглах боломжтой бэлэн мөнгө",
+    "fundTooltip": "Үнэт цаасны төвлөрсөн хадгаламж дахь таны мөнгөн хөрөнгө"
+  },
+  "stockTable": {
+    "stocksList": "Хөрөнгийн жагсаалт",
+    "bondsList": "Бондын жагсаалт"
   },
   "common": {
     "noTransactions": "Гүйлгээ олдсонгүй",
@@ -50,7 +57,42 @@
     "locked": "Түгжээтэй",
     "securitiesAccountRequired": "Та арилжаанд оролцохын тулд үнэт цаасны данстай байх шаардлагатай",
     "comingSoon": "Тун удахгүй",
-    "openAccount": "Данс нээх"
+    "openAccount": "Данс нээх",
+    "noData": "Мэдээлэл байхгүй байна"
+  },
+  "stockTable": {
+    "stocksList": "Хөрөнгийн жагсаалт",
+    "bondsList": "Бондын жагсаалт"
+  },
+  "withdrawal": {
+    "title": "Мөнгө хүсэх",
+    "newRequest": "Шинэ хүсэлт",
+    "descriptionPlaceholder": "Гүйлгээний утга оруулна уу",
+    "fillAllFields": "Бүх талбарыг бөглөнө үү",
+    "requestSentSuccess": "Мөнгө хүсэх хүсэлт амжилттай илгээгдлээ",
+    "requestCancelled": "Хүсэлт цуцлагдлаа",
+    "cancelError": "Цуцлах үед алдаа гарлаа",
+    "bankAddedSuccess": "Банкны данс амжилттай нэмэгдлээ",
+    "bankAddError": "Банкны данс нэмэхэд алдаа гарлаа",
+    "statusNew": "Шинэ",
+    "statusApproved": "Зөвшөөрөгдсөн",
+    "statusCancelled": "Цуцлагдсан",
+    "statusCompleted": "Дууссан",
+    "statusUnknown": "Тодорхойгүй",
+    "enterAmount": "Дүн оруулах",
+    "sending": "Илгээж байна...",
+    "sendRequest": "Хүсэлт илгээх",
+    "selectBank": "Банкны данс сонгоно уу",
+    "agreementCreatedSuccess": "Гурвалсан гэрээ амжилттай байгууллаа",
+    "agreementCreateError": "Гэрээ байгуулахад алдаа гарлаа",
+    "creating": "Байгуулж байна...",
+    "createAgreement": "Гурвалсан гэрээ байгуулах",
+    "enterAccountNumber": "Дансны дугаар оруулах",
+    "enterAccountName": "Дансан дахь овог нэрээ оруулна уу",
+    "adding": "Нэмж байна...",
+    "addBankAccount": "Банкны данс нэмэх",
+    "nominalRequestHistory": "Номинал хүсэлтийн түүх",
+    "csdRequestHistory": "ҮЦТХТ хүсэлтийн түүх"
   },
   "header": {
     "notifications": "Мэдэгдэл",
@@ -318,6 +360,11 @@
     "sellQuantity": "Зарах тоо",
     "orders": "Захиалга",
     "lastUpdated": "Сүүлд шинэчлэгдсэн",
+    "companyInfo": "Компанийн мэдээлэл",
+    "bondInfo": "Бондын мэдээлэл",
+    "noOrders": "Захиалга байхгүй",
+    "buyAction": "АВАХ",
+    "sellAction": "ЗАРАХ",
     "loading": "Ачааллаж байна...",
     "refreshData": "Өгөгдөл шинэчлэх",
     "turnover": "Эргэлт",
@@ -404,6 +451,9 @@
     "categoryI": "I ангилал",
     "categoryII": "II ангилал",
     "categoryIII": "III ангилал",
+    "categoryFund": "Хөрөнгө оруулалтын сан",
+    "categoryBond": "Компанийн бонд",
+    "categoryIABS": "Хөрөнгөөр баталгаажсан үнэт цаас",
     "timeFilter": "Хугацааны шүүлтүүр",
     "lastTradedPrice": "Сүүлийн ханш",
     "changePercentage": "% Өөрчлөлт",
@@ -635,6 +685,8 @@
     "buy": "Авах",
     "sell": "Зарах",
     "selectStock": "Хувьцаа сонгох",
+    "selectStockPlaceholder": "Арилжаа хийх хувьцааг сонгоно уу",
+    "searchStockPlaceholder": "Хувьцааны код эсвэл нэр хайх...",
     "orderType": "Захиалгын төрөл",
     "market": "Зах зээлийн",
     "conditional": "Нөхцөлт",
@@ -676,6 +728,23 @@
     "orderBookError": "Захиалгын номыг ачаалахад алдаа гарлаа",
     "noSellOrders": "Зарах захиалга байхгүй",
     "noBuyOrders": "Авах захиалга байхгүй"
+  },
+  "stockDetails": {
+    "financialReport": "Санхүүгийн тайлан",
+    "financialReportNotFound": "Санхүүгийн тайлан олдсонгүй",
+    "year": "Он",
+    "quarter": "Улирал",
+    "firstHalf": "1-р хагас жил",
+    "secondHalf": "2-р хагас жил",
+    "registry": "Регистр",
+    "yearOf": "оны",
+    "quarterSuffix": "р улирал",
+    "balanceSheet": "Баланс",
+    "incomeStatement": "Орлогын тайлан"
+  },
+  "transactions": {
+    "thirtyDays": "30 хоног",
+    "byDay": "Өдрөөр"
   },
   "exchange": {
     "priceSteps": "Үнийн алхам",

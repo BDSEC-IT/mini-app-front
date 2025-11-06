@@ -640,7 +640,7 @@ export default function TransactionsPage({
                   <div className="flex-shrink-0 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-medium flex items-center gap-1.5">
                     <span>
                       {dateRangeOption === '7' ? '7 хоног' : 
-                       dateRangeOption === '30' ? '30 хоног' : 'Өдрөөр'}
+                       dateRangeOption === '30' ? t('transactions.thirtyDays', '30 хоног') : t('transactions.byDay', 'Өдрөөр')}
                     </span>
                     <button
                       onClick={() => onDateRangeChange('all')}

@@ -276,7 +276,7 @@ export default function Portfolio() {
               <Wallet className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h1 className="text-base font-semibold text-gray-900 dark:text-white">{t('portfolio.title')}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('portfolio.title')}</h1>
               <p className="text-xs text-gray-600 dark:text-gray-400">{t('portfolio.subtitle')}</p>
             </div>
           </div>

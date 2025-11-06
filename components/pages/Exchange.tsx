@@ -123,13 +123,13 @@ const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen,
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             {t('exchange.cancel', 'Цуцлах')}
           </button>
           <button
             onClick={onConfirm}
-            className={`flex-1 py-2 px-4 rounded-lg text-white ${
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold text-white ${
               orderData.side === 'BUY' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
             }`}
           >
@@ -782,7 +782,7 @@ export default function Exchange() {
           <button onClick={() => setShowPriceSteps(false)} className="mr-3">
             <ArrowLeftIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
-          <h1 className="text-lg font-medium text-gray-900 dark:text-white">{t('exchange.priceSteps', 'Үнийн алхам')}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('exchange.priceSteps', 'Үнийн алхам')}</h1>
         </div>
         <div className="p-4">
           <div className="grid grid-cols-2 gap-4 mb-4 text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -871,7 +871,7 @@ export default function Exchange() {
           <div className="flex mb-3 items-center gap-6">
             <button
               onClick={() => setActiveTab('orderbook')}
-              className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+              className={`px-4 py-2 text-sm font-bold transition-colors relative ${
                 activeTab === 'orderbook'
                   ? 'text-blue-600 dark:text-blue-400'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -884,7 +884,7 @@ export default function Exchange() {
             </button>
             <button
               onClick={() => setActiveTab('chart')}
-              className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+              className={`px-4 py-2 text-sm font-bold transition-colors relative ${
                 activeTab === 'chart'
                   ? 'text-blue-600 dark:text-blue-400'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'

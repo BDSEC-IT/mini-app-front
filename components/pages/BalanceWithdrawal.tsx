@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { ArrowLeft, AlertTriangle, Plus, X, CheckCircle, Clock, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useWithdrawalData } from '@/hooks/useWithdrawalData';
 import { formatCurrency } from '@/utils/balanceUtils';
 import { MONGOLIAN_BANKS, type WithdrawalType } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 export default function BalanceWithdrawal() {
+  const { t } = useTranslation();
   // Get type from URL query parameter
   const [selectedType, setSelectedType] = useState<WithdrawalType>('NOMINAL');
   const [currentView, setCurrentView] = useState<'main' | 'create' | 'addBank' | 'createAgreement'>('main');
@@ -119,7 +121,7 @@ export default function BalanceWithdrawal() {
   // Handle withdrawal creation
   const handleCreateWithdrawal = async () => {
     if (!selectedBank || !amount || !description) {
-      toast.error('Бүх талбарыг бөглөнө үү');
+      toast.error(t('withdrawal.fillAllFields', 'Бүх талбарыг бөглөнө үү'));
       return;
     }
 
@@ -152,7 +154,7 @@ export default function BalanceWithdrawal() {
     });
 
     if (result.success) {
-      toast.success('Мөнгө хүсэх хүсэлт амжилттай илгээгдлээ');
+      toast.success(t('withdrawal.requestSentSuccess', 'Мөнгө хүсэх хүсэлт амжилттай илгээгдлээ'));
       setCurrentView('main');
       setAmount('');
       setDisplayAmount('');
@@ -160,7 +162,7 @@ export default function BalanceWithdrawal() {
       setSelectedBank('');
       setSelectedAssetCode('');
     } else {
-      toast.error(result.message || 'Алдаа гарлаа');
+      toast.error(result.message || t('common.error', 'Алдаа гарлаа'));
     }
   };
 
@@ -168,26 +170,26 @@ export default function BalanceWithdrawal() {
   const handleCancelWithdrawal = async (withdrawalId: number) => {
     const result = await cancelWithdrawal(withdrawalId);
     if (result.success) {
-      toast.success('Хүсэлт цуцлагдлаа');
+      toast.success(t('withdrawal.requestCancelled', 'Хүсэлт цуцлагдлаа'));
     } else {
-      toast.error(result.message || 'Цуцлах үед алдаа гарлаа');
+      toast.error(result.message || t('withdrawal.cancelError', 'Цуцлах үед алдаа гарлаа'));
     }
   };
 
   // Handle adding new bank account
   const handleAddBank = async () => {
     if (!newBankData.accNumber || !newBankData.accName || !newBankData.bankCode) {
-      toast.error('Бүх талбарыг бөглөнө үү');
+      toast.error(t('withdrawal.fillAllFields', 'Бүх талбарыг бөглөнө үү'));
       return;
     }
 
     const result = await addBank(newBankData);
     if (result.success) {
-      toast.success('Банкны данс амжилттай нэмэгдлээ');
+      toast.success(t('withdrawal.bankAddedSuccess', 'Банкны данс амжилттай нэмэгдлээ'));
       setCurrentView('main');
       setNewBankData({ accNumber: '', accName: '', bankCode: '', currency: 'MNT' });
     } else {
-      toast.error(result.message || 'Банкны данс нэмэхэд алдаа гарлаа');
+      toast.error(result.message || t('withdrawal.bankAddError', 'Банкны данс нэмэхэд алдаа гарлаа'));
     }
   };
 
@@ -197,31 +199,31 @@ export default function BalanceWithdrawal() {
       case 'new':
         return { 
           icon: <Clock className="w-4 h-4 text-yellow-500" />, 
-          text: 'Шинэ', 
+          text: t('withdrawal.statusNew', 'Шинэ'), 
           color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400' 
         };
       case 'accepted':
         return { 
           icon: <CheckCircle className="w-4 h-4 text-green-500" />, 
-          text: 'Зөвшөөрөгдсөн', 
+          text: t('withdrawal.statusApproved', 'Зөвшөөрөгдсөн'), 
           color: 'text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-400' 
         };
       case 'cancelled':
         return { 
           icon: <XCircle className="w-4 h-4 text-red-500" />, 
-          text: 'Цуцлагдсан', 
+          text: t('withdrawal.statusCancelled', 'Цуцлагдсан'), 
           color: 'text-red-600 bg-red-100 dark:bg-red-900/20 dark:text-red-400' 
         };
       case 'completed':
         return { 
           icon: <CheckCircle className="w-4 h-4 text-blue-500" />, 
-          text: 'Дууссан', 
+          text: t('withdrawal.statusCompleted', 'Дууссан'), 
           color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400' 
         };
       default:
         return { 
           icon: <Clock className="w-4 h-4 text-gray-500" />, 
-          text: 'Тодорхойгүй', 
+          text: t('withdrawal.statusUnknown', 'Тодорхойгүй'), 
           color: 'text-gray-600 bg-gray-100 dark:bg-gray-900/20 dark:text-gray-400' 
         };
     }
@@ -485,7 +487,7 @@ export default function BalanceWithdrawal() {
             inputMode="decimal"
             value={displayAmount}
             onChange={handleAmountChange}
-            placeholder="Дүн оруулах"
+            placeholder={t('withdrawal.enterAmount', 'Дүн оруулах')}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec focus:border-transparent"
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -501,7 +503,7 @@ export default function BalanceWithdrawal() {
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Гүйлгээний утга оруулна уу"
+            placeholder={t('withdrawal.descriptionPlaceholder', 'Гүйлгээний утга оруулна уу')}
             rows={3}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec focus:border-transparent resize-none"
           />
@@ -513,7 +515,7 @@ export default function BalanceWithdrawal() {
           disabled={loadingCreate || !selectedBank || !amount || !description || (selectedType === 'CSD' && !selectedAssetCode)}
           className="w-full bg-bdsec dark:bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-bdsec/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
-          {loadingCreate ? 'Илгээж байна...' : 'Хүсэлт илгээх'}
+          {loadingCreate ? t('withdrawal.sending', 'Илгээж байна...') : t('withdrawal.sendRequest', 'Хүсэлт илгээх')}
         </button>
       </div>
     </div>
@@ -522,16 +524,16 @@ export default function BalanceWithdrawal() {
   // Handle CSD Agreement
   const handleCSDAgreement = async () => {
     if (!agreementBank) {
-      toast.error('Банкны данс сонгоно уу');
+      toast.error(t('withdrawal.selectBank', 'Банкны данс сонгоно уу'));
       return;
     }
     const result = await handleCreateCSDAgreement(agreementBank);
     if (result.success) {
-      toast.success('Гурвалсан гэрээ амжилттай байгууллаа');
+      toast.success(t('withdrawal.agreementCreatedSuccess', 'Гурвалсан гэрээ амжилттай байгууллаа'));
       setCurrentView('main');
       setAgreementBank('');
     } else {
-      toast.error(result.message || 'Гэрээ байгуулахад алдаа гарлаа');
+      toast.error(result.message || t('withdrawal.agreementCreateError', 'Гэрээ байгуулахад алдаа гарлаа'));
     }
   };
 
@@ -573,7 +575,7 @@ export default function BalanceWithdrawal() {
           disabled={loadingAgreementAction || !agreementBank}
           className="w-full bg-green-600 dark:bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
-          {loadingAgreementAction ? 'Байгуулж байна...' : 'Гурвалсан гэрээ байгуулах'}
+          {loadingAgreementAction ? t('withdrawal.creating', 'Байгуулж байна...') : t('withdrawal.createAgreement', 'Гурвалсан гэрээ байгуулах')}
         </button>
       </div>
     </div>
@@ -592,7 +594,7 @@ export default function BalanceWithdrawal() {
             type="text"
             value={newBankData.accNumber}
             onChange={(e) => setNewBankData({ ...newBankData, accNumber: e.target.value })}
-            placeholder="Дансны дугаар оруулах"
+            placeholder={t('withdrawal.enterAccountNumber', 'Дансны дугаар оруулах')}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec focus:border-transparent"
           />
         </div>
@@ -606,7 +608,7 @@ export default function BalanceWithdrawal() {
             type="text"
             value={newBankData.accName}
             onChange={(e) => setNewBankData({ ...newBankData, accName: e.target.value })}
-            placeholder="Дансан дахь овог нэрээ оруулна уу"
+            placeholder={t('withdrawal.enterAccountName', 'Дансан дахь овог нэрээ оруулна уу')}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec focus:border-transparent"
           />
         </div>
@@ -651,7 +653,7 @@ export default function BalanceWithdrawal() {
           disabled={loadingAddBank || !newBankData.accNumber || !newBankData.accName || !newBankData.bankCode}
           className="w-full bg-bdsec dark:bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-bdsec/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
-          {loadingAddBank ? 'Нэмж байна...' : 'Банкны данс нэмэх'}
+          {loadingAddBank ? t('withdrawal.adding', 'Нэмж байна...') : t('withdrawal.addBankAccount', 'Банкны данс нэмэх')}
         </button>
       </div>
     </div>
@@ -671,7 +673,7 @@ export default function BalanceWithdrawal() {
     return (
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          {selectedType === 'NOMINAL' ? 'Номинал хүсэлтийн түүх' : 'ҮЦТХТ хүсэлтийн түүх'}
+          {selectedType === 'NOMINAL' ? t('withdrawal.nominalRequestHistory', 'Номинал хүсэлтийн түүх') : t('withdrawal.csdRequestHistory', 'ҮЦТХТ хүсэлтийн түүх')}
         </h3>
         
         {typeWithdrawals.length === 0 ? (
@@ -723,7 +725,7 @@ export default function BalanceWithdrawal() {
                         <button
                           onClick={() => handleCancelWithdrawal(withdrawal.withdrawalid)}
                           className="text-red-500 hover:text-red-700 p-1"
-                          title="Цуцлах"
+                          title={t('common.cancel', 'Цуцлах')}
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -833,9 +835,9 @@ export default function BalanceWithdrawal() {
 
     const getBackText = () => {
       if (currentView === 'create' || currentView === 'addBank' || currentView === 'createAgreement') {
-        return 'Буцах';
+        return t('common.back', 'Буцах');
       }
-      return 'Үлдэгдэл';
+      return t('nav.balance', 'Үлдэгдэл');
     };
 
     return (
@@ -849,10 +851,10 @@ export default function BalanceWithdrawal() {
             <span className="text-sm font-medium">{getBackText()}</span>
           </button>
           <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {currentView === 'main' ? 'Мөнгө хүсэх' : 
-             currentView === 'create' ? 'Шинэ хүсэлт' : 
-             currentView === 'createAgreement' ? 'Гурвалсан гэрээ байгуулах' :
-             'Банкны данс нэмэх'}
+            {currentView === 'main' ? t('withdrawal.title', 'Мөнгө хүсэх') : 
+             currentView === 'create' ? t('withdrawal.newRequest', 'Шинэ хүсэлт') : 
+             currentView === 'createAgreement' ? t('withdrawal.createAgreement', 'Гурвалсан гэрээ байгуулах') :
+             t('withdrawal.addBankAccount', 'Банкны данс нэмэх')}
           </h1>
           <div className="w-16"></div> {/* Spacer for centering */}
         </div>

@@ -13,6 +13,7 @@ import { StockList } from './dashboard/StockList'
 import { getStockFilterDate, shouldDisplayStock, getDisplayPeriodDescription, isDuringTradingHours, filterTodaysFreshStocks, isTodaysFreshData } from '@/lib/trading-time-utils'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'next/navigation'
 import Cookies from 'js-cookie'
 
 // Custom hook for intersection observer
@@ -43,21 +44,19 @@ const useInView = (threshold = 0.1) => {
 
 
 
-// Client-only wrapper component
+// Client-only wrapper component - removed null return to prevent flash
 function ClientOnly({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) return null
   return <>{children}</>
 }
 
-const DashboardContent = () => {
+interface DashboardContentProps {
+  initialStocks?: StockData[]
+}
+
+const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language || 'mn';
+  const searchParams = useSearchParams();
   
   // Helper: Format symbol display
   const formatSymbolDisplay = (symbol: string): string => {
@@ -74,16 +73,18 @@ const DashboardContent = () => {
     return currentLanguage === 'mn' ? stock.mnName : stock.enName;
   };
 
-  const [selectedSymbol, setSelectedSymbol] = useState('BDS'); // Default to BDS
+  // Get symbol from URL parameter or default to BDS
+  const symbolFromUrl = searchParams.get('symbol');
+  const [selectedSymbol, setSelectedSymbol] = useState(symbolFromUrl || 'BDS');
   const { theme } = useTheme()
   const [activeFilter, setActiveFilter] = useState('mostActive')
   const [orderBookData, setOrderBookData] = useState<OrderBookEntry[]>([])
-  const [stocksLoading, setStocksLoading] = useState(true)
+  const [stocksLoading, setStocksLoading] = useState(initialStocks.length === 0)
   const [orderBookLoading, setOrderBookLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string>('')
-  const [allStocks, setAllStocks] = useState<StockData[]>([])
-  const [filteredStocks, setFilteredStocks] = useState<StockData[]>([])
+  const [allStocks, setAllStocks] = useState<StockData[]>(initialStocks)
+  const [filteredStocks, setFilteredStocks] = useState<StockData[]>(initialStocks)
   const [searchTerm, setSearchTerm] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -186,6 +187,12 @@ const DashboardContent = () => {
   // Fetch all stocks data with company information
   const fetchStocksData = useCallback(async () => {
     console.log('=== Dashboard: fetchStocksData START ===');
+    // Skip if we already have initial stocks
+    if (initialStocks.length > 0 && allStocks.length > 0) {
+      console.log('Using cached initial stocks, skipping fetch');
+      return;
+    }
+    
     setStocksLoading(true)
     try {
       console.log('Calling fetchAllStocksWithCompanyInfo...');
@@ -202,7 +209,7 @@ const DashboardContent = () => {
       setStocksLoading(false)
     }
     console.log('=== Dashboard: fetchStocksData END ===');
-  }, [])
+  }, [initialStocks, allStocks])
 
   // Fetch specific stock data for the selected symbol with company information
   const fetchSelectedStockData = useCallback(async () => {
@@ -307,6 +314,15 @@ const DashboardContent = () => {
 
     checkTradingStatus();
   }, []);
+
+  // Update selected symbol when URL parameter changes
+  useEffect(() => {
+    const symbolParam = searchParams.get('symbol');
+    if (symbolParam && symbolParam !== selectedSymbol) {
+      console.log('🔗 Dashboard: URL symbol parameter changed to:', symbolParam);
+      setSelectedSymbol(symbolParam);
+    }
+  }, [searchParams, selectedSymbol]);
 
   // Fetch data when component mounts or selectedSymbol changes
   useEffect(() => {
@@ -861,7 +877,7 @@ const DashboardContent = () => {
         <StockDetails
           selectedSymbol={selectedSymbol}
           details={companyDetails}
-          infoLabel={isBond ? 'Bond Info' : 'Компанийн мэдээлэл'}
+          infoLabel={isBond ? t('dashboard.bondInfo', 'Bond Info') : t('dashboard.companyInfo', 'Компанийн мэдээлэл')}
         />
       </div>
       
@@ -869,10 +885,10 @@ const DashboardContent = () => {
   )
 }
 
-const Dashboard = () => {
+const Dashboard = ({ initialStocks }: DashboardContentProps) => {
   return (
     <ClientOnly>
-      <DashboardContent />
+      <DashboardContent initialStocks={initialStocks} />
     </ClientOnly>
   )
 }

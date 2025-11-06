@@ -221,7 +221,7 @@ const OrderBookComponent = ({
                   <span className="bg-green-50 dark:bg-green-900/10 px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
                     {(order.MDEntrySize || 0).toLocaleString()}
                   </span>
-                  <span className="text-green-500 font-medium justify-self-end text-xs sm:text-sm">
+                  <span className="text-green-500 font-semibold justify-self-end text-sm">
                     {formatOrderPrice(order.MDEntryPx, selectedSymbol)}
                   </span>
                   
@@ -255,7 +255,7 @@ const OrderBookComponent = ({
                   key={`sell-${order.id}-${index}`}
                   className="grid grid-cols-2 text-right text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
-                  <span className="text-red-500 mr-5 font-medium justify-self-end text-xs sm:text-sm">
+                  <span className="text-red-500 mr-5 font-semibold justify-self-end text-sm">
                     {formatOrderPrice(order.MDEntryPx, selectedSymbol)} ₮
                   </span>
                   <span className="bg-red-50 dark:bg-red-900/10 px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
@@ -284,9 +284,9 @@ const OrderBookComponent = ({
               maxHeight: '50px', // iOS recommended touch target
               filter: bestAsk ? 'drop-shadow(0 4px 12px rgba(34, 197, 94, 0.4))' : 'none'
             }}
-            title={bestAsk ? `Авах - ${formatPrice(bestAsk)}₮` : 'Захиалга байхгүй'}
+            title={bestAsk ? `${t('dashboard.buy', 'Авах')} - ${formatPrice(bestAsk)}₮` : t('dashboard.noOrders', 'Захиалга байхгүй')}
           >
-            <span className="text-md font-bold tracking-wide">АВАХ</span>
+            <span className="text-md font-bold tracking-wide">{t('dashboard.buyAction', 'АВАХ').toUpperCase()}</span>
             {bestAsk && (
               <span className="text-sm mt-1 font-semibold opacity-95">
                 {formatPrice(bestAsk)}₮
@@ -303,9 +303,9 @@ const OrderBookComponent = ({
               maxHeight: '50px', // iOS recommended touch target
               filter: bestBid ? 'drop-shadow(0 4px 12px rgba(239, 68, 68, 0.4))' : 'none'
             }}
-            title={bestBid ? `Зарах - ${formatPrice(bestBid)}₮` : 'Захиалга байхгүй'}
+            title={bestBid ? `${t('dashboard.sell', 'Зарах')} - ${formatPrice(bestBid)}₮` : t('dashboard.noOrders', 'Захиалга байхгүй')}
           >
-            <span className="text-md font-bold tracking-wide">ЗАРАХ</span>
+            <span className="text-md font-bold tracking-wide">{t('dashboard.sellAction', 'ЗАРАХ').toUpperCase()}</span>
             {bestBid && (
               <span className="text-sm mt-1 font-semibold opacity-95">
                 {formatPrice(bestBid)}₮

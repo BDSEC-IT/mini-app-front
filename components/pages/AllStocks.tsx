@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight } from 'lucide-react'
 import { fetchAllStocks, type StockData } from '@/lib/api'
 import socketIOService from '@/lib/socketio'
@@ -22,6 +22,7 @@ const AllStocks = () => {
   const { t, i18n } = useTranslation()
   const currentLanguage = i18n.language || 'mn';
   const searchParams = useSearchParams()
+  const router = useRouter()
 
 
   
@@ -71,9 +72,9 @@ const AllStocks = () => {
     { id: 'I', name: t('allStocks.categoryI'), mnName: t('allStocks.categoryI') },
     { id: 'II', name: t('allStocks.categoryII'), mnName: t('allStocks.categoryII') },
     { id: 'III', name: t('allStocks.categoryIII'), mnName: t('allStocks.categoryIII') },
-    { id: 'FUND', name: 'Хөрөнгө оруулалтын сан', mnName: 'Хөрөнгө оруулалтын сан' },
-    { id: 'BOND', name: 'Компанийн бонд', mnName: 'Компанийн бонд' },
-    { id: 'IABS', name: 'Хөрөнгөөр баталгаажсан үнэт цаас', mnName: 'Хөрөнгөөр баталгаажсан үнэт цаас' }
+    { id: 'FUND', name: t('allStocks.categoryFund'), mnName: t('allStocks.categoryFund') },
+    { id: 'BOND', name: t('allStocks.categoryBond'), mnName: t('allStocks.categoryBond') },
+    { id: 'IABS', name: t('allStocks.categoryIABS'), mnName: t('allStocks.categoryIABS') }
   ], [t]);
 
   // Fetch all stocks data
@@ -630,11 +631,18 @@ const getStockCategory = (stock: StockData): string => {
     
     return stocks.map((stock) => {
       const blinkClass = blinkingRows.get(stock.Symbol);
+      
+      // Handler for row click
+      const handleRowClick = () => {
+        const cleanSymbol = stock.Symbol.split('-')[0];
+        router.push(`/?symbol=${cleanSymbol}`);
+      };
 
       return (
         <tr 
           key={stock.Symbol} 
-          className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+          onClick={handleRowClick}
+          className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 cursor-pointer"
           style={blinkClass ? {
             animation: blinkClass === 'gain' 
               ? 'flash-green 800ms ease-out' 
@@ -642,10 +650,10 @@ const getStockCategory = (stock: StockData): string => {
           } : {}}
         >
           <td className="px-2 py-2 whitespace-nowrap">
-            <a href={`/stocks/${stock.Symbol}`} className="flex flex-col">
+            <div className="flex flex-col">
               <span className="font-medium text-xs">{stock.Symbol}</span>
               <span className="text-[10px] text-gray-500">{getCompanyName(stock)}</span>
-            </a>
+            </div>
           </td>
           <td className="px-2 py-2 text-right">
             {formatPrice(stock.LastTradedPrice, isBondCategory)}
@@ -900,7 +908,7 @@ const getStockCategory = (stock: StockData): string => {
               >
                 <ChevronRight className="transform rotate-180" size={18} />
               </a>
-              <h1 className="text-base font-bold">{t('allStocks.title')}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('allStocks.title')}</h1>
             </div>
             <div className="text-[10px] text-right text-gray-500">
               {activeTab === 'active' && displayPeriodDescription && (
@@ -1048,9 +1056,9 @@ const getStockCategory = (stock: StockData): string => {
               {renderCategorySection('I', t('allStocks.categoryI'), 'bg-blue-50 dark:bg-blue-900/30', 'text-blue-800 dark:text-blue-200')}
               {renderCategorySection('II', t('allStocks.categoryII'), 'bg-purple-50 dark:bg-purple-900/30', 'text-purple-800 dark:text-purple-200')}
               {renderCategorySection('III', t('allStocks.categoryIII'), 'bg-gray-50 dark:bg-gray-800/60', 'text-gray-800 dark:text-gray-200')}
-              {renderCategorySection('FUND', 'Хөрөнгө оруулалтын сан', 'bg-green-50 dark:bg-green-900/30', 'text-green-800 dark:text-green-200')}
-              {renderCategorySection('IABS', 'Хөрөнгөөр баталгаажсан үнэт цаас', 'bg-teal-50 dark:bg-teal-900/30', 'text-teal-800 dark:text-teal-200')}
-              {renderCategorySection('BOND', 'Компанийн бонд', 'bg-orange-50 dark:bg-orange-900/30', 'text-orange-800 dark:text-orange-200')}
+              {renderCategorySection('FUND', t('allStocks.categoryFund'), 'bg-green-50 dark:bg-green-900/30', 'text-green-800 dark:text-green-200')}
+              {renderCategorySection('IABS', t('allStocks.categoryIABS'), 'bg-teal-50 dark:bg-teal-900/30', 'text-teal-800 dark:text-teal-200')}
+              {renderCategorySection('BOND', t('allStocks.categoryBond'), 'bg-orange-50 dark:bg-orange-900/30', 'text-orange-800 dark:text-orange-200')}
             </div>
           ) : (
             <div className="text-center py-12">

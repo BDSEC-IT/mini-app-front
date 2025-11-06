@@ -2,6 +2,7 @@
 
 import { ChevronDown, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import InfoTooltip from '@/components/ui/InfoTooltip';
 import type { BalanceType, PageType } from '@/types/balance';
 
@@ -21,15 +22,16 @@ export default function BalanceNavigation({
   onPageChange
 }: BalanceNavigationProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   // Get tooltip content based on selected type
   const getTooltipContent = (type: BalanceType) => {
     switch (type) {
       case 'securities':
-        return 'Таны эзэмшиж буй үнэт цаасны жагсаалт';
+        return t('balance.securitiesTooltip', 'Таны эзэмшиж буй үнэт цаасны жагсаалт');
       case 'nominal':
-        return 'Таны арилжаанд ашиглах боломжтой бэлэн мөнгө';
+        return t('balance.nominalTooltip', 'Таны арилжаанд ашиглах боломжтой бэлэн мөнгө');
       case 'fund':
-        return 'Үнэт цаасны төвлөрсөн хадгаламж дахь таны мөнгөн хөрөнгө';
+        return t('balance.fundTooltip', 'Үнэт цаасны төвлөрсөн хадгаламж дахь таны мөнгөн хөрөнгө');
       default:
         return '';
     }
@@ -42,7 +44,7 @@ export default function BalanceNavigation({
           <select
             value={balanceType}
             onChange={(e) => onBalanceTypeChange(e.target.value as BalanceType)}
-            className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 pr-7 text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-bdsec"
+            className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 pr-7 text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-bdsec"
           >
             <option value="securities">Үнэт цаас</option>
             <option value="nominal">Номинал</option>

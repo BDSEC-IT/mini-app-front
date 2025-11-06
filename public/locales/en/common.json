@@ -14,7 +14,14 @@
   },
   "balance": {
     "totalAssets": "Total Assets",
-    "nominalBalance": "Nominal Available Balance (9995)"
+    "nominalBalance": "Nominal Available Balance (9995)",
+    "securitiesTooltip": "List of securities you own",
+    "nominalTooltip": "Available cash for trading",
+    "fundTooltip": "Your assets in the Central Securities Depository"
+  },
+  "stockTable": {
+    "stocksList": "Securities List",
+    "bondsList": "Bonds List"
   },
   "common": {
     "noTransactions": "No transactions found",
@@ -29,6 +36,7 @@
     "language": "Language",
     "theme": "Theme",
     "noResults": "No results found",
+    "noData": "No data available",
     "settings": "Settings",
     "viewAll": "View All",
     "next": "Next",
@@ -295,6 +303,10 @@
     "quantity": "Quantity",
     "orders": "Orders",
     "lastUpdated": "Last Updated",
+    "companyInfo": "Company Information",
+    "bondInfo": "Bond Information",
+    "buyAction": "BUY",
+    "sellAction": "SELL",
 
     "loading": "Loading...",
     "refreshData": "Refresh Data",
@@ -380,6 +392,9 @@
     "categoryI": "Category I",
     "categoryII": "Category II",
     "categoryIII": "Category III",
+    "categoryFund": "Investment Fund",
+    "categoryBond": "Corporate Bond",
+    "categoryIABS": "Asset-Backed Securities",
     
     "timeFilter": "Time Period",
     "lastTradedPrice": "Last Price",
@@ -603,6 +618,7 @@
     "buy": "Buy",
     "sell": "Sell",
     "selectStock": "Select Stock",
+    "selectStockPlaceholder": "Please select a stock to trade",
     "orderType": "Order Type",
     "market": "Market",
     "conditional": "Conditional",
@@ -644,6 +660,53 @@
     "orderBookError": "Failed to load order book",
     "noSellOrders": "No sell orders",
     "noBuyOrders": "No buy orders"
+  },
+  "withdrawal": {
+    "title": "Withdraw Funds",
+    "newRequest": "New Request",
+    "descriptionPlaceholder": "Enter transaction description",
+    "fillAllFields": "Please fill all fields",
+    "requestSentSuccess": "Withdrawal request sent successfully",
+    "requestCancelled": "Request cancelled",
+    "cancelError": "Error cancelling request",
+    "bankAddedSuccess": "Bank account added successfully",
+    "bankAddError": "Error adding bank account",
+    "statusNew": "New",
+    "statusApproved": "Approved",
+    "statusCancelled": "Cancelled",
+    "statusCompleted": "Completed",
+    "statusUnknown": "Unknown",
+    "enterAmount": "Enter amount",
+    "sending": "Sending...",
+    "sendRequest": "Send Request",
+    "selectBank": "Please select a bank account",
+    "agreementCreatedSuccess": "Tripartite agreement created successfully",
+    "agreementCreateError": "Error creating agreement",
+    "creating": "Creating...",
+    "createAgreement": "Create Tripartite Agreement",
+    "enterAccountNumber": "Enter account number",
+    "enterAccountName": "Enter account holder name",
+    "adding": "Adding...",
+    "addBankAccount": "Add Bank Account",
+    "nominalRequestHistory": "Nominal Request History",
+    "csdRequestHistory": "CSD Request History"
+  },
+  "stockDetails": {
+    "financialReport": "Financial Report",
+    "financialReportNotFound": "Financial report not found",
+    "year": "Year",
+    "quarter": "Quarter",
+    "firstHalf": "First Half",
+    "secondHalf": "Second Half",
+    "registry": "Registry",
+    "yearOf": "of year",
+    "quarterSuffix": "quarter",
+    "balanceSheet": "Balance Sheet",
+    "incomeStatement": "Income Statement"
+  },
+  "transactions": {
+    "thirtyDays": "30 Days",
+    "byDay": "By Day"
   },
   "exchange": {
     "priceSteps": "Price Steps",

@@ -13,8 +13,15 @@ const BottomNavigation = () => {
   const pathname = usePathname()
   const { t } = useTranslation()
 
-  // Window width state must be defined first
-  const [winW, setWinW] = useState(typeof window !== 'undefined' ? window.innerWidth : 0)
+  // Use 390 as default SSR value to prevent hydration mismatch (common mobile width)
+  const [winW, setWinW] = useState(390)
+  const [mounted, setMounted] = useState(false)
+
+  // Update window width after mount to get actual value
+  useEffect(() => {
+    setMounted(true)
+    setWinW(window.innerWidth)
+  }, [])
 
   // Responsive icon and text sizing
   const iconSize = Math.max(16, Math.min(22, winW * 0.055));
@@ -204,8 +211,8 @@ const BottomNavigation = () => {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-none will-change-transform" style={{ paddingBottom: `${safeInsetBottom}px`, minHeight: BAR_H, transform: 'translateZ(0)' }}>
-      <div className="relative" style={{ height: BAR_H }}>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-none will-change-transform" style={{ paddingBottom: `${safeInsetBottom}px`, minHeight: BAR_H, transform: 'translateZ(0)' }} suppressHydrationWarning>
+      <div className="relative" style={{ height: BAR_H }} suppressHydrationWarning>
         {pathname === '/exchange' ? (
           // Simple flat background for exchange page
           <div className="absolute inset-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700" />

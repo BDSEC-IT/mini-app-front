@@ -41,10 +41,10 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
       if (response.success) {
         setReportData(response.data)
       } else {
-        setError('Санхүүгийн тайлан олдсонгүй')
+        setError(t('stockDetails.financialReportNotFound', 'Санхүүгийн тайлан олдсонгүй'))
       }
     } catch (err) {
-      setError('Санхүүгийн тайлан олдсонгүй')
+      setError(t('stockDetails.financialReportNotFound', 'Санхүүгийн тайлан олдсонгүй'))
       console.error('Error fetching MSE report:', err)
     } finally {
       setLoading(false)
@@ -142,7 +142,7 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
           >
             <div className="flex items-center">
               <FileText size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
-              <span className="text-sm font-medium">Санхүүгийн тайлан</span>
+              <span className="text-sm font-medium">{t('stockDetails.financialReport', 'Санхүүгийн тайлан')}</span>
             </div>
             <ChevronDown 
               size={18} 
@@ -155,7 +155,7 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
               {/* Period Selection */}
               <div className="flex flex-wrap gap-3 mb-4">
                 <div className="flex-1 min-w-[120px]">
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Он</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('stockDetails.year', 'Он')}</label>
                   <select
                     value={selectedYear}
                     onChange={(e) => setSelectedYear(e.target.value)}
@@ -167,7 +167,7 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
                   </select>
                 </div>
                 <div className="flex-1 min-w-[120px]">
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Улирал</label>
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{t('stockDetails.quarter', 'Улирал')}</label>
                   <select
                     value={selectedQuarter}
                     onChange={(e) => setSelectedQuarter(e.target.value)}
@@ -175,7 +175,7 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
                   >
                     {quarters.map(quarter => (
                       <option key={quarter} value={quarter}>
-                        {quarter === '2' ? '1-р хагас жил' : quarter === '4' ? '2-р хагас жил' : `${quarter}`}
+                        {quarter === '2' ? t('stockDetails.firstHalf', '1-р хагас жил') : quarter === '4' ? t('stockDetails.secondHalf', '2-р хагас жил') : `${quarter}`}
                       </option>
                     ))}
                   </select>
@@ -199,21 +199,21 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
                   <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{reportData.companyInfo.companyName}</h3>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                      Регистр: {reportData.companyInfo.registryNumber}
+                      {t('stockDetails.registry', 'Регистр')}: {reportData.companyInfo.registryNumber}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
                       {reportData.currency}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {selectedYear} оны {selectedQuarter}-р улирал
+                      {selectedYear} {t('stockDetails.yearOf', 'оны')} {selectedQuarter}-{t('stockDetails.quarterSuffix', 'р улирал')}
                     </p>
                   </div>
 
                   {/* Balance Sheet */}
-                  {renderFinancialTable(reportData.balanceData, 'Баланс')}
+                  {renderFinancialTable(reportData.balanceData, t('stockDetails.balanceSheet', 'Баланс'))}
 
                   {/* Income Statement */}
-                  {renderFinancialTable(reportData.incomeData, 'Орлогын тайлан')}
+                  {renderFinancialTable(reportData.incomeData, t('stockDetails.incomeStatement', 'Орлогын тайлан'))}
                 </div>
               )}
             </div>
