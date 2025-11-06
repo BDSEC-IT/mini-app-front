@@ -222,7 +222,7 @@ const BottomNavigation = () => {
           </div>
         )}
 
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none mx-6">
           {/* Conditionally hide exchange button when on /exchange page */}
           {pathname !== '/exchange' && (
             <div className={`absolute left-1/2 -translate-x-1/2 translate-y-1 z-30 pointer-events-auto`} style={{ top: -topOffset - buttonSize/2 }}>
@@ -262,7 +262,7 @@ const BottomNavigation = () => {
               </div>
             </div>
           )}
-          <div className={`absolute bottom-2 inset-x-0 flex items-center px-4 pointer-events-auto z-30 ${
+          <div className={`absolute bottom-2 inset-x-0 flex items-center px-5 pointer-events-auto z-30 ${
             pathname === '/exchange' ? 'justify-evenly' : 'justify-between'
           }`}>
             <Link href="/" className={`flex flex-col items-center ${isActive('/') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
