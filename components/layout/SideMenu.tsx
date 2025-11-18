@@ -158,7 +158,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`sticky inset-0  bg-black/50 z-40 o transition-opacity duration-300  ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
       <div
@@ -181,7 +181,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
           </div>
         </div>
                 {/* Simple scrollable container */}
-        <div className="overflow-y-auto" style={{ height: 'calc(100vh - 120px)' }}>
+        <div className="overflow-y-auto h-[calc(100vh-180px)] pb-10">
           <nav className="p-3">
             <ul className="space-y-1.5">
             {isLoggedIn && (

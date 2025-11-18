@@ -453,7 +453,7 @@ const AboutUs = () => {
               {[
                 { name: 'Facebook', icon: Facebook, url: 'https://www.facebook.com/BDSecJSC' },
                 { name: 'YouTube', icon: Youtube, url: 'https://www.youtube.com/@bdsecjsc9617' },
-                { name: 'Instagram', icon: Instagram, url: 'https://www.instagram.com/bdsec_jsc/' },
+                { name: 'Instagram', icon: Instagram, url: 'https://www.instagram.com/bdsec.brokerage/' },
                 { name: 'LinkedIn', icon: Linkedin, url: 'https://www.linkedin.com/company/bdsec-jsc/' },
               ].map((social) => (
                 <a

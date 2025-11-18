@@ -7,6 +7,7 @@ import { useWithdrawalData } from '@/hooks/useWithdrawalData';
 import { formatCurrency } from '@/utils/balanceUtils';
 import { MONGOLIAN_BANKS, type WithdrawalType } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { get } from 'lodash';
 
 export default function BalanceWithdrawal() {
   const { t } = useTranslation();
@@ -24,6 +25,8 @@ export default function BalanceWithdrawal() {
   const [showBalance, setShowBalance] = useState(true);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
+  const BANK_FEE = 200;
+
 
   // New bank account form
   const [newBankData, setNewBankData] = useState({
@@ -132,8 +135,8 @@ export default function BalanceWithdrawal() {
 
     const amountNum = parseFloat(amount);
     const availableBalance = selectedType === 'NOMINAL' 
-      ? getAvailableBalance() 
-      : getCSDAvailableBalance();
+      ? getAvailableBalance()-BANK_FEE 
+      : getCSDAvailableBalance()-BANK_FEE;
 
     if (amountNum <= 0) {
       toast.error('Дүн 0-ээс их байх ёстой');
@@ -300,13 +303,13 @@ export default function BalanceWithdrawal() {
                 <div className="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
                   <span className="text-lg font-bold text-gray-700 dark:text-gray-300">₮</span>
                 </div>
-                <div className="z-10">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Номинал боломжит үлдэгдэл</h3>
+                <div className="z-10 ">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Номинал үлдэгдэл</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Бэлэн мөнгө</p>
                 </div>
               </div>
               <div className="text-right z-10">
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <p className="text-lg font-bold text-gray-900 dark:text-white text-nowrap">
                   {showBalance ? `${formatCurrency(availableBalance)} ₮` : '***,*** ₮'}
                 </p>
               </div>
@@ -448,15 +451,15 @@ export default function BalanceWithdrawal() {
           <select
             value={selectedBank}
             onChange={(e) => setSelectedBank(e.target.value)}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-bdsec focus:border-transparent"
-          >
+            className="w-full box-border p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-bdsec focus:border-transparent"
+            >
             <option value="">Банкны данс сонгох</option>
             {banks.filter(bank => bank.active).map((bank) => (
-              <option key={bank.resPartnerBankId} value={bank.accNumber}>
-                {bank.bankName} - {bank.accNumber} ({bank.accHolderName})
-              </option>
+            <option key={bank.resPartnerBankId} value={bank.accNumber}>
+            {bank.bankName} - {bank.accNumber} ({bank.accHolderName})
+            </option>
             ))}
-          </select>
+          </select> 
         </div>
 
         {/* CSD Asset Code Selection */}
@@ -490,9 +493,12 @@ export default function BalanceWithdrawal() {
             placeholder={t('withdrawal.enterAmount', 'Дүн оруулах')}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec focus:border-transparent"
           />
+          { parseFloat(amount) > (selectedType === 'NOMINAL' ? getAvailableBalance()-BANK_FEE : getCSDAvailableBalance()-BANK_FEE) ? 
+          <p className="text-xs text-red-500 dark:text-red-400 mt-1">Хүсэлтийн дээд хэмжээ хэтэрсэн байна</p> : 
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Нийт: {formatCurrency(selectedType === 'NOMINAL' ? getAvailableBalance() : getCSDAvailableBalance())} ₮
+            Хүсэлтийн дээд хэмжээ: {formatCurrency(selectedType === 'NOMINAL' ? getAvailableBalance()-BANK_FEE : getCSDAvailableBalance()-BANK_FEE)} ₮
           </p>
+          }
         </div>
 
         {/* Description */}
@@ -512,7 +518,7 @@ export default function BalanceWithdrawal() {
         {/* Submit Button */}
         <button
           onClick={handleCreateWithdrawal}
-          disabled={loadingCreate || !selectedBank || !amount || !description || (selectedType === 'CSD' && !selectedAssetCode)}
+          disabled={loadingCreate || !selectedBank || !amount || !description || (selectedType === 'CSD' && !selectedAssetCode) || parseFloat(amount) <= 0 || parseFloat(amount) > (selectedType === 'NOMINAL' ? getAvailableBalance()-BANK_FEE : getCSDAvailableBalance()-BANK_FEE)}
           className="w-full bg-bdsec dark:bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-bdsec/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           {loadingCreate ? t('withdrawal.sending', 'Илгээж байна...') : t('withdrawal.sendRequest', 'Хүсэлт илгээх')}
