@@ -48,7 +48,7 @@ export const StockSelector: React.FC<StockSelectorProps> = ({
             placeholder="Хувьцааны нэр эсвэл симболоор хайх..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl outline-none text-sm bg-white dark:bg-gray-800 text-[16px] text-gray-900 dark:text-white text-small"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl outline-none bg-white dark:bg-gray-800 text-[16px] text-gray-900 dark:text-white text-small"
             autoFocus
           />
         </div>
