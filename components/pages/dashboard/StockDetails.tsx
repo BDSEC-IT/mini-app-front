@@ -1,15 +1,18 @@
 import { BarChart3, FileText, ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
-import { fetchMSEReport, type MSEReportData, type MSEReportRow } from '@/lib/api'
+import { fetchMSEReport, type MSEReportData, type MSEReportRow, type StockData, type WeekHighLowData } from '@/lib/api'
 
 interface StockDetailsProps {
   selectedSymbol: string
   details: any
   infoLabel?: string // Optional label for stock/bond info
+  stockData?: StockData | null
+  weekStats?: WeekHighLowData | null
+  weekStatsLoading?: boolean
 }
 
-export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetailsProps) => {
+export const StockDetails = ({ selectedSymbol, details, infoLabel, stockData, weekStats, weekStatsLoading = false }: StockDetailsProps) => {
   const { t } = useTranslation()
   const [selectedYear, setSelectedYear] = useState('2023')
   const [selectedQuarter, setSelectedQuarter] = useState('2')
@@ -17,6 +20,10 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showFinancials, setShowFinancials] = useState(false)
+  const formatPrice = (value?: number | null) => {
+    if (value === null || value === undefined || Number.isNaN(value)) return '-'
+    return `${Number(value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₮`
+  }
 
   // Generate year options (last 5 years)
   const currentYear = new Date().getFullYear()
@@ -94,6 +101,34 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
     )
   }
 
+  const metricCards = [
+    {
+      key: 'open',
+      label: t('stockDetails.openPrice', 'Нээлт'),
+      value: stockData?.OpeningPrice
+    },
+    {
+      key: 'high',
+      label: t('stockDetails.highPrice', 'Дээд'),
+      value: stockData?.HighPrice
+    },
+    {
+      key: 'low',
+      label: t('stockDetails.lowPrice', 'Доод'),
+      value: stockData?.LowPrice
+    },
+    {
+      key: '52high',
+      label: t('stockDetails.high52', '52-д.х дээд'),
+      value: weekStats?.['52high']
+    },
+    {
+      key: '52low',
+      label: t('stockDetails.low52', '52-д.х доод'),
+      value: weekStats?.['52low']
+    }
+  ]
+
   if (!details) {
     return <div>Loading...</div>
   }
@@ -131,6 +166,35 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+          {t('stockDetails.priceStats', 'Ханшийн үзүүлэлт')}
+        </h3>
+        {weekStatsLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {metricCards.map(card => (
+              <div key={card.key} className="p-3 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-100/40 dark:bg-gray-800/40 animate-pulse h-20" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {metricCards.map(card => (
+              <div
+                key={card.key}
+                className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-900/40 shadow-sm"
+              >
+                <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">
+                  {card.label}
+                </p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white mt-1">
+                  {formatPrice(card.value)}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Financial Reports Section */}

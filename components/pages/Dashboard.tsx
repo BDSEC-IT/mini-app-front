@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Search, ChevronDown } from 'lucide-react'
 import { TradingViewChart } from '../ui/TradingViewChart'
 import { useTheme } from '@/contexts/ThemeContext'
-import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, getUserAccountInformation, hasActiveMCSDAccount, type OrderBookEntry, type StockData, BASE_URL } from '@/lib/api'
+import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, getUserAccountInformation, hasActiveMCSDAccount, fetch52WeekHighLowBySymbol, type OrderBookEntry, type StockData, type WeekHighLowData, BASE_URL } from '@/lib/api'
 import socketIOService from '@/lib/socketio'
 import { StockHeader } from './dashboard/StockHeader'
 import { OrderBook } from './dashboard/OrderBook'
@@ -100,6 +100,8 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
   const [updateQueue, setUpdateQueue] = useState<StockData[]>([])
   const throttleRef = useRef<NodeJS.Timeout | null>(null)
   const [canTrade, setCanTrade] = useState(false)
+  const [weekStats, setWeekStats] = useState<WeekHighLowData | null>(null)
+  const [weekStatsLoading, setWeekStatsLoading] = useState(false)
 
   // Throttled update function to reduce visual glitching
   const processUpdateQueue = useCallback(() => {
@@ -183,6 +185,43 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
   
   // Check if current data is fresh or historical  
   const isDataFresh = displayStockData ? isTodaysFreshData(displayStockData.MDEntryTime) : false;
+
+  useEffect(() => {
+    if (!selectedSymbol) return;
+    if (isBond) {
+      setWeekStats(null);
+      setWeekStatsLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchWeekStats = async () => {
+      setWeekStatsLoading(true);
+      try {
+        const baseSymbol = selectedSymbol.split('-')[0];
+        const fullSymbol = `${baseSymbol}-O-0000`;
+        const data = await fetch52WeekHighLowBySymbol(fullSymbol);
+        if (isMounted) {
+          setWeekStats(data);
+        }
+      } catch (error) {
+        console.error('Error fetching 52-week stats:', error);
+        if (isMounted) {
+          setWeekStats(null);
+        }
+      } finally {
+        if (isMounted) {
+          setWeekStatsLoading(false);
+        }
+      }
+    };
+
+    fetchWeekStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedSymbol, isBond]);
 
   // Fetch all stocks data with company information
   const fetchStocksData = useCallback(async () => {
@@ -878,6 +917,9 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
           selectedSymbol={selectedSymbol}
           details={companyDetails}
           infoLabel={isBond ? t('dashboard.bondInfo', 'Bond Info') : t('dashboard.companyInfo', 'Компанийн мэдээлэл')}
+          stockData={displayStockData}
+          weekStats={weekStats}
+          weekStatsLoading={weekStatsLoading}
         />
       </div>
       

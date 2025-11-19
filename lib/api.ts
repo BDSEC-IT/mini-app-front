@@ -1194,6 +1194,38 @@ export const fetch52WeekHighLow = async (): Promise<WeekHighLowResponse> => {
   }
 };
 
+const getMock52WeekDataForSymbol = (symbol: string): WeekHighLowData | null => {
+  const mockData = generateMock52WeekData();
+  const baseSymbol = symbol.split('-')[0].toUpperCase();
+  const match = mockData.find(item => item.Symbol.split('-')[0].toUpperCase() === baseSymbol);
+  return match || mockData[0] || null;
+};
+
+export const fetch52WeekHighLowBySymbol = async (symbol: string): Promise<WeekHighLowData | null> => {
+  const normalizedSymbol = symbol.includes('-') ? symbol : `${symbol}-O-0000`;
+  const url = `${BASE_URL}/securities/52-week-high-low/symbol/${normalizedSymbol}`;
+  logDev(`Fetching 52-week high-low for ${normalizedSymbol}...`);
+
+  try {
+    const response = await fetchWithTimeout(url);
+
+    if (!response.ok) {
+      logDev(`Using mock 52-week high-low data for ${normalizedSymbol} (${response.status})`);
+      return getMock52WeekDataForSymbol(normalizedSymbol);
+    }
+
+    const responseData = await response.json();
+    const payload = Array.isArray(responseData.data)
+      ? responseData.data[0]
+      : responseData.data;
+
+    return payload || null;
+  } catch (error) {
+    logDev(`Using fallback mock 52-week high-low data for ${normalizedSymbol}`);
+    return getMock52WeekDataForSymbol(normalizedSymbol);
+  }
+};
+
 // Search account by registration number (deprecated - use sendRegistrationNumber instead)
 export const searchAccountByRegNumber = async (registrationNumber: string) => {
   const url = `${BASE_URL}/helper/search-account/${registrationNumber}`;
