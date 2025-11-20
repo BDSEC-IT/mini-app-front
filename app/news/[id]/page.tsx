@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { fetchNews, NewsData } from '@/lib/api'
-import { Calendar, Eye } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 
 export default function NewsDetailPage() {
   const { t } = useTranslation()
@@ -99,10 +99,10 @@ export default function NewsDetailPage() {
               <Calendar size={16} />
               <span>{t('news.publishedAt', 'Published at')}: {formatDate(article.publishedAt)}</span>
             </div>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <Eye size={16} />
               <span>{article.seenCount.toLocaleString()}</span>
-            </div>
+            </div> */}
           </div>
 
           {/* Organization Logos */}

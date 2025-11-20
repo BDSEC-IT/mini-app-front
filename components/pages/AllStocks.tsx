@@ -945,14 +945,15 @@ const getStockCategory = (stock: StockData): string => {
           
           {/* Search Bar */}
           <div className="mb-4 relative">
-            <div className="flex items-center border rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800 h-10">
+            <div className="flex items-center border rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800 h-10  focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <Search size={16} className="text-gray-600 dark:text-gray-400 mr-2" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={handleSearch}
-                className="bg-transparent outline-none w-full text-sm text-gray-900 dark:text-gray-100"
+                className="bg-transparent outline-none w-full text-[16px] text-gray-900 dark:text-gray-100"
                 placeholder={t('common.search')}
+                autoFocus
               />
               {searchTerm && (
                 <button onClick={clearSearch} className="ml-2 h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">

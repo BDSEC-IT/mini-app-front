@@ -7,6 +7,7 @@ import { useWithdrawalData } from '@/hooks/useWithdrawalData';
 import { formatCurrency } from '@/utils/balanceUtils';
 import { MONGOLIAN_BANKS, type WithdrawalType } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { get } from 'lodash';
 
 export default function BalanceWithdrawal() {
   const { t } = useTranslation();
@@ -24,6 +25,8 @@ export default function BalanceWithdrawal() {
   const [showBalance, setShowBalance] = useState(true);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
+  const BANK_FEE = 200;
+
 
   // New bank account form
   const [newBankData, setNewBankData] = useState({
@@ -132,8 +135,8 @@ export default function BalanceWithdrawal() {
 
     const amountNum = parseFloat(amount);
     const availableBalance = selectedType === 'NOMINAL' 
-      ? getAvailableBalance() 
-      : getCSDAvailableBalance();
+      ? getAvailableBalance()-BANK_FEE 
+      : getCSDAvailableBalance()-BANK_FEE;
 
     if (amountNum <= 0) {
       toast.error('Дүн 0-ээс их байх ёстой');
@@ -300,13 +303,13 @@ export default function BalanceWithdrawal() {
                 <div className="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
                   <span className="text-lg font-bold text-gray-700 dark:text-gray-300">₮</span>
                 </div>
-                <div className="z-10">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Номинал боломжит үлдэгдэл</h3>
+                <div className="z-10 ">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Номинал үлдэгдэл</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Бэлэн мөнгө</p>
                 </div>
               </div>
               <div className="text-right z-10">
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <p className="text-lg font-bold text-gray-900 dark:text-white text-nowrap">
                   {showBalance ? `${formatCurrency(availableBalance)} ₮` : '***,*** ₮'}
                 </p>
               </div>
@@ -428,98 +431,110 @@ export default function BalanceWithdrawal() {
   };
 
   // Create Withdrawal Form
-  const renderCreateForm = () => (
-    <div className="p-4">
-      <div className="space-y-4">
-        {/* Bank Selection */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Банкны данс
-            </label>
-            <button
-              onClick={() => setCurrentView('addBank')}
-              className="flex items-center space-x-1 text-sm text-muted-foreground"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Шинэ данс нэмэх</span>
-            </button>
-          </div>
-          <select
-            value={selectedBank}
-            onChange={(e) => setSelectedBank(e.target.value)}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-bdsec focus:border-transparent"
-          >
-            <option value="">Банкны данс сонгох</option>
-            {banks.filter(bank => bank.active).map((bank) => (
-              <option key={bank.resPartnerBankId} value={bank.accNumber}>
-                {bank.bankName} - {bank.accNumber} ({bank.accHolderName})
-              </option>
-            ))}
-          </select>
-        </div>
+  const renderCreateForm = () => {
+    const availableBalance = selectedType === 'NOMINAL'
+      ? getAvailableBalance() - BANK_FEE
+      : getCSDAvailableBalance() - BANK_FEE;
 
-        {/* CSD Asset Code Selection */}
-        {selectedType === 'CSD' && (
+    return (
+      <div className="p-4">
+        <div className="space-y-4">
+          {/* Bank Selection */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Банкны данс
+              </label>
+              <button
+                onClick={() => setCurrentView('addBank')}
+                className="flex items-center space-x-1 text-sm text-muted-foreground"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Шинэ данс нэмэх</span>
+              </button>
+            </div>
+            <select
+              value={selectedBank}
+              onChange={(e) => setSelectedBank(e.target.value)}
+              className="w-full box-border p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-bdsec focus:border-transparent"
+              >
+              <option value="">Банкны данс сонгох</option>
+              {banks.filter(bank => bank.active).map((bank) => (
+              <option key={bank.resPartnerBankId} value={bank.accNumber}>
+              {bank.bankName} - {bank.accNumber} ({bank.accHolderName})
+              </option>
+              ))}
+            </select> 
+          </div>
+
+          {/* CSD Asset Code Selection */}
+          {selectedType === 'CSD' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Asset Code
+              </label>
+              <select
+                value={selectedAssetCode}
+                onChange={(e) => setSelectedAssetCode(e.target.value)}
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-bdsec focus:border-transparent"
+              >
+                <option value="">Asset Code сонгох</option>
+                <option value="9992">9992</option>
+                <option value="9998">9998</option>
+              </select>
+            </div>
+          )}
+
+          {/* Amount */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Asset Code
+              Мөнгөн дүн (₮)
             </label>
-            <select
-              value={selectedAssetCode}
-              onChange={(e) => setSelectedAssetCode(e.target.value)}
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-bdsec focus:border-transparent"
-            >
-              <option value="">Asset Code сонгох</option>
-              <option value="9992">9992</option>
-              <option value="9998">9998</option>
-            </select>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={displayAmount}
+              onChange={handleAmountChange}
+              placeholder={t('withdrawal.enterAmount', 'Дүн оруулах')}
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec focus:border-transparent"
+            />
+            {availableBalance < BANK_FEE ? (
+              <p>Хүсэлтийн дээд хэмжээ 0₮</p>
+            ) : parseFloat(amount || '0') > availableBalance ? (
+              <p className="text-xs text-red-500 dark:text-red-400 mt-1">Хүсэлтийн дээд хэмжээ хэтэрсэн байна</p>
+            ) : (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Хүсэлтийн дээд хэмжээ: {formatCurrency(availableBalance)} ₮
+              </p>
+            )}
           </div>
-        )}
 
-        {/* Amount */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Мөнгөн дүн (₮)
-          </label>
-          <input
-            type="text"
-            inputMode="decimal"
-            value={displayAmount}
-            onChange={handleAmountChange}
-            placeholder={t('withdrawal.enterAmount', 'Дүн оруулах')}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec focus:border-transparent"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Нийт: {formatCurrency(selectedType === 'NOMINAL' ? getAvailableBalance() : getCSDAvailableBalance())} ₮
-          </p>
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Гүйлгээний утга
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t('withdrawal.descriptionPlaceholder', 'Гүйлгээний утга оруулна уу')}
+              rows={3}
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec focus:border-transparent resize-none"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            onClick={handleCreateWithdrawal}
+            disabled={loadingCreate || !selectedBank || !amount || !description || (selectedType === 'CSD' && !selectedAssetCode) || parseFloat(amount || '0') <= 0 || parseFloat(amount || '0') > availableBalance}
+            className="w-full bg-bdsec dark:bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-bdsec/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {loadingCreate ? t('withdrawal.sending', 'Илгээж байна...') : t('withdrawal.sendRequest', 'Хүсэлт илгээх')}
+          </button>
         </div>
-
-        {/* Description */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Гүйлгээний утга
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={t('withdrawal.descriptionPlaceholder', 'Гүйлгээний утга оруулна уу')}
-            rows={3}
-            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec focus:border-transparent resize-none"
-          />
-        </div>
-
-        {/* Submit Button */}
-        <button
-          onClick={handleCreateWithdrawal}
-          disabled={loadingCreate || !selectedBank || !amount || !description || (selectedType === 'CSD' && !selectedAssetCode)}
-          className="w-full bg-bdsec dark:bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-bdsec/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
-          {loadingCreate ? t('withdrawal.sending', 'Илгээж байна...') : t('withdrawal.sendRequest', 'Хүсэлт илгээх')}
-        </button>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Handle CSD Agreement
   const handleCSDAgreement = async () => {
