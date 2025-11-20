@@ -4,6 +4,7 @@ type Props = {
   sublabel: string
   bottomLabel?: string
   otherValue: number
+  otherLabel?: string
   variant: 'underwriter' | 'broker'
 }
 
@@ -13,6 +14,7 @@ export default function CircularProgress({
   sublabel,
   bottomLabel,
   otherValue,
+  otherLabel,
   variant,
 }: Props) {
   const radius = 45
@@ -142,16 +144,7 @@ export default function CircularProgress({
 
       {/* Broker: Enhanced design */}
       {variant === 'broker' && (
-        <>
-          <div className="text-center mb-2">
-            <div className="text-bdsec dark:text-indigo-400 text-xl font-bold leading-tight">
-              {label}
-            </div>
-            <span className="block text-xs font-medium text-gray-600 dark:text-gray-400">
-              {sublabel}
-            </span>
-          </div>
-
+        <div className="flex items-center space-x-2 ">
           <div className="relative">
             <svg height="100" width="100" className="drop-shadow-lg">
               <defs>
@@ -229,7 +222,7 @@ export default function CircularProgress({
                 fontSize="8"
                 className="text-gray-600 dark:text-gray-400"
               >
-                {sublabel}
+                {otherLabel}
               </text>
             </svg>
             
@@ -242,13 +235,18 @@ export default function CircularProgress({
               }}
             />
           </div>
-
-          {bottomLabel && (
-            <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-2 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-md">
-              {bottomLabel}
-            </div>
-          )}
-        </>
+           <div className="text-left mb-2">
+            <span className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+              {bottomLabel} он:
+            </span>
+            <p className="text-bdsec dark:text-indigo-400 text-xl font-bold leading-tight">
+              {label}
+            </p>
+            <span className="block text-xs font-medium text-gray-600 dark:text-gray-400">
+              {sublabel}
+            </span>
+          </div>
+        </div>
       )}
     </div>
   )

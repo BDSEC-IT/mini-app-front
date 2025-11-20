@@ -578,6 +578,7 @@
     "retry": "Try Again",
     "noData": "No portfolio data available",
     "totalInvested": "Total Invested",
+    "totalProfit": "Total Profit",
     "currentValue": "Current Value",
     "profitLoss": "Profit/Loss",
     "cashAccount": "Cash Account",

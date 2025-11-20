@@ -281,7 +281,7 @@ export default function Portfolio() {
               <div >
                 <span className="text-sm text-white/80">{t('portfolio.currentValue')}</span>
                 <p className="text-2xl font-bold">
-                {showBalance ? formatCurrency(totalAssetValue) : '***,***'} ₮
+                {showBalance ? formatCurrency(totalAssetValue) : '******'} ₮
                 </p>
               </div>
               <div className="flex space-x-2">
@@ -309,13 +309,13 @@ export default function Portfolio() {
                 <div className='flex justify-between items-center '>
                   <p className=" ">{t('portfolio.totalInvested')}:</p>
                   <p className="font-semibold">
-                    {showBalance ? formatCurrency(totalInvested) : '***,***'} ₮
+                    {showBalance ? formatCurrency(totalInvested) : '******'} ₮
                   </p>
                 </div>
                 <div className=" flex  justify-between items-center">
                   <p>{t('portfolio.totalProfit')}:</p>
                   <p className='font-semibold'>
-                    {showBalance ? (totalProfit >= 0 ? '+' : '') + formatCurrency(Math.abs(totalProfit)) : '***,***'} ₮
+                    {showBalance ? (totalProfit >= 0 ? '+' : '') + formatCurrency(Math.abs(totalProfit)) : '******'} ₮
                   </p>
                 </div>
                  <div className="flex items-center justify-between">
