@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight, Maximize2 } from 'lucide-react'
 import { fetchAllStocks, type StockData } from '@/lib/api'
 import socketIOService from '@/lib/socketio'
 // import { testBackendDevConfig } from '@/lib/simple-socket-test' // Disabled
@@ -659,14 +659,25 @@ const getStockCategory = (stock: StockData): string => {
             {formatPrice(stock.LastTradedPrice, isBondCategory)}
           </td>
           <td className="px-2 py-2 text-right">
+            <span className={
+              Number(stock.Changes) > 0
+                ? 'text-green-500'
+                : Number(stock.Changes) < 0
+                  ? 'text-red-500'
+                  : ''
+            }>
+              {Number(stock.Changes) > 0 ? '+' : ''}{Number(stock.Changes || 0).toFixed(2)}
+            </span>
+          </td>
+          <td className="px-2 py-2 text-right">
             <div className="flex items-center justify-end">
               {stock.Changep !== null && stock.Changep !== undefined ? (
                 <>
                   <span className={
-                    stock.Changep > 0 
-                      ? 'text-green-500' 
-                      : stock.Changep < 0 
-                        ? 'text-red-500' 
+                    stock.Changep > 0
+                      ? 'text-green-500'
+                      : stock.Changep < 0
+                        ? 'text-red-500'
                         : ''
                   }>
                     {stock.Changep > 0 ? '+' : ''}{stock.Changep.toFixed(2)}%
@@ -679,17 +690,6 @@ const getStockCategory = (stock: StockData): string => {
                 </>
               ) : '-'}
             </div>
-          </td>
-          <td className="px-2 py-2 text-right">
-            <span className={
-              Number(stock.Changes) > 0 
-                ? 'text-green-500' 
-                : Number(stock.Changes) < 0 
-                  ? 'text-red-500' 
-                  : ''
-            }>
-              {Number(stock.Changes) > 0 ? '+' : ''}{Number(stock.Changes || 0).toFixed(2)}
-            </span>
           </td>
           <td className="px-2 py-2 text-right">
             {stock.Volume?.toLocaleString() || '-'}
@@ -781,17 +781,17 @@ const getStockCategory = (stock: StockData): string => {
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
-                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
-                      %
-                      {sortConfig.key === 'Changep' && (
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
+                      {t('dashboard.change')}
+                      {sortConfig.key === 'Changes' && (
                         sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
                       )}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
-                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
-                      {t('dashboard.change')}
-                      {sortConfig.key === 'Changes' && (
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
+                      %
+                      {sortConfig.key === 'Changep' && (
                         sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
                       )}
                     </div>
@@ -939,6 +939,7 @@ const getStockCategory = (stock: StockData): string => {
               onClick={() => setIsFullTableModalOpen(true)}
               className="flex items-center gap-1 text-sm text-bdsec dark:text-indigo-400"
             >
+              <Maximize2 size={14} />
               {t('allStocks.seeFullTable')}
             </button>
           </div>

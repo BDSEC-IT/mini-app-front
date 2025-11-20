@@ -185,7 +185,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
                         </span>
                         {isPartial && (
                           <span className="text-[10px] text-amber-600 dark:text-amber-400">
-                            {t('exchange.partial', 'Хэсэгчилсэн')}
+                            {t('exchange.partial', 'Хэсэгчилэн биелсэн')} ({order.cumQty}/{order.quantity})
                           </span>
                         )}
                       </div>

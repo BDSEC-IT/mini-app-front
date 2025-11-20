@@ -103,7 +103,25 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel, stockData, we
     )
   }
 
+  // Calculate market cap
+  const marketCap = stockData?.LastTradedPrice && details?.issued_shares
+    ? stockData.LastTradedPrice * parseInt(details.issued_shares, 10)
+    : null;
+
+  const formatMarketCap = (value: number | null) => {
+    if (!value) return '-';
+    if (value >= 1e12) return `${(value / 1e12).toFixed(2)} их наяд ₮`;
+    if (value >= 1e9) return `${(value / 1e9).toFixed(2)} тэрбум ₮`;
+    if (value >= 1e6) return `${(value / 1e6).toFixed(2)} сая ₮`;
+    return `${value.toLocaleString()} ₮`;
+  };
+
   const metricCards = [
+    {
+      key: 'prevClose',
+      label: t('stockDetails.previousClose', 'Өмнөх хаалт'),
+      value: stockData?.PreviousClose
+    },
     {
       key: 'open',
       label: t('stockDetails.openPrice', 'Нээлт'),
@@ -154,6 +172,10 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel, stockData, we
           <div className="flex justify-between items-center p-3">
             <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.totalShares')}:</span>
             <span className="text-xs sm:text-sm font-medium">{parseInt(details.issued_shares, 10).toLocaleString('en-US')}</span>
+          </div>
+          <div className="flex justify-between items-center p-3">
+            <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('stockDetails.marketCap', 'Зах зээлийн үнэлгээ')}:</span>
+            <span className="text-xs sm:text-sm font-medium">{formatMarketCap(marketCap)}</span>
           </div>
           {weekStatsLoading ? (
             metricCards.map(card => (
