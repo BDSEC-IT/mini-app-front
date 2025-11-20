@@ -23,6 +23,8 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel, stockData, we
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showFinancials, setShowFinancials] = useState(false)
+  const [peRatio, setPeRatio] = useState<number | null>(null)
+  const [peLoading, setPeLoading] = useState(false)
   const formatPrice = (value?: number | null) => {
     if (value === null || value === undefined || Number.isNaN(value)) return '-'
     return `${Number(value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₮`
@@ -38,6 +40,69 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel, stockData, we
       fetchReport()
     }
   }, [details?.companycode, selectedYear, selectedQuarter, showFinancials])
+
+  // Auto-fetch latest annual report for P/E calculation
+  useEffect(() => {
+    const fetchPERatio = async () => {
+      if (!details?.companycode || !stockData?.LastTradedPrice || !details?.issued_shares) return
+
+      setPeLoading(true)
+      try {
+        // Try fetching reports in order: current year Q4, current year Q2, previous year Q4
+        const peYear = currentMonth <= 3 ? (currentYear - 1).toString() : currentYear.toString()
+        const prevYear = (parseInt(peYear) - 1).toString()
+
+        const reportAttempts = [
+          { year: peYear, quarter: '4' },
+          { year: peYear, quarter: '2' },
+          { year: prevYear, quarter: '4' },
+        ]
+
+        let reportData = null
+        for (const attempt of reportAttempts) {
+          try {
+            const response = await fetchMSEReport(details.companycode, attempt.year, attempt.quarter)
+            if (response.success && response.data?.incomeData) {
+              reportData = response.data
+              break
+            }
+          } catch {
+            // Try next attempt
+            continue
+          }
+        }
+
+        if (reportData?.incomeData) {
+          // Find net income row (Цэвэр ашиг or similar)
+          const netIncomeRow = reportData.incomeData.find(row =>
+            row.type === 'data' &&
+            (row.data.indicator.includes('Цэвэр ашиг') ||
+             row.data.indicator.includes('цэвэр ашиг') ||
+             row.data.indicator.includes('Тайлант үеийн ашиг'))
+          )
+
+          if (netIncomeRow && netIncomeRow.data.finalBalance) {
+            const netIncome = parseFloat(netIncomeRow.data.finalBalance.replace(/,/g, ''))
+            const totalShares = parseInt(details.issued_shares, 10)
+            const eps = netIncome / totalShares
+
+            if (eps > 0) {
+              const pe = stockData.LastTradedPrice / eps
+              setPeRatio(pe)
+            } else {
+              setPeRatio(null) // Negative earnings
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching P/E data:', err)
+      } finally {
+        setPeLoading(false)
+      }
+    }
+
+    fetchPERatio()
+  }, [details?.companycode, stockData?.LastTradedPrice, details?.issued_shares, currentMonth, currentYear])
 
   const fetchReport = async () => {
     if (!details?.companycode) return
@@ -103,7 +168,25 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel, stockData, we
     )
   }
 
+  // Calculate market cap
+  const marketCap = stockData?.LastTradedPrice && details?.issued_shares
+    ? stockData.LastTradedPrice * parseInt(details.issued_shares, 10)
+    : null;
+
+  const formatMarketCap = (value: number | null) => {
+    if (!value) return '-';
+    if (value >= 1e12) return `${(value / 1e12).toFixed(2)} их наяд ₮`;
+    if (value >= 1e9) return `${(value / 1e9).toFixed(2)} тэрбум ₮`;
+    if (value >= 1e6) return `${(value / 1e6).toFixed(2)} сая ₮`;
+    return `${value.toLocaleString()} ₮`;
+  };
+
   const metricCards = [
+    {
+      key: 'prevClose',
+      label: t('stockDetails.previousClose', 'Өмнөх хаалт'),
+      value: stockData?.PreviousClose
+    },
     {
       key: 'open',
       label: t('stockDetails.openPrice', 'Нээлт'),
@@ -154,6 +237,20 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel, stockData, we
           <div className="flex justify-between items-center p-3">
             <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.totalShares')}:</span>
             <span className="text-xs sm:text-sm font-medium">{parseInt(details.issued_shares, 10).toLocaleString('en-US')}</span>
+          </div>
+          <div className="flex justify-between items-center p-3">
+            <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('stockDetails.marketCap', 'Зах зээлийн үнэлгээ')}:</span>
+            <span className="text-xs sm:text-sm font-medium">{formatMarketCap(marketCap)}</span>
+          </div>
+          <div className="flex justify-between items-center p-3">
+            <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('stockDetails.peRatio', 'P/E харьцаа')}:</span>
+            <span className="text-xs sm:text-sm font-medium">
+              {peLoading ? (
+                <span className="inline-block w-12 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              ) : peRatio !== null ? (
+                peRatio.toFixed(2)
+              ) : '-'}
+            </span>
           </div>
           {weekStatsLoading ? (
             metricCards.map(card => (

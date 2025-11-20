@@ -218,16 +218,11 @@ export function shouldDisplayStock(
   targetDate: string,
   isBond: boolean = false
 ): boolean {
-  // Bonds are always displayed regardless of trading time logic
-  if (isBond) {
-    return true;
-  }
-  
-  // For stocks, check if MDEntryTime matches the target date
+  // For both stocks and bonds, check if MDEntryTime matches the target date
   if (!stockMDEntryTime) {
     return false;
   }
-  
+
   const stockDate = stockMDEntryTime.slice(0, 10); // Extract YYYY-MM-DD part
   return stockDate === targetDate;
 }
