@@ -105,9 +105,9 @@ const FullStockTableModal: React.FC<FullStockTableModalProps> = ({
           </td>
           <td className="px-2 py-2 text-right text-sm">
             <span className={`font-medium ${
-              stock.Changes > 0 ? 'text-green-500' : stock.Changes < 0 ? 'text-red-500' : 'text-gray-500'
+              Number(stock.Changes) > 0 ? 'text-green-500' : Number(stock.Changes) < 0 ? 'text-red-500' : 'text-gray-500'
             }`}>
-              {stock.Changes > 0 ? '+' : ''}{stock.Changes?.toFixed(2) || '-'}
+              {Number(stock.Changes) > 0 ? '+' : ''}{typeof stock.Changes === 'number' ? stock.Changes.toFixed(2) : '-'}
             </span>
           </td>
           <td className="px-2 py-2 text-right text-sm font-normal">

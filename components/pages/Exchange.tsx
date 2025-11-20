@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'next/navigation';
 import Cookies from 'js-cookie';
-import { 
+import {
   fetchSecondaryOrders,
+  fetchSecondaryOrderStatus,
   placeSecondaryOrder,
   cancelSecondaryOrder,
   fetchIstockNominalBalance,
@@ -486,10 +487,34 @@ export default function Exchange() {
       setLoadingOrders(true);
       const result = await fetchSecondaryOrders(token);
       if (result.success && result.data) {
+        // Enhance orders with execution data for accurate cumQty
+        const enhancedOrders = await Promise.all(
+          result.data.map(async (order) => {
+            try {
+              const statusResult = await fetchSecondaryOrderStatus(order.id, token);
+              if (statusResult.success && statusResult.data?.executions) {
+                const totalExecuted = statusResult.data.executions.reduce(
+                  (sum: number, exec: any) => sum + (exec.execQty || 0),
+                  0
+                );
+                return {
+                  ...order,
+                  cumQty: totalExecuted,
+                  leavesQty: order.quantity - totalExecuted,
+                  executions: statusResult.data.executions
+                };
+              }
+            } catch (e) {
+              console.error('Error fetching status for order', order.id, ':', e);
+            }
+            return order;
+          })
+        );
+
         // Sort orders by date in descending order (newest first)
-        const sortedOrders = result.data.sort((a: any, b: any) => {
-          const dateA = new Date(a.createdAt || a.date || 0).getTime();
-          const dateB = new Date(b.createdAt || b.date || 0).getTime();
+        const sortedOrders = enhancedOrders.sort((a: any, b: any) => {
+          const dateA = new Date(a.createdDate || a.createdAt || a.date || 0).getTime();
+          const dateB = new Date(b.createdDate || b.createdAt || b.date || 0).getTime();
           return dateB - dateA; // Descending order
         });
         setOrders(sortedOrders);
