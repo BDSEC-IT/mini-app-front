@@ -335,6 +335,26 @@ a:focus-visible {
   color: rgb(15, 23, 42);
 }
 
+select, ::picker(select){
+ appearance: base-select;
+}
+select{ 
+  width: 100%;
+  padding:6px 12px;
+}
+
+::picker(select){
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  margin: 5px 0;
+  border-radius: 5px;
+  padding: 0 5px;
+  }
+option::checkmark {
+  order: 2;
+  margin-left: auto;
+}
+
 .no-scrollbar {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none;  /* IE 10+ */

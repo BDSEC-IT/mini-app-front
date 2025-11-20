@@ -131,7 +131,6 @@ export const OrderForm: React.FC<OrderFormProps> = ({
     }
     return dates;
   };
-  
   const dateOptions = generateDateOptions();
   return (
     <div className="bg-white dark:bg-gray-900  mt-3 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-6">
@@ -140,7 +139,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         <Select
           value={orderType}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setOrderType(e.target.value)}
-          className="text-xs py-2"
+          className="text-xs py-2 outline-none"
         >
           <option value="Зах зээлийн">{t('exchange.market', 'Зах зээл')}</option>
           <option value="Нөхцөлт">{t('exchange.limit', 'Нөхцөлт')}</option>
@@ -269,7 +268,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
               }
             }}
             placeholder={t('exchange.quantity', 'Тоо ширхэг')}
-            className={`w-full ${quantity ? 'pr-16' : ''}`}
+            className={`w-full text-[16px] outline-none ${quantity ? 'pr-16' : ''}`}
             min="1"
             max={getMaxQuantity()}
             step="1"
@@ -281,7 +280,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           )}
         </div>
       </div>
-
+      
       {/* Price Input for Limit Orders */}
       {orderType === 'Нөхцөлт' && (
         <div className="mb-4">
@@ -300,7 +299,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 onChange={handlePriceChange}
                 onBlur={handlePriceBlur}
                 placeholder={t('exchange.price')}
-                className={`w-full rounded ${price ? 'pr-8' : ''}`}
+                className={`w-full rounded outline-none text-[16px] ${price ? 'pr-8' : ''}`}
                 step={selectedStock ? getPriceStep(selectedStock.PreviousClose || 0) : 0.01}
               />
               {price && (
@@ -319,7 +318,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {t('exchange.step')}: {selectedStock ? getPriceStep(selectedStock.PreviousClose || 0) : 0.01}₮
+              {t('exchange.step')}: {getPriceStep((price && !isNaN(Number(price)) && Number(price) > 0) ? Number(price) : (selectedStock ? selectedStock.PreviousClose || 0 : 0.01))}₮
             </span>
             <Button
               variant="secondary"
