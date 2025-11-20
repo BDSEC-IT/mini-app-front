@@ -11,6 +11,8 @@ interface OrderData {
   buySell: 'BUY' | 'SELL';
   quantity: number;
   price: number;
+  symbol?: string;
+  createdDate?: string;
 }
 
 interface MyOrdersProps {
@@ -36,12 +38,17 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<OrderData | null>(null);
 
-  const filteredOrders = orders.filter(order => {
-    if (orderTab === 'active') return order.statusname === 'pending';
-    if (orderTab === 'completed') return order.statusname === 'completed';
-    if (orderTab === 'cancelled') return order.statusname === 'cancelled';
-    return false;
-  });
+  const filteredOrders = orders
+    .filter(order => {
+      if (orderTab === 'active') return order.statusname === 'pending';
+      if (orderTab === 'completed') return order.statusname === 'completed';
+      if (orderTab === 'cancelled') return order.statusname === 'cancelled';
+      return false;
+    })
+    .sort((a, b) => {
+      if (!a.createdDate || !b.createdDate) return 0;
+      return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
+    });
 
   const handleCancelClick = (order: OrderData) => {
     setOrderToCancel(order);
@@ -120,7 +127,12 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
             return (
               <div key={order.id} className="flex items-center justify-between py-1.5 px-2 mb-1 bg-gray-50 dark:bg-gray-800/30 rounded text-[10px] hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
                 <div className="flex-1">
-                  <div>
+                  <div className="flex items-center gap-1.5">
+                    {order.symbol && (
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {order.symbol.split('-')[0]}
+                      </span>
+                    )}
                     <span className={`font-medium px-1.5 py-0.5 rounded ${
                       order.buySell === 'BUY'
                         ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20'
@@ -128,8 +140,8 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
                     }`}>
                       {order.buySell === 'BUY' ? t('exchange.buy', 'АВАХ') : t('exchange.sell', 'ЗАРАХ')}
                     </span>
-                    <span className="ml-1.5 text-gray-500 dark:text-gray-400">
-                      ({feePercent}% {t('exchange.fee', 'шимтгэл')})
+                    <span className="text-gray-500 dark:text-gray-400">
+                      ({feePercent}%)
                     </span>
                   </div>
                   <div className="text-gray-600 dark:text-gray-300 mt-1">

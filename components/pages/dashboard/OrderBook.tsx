@@ -1,5 +1,5 @@
 import React from 'react'
-import { ArrowDown, ArrowUp, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { useRef, useEffect, useState } from 'react'
@@ -197,14 +197,15 @@ const OrderBookComponent = ({
 
         {/* Buy Orders */}
         <div className="overflow-hidden">
-          <div className="px-3 py-2 bg-green-50 dark:bg-green-900/10">
-            <div className="grid grid-cols-2 text-right">
-                <h3 className="text-sm font-medium text-gray-500">{t('dashboard.buyQuantity')}</h3>
-              <h3 className="text-sm font-medium text-green-500 flex justify-end">
-                <ArrowUp size={12} className="mr-1 text-green-500" />
-                {t('dashboard.buy')}
-              </h3>
-
+          <div className="px-3 py-1.5 bg-green-50 dark:bg-green-900/10">
+            <h3 className="text-sm font-medium text-green-500 text-center">
+              {t('dashboard.buyAction', 'Авах')}
+            </h3>
+          </div>
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex justify-center gap-4">
+              <h3 className="text-xs font-medium text-gray-500 w-14 text-right">{t('dashboard.buyQuantity')}</h3>
+              <h3 className="text-xs font-medium text-gray-500 w-20 text-right">{t('exchange.price', 'Үнэ')}</h3>
             </div>
           </div>
 
@@ -215,15 +216,14 @@ const OrderBookComponent = ({
               sortedBuyOrders.map((order, index) => (
                 <div
                   key={`buy-${order.id}-${index}`}
-                  className="grid grid-cols-2 text-right text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+                  className="flex justify-center gap-4 py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
-                  <span className="bg-green-50 dark:bg-green-900/10 px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
+                  <span className="text-gray-700 dark:text-gray-300 text-xs w-14 text-right tabular-nums">
                     {(order.MDEntrySize || 0).toLocaleString()}
                   </span>
-                  <span className="text-green-500 font-semibold justify-self-end text-sm">
+                  <span className="text-green-500 font-semibold text-sm w-20 text-right tabular-nums">
                     {formatOrderPrice(order.MDEntryPx, selectedSymbol)}
                   </span>
-                  
                 </div>
               ))
             ) : (
@@ -233,15 +233,17 @@ const OrderBookComponent = ({
             )}
           </div>
         </div>
-          {/* Sell Orders */}
+        {/* Sell Orders */}
         <div className="overflow-hidden">
-          <div className="px-3 py-2 bg-red-50 dark:bg-red-900/10">
-            <div className="grid grid-cols-2 text-right">
-              <h3 className="text-sm font-medium text-red-500 flex items-center">
-                <ArrowDown size={12} className="mr-1 text-red-500" />
-                {t('dashboard.sell')}
-              </h3>
-              <h3 className="text-sm font-medium text-gray-500">{t('dashboard.sellQuantity')}</h3>
+          <div className="px-3 py-1.5 bg-red-50 dark:bg-red-900/10">
+            <h3 className="text-sm font-medium text-red-500 text-center">
+              {t('dashboard.sellAction', 'Зарах')}
+            </h3>
+          </div>
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex justify-center gap-4">
+              <h3 className="text-xs font-medium text-gray-500 w-20 text-right">{t('exchange.price', 'Үнэ')}</h3>
+              <h3 className="text-xs font-medium text-gray-500 w-14 text-right">{t('dashboard.sellQuantity')}</h3>
             </div>
           </div>
 
@@ -252,12 +254,12 @@ const OrderBookComponent = ({
               sortedSellOrders.map((order, index) => (
                 <div
                   key={`sell-${order.id}-${index}`}
-                  className="grid grid-cols-2 text-right text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+                  className="flex justify-center gap-4 py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
-                  <span className="text-red-500 mr-5 font-semibold justify-self-end text-sm">
-                    {formatOrderPrice(order.MDEntryPx, selectedSymbol)} ₮
+                  <span className="text-red-500 font-semibold text-sm w-20 text-right tabular-nums">
+                    {formatOrderPrice(order.MDEntryPx, selectedSymbol)}
                   </span>
-                  <span className="bg-red-50 dark:bg-red-900/10 px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
+                  <span className="text-gray-700 dark:text-gray-300 text-xs w-14 text-right tabular-nums">
                     {(order.MDEntrySize || 0).toLocaleString()}
                   </span>
                 </div>
