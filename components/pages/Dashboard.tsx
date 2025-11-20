@@ -595,8 +595,10 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
   }, [allStocks, searchTerm])
 
   const handleStockSelect = (symbol: string) => {
+    // Clean the symbol - extract base symbol without suffix (e.g., APU-O-0000 -> APU)
+    const cleanSymbol = symbol.split('-')[0]
     // Always set the new symbol, even if it's the same
-    setSelectedSymbol(symbol)
+    setSelectedSymbol(cleanSymbol)
     // Clear search and close search dropdown
     setSearchTerm('')
     setIsSearchOpen(false)
@@ -757,7 +759,7 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
                               {getCompanyName(stock)}
                             </div>
                           </div>
-                          {stock.Changep !== undefined && (
+                          {stock.Changep != null && (
                             <div className={`ml-2 text-[10px] font-semibold ${
                               stock.Changep >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                             }`}>

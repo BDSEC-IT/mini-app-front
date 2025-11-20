@@ -1024,25 +1024,16 @@ const getStockCategory = (stock: StockData): string => {
             </div>
 
             {/* 52/7 Button */}
-            <div className="px-4 py-2 text-sm whitespace-nowrap">
-              <button
-                onClick={() => {
-                  setIsModalOpen(true);    // Open modal
-                }}
-                className={`px-4 py-2 text-sm whitespace-nowrap ${
-                  activeTab === 'average'
-                    ? 'bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
-                    : 'text-gray-500'
-                }`}
-              >
-             {t('StockAver.see_data') }
-              </button>
-
-              <StockAverageModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-              />
-            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className={`px-4 py-2 text-sm whitespace-nowrap ${
+                activeTab === 'average'
+                  ? 'bg-bdsec dark:bg-indigo-500 text-white rounded-t-md'
+                  : 'text-gray-500'
+              }`}
+            >
+              {t('StockAver.see_data')}
+            </button>
           </div>
 
 
