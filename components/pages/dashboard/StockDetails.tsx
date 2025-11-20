@@ -1,25 +1,34 @@
-import { BarChart3, FileText, ChevronDown } from 'lucide-react'
+import { FileText, ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
-import { fetchMSEReport, type MSEReportData, type MSEReportRow } from '@/lib/api'
+import { fetchMSEReport, type MSEReportData, type MSEReportRow, type StockData, type WeekHighLowData } from '@/lib/api'
 
 interface StockDetailsProps {
   selectedSymbol: string
   details: any
   infoLabel?: string // Optional label for stock/bond info
+  stockData?: StockData | null
+  weekStats?: WeekHighLowData | null
+  weekStatsLoading?: boolean
 }
 
-export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetailsProps) => {
+export const StockDetails = ({ selectedSymbol, details, infoLabel, stockData, weekStats, weekStatsLoading = false }: StockDetailsProps) => {
   const { t } = useTranslation()
-  const [selectedYear, setSelectedYear] = useState('2023')
+  const currentYear = new Date().getFullYear()
+  const currentMonth = new Date().getMonth() + 1
+  const defaultYear = currentMonth <= 3 ? currentYear - 1 : currentYear
+  const [selectedYear, setSelectedYear] = useState(defaultYear.toString())
   const [selectedQuarter, setSelectedQuarter] = useState('2')
   const [reportData, setReportData] = useState<MSEReportData | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showFinancials, setShowFinancials] = useState(false)
+  const formatPrice = (value?: number | null) => {
+    if (value === null || value === undefined || Number.isNaN(value)) return '-'
+    return `${Number(value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₮`
+  }
 
   // Generate year options (last 5 years)
-  const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
   const quarters = [ '2',  '4']
 
@@ -94,42 +103,73 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel }: StockDetail
     )
   }
 
+  const metricCards = [
+    {
+      key: 'open',
+      label: t('stockDetails.openPrice', 'Нээлт'),
+      value: stockData?.OpeningPrice
+    },
+    {
+      key: 'high',
+      label: t('stockDetails.highPrice', 'Дээд'),
+      value: stockData?.HighPrice
+    },
+    {
+      key: 'low',
+      label: t('stockDetails.lowPrice', 'Доод'),
+      value: stockData?.LowPrice
+    },
+    {
+      key: '52high',
+      label: t('stockDetails.high52', '52-д.х дээд'),
+      value: weekStats?.['52high']
+    },
+    {
+      key: '52low',
+      label: t('stockDetails.low52', '52-д.х доод'),
+      value: weekStats?.['52low']
+    }
+  ]
+
   if (!details) {
     return <div>Loading...</div>
   }
 
   return (
     <div className="w-full backdrop-blur-2xl my-3">
-      <h2 className="text-base sm:text-lg font-medium mb-4 flex items-center">
-        <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
+      <h2 className="text-base sm:text-lg font-medium mb-4">
         {infoLabel || t('dashboard.stockDetails')} - {selectedSymbol.split('-')[0]}
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="overflow-hidden">
-          <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
-            <div className="flex justify-between items-center p-3">
-              <span className="text-xs sm:text-sm text-gray-500 font-medium">ISIN:</span>
-              <span className="text-xs sm:text-sm font-medium">{details.ISIN}</span>
-            </div>
-            <div className="flex justify-between items-center p-3">
-              <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.companyCode')}:</span>
-              <span className="text-xs sm:text-sm font-medium">{details.companycode}</span>
-            </div>
+      <div className="overflow-hidden">
+        <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
+          <div className="flex justify-between items-center p-3">
+            <span className="text-xs sm:text-sm text-gray-500 font-medium">ISIN:</span>
+            <span className="text-xs sm:text-sm font-medium">{details.ISIN}</span>
           </div>
-        </div>
-
-        <div className="overflow-hidden">
-          <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
-            <div className="flex justify-between items-center p-3">
-              <span className="text-xs sm:text-sm text-gray-500 font-medium">
-                {t('dashboard.totalShares')}:
-              </span>
-              <span className="text-xs sm:text-sm font-medium">
-                {parseInt(details.issued_shares, 10).toLocaleString('en-US')}
-              </span>
-            </div>
+          <div className="flex justify-between items-center p-3">
+            <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.companyCode')}:</span>
+            <span className="text-xs sm:text-sm font-medium">{details.companycode}</span>
           </div>
+          <div className="flex justify-between items-center p-3">
+            <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.totalShares')}:</span>
+            <span className="text-xs sm:text-sm font-medium">{parseInt(details.issued_shares, 10).toLocaleString('en-US')}</span>
+          </div>
+          {weekStatsLoading ? (
+            metricCards.map(card => (
+              <div key={card.key} className="flex justify-between items-center p-3 animate-pulse">
+                <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+              </div>
+            ))
+          ) : (
+            metricCards.map(card => (
+              <div key={card.key} className="flex justify-between items-center p-3">
+                <span className="text-xs sm:text-sm text-gray-500 font-medium">{card.label}:</span>
+                <span className="text-xs sm:text-sm font-medium">{formatPrice(card.value)}</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

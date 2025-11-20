@@ -953,6 +953,7 @@ const getStockCategory = (stock: StockData): string => {
                 onChange={handleSearch}
                 className="bg-transparent outline-none w-full text-[16px] text-gray-900 dark:text-gray-100"
                 placeholder={t('common.search')}
+                autoFocus
               />
               {searchTerm && (
                 <button onClick={clearSearch} className="ml-2 h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">

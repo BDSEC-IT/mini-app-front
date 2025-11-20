@@ -693,6 +693,17 @@
     "csdRequestHistory": "CSD Request History"
   },
   "stockDetails": {
+    "priceStats": "Price Statistics",
+    "openPrice": "Open Price",
+    "highPrice": "High Price",
+    "lowPrice": "Low Price",
+    "high52": "52-Week High",
+    "low52": "52-Week Low",
+    "open": "Open",
+    "high": "High",
+    "low": "Low",
+    "52high": "52-Week High",
+    "52low": "52-Week Low",
     "financialReport": "Financial Report",
     "financialReportNotFound": "Financial report not found",
     "year": "Year",

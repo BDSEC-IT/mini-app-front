@@ -7,8 +7,8 @@ export const revalidate = 60
 // Pre-fetch stock data at build time and cache it
 export async function generateMetadata() {
   return {
-    title: 'BDSEC | Dashboard',
-    description: 'Mongolia Stock Exchange Trading Platform'
+    title: 'Нүүр | BDSEC',
+    description: 'МХБ арилжааны платформ'
   }
 }
 
