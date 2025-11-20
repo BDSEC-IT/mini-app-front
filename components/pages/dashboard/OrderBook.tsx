@@ -1,5 +1,5 @@
 import React from 'react'
-import { Activity, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react'
+import { ArrowDown, ArrowUp, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { useRef, useEffect, useState } from 'react'
@@ -160,8 +160,7 @@ const OrderBookComponent = ({
         orderBookInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}>
         <div>
-          <h2 className="text-lg font-semibold flex items-center">
-            <Activity size={16} className="mr-2 text-gray-600 dark:text-gray-400" />
+          <h2 className="text-base sm:text-lg font-medium">
             {t('dashboard.orderBook')} - {selectedSymbol.split('-')[0]}
           </h2>
           <div className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.orderBookExplanation')}</div>

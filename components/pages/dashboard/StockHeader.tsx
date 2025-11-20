@@ -96,7 +96,7 @@ export const StockHeader = ({
         <div className="flex flex-col gap-1">
           {/* Symbol Only */}
           <div className='flex gap-x-2 '>
-          <h2 className="text-2xl dark:text-indigo-500 light:text-bdsec   font-semibold content-center">
+          <h2 className="text-2xl text-bdsec dark:text-indigo-400 font-semibold content-center">
             {selectedStockData?.Symbol ? formatSymbolDisplay(selectedStockData.Symbol) : ''}
           </h2>
 

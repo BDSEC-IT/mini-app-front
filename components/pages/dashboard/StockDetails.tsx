@@ -1,4 +1,4 @@
-import { BarChart3, FileText, ChevronDown } from 'lucide-react'
+import { FileText, ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
 import { fetchMSEReport, type MSEReportData, type MSEReportRow, type StockData, type WeekHighLowData } from '@/lib/api'
@@ -14,7 +14,10 @@ interface StockDetailsProps {
 
 export const StockDetails = ({ selectedSymbol, details, infoLabel, stockData, weekStats, weekStatsLoading = false }: StockDetailsProps) => {
   const { t } = useTranslation()
-  const [selectedYear, setSelectedYear] = useState('2023')
+  const currentYear = new Date().getFullYear()
+  const currentMonth = new Date().getMonth() + 1
+  const defaultYear = currentMonth <= 3 ? currentYear - 1 : currentYear
+  const [selectedYear, setSelectedYear] = useState(defaultYear.toString())
   const [selectedQuarter, setSelectedQuarter] = useState('2')
   const [reportData, setReportData] = useState<MSEReportData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -26,7 +29,6 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel, stockData, we
   }
 
   // Generate year options (last 5 years)
-  const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString())
   const quarters = [ '2',  '4']
 
@@ -135,66 +137,40 @@ export const StockDetails = ({ selectedSymbol, details, infoLabel, stockData, we
 
   return (
     <div className="w-full backdrop-blur-2xl my-3">
-      <h2 className="text-base sm:text-lg font-medium mb-4 flex items-center">
-        <BarChart3 size={18} className="mr-2 text-bdsec dark:text-indigo-400" />
+      <h2 className="text-base sm:text-lg font-medium mb-4">
         {infoLabel || t('dashboard.stockDetails')} - {selectedSymbol.split('-')[0]}
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="overflow-hidden">
-          <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
-            <div className="flex justify-between items-center p-3">
-              <span className="text-xs sm:text-sm text-gray-500 font-medium">ISIN:</span>
-              <span className="text-xs sm:text-sm font-medium">{details.ISIN}</span>
-            </div>
-            <div className="flex justify-between items-center p-3">
-              <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.companyCode')}:</span>
-              <span className="text-xs sm:text-sm font-medium">{details.companycode}</span>
-            </div>
+      <div className="overflow-hidden">
+        <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
+          <div className="flex justify-between items-center p-3">
+            <span className="text-xs sm:text-sm text-gray-500 font-medium">ISIN:</span>
+            <span className="text-xs sm:text-sm font-medium">{details.ISIN}</span>
           </div>
-        </div>
-
-        <div className="overflow-hidden">
-          <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
-            <div className="flex justify-between items-center p-3">
-              <span className="text-xs sm:text-sm text-gray-500 font-medium">
-                {t('dashboard.totalShares')}:
-              </span>
-              <span className="text-xs sm:text-sm font-medium">
-                {parseInt(details.issued_shares, 10).toLocaleString('en-US')}
-              </span>
-            </div>
+          <div className="flex justify-between items-center p-3">
+            <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.companyCode')}:</span>
+            <span className="text-xs sm:text-sm font-medium">{details.companycode}</span>
           </div>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-          {t('stockDetails.priceStats', 'Ханшийн үзүүлэлт')}
-        </h3>
-        {weekStatsLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {metricCards.map(card => (
-              <div key={card.key} className="p-3 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 bg-gray-100/40 dark:bg-gray-800/40 animate-pulse h-20" />
-            ))}
+          <div className="flex justify-between items-center p-3">
+            <span className="text-xs sm:text-sm text-gray-500 font-medium">{t('dashboard.totalShares')}:</span>
+            <span className="text-xs sm:text-sm font-medium">{parseInt(details.issued_shares, 10).toLocaleString('en-US')}</span>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {metricCards.map(card => (
-              <div
-                key={card.key}
-                className="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-900/40 shadow-sm"
-              >
-                <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 font-semibold">
-                  {card.label}
-                </p>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white mt-1">
-                  {formatPrice(card.value)}
-                </p>
+          {weekStatsLoading ? (
+            metricCards.map(card => (
+              <div key={card.key} className="flex justify-between items-center p-3 animate-pulse">
+                <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
+                <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          ) : (
+            metricCards.map(card => (
+              <div key={card.key} className="flex justify-between items-center p-3">
+                <span className="text-xs sm:text-sm text-gray-500 font-medium">{card.label}:</span>
+                <span className="text-xs sm:text-sm font-medium">{formatPrice(card.value)}</span>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Financial Reports Section */}
