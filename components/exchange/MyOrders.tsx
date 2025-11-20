@@ -47,6 +47,8 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
   const { t } = useTranslation('common');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<OrderData | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 5;
 
   const filteredOrders = orders
     .filter(order => {
@@ -59,6 +61,19 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
       if (!a.createdDate || !b.createdDate) return 0;
       return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
     });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * ordersPerPage,
+    currentPage * ordersPerPage
+  );
+
+  // Reset to page 1 when tab changes
+  const handleTabChange = (tab: OrderTab) => {
+    setOrderTab(tab);
+    setCurrentPage(1);
+  };
 
   const handleCancelClick = (order: OrderData) => {
     setOrderToCancel(order);
@@ -117,7 +132,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
           ].map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setOrderTab(tab.key as OrderTab)}
+              onClick={() => handleTabChange(tab.key as OrderTab)}
               className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                 orderTab === tab.key
                   ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
@@ -131,7 +146,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
       </div>
       
       {/* Order Content */}
-      <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
+      <div className="p-3">
         {loading ? (
           <div className="space-y-2">
             {[...Array(3)].map((_, i) => (
@@ -144,9 +159,9 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
               </div>
             ))}
           </div>
-        ) : filteredOrders.length > 0 ? (
+        ) : paginatedOrders.length > 0 ? (
           <div className="divide-y divide-gray-100 dark:divide-gray-800">
-            {filteredOrders.map((order) => {
+            {paginatedOrders.map((order) => {
               const totalWithFee = calculateTotal(order);
               const isPartial = isPartialOrder(order);
 
@@ -225,6 +240,29 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
             {orderTab === 'active' && t('exchange.noActiveOrders', 'Идэвхтэй захиалга байхгүй')}
             {orderTab === 'completed' && t('exchange.noCompletedOrders', 'Биелсэн захиалга байхгүй')}
             {orderTab === 'cancelled' && t('exchange.noCancelledOrders', 'Цуцлагдсан захиалга байхгүй')}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-3 mt-3 border-t border-gray-100 dark:border-gray-800">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="text-xs px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              ←
+            </button>
+            <span className="text-xs text-gray-600 dark:text-gray-400 min-w-[60px] text-center">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="text-xs px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              →
+            </button>
           </div>
         )}
       </div>
