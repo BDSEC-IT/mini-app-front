@@ -181,10 +181,15 @@ const getStockCategory = (stock: StockData): string => {
   }
 
   // console.log(stock);
-  if (!stock.MarketSegmentID) return '';
+  if (!stock.MarketSegmentID || stock.MarketSegmentID === null) return '';
 
   // Case-insensitive check with string comparison
   const segment = stock.MarketSegmentID.toString().trim().toUpperCase();
+  
+  // Don't show/render if segment is null or "N/A"
+  if (segment === 'N/A' || segment === 'NA' || segment === '' || segment === 'NULL' || !segment) {
+    return '';
+  }
   
   // Check various patterns
   if (segment === 'I' || segment === 'I CLASSIFICATION' || segment === 'I АНГИЛАЛ' || segment.startsWith('I ')) {
@@ -209,10 +214,6 @@ const getStockCategory = (stock: StockData): string => {
   else if (segment === 'MAIN' || segment === 'MAIN MARKET' || segment.includes('MAIN')) {
     // MAIN market segment - treat as category I by default
     return 'BOND';
-  }
-  else if (segment === 'N/A' || segment === 'NA' || segment === '' || segment === 'NULL') {
-    // Unknown/undefined market segment - treat as category I by default
-    return 'I';
   }
   
   // Only log truly unknown segments to avoid spam

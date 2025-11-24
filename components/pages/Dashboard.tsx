@@ -757,7 +757,7 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
                               {getCompanyName(stock)}
                             </div>
                           </div>
-                          {stock.Changep !== undefined && (
+                          {stock.Changep != null && typeof stock.Changep === 'number' && !isNaN(stock.Changep) && (
                             <div className={`ml-2 text-[10px] font-semibold ${
                               stock.Changep >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                             }`}>

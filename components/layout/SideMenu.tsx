@@ -40,7 +40,6 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   const { theme, setTheme } = useTheme()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [accountInfo, setAccountInfo] = useState<UserAccountResponse['data'] | null>(null)
-    console.log("accountInfopls",accountInfo)
   const [isGeneralInfoComplete, setIsGeneralInfoComplete] = useState<boolean | null>(null);
   const [feeInfoCompleted, setFeeInfoCompleted] = useState<boolean | null>(null);
   const [hasExistingMcsdAccount, setHasExistingMcsdAccount] = useState(false);

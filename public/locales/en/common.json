@@ -27,6 +27,7 @@
     "noTransactions": "No transactions found",
     "loading": "Loading...",
     "error": "Error occurred",
+    "selectCountry": "Select Country",
     "success": "Success",
     "cancel": "Cancel",
     "save": "Save",
@@ -500,8 +501,10 @@
   },
   "auth": {
     "selectYourNationality": "Select Your Nationality",
+    "nationalitySubtitle": "Before completing your registration, please select your nationality",
+
     "nationalityHelpText": "We need to know your country to verify your information.",
-    "enterYourRegisterNumber": "Enter Your Register Number",
+    "enterYourRegisterNumber": "Enter Your Civil ID",
     "registerHelpText": "Your registration number in {{country}}.",
     "registerNumber": "Register Number",
     "verifyAccount": "Continue",

@@ -20,6 +20,7 @@ import { ArrowLeft, ArrowRight, Check, AlertCircle, CreditCard, Edit, CheckCircl
 import Cookies from 'js-cookie'
 import { getAccountStatusRequest, sendAccountStatusRequest, createOrRenewInvoice, getUserAccountInformation, getRegistrationNumber, sendRegistrationNumber, BASE_URL, checkInvoiceStatus } from '@/lib/api'
 import Link from 'next/link'
+import RegistrationGuard from '@/components/providers/RegistrationGuard'
 
 export default function GeneralInfoPage() {
   const { t } = useTranslation()
@@ -910,69 +911,73 @@ export default function GeneralInfoPage() {
   // At the top of the return, conditionally render the register input form
   if (showRegisterInput) {
     return (
-      <div className="max-w-md mx-auto p-4 sm:p-6 lg:p-8 pb-24">
-        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mt-12">
-          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">{t('profile.enterRegisterNumberTitle', 'Регистрийн дугаар оруулах')}</h1>
-          <form onSubmit={handleRegisterSubmit} className="space-y-6">
-            <label htmlFor="registerNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('profile.registerNumber')}
-              <span className="text-red-500">*</span>
-            </label>
-            <input
-              id="registerNumber"
-              type="text"
-              placeholder={nationality === '496' ? 'AX01234567' : t('profile.enterRegisterNumber', 'Enter your register number')}
-              required
-              value={registerInput}
-              onChange={e => setRegisterInput(e.target.value)}
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 border-gray-300 dark:border-gray-700 focus:ring-bdsec dark:focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-            />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            <button type="submit" className="w-full px-4 py-2 bg-bdsec dark:bg-indigo-500 text-white rounded-md hover:bg-bdsec/90 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500 focus:ring-offset-2 transition-colors">
-              {t('profile.next')}
-            </button>
-          </form>
+      <RegistrationGuard>
+        <div className="max-w-md mx-auto p-4 sm:p-6 lg:p-8 pb-24">
+          <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mt-12">
+            <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">{t('profile.enterRegisterNumberTitle', 'Регистрийн дугаар оруулах')}</h1>
+            <form onSubmit={handleRegisterSubmit} className="space-y-6">
+              <label htmlFor="registerNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('profile.registerNumber')}
+                <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="registerNumber"
+                type="text"
+                placeholder={nationality === '496' ? 'AX01234567' : t('profile.enterRegisterNumber', 'Enter your register number')}
+                required
+                value={registerInput}
+                onChange={e => setRegisterInput(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 border-gray-300 dark:border-gray-700 focus:ring-bdsec dark:focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              />
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+              <button type="submit" className="w-full px-4 py-2 bg-bdsec dark:bg-indigo-500 text-white rounded-md hover:bg-bdsec/90 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500 focus:ring-offset-2 transition-colors">
+                {t('profile.next')}
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
+      </RegistrationGuard>
     );
   }
 
   return (
-    <div className=" min-h-screen max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 pb-24">
-      <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
-          {t('profile.accountSetupGeneral')}
-        </h1>
-        
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-            <div className="flex">
-              <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+    <RegistrationGuard>
+      <div className=" min-h-screen max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 pb-24">
+        <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
+          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
+            {t('profile.accountSetupGeneral')}
+          </h1>
+          
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+              <div className="flex">
+                <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              </div>
             </div>
-          </div>
-        )}
-        
-        {viewMode === 'form' && (
-            <div className="mb-8">
-                <div className="flex items-center">
-                    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 1 ? 'bg-bdsec dark:bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
-                    {step > 1 ? <Check className="h-5 w-5" /> : 1}
-                    </div>
-                    <div className={`flex-1 h-1 mx-2 ${step >= 2 ? 'bg-bdsec dark:bg-indigo-500' : 'bg-gray-200'}`}></div>
-                    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 2 ? 'bg-bdsec text-white' : 'bg-gray-200 text-gray-500'}`}>
-                    2
-                    </div>
-                </div>
-                <div className="flex justify-between mt-2 text-center">
-                    <span className="text-xs text-gray-500 w-1/2">{t('profile.basicInfo')}</span>
-                    <span className="text-xs text-gray-500 w-1/2">{t('profile.personalInfo')}</span>
-                </div>
-            </div>
-        )}
-        
-        {renderContent()}
+          )}
+          
+          {viewMode === 'form' && (
+              <div className="mb-8">
+                  <div className="flex items-center">
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 1 ? 'bg-bdsec dark:bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                      {step > 1 ? <Check className="h-5 w-5" /> : 1}
+                      </div>
+                      <div className={`flex-1 h-1 mx-2 ${step >= 2 ? 'bg-bdsec dark:bg-indigo-500' : 'bg-gray-200'}`}></div>
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 2 ? 'bg-bdsec text-white' : 'bg-gray-200 text-gray-500'}`}>
+                      2
+                      </div>
+                  </div>
+                  <div className="flex justify-between mt-2 text-center">
+                      <span className="text-xs text-gray-500 w-1/2">{t('profile.basicInfo')}</span>
+                      <span className="text-xs text-gray-500 w-1/2">{t('profile.personalInfo')}</span>
+                  </div>
+              </div>
+          )}
+          
+          {renderContent()}
+        </div>
       </div>
-    </div>
+    </RegistrationGuard>
   )
 } 

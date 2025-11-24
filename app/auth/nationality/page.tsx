@@ -114,15 +114,15 @@ export default function NationalityPage() {
             </div>
 
             <button type="submit" className="w-full px-4 py-2 bg-bdsec dark:bg-indigo-500 text-white rounded-md hover:bg-bdsec/90 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500 focus:ring-offset-2 transition-colors">
-              {t('common.continue', 'Үргэлжлүүлэх')}
+              {t('auth.verifyAccount', 'Үргэлжлүүлэх')}
             </button>
           </form>
         </div>
 
         {/* Small helper text */}
-        <p className="mt-4 text-[11px] text-center text-gray-500 dark:text-gray-400">
+        {/* <p className="mt-4 text-[11px] text-center text-gray-500 dark:text-gray-400">
           {t('auth.nationalityHelp', 'Та буруу сонгосон бол дараагийн алхамд өөрчилж болно.')}
-        </p>
+        </p> */}
       </div>
     </div>
   )

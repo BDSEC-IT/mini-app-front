@@ -44,6 +44,9 @@ const Profile = () => {
         
         if (invoiceResponse.success && invoiceResponse.data) {
           setInvoiceData(invoiceResponse.data)
+        } else {
+          console.warn('Invoice status check failed or returned no data:', invoiceResponse)
+          // Don't set error here - invoice data is optional, we can use accountInfo instead
         }
       } catch (err) {
         console.error('Error fetching profile:', err)
@@ -104,8 +107,10 @@ const Profile = () => {
 
   const primary = accountInfo.superAppAccount;
   // CRITICAL: Only consider account active if DGStatus === 'COMPLETED'
-  const hasMcsdAccount = hasActiveMCSDAccount(accountInfo);
-  const hasActiveMcsdAccount = hasMcsdAccount;
+  const hasActiveMcsdAccount = hasActiveMCSDAccount(accountInfo);
+  // Check if user has any MCSD account (including PENDING) - for showing step 3
+  const hasMcsdAccountId = !!primary?.MCSDAccountId || !!primary?.MCSDAccount;
+  const hasMcsdAccount = hasActiveMcsdAccount; // Keep for backward compatibility
 
   // Simplified completion checks - only use backend API data
   const isGeneralInfoComplete = () => {
@@ -144,9 +149,19 @@ const Profile = () => {
   }
 
   const isPaymentComplete = () => {
-    // Only complete if invoice is actually paid
-    console.log('invoiceData', invoiceData);
-    return invoiceData && invoiceData.data && invoiceData.data.registrationFee?.status === 'COMPLETED';
+    // Check registration fee status from accountInfo (primary source)
+    // Fallback to invoiceData if accountInfo doesn't have it
+    const feeStatus = primary?.registrationFee?.status;
+    const invoiceFeeStatus = invoiceData?.data?.registrationFee?.status || invoiceData?.registrationFee?.status;
+    
+    console.log('Payment status check:', {
+      feeStatus,
+      invoiceFeeStatus,
+      invoiceData,
+      primaryRegistrationFee: primary?.registrationFee
+    });
+    
+    return feeStatus === 'COMPLETED' || invoiceFeeStatus === 'COMPLETED';
   }
 
   return (
@@ -174,12 +189,19 @@ const Profile = () => {
           {/* Account Status */}
           <div className="p-6">
             <h3 className="font-semibold text-base mb-4">{t('profile.accountStatus')}</h3>
-            {!hasMcsdAccount ? (
+            {hasActiveMcsdAccount ? (
+              <div className="flex items-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+                <CheckCircle className="h-5 w-5 mr-3 flex-shrink-0" />
+                <p className="font-medium text-sm">{t('profile.mcsdAccountActiveDetail')}</p>
+              </div>
+            ) : (
               <div className="space-y-4">
-                <div className="flex items-center p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800/50">
-                  <AlertTriangle className="h-5 w-5 mr-3 flex-shrink-0" />
-                  <p className="font-medium text-sm">{t('profile.mcsdAccountNeededDetail')}</p>
-                </div>
+                {!hasMcsdAccountId && (
+                  <div className="flex items-center p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800/50">
+                    <AlertTriangle className="h-5 w-5 mr-3 flex-shrink-0" />
+                    <p className="font-medium text-sm">{t('profile.mcsdAccountNeededDetail')}</p>
+                  </div>
+                )}
                 <div className="flex items-center">
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-4 ${isGeneralInfoComplete() ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
                     {isGeneralInfoComplete() ? <CheckCircle className="h-5 w-5" /> : '1'}
@@ -198,30 +220,27 @@ const Profile = () => {
                     <Link href="/account-setup/fee" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">{t('profile.payFee')}</Link>
                   )}
                 </div>
+                {isPaymentComplete() && hasMcsdAccountId && !hasActiveMcsdAccount && (
+                  <div className="flex items-center">
+                    <div className="h-8 w-8 rounded-full flex items-center justify-center mr-4 bg-orange-500 text-white">
+                      <Clock className="h-5 w-5" />
+                    </div>
+                    <p className="font-medium text-orange-600 dark:text-orange-400">{t('profile.openingProcess', 'Данс нээх үйл явц')}</p>
+                    <Link href="/account-setup/opening-process" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">
+                      {t('profile.viewProcess', 'Харах')}
+                    </Link>
+                  </div>
+                )}
+                {isPaymentComplete() && !hasMcsdAccountId && (
+                  <div className="flex items-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                    <Clock className="h-5 w-5 mr-3 flex-shrink-0" />
+                    <p className="font-medium text-sm">{t('profile.waitingAccountCreation', 'Данс үүсгэгдэж байна...')}</p>
+                    <Link href="/account-setup/opening-process" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">
+                      {t('profile.viewProcess', 'Харах')}
+                    </Link>
+                  </div>
+                )}
               </div>
-            ) : (
-              hasActiveMcsdAccount ? (
-              <div className="flex items-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
-                <CheckCircle className="h-5 w-5 mr-3 flex-shrink-0" />
-                <p className="font-medium text-sm">{t('profile.mcsdAccountActiveDetail')}</p>
-              </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                <div className="flex items-center p-4 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-800">
-                  <AlertTriangle className="h-5 w-5 mr-3 flex-shrink-0" />
-                  <p className="font-medium text-sm">Таны мэдээлэл ҮЦТХТ-д шалгагдаж байна</p>
-                </div>
-                <div className="flex justify-end">
-                  <Link
-                  href="/account-setup/opening-process"
-                    className="text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded"
-                  >
-                    Данс нээх үйл явцийг харах
-                  </Link>
-                </div>
-              </div>
-              
-              )
             )}
           </div>
           
