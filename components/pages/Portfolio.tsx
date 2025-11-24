@@ -268,39 +268,6 @@ export default function Portfolio() {
 
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen pb-20">
-      {/* Compact Header */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center space-x-3">
-            <div className="h-8 w-8 rounded-xl bg-bdsec dark:bg-indigo-600 flex items-center justify-center">
-              <Wallet className="h-4 w-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('portfolio.title')}</h1>
-              <p className="text-xs text-gray-600 dark:text-gray-400">{t('portfolio.subtitle')}</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-gray-200 dark:border-gray-700"
-            >
-              <RefreshCw className={`h-4 w-4 text-gray-600 dark:text-gray-400 ${refreshing ? 'animate-spin' : ''}`} />
-            </button>
-            <button
-              onClick={() => setShowBalance(!showBalance)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-gray-200 dark:border-gray-700"
-            >
-              {showBalance ? (
-                <Eye className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              ) : (
-                <EyeOff className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
 
       <div className="p-4 space-y-3">
         {/* Total Portfolio Value - Hero Card */}
@@ -310,44 +277,55 @@ export default function Portfolio() {
 
           {/* Content */}
           <div className="relative z-10">
-            <p className="text-xs text-white/80 mb-2">{t('portfolio.currentValue')}</p>
-            <p className="text-3xl font-bold mb-4">
-              {showBalance ? formatCurrency(totalAssetValue) : '***,***'} ₮
-            </p>
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                {totalProfit >= 0 ? (
-                  <ArrowUpRight className="h-4 w-4" />
-                ) : (
-                  <ArrowDownRight className="h-4 w-4" />
-                )}
-                <span className="font-semibold">
-                  {showBalance ? (totalProfit >= 0 ? '+' : '') + formatCurrency(Math.abs(totalProfit)) : '***,***'} ₮
-                </span>
+            <div className='flex justify-between items-center mb-4'>
+              <div >
+                <span className="text-sm text-white/80">{t('portfolio.currentValue')}</span>
+                <p className="text-2xl font-bold">
+                {showBalance ? formatCurrency(totalAssetValue) : '******'} ₮
+                </p>
               </div>
-              <span className="font-semibold">
-                {showBalance ? formatPercentage(profitLossPercent) : '***%'}
-              </span>
+              <div className="flex space-x-2">
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="p-2 rounded-lg  transition-colors border border-gray-700 dark:border-gray-200"
+              >
+                <RefreshCw className={`h-4 w-4 text-gray-600 dark:text-gray-200 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={() => setShowBalance(!showBalance)}
+                className="p-2 rounded-lg  transition-colors border border-gray-700 dark:border-gray-200"
+              >
+                {showBalance ? (
+                  <Eye className="h-4 w-4 text-gray-600 dark:text-gray-200" />
+                ) : (
+                  <EyeOff className="h-4 w-4 text-gray-600 dark:text-gray-200" />
+                )}
+              </button>
+              </div>
             </div>
-          </div>
-        </div>
-        
-
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{t('portfolio.totalInvested')}</p>
-            <p className="text-base font-bold text-gray-900 dark:text-white">
-              {showBalance ? formatCurrency(totalInvested) : '***,***'} ₮
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800/50 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{t('portfolio.cashAccount')}</p>
-            <p className="text-base font-bold text-gray-900 dark:text-white">
-              {showBalance ? formatCurrency(nominalBalance) : '***,***'} ₮
-            </p>
-          </div>
+              
+              <div className='text-base text-white  p-2 rounded-lg bg-white/10'>
+                <div className='flex justify-between items-center '>
+                  <p className=" ">{t('portfolio.totalInvested')}</p>
+                  <p className="font-semibold">
+                    {showBalance ? formatCurrency(totalInvested) : '******'} ₮
+                  </p>
+                </div>
+                <div className=" flex  justify-between items-center">
+                  <p>{t('portfolio.profitLoss')} (₮)</p>
+                  <p className='font-semibold'>
+                    {showBalance ? (totalProfit >= 0 ? '+' : '-') + formatCurrency(Math.abs(totalProfit)) : '******'} ₮
+                  </p>
+                </div>
+                 <div className="flex items-center justify-between">
+                    <p className=''>{t('portfolio.profitLoss')} (%)</p>
+                    <p className={`font-semibold ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {showBalance ? formatPercentage(profitLossPercent) : '***%'}
+                    </p>
+                  </div>
+              </div>  
+            </div>
         </div>
 
         {/* Portfolio Charts */}

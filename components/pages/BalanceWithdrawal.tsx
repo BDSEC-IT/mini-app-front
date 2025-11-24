@@ -298,18 +298,18 @@ export default function BalanceWithdrawal() {
               />
             </svg>
             
-            <div className="flex items-center justify-between mb-6 z-10">
+            <div className="flex items-center justify-between gap-5 z-10">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                <div className="w-12 aspect-square bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
                   <span className="text-lg font-bold text-gray-700 dark:text-gray-300">₮</span>
                 </div>
                 <div className="z-10 ">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Номинал үлдэгдэл</h3>
+                  <h3 className="font-semibold text-base text-gray-900 text-wrap dark:text-white">Номинал үлдэгдэл</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Бэлэн мөнгө</p>
                 </div>
               </div>
               <div className="text-right z-10">
-                <p className="text-lg font-bold text-gray-900 dark:text-white text-nowrap">
+                <p className="text-base font-bold text-gray-900 dark:text-white text-nowrap">
                   {showBalance ? `${formatCurrency(availableBalance)} ₮` : '***,*** ₮'}
                 </p>
               </div>
@@ -456,7 +456,7 @@ export default function BalanceWithdrawal() {
             <select
               value={selectedBank}
               onChange={(e) => setSelectedBank(e.target.value)}
-              className="w-full box-border p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-bdsec focus:border-transparent"
+              className="w-full  border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-bdsec focus:border-transparent"
               >
               <option value="">Банкны данс сонгох</option>
               {banks.filter(bank => bank.active).map((bank) => (

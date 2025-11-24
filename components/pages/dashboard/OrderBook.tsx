@@ -275,19 +275,19 @@ const OrderBookComponent = ({
 
       {/* Quick Trade Buttons - Full Width at Bottom (Mobile Optimized) */}
       {canTrade && (
-        <div className="mt-3 grid grid-cols-2 gap-3">
+        <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(100px,1fr))] gap-3 ">
           {/* Buy Button with Best Ask Price */}
           <button
             onClick={handleQuickBuy}
             disabled={!bestAsk}
-            className="flex flex-col items-center justify-center py-2 rounded-xl bg-green-500 hover:bg-green-600 active:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
+            className="flex flex-col items-center justify-center  rounded-xl bg-green-500 hover:bg-green-600 active:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
             style={{
               maxHeight: '50px', // iOS recommended touch target
               filter: bestAsk ? 'drop-shadow(0 4px 12px rgba(34, 197, 94, 0.4))' : 'none'
             }}
             title={bestAsk ? `${t('dashboard.buy', 'Авах')} - ${formatPrice(bestAsk)}₮` : t('dashboard.noOrders', 'Захиалга байхгүй')}
           >
-            <span className="text-md font-bold tracking-wide">{t('dashboard.buyAction', 'АВАХ').toUpperCase()}</span>
+            <span className="text-medium font-bold tracking-wide">{t('dashboard.buyAction', 'АВАХ').toUpperCase()}</span>
             {bestAsk && (
               <span className="text-sm mt-1 font-semibold opacity-95">
                 {formatPrice(bestAsk)}₮
@@ -299,7 +299,7 @@ const OrderBookComponent = ({
           <button
             onClick={handleQuickSell}
             disabled={!bestBid}
-            className="flex flex-col items-center justify-center py-2 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
+            className="flex flex-col items-center justify-center  rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
             style={{
               maxHeight: '50px', // iOS recommended touch target
               filter: bestBid ? 'drop-shadow(0 4px 12px rgba(239, 68, 68, 0.4))' : 'none'
