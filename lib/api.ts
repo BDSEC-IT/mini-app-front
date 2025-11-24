@@ -3113,7 +3113,7 @@ export interface MSEReportData {
 export interface MSEReportResponse {
   success: boolean;
   message: string;
-  data: MSEReportData;
+  data: MSEReportData | null;
 }
 
 // Fetch MSE Financial Report
@@ -3133,14 +3133,13 @@ export const fetchMSEReport = async (
     });
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      return { success: false, message: `HTTP error! status: ${response.status}`, data: null };
     }
-    
+
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error fetching MSE report:', error);
-    throw error;
+    return { success: false, message: 'Error fetching MSE report', data: null };
   }
 };
 

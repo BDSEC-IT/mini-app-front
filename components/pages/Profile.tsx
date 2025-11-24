@@ -146,7 +146,6 @@ const Profile = () => {
   const isPaymentComplete = () => {
     // Only complete if invoice is actually paid
     console.log('invoiceData', invoiceData);
-    //console.log("rad",invoiceData.data.registrationFee?.status)
     return invoiceData && invoiceData.data && invoiceData.data.registrationFee?.status === 'COMPLETED';
   }
 

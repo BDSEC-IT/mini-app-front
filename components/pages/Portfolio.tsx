@@ -307,19 +307,19 @@ export default function Portfolio() {
               
               <div className='text-base text-white  p-2 rounded-lg bg-white/10'>
                 <div className='flex justify-between items-center '>
-                  <p className=" ">{t('portfolio.totalInvested')}:</p>
+                  <p className=" ">{t('portfolio.totalInvested')}</p>
                   <p className="font-semibold">
                     {showBalance ? formatCurrency(totalInvested) : '******'} ₮
                   </p>
                 </div>
                 <div className=" flex  justify-between items-center">
-                  <p>{t('portfolio.totalProfit')}:</p>
+                  <p>{t('portfolio.profitLoss')} (₮)</p>
                   <p className='font-semibold'>
-                    {showBalance ? (totalProfit >= 0 ? '+' : '') + formatCurrency(Math.abs(totalProfit)) : '******'} ₮
+                    {showBalance ? (totalProfit >= 0 ? '+' : '-') + formatCurrency(Math.abs(totalProfit)) : '******'} ₮
                   </p>
                 </div>
                  <div className="flex items-center justify-between">
-                    <p className=''>{t('portfolio.profitLoss')}:</p>
+                    <p className=''>{t('portfolio.profitLoss')} (%)</p>
                     <p className={`font-semibold ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {showBalance ? formatPercentage(profitLossPercent) : '***%'}
                     </p>
