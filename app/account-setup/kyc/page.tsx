@@ -65,19 +65,16 @@ export default function KycPage() {
       if (result.success && result.data) {
         setKycData(result.data);
         
-        // Set existing image previews
+        // Set existing image previews using the proxy API route
+        const timestamp = new Date().getTime();
         if (result.data.nationalIdFront) {
-          // Remove './' prefix if exists and construct proper URL
-          const path = result.data.nationalIdFront.replace(/^\.\//, '');
-          setNationalIdFrontPreview(`${BASE_URL}/${path}`);
+          setNationalIdFrontPreview(`/api/kyc-image?field=nationalIdFront&t=${timestamp}`);
         }
         if (result.data.nationalIdBack) {
-          const path = result.data.nationalIdBack.replace(/^\.\//, '');
-          setNationalIdBackPreview(`${BASE_URL}/${path}`);
+          setNationalIdBackPreview(`/api/kyc-image?field=nationalIdBack&t=${timestamp}`);
         }
         if (result.data.selfie) {
-          const path = result.data.selfie.replace(/^\.\//, '');
-          setSelfiePreview(`${BASE_URL}/${path}`);
+          setSelfiePreview(`/api/kyc-image?field=selfie&t=${timestamp}`);
         }
       }
     } catch (error) {
@@ -246,7 +243,7 @@ export default function KycPage() {
             onChange={(e) => handleFileSelect(e, type)}
             className="hidden"
             id={`upload-${type}`}
-            disabled={uploading || loading}
+            disabled={uploading || loading || !!(kycData && (kycData.nationalIdFront || kycData.nationalIdBack || kycData.selfie))}
           />
           
           <label
@@ -255,8 +252,10 @@ export default function KycPage() {
               block w-full aspect-[3/2] rounded-lg border-2 border-dashed 
               ${preview ? 'border-green-500 dark:border-green-600' : 'border-gray-300 dark:border-gray-600'}
               hover:border-blue-500 dark:hover:border-blue-500
-              transition-colors cursor-pointer overflow-hidden
-              ${uploading || loading ? 'opacity-50 cursor-not-allowed' : ''}
+              transition-colors overflow-hidden
+              ${uploading || loading || (kycData && (kycData.nationalIdFront || kycData.nationalIdBack || kycData.selfie)) 
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'cursor-pointer'}
             `}
           >
             {preview ? (
