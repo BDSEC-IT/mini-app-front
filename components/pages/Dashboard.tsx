@@ -73,9 +73,10 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
     return currentLanguage === 'mn' ? stock.mnName : stock.enName;
   };
 
-  // Get symbol from URL parameter or default to BDS
+  // Get symbol from URL parameter or localStorage, default to BDS
   const symbolFromUrl = searchParams.get('symbol');
-  const [selectedSymbol, setSelectedSymbol] = useState(symbolFromUrl || 'BDS');
+  const symbolFromStorage = typeof window !== 'undefined' ? localStorage.getItem('selectedStock') : null;
+  const [selectedSymbol, setSelectedSymbol] = useState(symbolFromUrl || symbolFromStorage || 'BDS');
   const { theme } = useTheme()
   const [activeFilter, setActiveFilter] = useState('mostActive')
   const [orderBookData, setOrderBookData] = useState<OrderBookEntry[]>([])
@@ -597,6 +598,8 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
   const handleStockSelect = (symbol: string) => {
     // Always set the new symbol, even if it's the same
     setSelectedSymbol(symbol)
+    // Save selected stock to localStorage
+    localStorage.setItem('selectedStock', symbol)
     // Clear search and close search dropdown
     setSearchTerm('')
     setIsSearchOpen(false)
