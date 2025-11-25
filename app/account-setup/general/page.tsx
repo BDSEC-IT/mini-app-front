@@ -413,15 +413,15 @@ export default function GeneralInfoPage() {
                           </h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                               Таны данс нээх хүсэлтийг хянаж байна.
-                              <div className="flex justify-end mt-2">
-                  <Link
-                  href="/account-setup/opening-process"
-                    className="text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded"
-                  >
-                    Данс нээх үйл явцийг харах
-                  </Link>
-                </div>
                           </p>
+                          <div className="flex justify-end mt-2">
+                            <Link
+                              href="/account-setup/opening-process"
+                              className="text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded"
+                            >
+                              Данс нээх үйл явцийг харах
+                            </Link>
+                          </div>
                       </div>  
                   ) : (
                       <button
