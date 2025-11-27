@@ -19,7 +19,6 @@ export function useTransactionParams() {
   const type = (() => {
     const param = searchParams.get('type');
     const validType = VALID_TYPES.includes(param as ValidType) ? (param as ValidType) : 'security';
-    console.log('📊 Current type from URL:', validType);
     return validType;
   })();
 
@@ -46,7 +45,6 @@ export function useTransactionParams() {
 
   // Update URL parameters using window.location for immediate update
   const updateParams = useCallback((updates: Record<string, string | null>) => {
-    console.log('🔄 Updating params:', updates);
     
     const current = new URLSearchParams(Array.from(searchParams.entries()));
     
@@ -62,8 +60,6 @@ export function useTransactionParams() {
     const query = search ? `?${search}` : '';
     const newUrl = `${pathname}${query}`;
     
-    console.log('🌐 New URL:', newUrl);
-    
     // Use window.history.replaceState for immediate update
     window.history.replaceState({}, '', newUrl);
     
@@ -73,10 +69,7 @@ export function useTransactionParams() {
 
   // Handlers for different parameter updates
   const setType = useCallback((newType: TransactionType) => {
-    console.log('🎯 setType called with:', newType);
-    
     if (!VALID_TYPES.includes(newType as ValidType)) {
-      console.log('❌ Invalid type:', newType);
       return;
     }
     

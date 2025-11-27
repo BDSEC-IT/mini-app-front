@@ -328,7 +328,6 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
     ]) as Response
   } catch (error) {
     if ((error as Error).name === 'TimeoutError') {
-      console.log('Request timed out')
       // Only abort the controller if it's a timeout
       controller.abort()
       
@@ -345,7 +344,6 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
         }
       })
     } else if ((error as Error).name === 'AbortError') {
-      console.log('Request was aborted')
       
       // Create a mock response for aborted requests
       return new Response(JSON.stringify({
@@ -360,7 +358,6 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
         }
       })
     } else if ((error as Error).name === 'TypeError' && (error as Error).message.includes('Failed to fetch')) {
-      console.log('Network error:', error)
       
       // Create a mock response for network errors
       return new Response(JSON.stringify({
@@ -525,9 +522,7 @@ const logDev = (message: string) => {
 export const fetchSpecificStockData = async (symbol: string): Promise<ApiResponse<StockData>> => {
   const url = `${BASE_URL}/securities/trading-status/${symbol}`;
   
-  console.log('=== SPECIFIC TRADING STATUS API DEBUG ===');
-  console.log('Symbol:', symbol);
-  console.log('Specific trading status URL:', url);
+ 
   
   try {
     const response = await fetchWithTimeout(url)
@@ -538,7 +533,7 @@ export const fetchSpecificStockData = async (symbol: string): Promise<ApiRespons
       
       // Return mock data instead of throwing
       const mockData = createMockStock(symbol.split('-')[0])
-      console.log('Using mock data for specific stock:', mockData);
+     
       return {
         success: true,
         message: 'Mock data',
@@ -547,7 +542,7 @@ export const fetchSpecificStockData = async (symbol: string): Promise<ApiRespons
     }
     
     const responseData = await response.json();
-    console.log('fetchSpecificStockData real data:', responseData);
+ 
     
     return responseData;
   } catch (error) {
@@ -556,7 +551,7 @@ export const fetchSpecificStockData = async (symbol: string): Promise<ApiRespons
     
     // Return mock data as fallback
     const mockData = createMockStock(symbol.split('-')[0])
-    console.log('Using fallback mock data for specific stock:', mockData);
+   
     
     return {
       success: true,
@@ -569,10 +564,6 @@ export const fetchSpecificStockData = async (symbol: string): Promise<ApiRespons
 export const fetchStockData = async (symbol?: string): Promise<ApiResponse<StockData[]>> => {
   // Always fetch all stocks from the API, then filter if symbol is provided
   const url = `${BASE_URL}/securities/trading-status`;
-  
-  console.log('=== TRADING STATUS API DEBUG ===');
-  console.log('Original symbol:', symbol);
-  console.log('Trading status URL:', url);
   
   try {
     const response = await fetchWithTimeout(url)
@@ -590,7 +581,6 @@ export const fetchStockData = async (symbol?: string): Promise<ApiResponse<Stock
       
       // Return mock data instead of throwing
       const mockData = generateMockStockData(symbol)
-      console.log('Using mock data:', mockData);
       return {
         success: true,
         message: 'Mock data',
@@ -599,7 +589,6 @@ export const fetchStockData = async (symbol?: string): Promise<ApiResponse<Stock
     }
     
     const responseData = await response.json();
-    console.log('fetchStockData real data:', responseData);
     
     // If a specific symbol is requested, filter the results
     if (symbol && responseData.success && responseData.data) {
@@ -607,8 +596,6 @@ export const fetchStockData = async (symbol?: string): Promise<ApiResponse<Stock
       const filteredData = responseData.data.filter((stock: StockData) => 
         stock.Symbol.toLowerCase().includes(tradingSymbol)
       );
-      
-      console.log(`Filtered data for symbol ${symbol}:`, filteredData.length, 'stocks found');
       return {
         ...responseData,
         data: filteredData
@@ -622,8 +609,7 @@ export const fetchStockData = async (symbol?: string): Promise<ApiResponse<Stock
     
     // Return mock data as fallback
     const mockData = generateMockStockData(symbol)
-    console.log('Using fallback mock data:', mockData);
-    
+
     return {
       success: true,
       message: 'Mock data',
@@ -635,16 +621,12 @@ export const fetchStockData = async (symbol?: string): Promise<ApiResponse<Stock
 // Enhanced version of fetchStockData that includes company information
 export const fetchStockDataWithCompanyInfo = async (symbol?: string): Promise<ApiResponse<StockData[]>> => {
   try {
-    console.log('=== fetchStockDataWithCompanyInfo START ===');
-    console.log('Symbol:', symbol);
     
     let tradingResponse: ApiResponse<StockData[]>;
     
     // If symbol is provided, use the specific endpoint for more accurate data
     if (symbol) {
-      console.log('Using specific trading status endpoint for symbol:', symbol);
       const specificResponse = await fetchSpecificStockData(symbol);
-      console.log('Specific trading response:', specificResponse.success, specificResponse.data ? 'has data' : 'no data');
       
       // Convert single stock data to array format for consistency
       tradingResponse = {
@@ -654,11 +636,9 @@ export const fetchStockDataWithCompanyInfo = async (symbol?: string): Promise<Ap
     } else {
       // Fetch all stocks using the general endpoint
       tradingResponse = await fetchStockData(symbol);
-      console.log('General trading response:', tradingResponse.success, tradingResponse.data ? 'has data' : 'no data');
     }
 
     if (!tradingResponse.success || !tradingResponse.data) {
-      console.log('Trading data failed, using mock data');
       const mockData = generateMockStockData(symbol)
       return {
         success: true,
@@ -669,8 +649,6 @@ export const fetchStockDataWithCompanyInfo = async (symbol?: string): Promise<Ap
 
     // Fetch company data for the specific symbol (use original case for companies API)
     const companiesResponse = await fetchCompanies(1, 5000, symbol);
-    console.log('Companies response:', companiesResponse.success, companiesResponse.data ? companiesResponse.data.length : 0, 'companies');
-
     let stocksData = tradingResponse.data;
     let companiesData: CompanyData[] = [];
 
@@ -680,12 +658,9 @@ export const fetchStockDataWithCompanyInfo = async (symbol?: string): Promise<Ap
 
     // Get company info (should be only one company for the specific symbol)
     const companyInfo = companiesData.length > 0 ? companiesData[0] : null;
-    console.log('Company info found:', companyInfo?.mnTitle, companyInfo?.enTitle);
 
     // Handle single stock object vs array
     const stocksArray = Array.isArray(stocksData) ? stocksData : [stocksData];
-    console.log('Stocks data type:', Array.isArray(stocksData) ? 'array' : 'object', 'length:', stocksArray.length);
-
     // Merge trading data with company information
     const enrichedStocks = stocksArray.map(stock => {
       const baseSymbol = stock.Symbol.split('-')[0];
@@ -696,11 +671,8 @@ export const fetchStockDataWithCompanyInfo = async (symbol?: string): Promise<Ap
         enName: companyInfo?.enTitle || stock.enName || `${baseSymbol} Company`
       };
       
-      console.log(`Enriched ${stock.Symbol}:`, enrichedStock.mnName, enrichedStock.enName);
       return enrichedStock;
     });
-
-    console.log('=== fetchStockDataWithCompanyInfo SUCCESS ===');
     return {
       success: true,
       message: tradingResponse.message,
@@ -729,41 +701,6 @@ export const fetchOrderBook = async (symbol: string): Promise<OrderBookResponse>
   
   // Check if it's a bond symbol
   const isBond = tradingSymbol.includes('-bd') || tradingSymbol.includes('ombs') || tradingSymbol.includes('moni');
-  
-  // if (isBond) {
-  //   // For bonds, fetch from bonds endpoint
-  //   try {
-  //     const response = await fetchWithTimeout(`${BASE_URL}/securities/bonds?page=1&limit=5000&sortField`)
-  //     if (!response.ok) {
-  //       return { status: false, data: [] }
-  //     }
-  //     const bondsData = await response.json();
-  //     if (!bondsData.success) {
-  //       return { status: false, data: [] }
-  //     }
-  //     // Return the specific bond data that matches our symbol
-  //     const bondInfo = bondsData.data.find((bond: BondData) => 
-  //       bond.Symbol.toLowerCase() === tradingSymbol
-  //     );
-  //     if (!bondInfo) {
-  //       return { status: false, data: [] }
-  //     }
-  //     // Return bond info in a format compatible with order book display
-  //     return {
-  //       status: true,
-  //       data: [{
-  //         id: bondInfo.pkId,
-  //         Symbol: bondInfo.Symbol,
-  //         bondInfo: bondInfo // Additional bond-specific information
-  //       }]
-  //     }
-  //   } catch (error) {
-  //     logDev('Error fetching bond data');
-  //     return { status: false, data: [] }
-  //   }
-  // }
-
-  // For non-bond securities, fetch order book as usual
   const url = `${BASE_URL}/securities/order-book?symbol=${tradingSymbol}`;
   try {
     const response = await fetchWithTimeout(url)
@@ -1138,15 +1075,11 @@ export const fetchCompanies = async (page: number = 1, limit: number = 5000, sym
   const url = symbol 
     ? `${BASE_URL}/securities/companies?page=${page}&limit=${limit}&sortField&symbol=${symbol}`
     : `${BASE_URL}/securities/companies?page=${page}&limit=${limit}&sortField`;
-    
-  console.log('=== COMPANIES API DEBUG ===');
-  console.log('fetchCompanies URL:', url);
-  console.log('Symbol filter:', symbol);
+
   
   try {
     const response = await fetchWithTimeout(url);
-    console.log('Companies response status:', response.status);
-    console.log('Companies response statusText:', response.statusText);
+
     
     if (!response.ok) {
       console.error(`Error fetching companies: ${response.status} ${response.statusText}`);
@@ -1155,7 +1088,6 @@ export const fetchCompanies = async (page: number = 1, limit: number = 5000, sym
     }
     
     const data = await response.json();
-    console.log('Companies response data:', data);
     return data;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -1290,7 +1222,6 @@ export const digipayLogin = async (userIdKhan: string) => {
     
     if (!response.ok) {
       // If response is not ok, return the error from the server
-      console.log('DigiPay login failed, using mock token for development');
       
       // For development purposes, return a mock token
       return {
@@ -1315,7 +1246,6 @@ export const digipayLogin = async (userIdKhan: string) => {
     console.error('Error during DigiPay login:', error);
     
     // For development purposes, return a mock token
-    console.log('DigiPay login error, using mock token for development');
     return {
       success: true,
       message: 'Using mock token for development',
@@ -1624,7 +1554,6 @@ export const getUserProfile = async (token?: string): Promise<UserProfileRespons
     console.error('Error fetching user profile:', error);
     
     // For development purposes, return mock profile data
-    console.log('Using mock profile data for development');
     return {
       success: true,
       message: 'Using mock profile data',
@@ -1807,7 +1736,6 @@ export const submitAccountSetup = async (data: any, token: string) => {
 export const sendAccountStatusRequest = async (data: any, token: string) => {
   try {
     // Debug: Log the request body
-    console.log('sendAccountStatusRequest - Request body:', data);
 
     const response = await fetch(`${BASE_URL}/user/send-account-status-request`, {
       method: 'POST',
@@ -1893,17 +1821,6 @@ export const getAccountStatusRequest = async (token: string) => {
 // Create or renew invoice
 export const createOrRenewInvoice = async (token: string) => {
   try {
-    console.log('=== CREATE INVOICE DEBUG ===');
-    console.log('Token:', token ? `${token.substring(0, 20)}...` : 'No token');
-    console.log('Full token:', token);
-    console.log('URL:', `${BASE_URL}/user/create-or-renew-invoice-register`);
-    console.log('Headers:', {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    });
-    console.log('=== END DEBUG ===');
-
-    // Use the same fetchWithTimeout function that works for other endpoints
     const response = await fetchWithTimeout(`${BASE_URL}/user/create-or-renew-invoice-register`, {
       method: 'POST',
       headers: {
@@ -1912,10 +1829,6 @@ export const createOrRenewInvoice = async (token: string) => {
       }
     });
 
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-    // Check if response is JSON before trying to parse it
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       // Response is not JSON (likely HTML error page)
@@ -1931,7 +1844,6 @@ export const createOrRenewInvoice = async (token: string) => {
     }
 
     const result = await response.json();
-    console.log('Response data:', result);
     
     if (response.ok) {
       return {
@@ -1960,11 +1872,6 @@ export const createOrRenewInvoice = async (token: string) => {
 // Check invoice status
 export const checkInvoiceStatus = async (token: string) => {
   try {
-    console.log('=== CHECK INVOICE STATUS DEBUG ===');
-    console.log('Token:', token ? `${token.substring(0, 20)}...` : 'No token');
-    console.log('URL:', `${BASE_URL}/user/check-invoice-status`);
-    console.log('=== END DEBUG ===');
-
     const response = await fetchWithTimeout(`${BASE_URL}/user/check-invoice-status`, {
       method: 'GET',
       headers: {
@@ -1972,9 +1879,6 @@ export const checkInvoiceStatus = async (token: string) => {
         'Authorization': `Bearer ${token}`
       }
     });
-
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
     // Check if response is JSON before trying to parse it
     const contentType = response.headers.get('content-type');
@@ -1992,7 +1896,6 @@ export const checkInvoiceStatus = async (token: string) => {
     }
 
     const result = await response.json();
-    console.log('Response data:', result);
     
     if (response.ok) {
       return {
@@ -2020,8 +1923,6 @@ export const checkInvoiceStatus = async (token: string) => {
 // Fetch news from BDS
 export const fetchNews = async (page: number = 1, limit: number = 100): Promise<NewsResponse> => {
   try {
-    console.log("BASE_URL", BASE_URL);
-    console.log("url", `${BASE_URL}/securities/news-of-bds?page=${page}&limit=${limit}`);
     const response = await fetchWithTimeout(`${BASE_URL}/securities/news-of-bds?page=${page}&limit=${limit}`, {
       method: 'GET',
       headers: {
@@ -2029,7 +1930,6 @@ export const fetchNews = async (page: number = 1, limit: number = 100): Promise<
         'Content-Type': 'application/json',
       },
     });
-    console.log("response", response);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -2063,17 +1963,6 @@ export const getRegistrationNumber = async (token?: string) => {
       }
     });
     const data = await response.json();
-    
-    // Debug logging to see the actual response structure - reduced to improve performance
-    // console.log('getRegistrationNumber - Raw response data:', data);
-    // console.log('getRegistrationNumber - Response structure:', {
-    //   hasData: !!data?.data,
-    //   dataType: typeof data?.data,
-    //   hasRegisterNumber: !!data?.data?.registerNumber,
-    //   directData: typeof data === 'string' ? data : 'not string'
-    // });
-    
-    // Try multiple possible response structures
     let registerNumber = null;
     if (typeof data === 'string') {
       // Backend returns just the string directly
@@ -2088,8 +1977,6 @@ export const getRegistrationNumber = async (token?: string) => {
       // Backend returns { data: "..." }
       registerNumber = data.data;
     }
-    
-    // console.log('getRegistrationNumber - Extracted registerNumber:', registerNumber);
     
     return {
       success: response.ok,
@@ -2206,9 +2093,7 @@ export const fetchPortfolioTotal = async (body: PortfolioTotalRequest, token: st
     }
     // Console log the important values as requested
     if (json?.data) {
-      console.log('Portfolio Total:', json.data);
     } else {
-      console.log('Portfolio Total raw response:', json);
     }
     return { success: true, data: json.data || json, message: json.message, statusCode: response.status };
   } catch (e) {
@@ -2461,7 +2346,6 @@ export interface CompletedOrdersResponse {
 export const fetchEnhancedOrderBook = async (symbol: string, token?: string, limit?: number): Promise<EnhancedOrderBookResponse> => {
   const limitParam = limit ? `&limit=${limit}&count=${limit}&size=${limit}&depth=${limit}` : '';
   const url = `${BASE_URL}/securities/enhanced-order-book?limited=false&symbol=${symbol}${limitParam}`
-  console.log('Enhanced OrderBook URL:', url);
   try {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',

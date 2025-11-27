@@ -11,7 +11,6 @@ export function testBackendDevConfig() {
   });
 
   socket.on('connect', () => {
-    console.log('✅ Socket.IO test: Connected');
     socket.emit('join-trading-room');
   });
 
@@ -20,19 +19,15 @@ export function testBackendDevConfig() {
   });
 
   socket.on('trading-data-update', (data) => {
-    console.log('📊 Socket.IO test: Trading data received');
   });
 
   socket.on('trading-status-update', (data) => {
-    console.log('📈 Socket.IO test: Trading status received');
   });
 
   // Test connection for 10 seconds
   setTimeout(() => {
     if (socket.connected) {
-      console.log('✅ Socket.IO test: SUCCESS');
     } else {
-      console.log('❌ Socket.IO test: FAILED');
     }
     socket.disconnect();
   }, 10000);

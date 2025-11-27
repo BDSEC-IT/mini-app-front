@@ -28,7 +28,6 @@ export const StockSelector: React.FC<StockSelectorProps> = ({
     (stock.mnName && stock.mnName.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (stock.enName && stock.enName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-  console.log(filteredStocks);
   return (
     <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900 flex flex-col h-screen">
       {/* Header */}

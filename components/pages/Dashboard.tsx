@@ -137,7 +137,7 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
       });
 
       if (updatedCount > 0) {
-        console.log(`🏠 Dashboard: Processed ${updatedCount} stock updates`);
+      
         setLastUpdated(new Date().toLocaleTimeString());
       }
 
@@ -226,18 +226,17 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
 
   // Fetch all stocks data with company information
   const fetchStocksData = useCallback(async () => {
-    console.log('=== Dashboard: fetchStocksData START ===');
+
     // Skip if we already have initial stocks
     if (initialStocks.length > 0 && allStocks.length > 0) {
-      console.log('Using cached initial stocks, skipping fetch');
+      
       return;
     }
     
     setStocksLoading(true)
     try {
-      console.log('Calling fetchAllStocksWithCompanyInfo...');
+     
       const response = await fetchAllStocksWithCompanyInfo()
-      console.log('fetchStocksData response:', response.success, response.data ? response.data.length : 0, 'stocks');
       
       if (response.success && response.data) {
         setAllStocks(response.data)
@@ -248,33 +247,30 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
     } finally {
       setStocksLoading(false)
     }
-    console.log('=== Dashboard: fetchStocksData END ===');
+    
   }, [initialStocks, allStocks])
 
   // Fetch specific stock data for the selected symbol with company information
   const fetchSelectedStockData = useCallback(async () => {
-    console.log('=== Dashboard: fetchSelectedStockData START ===');
-    console.log('Selected symbol:', selectedSymbol);
+   
+    
     
     try {
       // Construct the full symbol directly to avoid circular dependency
       const baseSymbol = selectedSymbol.split('-')[0]; // Extract base symbol like 'BDS' from 'BDS-O-0000'
       const fullSymbol = `${baseSymbol}-O-0000`;
-      console.log('Using full symbol for API call:', fullSymbol);
-      console.log('Calling fetchStockDataWithCompanyInfo...');
+    
       const response = await fetchStockDataWithCompanyInfo(fullSymbol)
-      console.log('Response received:', response.success, response.data ? 'has data' : 'no data');
+
       
       if (response.success && response.data) {
         const stockData = Array.isArray(response.data) ? response.data[0] : response.data
-        console.log('Stock data:', stockData);
         setSelectedStockData(stockData)
       }
     } catch (err) {
       console.error('Error fetching selected stock data:', err)
     }
     
-    console.log('=== Dashboard: fetchSelectedStockData END ===');
   }, [selectedSymbol])
 
   const fetchCompanyDetails = useCallback(async () => {
@@ -359,16 +355,14 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
   useEffect(() => {
     const symbolParam = searchParams.get('symbol');
     if (symbolParam && symbolParam !== selectedSymbol) {
-      console.log('🔗 Dashboard: URL symbol parameter changed to:', symbolParam);
+     
       setSelectedSymbol(symbolParam);
     }
   }, [searchParams, selectedSymbol]);
 
   // Fetch data when component mounts or selectedSymbol changes
   useEffect(() => {
-    console.log('=== Dashboard: useEffect triggered ===');
-    console.log('fetchStocksData function:', typeof fetchStocksData);
-    console.log('fetchSelectedStockData function:', typeof fetchSelectedStockData);
+  
 
     fetchStocksData()
     fetchSelectedStockData()
@@ -377,16 +371,16 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
   // Initialize Socket.IO for real-time updates
   useEffect(() => {
     const initializeSocketIO = async () => {
-      console.log('🏠 Dashboard: Initializing Socket.IO...');
+     
       
       const connected = await socketIOService.connect();
       if (connected) {
-        console.log('🏠 Dashboard: Socket.IO connected successfully');
+      
         socketIOService.joinTradingRoom();
         
         // Listen for real-time trading data updates
         socketIOService.onTradingDataUpdate((data: StockData[]) => {
-          console.log('🏠 Dashboard: Real-time update received:', data?.length, 'stocks');
+        
           
           // Queue updates instead of immediately applying them
           const dataArray = Array.isArray(data) ? data : [data];
@@ -411,7 +405,6 @@ const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
           });
         });
       } else {
-        console.log('🏠 Dashboard: Socket.IO connection failed, using periodic refresh');
         // Fallback to periodic refresh every 20 seconds
         const interval = setInterval(() => {
           fetchStocksData();

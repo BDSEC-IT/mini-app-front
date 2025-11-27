@@ -180,7 +180,7 @@ const getStockCategory = (stock: StockData): string => {
     return 'BOND';
   }
 
-  // console.log(stock);
+
   if (!stock.MarketSegmentID || stock.MarketSegmentID === null) return '';
 
   // Case-insensitive check with string comparison
@@ -218,7 +218,7 @@ const getStockCategory = (stock: StockData): string => {
   
   // Only log truly unknown segments to avoid spam
   if (segment && segment !== 'MAIN' && segment !== 'N/A' && segment !== 'BD') {
-    console.log('Unknown MarketSegmentID:', segment);
+  
   }
   return 'I'; // Default to category I instead of empty string
 };
@@ -310,7 +310,7 @@ const getStockCategory = (stock: StockData): string => {
         
         // Use Socket.IO for real-time updates
         socketIOService.onTradingDataUpdate((data: StockData[]) => {
-          console.log('📊 Socket.IO: Processing real-time data:', data?.length, 'stocks')
+    
           
           setAllStocks(prevStocks => {
             const updatedStocks = [...prevStocks];
@@ -340,14 +340,12 @@ const getStockCategory = (stock: StockData): string => {
                 // Determine flash color based on price change
                 if (newPrice > oldPrice) {
                   newBlinkingRows.set(update.Symbol, 'gain');
-                  console.log(`📈 ${update.Symbol}: ${oldPrice} → ${newPrice} (GAIN)`)
                 } else if (newPrice < oldPrice) {
                   newBlinkingRows.set(update.Symbol, 'loss');
-                  console.log(`📉 ${update.Symbol}: ${oldPrice} → ${newPrice} (LOSS)`)
+              
                 } else {
                   // Even if price didn't change, still flash to show it's updating
                   newBlinkingRows.set(update.Symbol, 'gain');
-                  console.log(`🔄 ${update.Symbol}: Updated (no price change)`)
                 }
 
                 // Update the stock data
@@ -361,8 +359,6 @@ const getStockCategory = (stock: StockData): string => {
 
             // Apply flashing effects to all updated rows
             if (newBlinkingRows.size > 0) {
-              console.log('✨ Socket.IO: Flashing rows:', Array.from(newBlinkingRows.keys()))
-              
               setBlinkingRows(prev => {
                 const nextMap = new Map(prev);
                 newBlinkingRows.forEach((value, key) => nextMap.set(key, value));
@@ -380,8 +376,6 @@ const getStockCategory = (stock: StockData): string => {
                 }, 800);
               });
             }
-
-            console.log(`🎯 Socket.IO: Updated ${updatedCount} stocks with real-time data`)
             return updatedStocks;
           });
           
@@ -394,16 +388,12 @@ const getStockCategory = (stock: StockData): string => {
         const pollingResult = await realTimePollingService.connect();
         
         if (pollingResult) {
-          console.log('✅ Polling service connected successfully!');
           realTimePollingService.joinTradingRoom();
           
           // Use polling for real-time-like updates
           realTimePollingService.onTradingDataUpdate((data: StockData[]) => {
-            console.log('📊 Polling data received:', data?.length || 0, 'stocks');
             
             setAllStocks(prevStocks => {
-              console.log('📊 Processing polled stock updates:')
-              console.log('  Previous stocks count:', prevStocks.length)
               
               const updatedStocks = [...prevStocks];
               const newBlinkingRows = new Map<string, 'gain' | 'loss'>();
@@ -412,7 +402,6 @@ const getStockCategory = (stock: StockData): string => {
 
               // Ensure data is an array
               const dataArray = Array.isArray(data) ? data : [data];
-              console.log('  Processing array with', dataArray.length, 'items')
 
               dataArray.forEach((update, index) => {
                 if (!update || !update.Symbol) return;
@@ -436,11 +425,9 @@ const getStockCategory = (stock: StockData): string => {
                   if (newPrice > oldPrice) {
                     newBlinkingRows.set(update.Symbol, 'gain');
                     priceChangedCount++;
-                    console.log(`  🟢 ${update.Symbol} GAIN: ${oldPrice} -> ${newPrice}`)
                   } else if (newPrice < oldPrice) {
                     newBlinkingRows.set(update.Symbol, 'loss');
                     priceChangedCount++;
-                    console.log(`  🔴 ${update.Symbol} LOSS: ${oldPrice} -> ${newPrice}`)
                   }
 
                   updatedStocks[stockIndex] = {
@@ -453,7 +440,6 @@ const getStockCategory = (stock: StockData): string => {
 
               // Apply blinking effects
               if (newBlinkingRows.size > 0) {
-                console.log('✨ Applying blink effects to:', Array.from(newBlinkingRows.keys()))
                 setBlinkingRows(prev => {
                   const nextMap = new Map(prev);
                   newBlinkingRows.forEach((value, key) => nextMap.set(key, value));
@@ -469,8 +455,6 @@ const getStockCategory = (stock: StockData): string => {
                   }, 500);
                 });
               }
-
-              console.log('📈 Polling update summary:', updatedCount, 'updates,', priceChangedCount, 'price changes')
               return updatedStocks;
             });
             
@@ -487,7 +471,6 @@ const getStockCategory = (stock: StockData): string => {
 
     // Listen for connection status changes
     socketIOService.onConnectionStatusChange((connected) => {
-      console.log('📡 Socket.IO connection status changed:', connected);
       if (connected) {
         socketIOService.joinTradingRoom();
       }
@@ -495,45 +478,21 @@ const getStockCategory = (stock: StockData): string => {
 
     // Listen for trading data updates
     socketIOService.onTradingDataUpdate((data: StockData[]) => {
-      console.log('🏢 AllStocks received trading data update:')
-      console.log('  Raw data type:', typeof data)
-      console.log('  Is array:', Array.isArray(data))
-      console.log('  Data length/size:', Array.isArray(data) ? data.length : 'N/A')
-      console.log('  Full data:', data)
-      
       setAllStocks(prevStocks => {
-        console.log('📊 Processing stock updates:')
-        console.log('  Previous stocks count:', prevStocks.length)
-        
-        const updatedStocks = [...prevStocks];
+          const updatedStocks = [...prevStocks];
         const newBlinkingRows = new Map<string, 'gain' | 'loss'>();
         let updatedCount = 0;
         let priceChangedCount = 0;
 
         // Ensure data is an array
         const dataArray = Array.isArray(data) ? data : [data];
-        console.log('  Processing array with', dataArray.length, 'items')
 
         dataArray.forEach((update, index) => {
-          console.log(`  [${index}] Processing update for:`, {
-            Symbol: update?.Symbol,
-            LastTradedPrice: update?.LastTradedPrice,
-            Changes: update?.Changes,
-            Changep: update?.Changep
-          })
-          
-          if (!update || !update.Symbol) {
-            console.log(`  [${index}] ⚠️ Skipping invalid update (no symbol)`)
-            return;
-          }
-          
           const stockIndex = updatedStocks.findIndex(s => s.Symbol === update.Symbol);
           if (stockIndex !== -1) {
             const oldPrice = updatedStocks[stockIndex].LastTradedPrice || 0;
             const newPrice = update.LastTradedPrice || 0;
             const oldChange = updatedStocks[stockIndex].Changep || 0;
-
-            console.log(`  [${index}] ${update.Symbol}: ${oldPrice} -> ${newPrice}`)
 
             // Store previous values for price and change
             setPreviousStockValues(prev => ({
@@ -548,13 +507,10 @@ const getStockCategory = (stock: StockData): string => {
             if (newPrice > oldPrice) {
               newBlinkingRows.set(update.Symbol, 'gain');
               priceChangedCount++;
-              console.log(`  [${index}] 🟢 ${update.Symbol} GAIN: ${oldPrice} -> ${newPrice}`)
-            } else if (newPrice < oldPrice) {
+                       } else if (newPrice < oldPrice) {
               newBlinkingRows.set(update.Symbol, 'loss');
               priceChangedCount++;
-              console.log(`  [${index}] 🔴 ${update.Symbol} LOSS: ${oldPrice} -> ${newPrice}`)
             } else if (oldPrice !== 0) {
-              console.log(`  [${index}] ⚪ ${update.Symbol} NO CHANGE: ${oldPrice}`)
             }
 
             updatedStocks[stockIndex] = {
@@ -563,18 +519,11 @@ const getStockCategory = (stock: StockData): string => {
             };
             updatedCount++;
           } else {
-            console.log(`  [${index}] ⚠️ Stock ${update.Symbol} not found in current list`)
           }
         });
 
-        console.log('📈 Update summary:')
-        console.log('  Total updates processed:', updatedCount)
-        console.log('  Price changes detected:', priceChangedCount)
-        console.log('  Blinking stocks:', Array.from(newBlinkingRows.keys()))
-
         // Apply blinking rows and set timeouts to remove them
         if (newBlinkingRows.size > 0) {
-          console.log('✨ Applying blink effects to:', Array.from(newBlinkingRows.keys()))
           setBlinkingRows(prev => {
             const nextMap = new Map(prev);
             newBlinkingRows.forEach((value, key) => nextMap.set(key, value));
@@ -591,16 +540,13 @@ const getStockCategory = (stock: StockData): string => {
           });
         }
 
-        console.log('✅ Stock update complete')
         return updatedStocks;
       });
       
-      console.log('🕒 Setting last update time')
       setLastUpdate(new Date());
     });
 
     return () => {
-      console.log('🔌 Cleaning up real-time connections...');
       socketIOService.disconnect();
       realTimePollingService.disconnect();
     };

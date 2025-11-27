@@ -80,7 +80,6 @@ export default function RegisterPage() {
     
     // Always get the token from the cookie right before the API call
     const cookieToken = Cookies.get('token');
-    console.log('Token from cookie:', cookieToken);
     if (!cookieToken) {
       setError('No token found in cookies. Please log in again.');
       setIsLoading(false);

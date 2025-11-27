@@ -82,7 +82,6 @@ export default function StockInfo({
       setError(null);
       
       // Fetch specific stock data
-      console.log(`Fetching stock data for symbol: ${symbol}`);
       const response = await fetchStockData(`${symbol}-O-0000`);
       if ('data' in response && response.data && Array.isArray(response.data) && response.data.length > 0) {
         const newData = response.data[0] as StockData;
@@ -115,7 +114,6 @@ export default function StockInfo({
 
   const handleSymbolChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newSymbol = e.target.value;
-    console.log(`Symbol changed to: ${newSymbol}`);
     if (onSymbolSelect) {
       onSymbolSelect(newSymbol);
     }

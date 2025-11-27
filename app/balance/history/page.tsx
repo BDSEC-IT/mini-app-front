@@ -31,9 +31,6 @@ export default function HistoryPage() {
     csdTransactions,
     cashTransactions,
   } = useBalanceData();
-
-  // Memoize the filtered transactions based on type
-  console.log(type)
   const transactions = useMemo(() => {
     switch (type) {
       case 'security':

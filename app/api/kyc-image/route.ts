@@ -7,9 +7,6 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const field = searchParams.get('field');
-    
-    console.log('KYC Image API called with field:', field);
-    console.log('Full URL:', request.url);
 
     if (!field) {
       console.error('Field parameter missing');

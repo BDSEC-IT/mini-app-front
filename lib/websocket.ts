@@ -98,35 +98,26 @@ class WebSocketService {
 
   // Connect to WebSocket with authentication
   async connect(): Promise<boolean> {
-    console.log('🚀 Starting WebSocket connection...')
-
     // Authenticate first if no token
     if (!this.token) {
-      console.log('🔑 No token found, authenticating...')
       const authResult = await this.authenticate()
       if (!authResult.success) {
         console.error('❌ Cannot connect without authentication:', authResult.message)
         return false
       }
-      console.log('🔑 Authentication completed, proceeding with WebSocket connection')
     } else {
-      console.log('🔑 Using existing token:', this.token.substring(0, 20) + '...')
     }
 
     // Try different WebSocket URLs
     const wsUrls = this.getWebSocketUrls()
-    console.log('🔌 Will try these WebSocket URLs:', wsUrls.map(url => url.replace(this.baseUrl, 'BASE_URL')))
 
     for (let i = 0; i < wsUrls.length; i++) {
       const wsUrl = wsUrls[i]
-      console.log(`🔌 Trying WebSocket URL ${i + 1}/${wsUrls.length}: ${wsUrl.replace(this.baseUrl, 'BASE_URL')}`)
       
       const success = await this.tryConnectToUrl(wsUrl)
       if (success) {
-        console.log(`✅ Successfully connected to: ${wsUrl.replace(this.baseUrl, 'BASE_URL')}`)
         return true
       } else {
-        console.log(`❌ Failed to connect to: ${wsUrl.replace(this.baseUrl, 'BASE_URL')}`)
       }
     }
 
@@ -144,10 +135,9 @@ class WebSocketService {
 
       // Create WebSocket connection with token
       const wsUrlWithAuth = `${wsUrl}?token=${this.token}`
-      console.log('🔌 Connecting to:', wsUrlWithAuth.replace(this.token!, '***'))
+
       
       this.socket = new WebSocket(wsUrlWithAuth)
-      console.log('🔌 WebSocket object created, initial state:', this.socket.readyState)
       
       return new Promise((resolve) => {
         if (!this.socket) {
@@ -156,7 +146,6 @@ class WebSocketService {
         }
 
         this.socket.onopen = () => {
-          console.log('✅ WebSocket connected successfully')
           this.isConnected = true
           this.reconnectAttempts = 0
           
@@ -171,19 +160,16 @@ class WebSocketService {
         }
 
         this.socket.onerror = (error) => {
-          console.log('❌ WebSocket error:', error)
           resolve(false)
         }
 
         this.socket.onclose = (event) => {
-          console.log(`🔌 WebSocket closed: ${event.code} - ${event.reason || 'No reason'}`)
           resolve(false)
         }
 
         // Quick check if connection fails immediately
         setTimeout(() => {
           if (this.socket?.readyState === 3) {
-            console.log('🔌 Connection failed quickly - endpoint likely doesn\'t exist')
             resolve(false)
           }
         }, 100)
@@ -191,7 +177,6 @@ class WebSocketService {
         // Timeout after 3 seconds for each URL attempt
         setTimeout(() => {
           if (!this.isConnected) {
-            console.log('⏰ Connection timeout for this URL')
             resolve(false)
           }
         }, 3000)
@@ -209,32 +194,14 @@ class WebSocketService {
 
     this.socket.onmessage = (event) => {
       try {
-        console.log('📨 RAW WebSocket message received:')
-        console.log('  Type:', typeof event.data)
-        console.log('  Length:', event.data.length)
-        console.log('  Raw data:', event.data)
-        
         const data = JSON.parse(event.data)
-        
-        console.log('📊 PARSED WebSocket data:')
-        console.log('  Data structure:', {
-          type: typeof data,
-          isArray: Array.isArray(data),
-          keys: Object.keys(data || {}),
-          length: Array.isArray(data) ? data.length : 'N/A'
-        })
-        console.log('  Full data object:', data)
-        
         // Handle different message types
         if (data.type === 'trading-data' && this.callbacks.tradingData) {
-          console.log('🎯 Calling trading-data callback with:', data.payload || data.data)
           this.callbacks.tradingData(data.payload || data.data)
         } else if (data.type === 'stock-update' && this.callbacks.stockUpdate) {
-          console.log('🎯 Calling stock-update callback with:', data.payload || data.data)
           this.callbacks.stockUpdate(data.payload || data.data)
         } else {
           // Default to trading data callback for backward compatibility
-          console.log('🎯 Using default callback (no specific type), data:', Array.isArray(data) ? data : [data])
           if (this.callbacks.tradingData) {
             this.callbacks.tradingData(Array.isArray(data) ? data : [data])
           }
@@ -248,9 +215,6 @@ class WebSocketService {
     }
 
     this.socket.onclose = (event) => {
-      console.log('🔌 WebSocket connection closed:')
-      console.log('  Code:', event.code)
-      console.log('  Reason:', event.reason || 'No reason provided')
       this.isConnected = false
       
       if (this.callbacks.connectionStatus) {
@@ -275,7 +239,6 @@ class WebSocketService {
     }
 
     try {
-      console.log('📡 Checking socket connection status...')
       
       const response = await fetch(`${this.baseUrl}/securities/socket-connection-status`, {
         method: 'GET',
@@ -288,7 +251,6 @@ class WebSocketService {
       const data = await response.json()
       
       if (response.ok) {
-        console.log('📊 Connection status:', data)
         return {
           success: true,
           connected: data.connected || false,
@@ -312,7 +274,6 @@ class WebSocketService {
     }
 
     try {
-      console.log('🔄 Forcing socket reconnection...')
       
       const response = await fetch(`${this.baseUrl}/securities/force-reconnect`, {
         method: 'POST',
@@ -325,7 +286,6 @@ class WebSocketService {
       const data = await response.json()
       
       if (response.ok) {
-        console.log('✅ Force reconnect successful')
         return { success: true, message: data.message || 'Reconnection initiated' }
       } else {
         console.error('❌ Force reconnect failed:', data)
@@ -340,7 +300,6 @@ class WebSocketService {
   // Join trading room (send subscription message)
   joinTradingRoom() {
     if (this.socket && this.isConnected) {
-      console.log('🏢 Joining trading room...')
       this.socket.send(JSON.stringify({
         type: 'subscribe',
         channel: 'trading-room'
@@ -353,7 +312,6 @@ class WebSocketService {
   // Subscribe to specific stock updates
   subscribeToStock(symbol: string) {
     if (this.socket && this.isConnected) {
-      console.log('📈 Subscribing to stock:', symbol)
       this.socket.send(JSON.stringify({
         type: 'subscribe',
         channel: 'stock-updates',
@@ -364,19 +322,16 @@ class WebSocketService {
 
   // Register callback for trading data updates
   onTradingDataUpdate(callback: (data: any) => void) {
-    console.log('📝 Registering trading data callback')
     this.callbacks.tradingData = callback
   }
 
   // Register callback for individual stock updates
   onStockUpdate(callback: (data: any) => void) {
-    console.log('📝 Registering stock update callback')
     this.callbacks.stockUpdate = callback
   }
 
   // Register callback for connection status changes
   onConnectionStatusChange(callback: (connected: boolean) => void) {
-    console.log('📝 Registering connection status callback')
     this.callbacks.connectionStatus = callback
   }
 
@@ -387,8 +342,6 @@ class WebSocketService {
 
   // Disconnect WebSocket
   disconnect() {
-    console.log('🔌 Disconnecting WebSocket...')
-    
     if (this.socket) {
       this.socket.close(1000, 'Client disconnect')
       this.socket = null

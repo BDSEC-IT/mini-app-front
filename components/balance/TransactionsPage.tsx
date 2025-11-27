@@ -410,7 +410,6 @@ export default function TransactionsPage({
 
   // Handle type change with validation
   const handleTypeChange = (newType: string) => {
-    console.log('newType', newType);
     if (VALID_TYPES.includes(newType as ValidType)) {
       onTransactionTypeChange(newType as TransactionType);
       // Don't call onClearAssetFilter here - it's handled in setType

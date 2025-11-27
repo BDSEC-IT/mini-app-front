@@ -134,17 +134,6 @@ const Profile = () => {
       mcsdRequest.id
     );
     
-    console.log('Profile DEBUG:', {
-      accountStatusData,
-      accountInfo,
-      mcsdRequest,
-      hasDirectAccountData,
-      hasNestedAccountData,
-      apiComplete,
-      finalResult: apiComplete || hasDirectAccountData || hasNestedAccountData
-    });
-
-    
     return apiComplete || hasDirectAccountData || hasNestedAccountData;
   }
 
@@ -153,13 +142,6 @@ const Profile = () => {
     // Fallback to invoiceData if accountInfo doesn't have it
     const feeStatus = primary?.registrationFee?.status;
     const invoiceFeeStatus = invoiceData?.data?.registrationFee?.status || invoiceData?.registrationFee?.status;
-    
-    console.log('Payment status check:', {
-      feeStatus,
-      invoiceFeeStatus,
-      invoiceData,
-      primaryRegistrationFee: primary?.registrationFee
-    });
     
     return feeStatus === 'COMPLETED' || invoiceFeeStatus === 'COMPLETED';
   }
