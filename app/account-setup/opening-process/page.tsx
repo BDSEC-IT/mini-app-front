@@ -3,167 +3,108 @@
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, CheckCircle2, Clock, ArrowRight } from 'lucide-react'
 import Cookies from 'js-cookie'
-import { BASE_URL, getUpdateMCSDStatus, getUserAccountInformation } from '@/lib/api'
+import { BASE_URL } from '@/lib/api'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import AccountFixFormMCSD from './AccountFixFormMCSD'
+
+type IStockAccountStatus =
+  | 'NOT_SENT'
+  | 'NEW'
+  | 'SENT'
+  | 'INFO_RECEIVED'
+  | 'INFO_REJECTED'
+  | 'CONFIRM'
+  | 'CONFIRMED'
 
 export default function AccountOpeningProcess() {
   const router = useRouter()
   const { t } = useTranslation()
   const [status, setStatus] = useState<'loading' | 'waiting_submission' | 'waiting_approval' | 'error' | 'success'>('loading')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [accountData, setAccountData] = useState<any>(null)
-  const [newRegNumber, setNewRegNumber] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showForm, setShowForm] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [mcsdIsError, setMcsdIsError] = useState(false)
-  const token = Cookies.get('token') 
-  const handleUpdateRegistryNumber = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newRegNumber) return
-    
-    // Show confirmation dialog
-    const confirmed = window.confirm(t('profile.registryUpdateWarning', 'Анхааруулга: Регистрийн дугаар солих үйлдлийг буцаах боломжгүй. Та итгэлтэй байна уу?'))
-    if (!confirmed) return
-
-    setIsSubmitting(true)
-    try {
-      const response = await fetch(`${BASE_URL}/user/update-registration-number`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ registrationNumber: newRegNumber })
-      })
-       
-      const data = await response.json()
-      console.log("data", data)
-
-      if (response.ok) {
-        //hard refresh
-        window.location.reload()
-        return;
-    
-      } else {
-        const stillDuplicate=data.message==="Registry number is duplicated"
-        if(stillDuplicate){
-          alert(t('profile.registryDuplicate', 'Энэ регистрийн дугаар дээр бүртгэлтэй байна.'))
-          setShowForm(false)
-          return
-        }
-        setErrorMessage(data.message || t('common.error.generic', 'Алдаа гарлаа'))
-      }
-    } catch (error) {
-      console.error('Error:', error)
-      setErrorMessage(t('common.error.generic', 'Алдаа гарлаа'))
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-  const handleOpenAccountError = async () => {
-    try {
-      const response = await fetch(`${BASE_URL}/user/resend-form-to-mcsd`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      const data = await response.json();
-      console.log("data opening",data)
-      if (response.ok) {
-        alert(t('profile.resendSuccess', 'Амжилттай илгээгдлээ. Та түр хүлээнэ үү.'));
-        window.location.reload();
-      } else {
-        alert(t('profile.resendError', 'Алдаа гарлаа. Дахин оролдоно уу.'));
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert(t('profile.resendError', 'Алдаа гарлаа. Дахин оролдоно уу.'));
-    }
-  };
-
-  const handleRegNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewRegNumber(e.target.value.toUpperCase())
-  }
+  const [istockStatus, setIstockStatus] = useState<IStockAccountStatus | null>(null)
+  const token = Cookies.get('token')
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchIstockStatus = async () => {
+      if (!token) {
+        setStatus('error')
+        setErrorMessage(t('common.error.generic', 'Алдаа гарлаа. Дахин оролдоно уу.'))
+        return
+      }
+
       try {
-        const data = await getUserAccountInformation(token)
-        setAccountData(data.data)
-        const acc = data.data?.superAppAccount;
-        const latestFee = acc?.registrationFee;
-        const hasForm = !!acc?.MCSDStateRequest;
-        const feePaid = (latestFee?.status || '').toUpperCase() === 'COMPLETED';
-        
-        // Only redirect to general if neither form nor fee exists
-        if (!acc) {
+        const response = await fetch(`${BASE_URL}/istockApp/account/check?source=superapp`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+
+        const data = await response.json()
+        console.log('ISTOCK account check response', data)
+
+        if (!response.ok || !data?.success) {
+          setStatus('error')
+          setErrorMessage(data?.message || t('common.error.generic', 'Алдаа гарлаа. Дахин оролдоно уу.'))
+          return
+        }
+
+        const rawStatus: IStockAccountStatus | undefined = data?.data?.accountStatus?.status
+        if (!rawStatus) {
+          // If we don't get a clear status, treat as not sent and redirect to general setup
           router.replace('/account-setup/general')
           return
         }
-        
-        // CRITICAL: Only redirect if account is COMPLETED (not just exists)
-        // If fee is paid but account not completed, stay on this page and show status
-        if(acc.MCSDAccount?.DGStatus === 'COMPLETED'){
-          window.alert(t('profile.accountCreatedSuccess', 'Таны данс амжилттай үүссэн байна'))
-          router.push('/')
-          return
-        }
+        setIstockStatus(rawStatus)
 
-        // Registration process error from fee (e.g., duplicated RegistryNumber)
-        if (latestFee?.mcsdError) {
-          setStatus('error')
-          setErrorMessage(latestFee.mcsdError || t('common.error.generic'))
-          return
-        }
-        
-        // Fee paid but account not created yet - show waiting status, don't redirect
-        // This allows user to see the status page with red indicator
-        if(!acc.MCSDAccountId && latestFee?.status === "COMPLETED"){
-          // Don't redirect - let user stay and see the status
-          setStatus('waiting_submission')
-          return
-        }
+        switch (rawStatus) {
+          case 'NOT_SENT':
+            // No account / no request yet – send user back to general setup
+            router.replace('/account-setup/general')
+            break
 
-        // Step 2: Try updating from backend status endpoint
-        if (!acc.MCSDAccountId) {
-          const mcsdStatus=await getUpdateMCSDStatus(token!)
-          if(mcsdStatus.success){
-            if(mcsdStatus.accountOpened){
+          case 'NEW':
+            // Request prepared, broker should send – similar to "waiting to be submitted"
+            setStatus('waiting_submission')
+            break
+
+          case 'SENT':
+          case 'INFO_RECEIVED':
+            // Request sent / info received – under review at depository
+            setStatus('waiting_approval')
+            break
+
+          case 'INFO_REJECTED':
+            // Rejected on depository side
+            setStatus('error')
+            setErrorMessage(
+              t(
+                'profile.accountOpeningRejected',
+                'Таны данс нээх хүсэлт ҮЦТХТ дээр саатсан байна.',
+              ),
+            )
+            break
+
+          case 'CONFIRM':
+          case 'CONFIRMED':
+            // Account successfully opened (and possibly with online rights)
             setStatus('success')
-              alert("Таны данс амжилттай нээгдлээ")
-              router.push('/')
-              return
-            }
-            else{
-              const mcsdIsErrorValue = false
-              setMcsdIsError(mcsdIsErrorValue)
-              setStatus('waiting_approval')
-              return
-            }
-          }
-          else{
-            alert(mcsdStatus.message)
-            router.push('/account-setup/general')
-            return
-          }
-          return
-        }
-     
+            window.alert(t('profile.accountCreatedSuccess', 'Таны данс амжилттай үүссэн байна'))
+            router.push('/')
+            break
 
-        // Fallback: stay and show current status
-        setStatus('waiting_approval')
+          default:
+            setStatus('error')
+            setErrorMessage(t('common.error.generic', 'Алдаа гарлаа. Дахин оролдоно уу.'))
+        }
       } catch (error) {
-        console.error('Error fetching account status:', error)
+        console.error('Error fetching ISTOCK account status:', error)
         setStatus('error')
         setErrorMessage(t('common.error.generic', 'Алдаа гарлаа. Дахин оролдоно уу.'))
       }
     }
-    fetchData()
+
+    fetchIstockStatus()
   }, [router, t, token])
 
   const renderContent = () => {
@@ -206,75 +147,27 @@ export default function AccountOpeningProcess() {
           <div className="space-y-6">
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0 mt-1">
-                <Clock className={`h-6 w-6 ${mcsdIsError ? 'text-red-500' : 'text-blue-500'}`} />
+                <Clock className="h-6 w-6 text-blue-500" />
               </div>
               <div>
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                  {mcsdIsError ? t('profile.waitingApprovalError', 'Таны мэдээлэл алдаатай байна') : t('profile.waitingApproval', 'Таны мэдээллийг шалгаж байна')}
+                  {t('profile.waitingApproval', 'Таны мэдээллийг шалгаж байна')}
                 </h3>
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  {!mcsdIsError &&t('profile.waitingApprovalDesc', 'ҮЦТХТ таны мэдээллийг шалгаж байна. Энэ хугацаанд та түр хүлээнэ үү.')}
+                  {t('profile.waitingApprovalDesc', 'ҮЦТХТ таны мэдээллийг шалгаж байна. Энэ хугацаанд та түр хүлээнэ үү.')}
                 </p>
               </div>
             </div>
-            {accountData?.MCSDAccount?.ErrorMessage && (
-              <div className='p-4 w-full bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600'>
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0">
-                    <Clock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">{t('profile.mcsdMessage', 'ҮЦТХТ мэдэгдэл')}</h4>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      {accountData?.MCSDAccount?.ErrorMessage}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
             <div className="flex justify-center">
               <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <div className={`w-3 h-3 ${mcsdIsError ? 'bg-red-500' : 'bg-blue-500'} rounded-full`} />
+                <div className="w-3 h-3 bg-blue-500 rounded-full" />
                 <span>{t('profile.underReview', 'Шалгаж байна')}</span>
               </div>
             </div>
-            {mcsdIsError && (
-              <div className="mt-6">
-                {!isEditMode ? (
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => {
-                        if (window.confirm('Та мэдээллээ шинэчлэхийг хүсэж байна уу? Энэ үйлдлийг буцаах боломжгүй.')) {
-                          setIsEditMode(true);
-                        }
-                      }}
-                      className="px-4 py-2 bg-bdsec text-white rounded-md hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-bdsec focus:ring-offset-2 transition-colors"
-                    >
-                      {t('profile.update', 'Засварлах')}
-                    </button>
-                  </div>
-                ) : (
-                  <AccountFixFormMCSD token={token!}/>
-                )}
-              </div>
-            )}
           </div>
         )
-        //There are two type of errors
-        //1. Registry number is duplicated. Add an quickform to change the registry number
-        //2. BDCId and BDCAcc is duplicated. We already tried 10times of sending it. so for now it is a dead-end we can't fix. Please manually check it.
       case 'error':
-       {const ResponseMessage=accountData?.superAppAccount?.registrationFee?.mcsdError || errorMessage || ''
-        const match = ResponseMessage.match(/"([A-Za-z]+)"/);
-        const isRegistryError=(match&&match[1]==="RegistryNumber")
-        let regId = null
-        if(isRegistryError){
-          const matches = ResponseMessage.match(/"([\u0400-\u04FF0-9A-Za-z-]+)"/g);
-          regId = matches?.[matches.length - 1]?.replace(/"/g, "");
-          console.log("regId",regId)
-        }
-        console.log("regId",regId)
-         return (
+        return (
           <div className="space-y-6">
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0 mt-1">
@@ -282,90 +175,23 @@ export default function AccountOpeningProcess() {
               </div>
               <div>
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                  {isRegistryError&&regId ? `${regId} дугаартай регистер өмнө нь илгээгдсэн байна.` : t('profile.accountOpeningError')}
+                  {t('profile.accountOpeningError', 'Данс нээх хүсэлт саатлаа')}
                 </h3>
                 <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-                  {ResponseMessage || t('common.error.generic')}
+                  {errorMessage || t('common.error.generic', 'Алдаа гарлаа. Дахин оролдоно уу.')}
                 </p>
-                <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>{isRegistryError&&regId ? `${regId} дугаартай регистер өмнө нь илгээгдсэн байна. Та регистрийн дугаараа зөв оруулсан эсэхээ шалгаарай. Хэрэв буруу оруулсан бол регистрийн дугаараа зөв оруулна уу. Регистрийн дугаар зөв бол та аль хэдийн БиДиСЕК үнэт цаасны компанитай холбогдоно уу.` : `Дахин оролдоно уу.`}</p>
-               {regId&& isRegistryError&& <div>
-                 <button
-                    onClick={() => setShowForm(!showForm)}
-                    className="disabled  mt-4 inline-flex items-center text-sm font-medium text-red-500 hover:text-red-500/80"
-                  >
-                    {t('profile.updateInformation')}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </button>
-               </div>
-                }
-                {regId && isRegistryError && showForm && (
-                  <div className="mt-6 space-y-4">
-                    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                      <form onSubmit={handleUpdateRegistryNumber} className="space-y-4">
-                        <div>
-                          <label htmlFor="regNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {t('profile.newRegistryNumber', 'Шинэ регистрийн дугаар')}
-                          </label>
-                          <div className="mt-1 relative">
-                            <input
-                              type="text"
-                              id="regNumber"
-                              name="regNumber"
-                              value={newRegNumber}
-                              onChange={handleRegNumberChange}
-                              placeholder={t('profile.registryPlaceholder', 'ТЕ12345678')}
-                              className="block w-full px-4 py-3 rounded-lg border-2 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors duration-200 text-base tracking-wider font-medium focus:border-bdsec focus:ring-2 focus:ring-bdsec/20 focus:outline-none"
-                              maxLength={10}
-                              required
-                            />
-                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                              <span className="text-gray-400 dark:text-gray-500 text-sm">{t('profile.registryShort', 'РД')}</span>
-                            </div>
-                          </div>
-                          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {t('profile.registryExample', 'Жишээ: ТЕ12345678')}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-end space-x-3">
-                          <button
-                            type="button"
-                            onClick={() => router.push('/account-setup/general')}
-                            className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bdsec"
-                          >
-                            {t('common.back', 'Буцах')}
-                          </button>
-                          <button
-                            type="submit"
-                            disabled={isSubmitting || !newRegNumber}
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-bdsec hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bdsec disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {isSubmitting ? t('common.sending', 'Илгээж байна...') : t('common.send', 'Илгээх')}
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                )}
-                {!isRegistryError && (
-                  <div className="mt-6 flex justify-start">
-                    <button
-                      onClick={handleOpenAccountError}
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-bdsec hover:bg-bdsec/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-bdsec transition-colors duration-200"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      {t('profile.resendForm', 'Дахин илгээх')}
-                    </button>
-                  </div>
-                )}
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  {istockStatus && (
+                    <span className="inline-block rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200 px-2 py-0.5 text-xs font-medium mr-2">
+                      {istockStatus}
+                    </span>
+                  )}
+                  {t('profile.accountOpeningErrorHint', 'Таны мэдээлэл буруу тул түр саатлаа. Брокертой холбоо барина уу.')}
+                </p>
               </div>
             </div>
           </div>
-        )}
+        )
 
       case 'success':
         return (
