@@ -20,6 +20,7 @@ import {
   BanknoteArrowDown,
   ArrowUpDown,
   Wallet2,
+  UserCheck,
 } from 'lucide-react'
 import Cookies from 'js-cookie'
 import { useTranslation } from 'react-i18next'
@@ -121,6 +122,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
     { href: '/portfolio', icon: TrendingUp, label: 'nav.portfolio' },
     { href: '/balance/recharge', icon: BanknoteArrowUp, label: 'nav.recharge' },
     { href: '/balance/withdrawal', icon: BanknoteArrowDown, label: 'nav.withdrawal' },
+    { href: '/account-setup/kyc-additional-info', icon: UserCheck, label: 'menu.onlineClient' },
     ...menuItems
   ] : menuItems;
   
@@ -235,7 +237,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
                 <div className="mb-2 px-2">
                   <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('menu.mySection', 'My Section')}</h3>
                 </div>
-                {advancedMenuItems.slice(0, 5).map((item) => (
+                {advancedMenuItems.slice(0, 6).map((item) => (
                   <Link href={item.href} onClick={onClose} key={item.href}>
                     <div className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === item.href ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
                       <item.icon size={18} className="mr-2.5" />

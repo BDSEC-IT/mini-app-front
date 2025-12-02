@@ -220,7 +220,8 @@
     "withdraw": "Withdraw Money",
     "recharge": "Recharge Balance",
     "mySection": "My Section",
-    "general": "General"
+    "general": "General",
+    "onlineClient": "Online Client"
   },
   "pagination": {
     "previous": "Previous",
@@ -822,5 +823,113 @@
     "time": "Time",
     "buyAction": "Buy",
     "sellAction": "Sell"
+  },
+  "kycAdditional": {
+    "fetchError": "Failed to load data",
+    "submitSuccess": "Information saved successfully",
+    "submitError": "Failed to save information",
+    "imageUploadWarning": "Form saved but image upload failed",
+    "alreadySubmitted": "Information Submitted",
+    "alreadySubmittedDescription": "Your additional KYC information has been submitted successfully.",
+    "informationSubmitted": "Information Submitted",
+    "step": {
+      "personalInfo": "Personal Information",
+      "documents": "Documents"
+    },
+    "section": {
+      "personalInfo": "Personal Information",
+      "incomeInfo": "Income Information",
+      "employmentInfo": "Employment Information",
+      "emergencyContact": "Emergency Contact"
+    },
+    "field": {
+      "education": "Education",
+      "monthlyIncome": "Monthly Income",
+      "incomeSource": "Income Source",
+      "businessSector": "Business Sector",
+      "employmentStatus": "Employment Status",
+      "jobTitle": "Job Title",
+      "workPlaceName": "Workplace Name",
+      "workPhone": "Work Phone",
+      "relationship": "Relationship",
+      "isPEP": "Are you a Politically Exposed Person?",
+      "pepDescription": "PEP - Politically Exposed Person"
+    },
+    "placeholder": {
+      "register": "e.g. AA12345678",
+      "phone": "e.g. 99112233",
+      "email": "e.g. example@email.com",
+      "businessSector": "Enter business sector",
+      "jobTitle": "Enter job title",
+      "workPlaceName": "Enter workplace name",
+      "workPhone": "Enter work phone"
+    },
+    "validation": {
+      "familyNameRequired": "Last name is required",
+      "nameRequired": "First name is required",
+      "registerMin6": "Register number must be at least 6 characters",
+      "registerMax10": "Register number must be at most 10 characters",
+      "birthdayRequired": "Birth date is required",
+      "phoneMin8": "Phone number must be at least 8 digits",
+      "emailInvalid": "Please enter a valid email address",
+      "emergencyWhoRequired": "Please select relationship",
+      "lastNameRequired": "Last name is required",
+      "firstNameRequired": "First name is required",
+      "imageOnly": "Please select an image file",
+      "fileTooLarge": "File size must be less than 5MB"
+    },
+    "income": {
+      "below500k": "Below ₮500,000",
+      "500kTo1m": "₮500,001 - ₮1,000,000",
+      "1mTo3m": "₮1,000,001 - ₮3,000,000",
+      "3mTo5m": "₮3,000,001 - ₮5,000,000",
+      "above5m": "Above ₮5,000,001"
+    },
+    "incomeSource": {
+      "salary": "Salary",
+      "business": "Business",
+      "investment": "Investment",
+      "pension": "Pension",
+      "other": "Other"
+    },
+    "education": {
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "vocational": "Vocational",
+      "bachelor": "Bachelor's",
+      "master": "Master's",
+      "doctorate": "Doctorate"
+    },
+    "employment": {
+      "fullTime": "Full-time",
+      "partTime": "Part-time",
+      "selfEmployed": "Self-employed",
+      "unemployed": "Unemployed",
+      "retired": "Retired",
+      "student": "Student"
+    },
+    "emergencyWho": {
+      "parent": "Parent",
+      "sibling": "Sibling (older)",
+      "youngerSibling": "Sibling (younger)",
+      "spouse": "Spouse",
+      "friend": "Friend",
+      "other": "Other"
+    },
+    "imageUpload": {
+      "title": "Upload Documents (Optional)",
+      "description": "Uploading your ID documents helps speed up your registration.",
+      "idFront": "National ID - Front",
+      "idBack": "National ID - Back",
+      "selfie": "Selfie Photo",
+      "clickToUpload": "Click to upload",
+      "fileFormat": "PNG, JPG (max 5MB)"
+    }
+  },
+  "common": {
+    "select": "Select",
+    "pleaseLogin": "Please login",
+    "yes": "Yes",
+    "no": "No"
   }
 } 
