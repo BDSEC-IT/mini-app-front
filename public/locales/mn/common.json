@@ -849,7 +849,10 @@
     "noTrades": "Арилжаа байхгүй",
     "time": "Цаг",
     "buyAction": "Худалдан авах",
-    "sellAction": "Зарах"
+    "sellAction": "Зарах",
+    "kycPending": "Таны KYC хүсэлт хянагдаж байна",
+    "onlineClientPending": "Таны онлайн харилцагч хүсэлт хянагдаж байна",
+    "kycPendingDefault": "Таны хүсэлт хянагдаж байна. Захиалга өгөх боломжгүй."
   },
   "kycAdditional": {
     "fetchError": "Мэдээлэл ачаалахад алдаа гарлаа",

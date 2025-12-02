@@ -17,6 +17,7 @@ import {
   fetchOrderBook,
   fetchTodayCompletedOrders,
   getUserAccountInformation,
+  BASE_URL,
   type StockData,
   type SecondaryOrderData,
   type EnhancedOrderBookData,
@@ -176,6 +177,8 @@ export default function Exchange() {
   const [feeEquity, setFeeEquity] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<any>(null);
+  const [kycPending, setKycPending] = useState<boolean>(false);
+  const [kycPendingMessage, setKycPendingMessage] = useState<string>('');
   
   // Form state
   const [orderSide, setOrderSide] = useState<OrderSide>('BUY');
@@ -193,7 +196,8 @@ export default function Exchange() {
         fetchStockHoldings(),
         fetchStocks(),
         fetchOrdersData(),
-        fetchFeeInformation()
+        fetchFeeInformation(),
+        fetchKycStatus()
       ]);
     };
     init();
@@ -288,6 +292,55 @@ export default function Exchange() {
     } catch (error) {
       console.error('Error fetching fee information:', error);
       setFeeEquity('1'); // Default to 1% if fetch fails
+    }
+  };
+
+  const fetchKycStatus = async () => {
+    const token = Cookies.get('token');
+    if (!token) return;
+
+    try {
+      // Check KYC pictures status (PENDING, APPROVED, REJECTED)
+      const kycPicturesRes = await fetch(`${BASE_URL}/kyc/pictures`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const kycPicturesData = await kycPicturesRes.json();
+      
+      if (kycPicturesData.success && kycPicturesData.data?.status === 'PENDING') {
+        setKycPending(true);
+        setKycPendingMessage(t('exchange.kycPending', 'Таны KYC хүсэлт хянагдаж байна'));
+        return;
+      }
+
+      // Check KYC additional (online client) status
+      const kycAdditionalRes = await fetch(`${BASE_URL}/kyc/additional`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const kycAdditionalData = await kycAdditionalRes.json();
+      
+      // If KYC additional exists with an ID and status is not approved, it's pending
+      if (kycAdditionalData.success && kycAdditionalData.data?.id) {
+        const status = kycAdditionalData.data.status;
+        if (!status || status === 'PENDING' || status === 'pending') {
+          setKycPending(true);
+          setKycPendingMessage(t('exchange.onlineClientPending', 'Таны онлайн харилцагч хүсэлт хянагдаж байна'));
+          return;
+        }
+      }
+
+      // No pending requests
+      setKycPending(false);
+      setKycPendingMessage('');
+    } catch (error) {
+      console.error('Error fetching KYC status:', error);
     }
   };
 
@@ -941,6 +994,8 @@ export default function Exchange() {
             placing={placing}
             onPlaceOrder={handlePlaceOrder}
             feeEquity={feeEquity}
+            kycPending={kycPending}
+            kycPendingMessage={kycPendingMessage}
           />
 
           {/* Order Confirmation Modal */}

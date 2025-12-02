@@ -822,7 +822,10 @@
     "noTrades": "No trades",
     "time": "Time",
     "buyAction": "Buy",
-    "sellAction": "Sell"
+    "sellAction": "Sell",
+    "kycPending": "Your KYC request is being reviewed",
+    "onlineClientPending": "Your online client request is being reviewed",
+    "kycPendingDefault": "Your request is being reviewed. You cannot place orders."
   },
   "kycAdditional": {
     "fetchError": "Failed to load data",

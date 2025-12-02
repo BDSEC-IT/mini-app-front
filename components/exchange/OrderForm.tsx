@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { AlertCircle } from 'lucide-react';
 import { Button, Input, Select } from '../ui';
 
 type OrderSide = 'BUY' | 'SELL';
@@ -31,6 +32,8 @@ interface OrderFormProps {
   placing: boolean;
   onPlaceOrder: () => void;
   feeEquity: string | null;
+  kycPending?: boolean;
+  kycPendingMessage?: string;
 }
 
 export const OrderForm: React.FC<OrderFormProps> = ({
@@ -59,7 +62,9 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   setShowPriceSteps,
   placing,
   onPlaceOrder,
-  feeEquity
+  feeEquity,
+  kycPending = false,
+  kycPendingMessage = ''
 }) => {
   const { t } = useTranslation('common');
   const [showDatePicker, setShowDatePicker] = React.useState(false);
@@ -363,22 +368,34 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         )}
       </div>
 
+      {/* KYC Pending Warning */}
+      {kycPending && (
+        <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              {kycPendingMessage || t('exchange.kycPendingDefault', 'Таны хүсэлт хянагдаж байна. Захиалга өгөх боломжгүй.')}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Submit Button with Glow Effect */}
       <div className="relative mb-2">
         <Button
           variant={orderSide === 'BUY' ? 'success' : 'danger'}
           onClick={onPlaceOrder}
-          disabled={placing || !quantity || (orderType === 'Нөхцөлт' && !price)}
+          disabled={placing || !quantity || (orderType === 'Нөхцөлт' && !price) || kycPending}
           className={`relative w-full py-3 text-sm font-bold transition-all duration-200 transform hover:scale-[1.02] ${
-            placing || !quantity || (orderType === 'Нөхцөлт' && !price)
+            placing || !quantity || (orderType === 'Нөхцөлт' && !price) || kycPending
               ? 'bg-gray-400 cursor-not-allowed hover:bg-gray-400 transform-none'
               : ''
           }`}
           style={{
-            filter: !(placing || !quantity || (orderType === 'Нөхцөлт' && !price))
+            filter: !(placing || !quantity || (orderType === 'Нөхцөлт' && !price) || kycPending)
               ? `drop-shadow(0 0 12px ${orderSide === 'BUY' ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)'})`
               : 'none',
-            textShadow: !(placing || !quantity || (orderType === 'Нөхцөлт' && !price))
+            textShadow: !(placing || !quantity || (orderType === 'Нөхцөлт' && !price) || kycPending)
               ? `0 0 8px ${orderSide === 'BUY' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.8)'}, 0 0 16px ${orderSide === 'BUY' ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`
               : 'none'
           }}
