@@ -119,6 +119,7 @@ export default function GeneralInfoPage() {
     const methods = useForm<AdultInfoFormData>({
       resolver: zodResolver(adultInfoSchema),
       defaultValues: { 
+        login: existingData?.login || '', 
         registerNumber: existingData?.registerNumber || registerNumber || '', 
         lastName: existingData?.lastName || '', 
         firstName: existingData?.firstName || '', 
@@ -138,6 +139,7 @@ export default function GeneralInfoPage() {
     useEffect(() => {
       if (existingData) {
         methods.reset({
+          login: existingData.login || '',
           registerNumber: existingData.registerNumber || registerNumber || '',
           lastName: existingData.lastName || '',
           firstName: existingData.firstName || '',
@@ -161,6 +163,13 @@ export default function GeneralInfoPage() {
     return (
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField 
+            name="login" 
+            label={t('profile.login', 'Имэйл')} 
+            placeholder={t('profile.enterLogin', 'И-мэйлээ оруулна уу')} 
+            required 
+            type="email"
+          />
           <FormField 
             name="registerNumber" 
             label={t('profile.registerNumber')} 
@@ -248,6 +257,7 @@ export default function GeneralInfoPage() {
     const methods = useForm<ChildInfoFormData>({
       resolver: zodResolver(childInfoSchema),
       defaultValues: { 
+        login: existingData?.login || '', 
         childRegisterNumber: existingData?.childRegisterNumber || registerNumber || '', 
         parentRegisterNumber: existingData?.parentRegisterNumber || '', 
         lastName: existingData?.lastName || '', 
@@ -266,6 +276,7 @@ export default function GeneralInfoPage() {
     useEffect(() => {
       if (existingData) {
         methods.reset({
+          login: existingData.login || '',
           childRegisterNumber: existingData.childRegisterNumber || registerNumber || '',
           parentRegisterNumber: existingData.parentRegisterNumber || '',
           lastName: existingData.lastName || '',
@@ -284,6 +295,13 @@ export default function GeneralInfoPage() {
     return (
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(onNext)} className="space-y-6">
+          <FormField 
+            name="login" 
+            label={t('profile.login', 'Имэйл')} 
+            placeholder={t('profile.enterLogin', 'И-мэйлээ оруулна уу')}
+            required 
+            type="email"
+          />
           <FormField name="childRegisterNumber" label={t('profile.childRegisterNumber')} placeholder={nationality === '496' ? 'AX01234567' : t('profile.enterRegisterNumber', 'Enter your register number')} required disabled={!!registerNumber} />
           <FormField name="parentRegisterNumber" label={t('profile.parentRegisterNumber')} placeholder={nationality === '496' ? 'AX01234567' : t('profile.enterRegisterNumber', 'Enter your register number')} required />
           <FormField name="lastName" label={t('profile.lastName')} placeholder={t('profile.enterLastName')} required />
@@ -382,6 +400,7 @@ export default function GeneralInfoPage() {
                   <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                       <h3 className="font-semibold text-gray-700 dark:text-gray-300 border-b pb-2 mb-2">Ерөнхий мэдээлэл</h3>
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                          <p className="col-span-2"><span className="font-medium text-gray-500">Имэйл:</span> {summaryData?.Login || summaryData?.login}</p>
                           <p><span className="font-medium text-gray-500">Овог:</span> {summaryData?.LastName || summaryData?.lastName}</p>
                           <p><span className="font-medium text-gray-500">Нэр:</span> {summaryData?.FirstName || summaryData?.firstName}</p>
                           <p><span className="font-medium text-gray-500">Регистр:</span> {summaryData?.RegistryNumber || summaryData?.registerNumber || summaryData?.childRegisterNumber}</p>
@@ -486,6 +505,7 @@ export default function GeneralInfoPage() {
               const acc = accountRes.data.superAppAccount as any;
               const req = acc.MCSDStateRequest || {};
               const prefill = {
+                login: req.Login || acc.login || '',
                 firstName: acc.firstName || req.FirstName || '',
                 lastName: acc.lastName || req.LastName || '',
                 registerNumber: req.RegistryNumber || '',
@@ -559,6 +579,7 @@ export default function GeneralInfoPage() {
             const mappedData = {
               isAdult: existingData.isAdult || (existingData.CustomerType === 1) || 
                       (existingData.Occupation || existingData.occupation ? true : undefined),
+              login: existingData.Login || existingData.login || '',
               registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber || '',
               childRegisterNumber: existingData.childRegisterNumber || '',
               parentRegisterNumber: existingData.parentRegisterNumber || '',
@@ -596,6 +617,7 @@ export default function GeneralInfoPage() {
             const mappedData = {
               isAdult: existingData.isAdult || (existingData.CustomerType === 1) || 
                       (existingData.Occupation || existingData.occupation ? true : undefined),
+              login: existingData.Login || existingData.login || '',
               registerNumber: existingData.RegistryNumber || existingData.registerNumber || existingData.childRegisterNumber || '',
               childRegisterNumber: existingData.childRegisterNumber || '',
               parentRegisterNumber: existingData.parentRegisterNumber || '',
@@ -676,6 +698,7 @@ export default function GeneralInfoPage() {
     // Map form field names to backend field names - use camelCase to match backend
     const mappedData = {
       isAdult: formData.isAdult,
+      login: data.login,
       registerNumber: (data as any).registerNumber || (data as any).childRegisterNumber,
       childRegisterNumber: (data as any).childRegisterNumber,
       parentRegisterNumber: (data as any).parentRegisterNumber,

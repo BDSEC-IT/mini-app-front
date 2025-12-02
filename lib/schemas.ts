@@ -9,6 +9,9 @@ export const adultCheckSchema = z.object({
 
 // Schema for adult user information
 export const adultInfoSchema = z.object({
+  login: z.string()
+    .max(60, "Login must be at most 60 characters")
+    .nonempty("Login is required"),
   registerNumber: z.string()
     .min(6, "Register number must be at least 6 characters")
     .nonempty("Register number is required"),
@@ -43,6 +46,9 @@ export const adultInfoSchema = z.object({
 
 // Schema for child user information
 export const childInfoSchema = z.object({
+  login: z.string()
+    .max(60, "Login must be at most 60 characters")
+    .nonempty("Login is required"),
   childRegisterNumber: z.string()
     .min(6, "Register number must be at least 6 characters")
     .nonempty("Register number is required"),

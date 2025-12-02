@@ -93,8 +93,8 @@
     "enterAccountName": "Дансан дахь овог нэрээ оруулна уу",
     "adding": "Нэмж байна...",
     "addBankAccount": "Банкны данс нэмэх",
-    "nominalRequestHistory": "Номинал хүсэлтийн түүх",
-    "csdRequestHistory": "ҮЦТХТ хүсэлтийн түүх"
+    "nominalRequestHistory": "Номинал мөнгө хүссэн түүх",
+    "csdRequestHistory": "ҮЦТХТ мөнгө хүссэн түүх"
   },
   "header": {
     "notifications": "Мэдэгдэл",
@@ -259,7 +259,7 @@
     "waitingApproval": "ҮЦТХТ-ийн зөвшөөрлийг хүлээж байна",
     "waitingApprovalDesc": "Таны мэдээллийг ҮЦТХТ-д данс нээхээр илгээсэн ба ажлын 8 цагийн дотор хянагдаж дуусна.",
     "waitingApprovalError": "Таны мэдээлэл алдаатай байна",
-    "accountOpeningError": "Данс нээх үед алдаа гарлаа",
+    "accountOpeningError": "Данс нээхэд саатал гарлаа",
     "accountOpeningSuccess": "Данс амжилттай нээгдлээ",
     "accountOpeningSuccessDesc": "Таны арилжааны данс амжилттай нээгдлээ. Та одоо арилжаанд оролцох боломжтой!",
     "processingTime": "Боловсруулах хугацаа: 72 цаг хүртэл",
