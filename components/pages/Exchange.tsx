@@ -57,6 +57,7 @@ interface OrderConfirmationModalProps {
     quantity: string;
     price?: string;
     total: number;
+    netTotal: number;
   };
   feeEquity: string | null;
 }
@@ -69,10 +70,6 @@ const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen,
   // Calculate fee and net total
   const feePercent = parseFloat(feeEquity || '1');
   const feeAmount = orderData.total * (feePercent / 100);
-  const netTotal = orderData.side === 'BUY' 
-    ? orderData.total + feeAmount 
-    : orderData.total - feeAmount;
-  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg max-w-sm w-full p-6">
@@ -116,7 +113,7 @@ const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen,
               {t('exchange.netTotal', 'Шимтгэл тооцсон нийт дүн')}:
             </span>
             <span className="text-lg font-extrabold text-gray-900 dark:text-white" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.01em' }}>
-              {netTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}₮
+              {orderData.netTotal}₮
             </span>
           </div>
         </div>
@@ -586,7 +583,8 @@ export default function Exchange() {
       type: orderType,
       quantity: quantity,
       price: orderType === 'Нөхцөлт' ? price : undefined,
-      total: calculateTotal()
+      total: calculateTotal(),
+      netTotal: calculateNetTotal()
     };
 
     setPendingOrder(orderData);
@@ -709,10 +707,18 @@ export default function Exchange() {
 
   const calculateTotal = () => {
     const qty = parseFloat(quantity) || 0;
-    const orderPrice = orderType === 'Зах зээлийн' 
+    const orderPrice = orderType === 'Зах зээлийн'
       ? (selectedStock?.PreviousClose || selectedStock?.LastTradedPrice || 0)
       : (parseFloat(price) || 0);
-    return (qty * orderPrice * 1.001); // Include 0.1% fee
+    const total = qty * orderPrice;
+    return total;
+  }
+  const calculateNetTotal = () => {
+    const feePercent = parseFloat(feeEquity || '1');
+    const total= calculateTotal();
+    const feeAmount = total * (feePercent / 100);
+    const netTotal = orderSide === 'BUY' ? total + feeAmount : total - feeAmount;
+    return netTotal;
   };
 
   const adjustPriceByStep = (currentPrice: string, direction: 'up' | 'down') => {
@@ -924,6 +930,7 @@ export default function Exchange() {
             accountBalance={accountBalance}
             selectedStockHolding={selectedStockHolding}
             calculateTotal={calculateTotal}
+            calculateNetTotal={calculateNetTotal}
             formatNumber={formatNumber}
             getMaxQuantity={getMaxQuantity}
             adjustPriceByStep={adjustPriceByStep}
