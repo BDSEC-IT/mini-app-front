@@ -442,15 +442,15 @@ export default function GeneralInfoPage() {
 
   useEffect(() => {
     const fetchStatusAndSetMode = async () => {
-      console.log('[DEBUG] Starting fetchStatusAndSetMode');
+      // console.log('[DEBUG] Starting fetchStatusAndSetMode');
       const existingToken = Cookies.get('token');
       
-              console.log('[DEBUG] Token check complete');
+              // console.log('[DEBUG] Token check complete');
       if (existingToken) {
-        console.log('[DEBUG] Token found, proceeding with API calls');
+        // console.log('[DEBUG] Token found, proceeding with API calls');
         try {
           // First, check if user has a registration number and account info
-          console.log('[DEBUG] Making registration and account API calls');
+          // console.log('[DEBUG] Making registration and account API calls');
           const [regRes, accountRes] = await Promise.all([
             getRegistrationNumber(existingToken),
             getUserAccountInformation(existingToken)
@@ -465,19 +465,19 @@ export default function GeneralInfoPage() {
               return
           }
           
-          console.log('[DEBUG] API calls completed');
-          console.log('[DEBUG] regRes:', regRes);
-          console.log('[DEBUG] accountRes:', accountRes);
-          console.log('[DEBUG] regRes type:', typeof regRes);
-          console.log('[DEBUG] accountRes type:', typeof accountRes);
+          // console.log('[DEBUG] API calls completed');
+          // console.log('[DEBUG] regRes:', regRes);
+          // console.log('[DEBUG] accountRes:', accountRes);
+          // console.log('[DEBUG] regRes type:', typeof regRes);
+          // console.log('[DEBUG] accountRes type:', typeof accountRes);
           
           if (!regRes.registerNumber) {
-            console.log('[DEBUG] No register number, showing input');
+            // console.log('[DEBUG] No register number, showing input');
             setShowRegisterInput(true);
             setViewMode('loading');
             return;
           } else {
-            console.log('[DEBUG] Register number found:', regRes.registerNumber);
+            // console.log('[DEBUG] Register number found:', regRes.registerNumber);
             setShowRegisterInput(false);
             setRegisterNumber(regRes.registerNumber);
             
@@ -500,7 +500,7 @@ export default function GeneralInfoPage() {
                 countryCode: req.Country || (formData as any)?.countryCode || nationality
               } as any;
               setFormData(prev => ({ ...prev, ...prefill }));
-              console.log('[DEBUG] setFormData (from superApp/MCSDStateRequest):', prefill);
+              // console.log('[DEBUG] setFormData (from superApp/MCSDStateRequest):', prefill);
             }
             // fee paid state
             setIsFeePaid(!!(accountRes.data?.superAppAccount?.registrationFee?.status === 'COMPLETED'))
@@ -509,12 +509,12 @@ export default function GeneralInfoPage() {
           // Now check account status
           const statusResponse = await getAccountStatusRequest(existingToken);
           
-          console.log('[DEBUG] Account status loaded');
-          console.log(statusResponse);
+          // console.log('[DEBUG] Account status loaded');
+          // console.log(statusResponse);
           if (statusResponse.data) {
-            console.log('FirstName:', statusResponse.data.FirstName);
-            console.log('Gender:', statusResponse.data.Gender);
-            console.log('BirthDate:', statusResponse.data.BirthDate);
+            // console.log('FirstName:', statusResponse.data.FirstName);
+            // console.log('Gender:', statusResponse.data.Gender);
+            // console.log('BirthDate:', statusResponse.data.BirthDate);
           }
           
           let hasSubmittedData = false;
@@ -555,7 +555,7 @@ export default function GeneralInfoPage() {
           
           if (hasSubmittedData && isDataComplete) {
             const existingData = statusResponse.data;
-            console.log("accountRes.data?.superAppAccount",accountRes.data?.superAppAccount)
+            // console.log("accountRes.data?.superAppAccount",accountRes.data?.superAppAccount)
             const mappedData = {
               isAdult: existingData.isAdult || (existingData.CustomerType === 1) || 
                       (existingData.Occupation || existingData.occupation ? true : undefined),
@@ -614,8 +614,8 @@ export default function GeneralInfoPage() {
             };
             
             setFormData(mappedData);
-            console.log('[DEBUG] setFormData(mappedData) (in incomplete)');
-            console.log(mappedData);
+            // console.log('[DEBUG] setFormData(mappedData) (in incomplete)');
+            // console.log(mappedData);
             setViewMode('form');
             setStep(2);
           } else {
@@ -632,7 +632,7 @@ export default function GeneralInfoPage() {
                 firstName,
                 lastName
               }));
-              console.log('[DEBUG] setFormData (from superApp):', { firstName, lastName });
+              // console.log('[DEBUG] setFormData (from superApp):', { firstName, lastName });
             }
             
             setViewMode('form');
@@ -664,12 +664,12 @@ export default function GeneralInfoPage() {
     setIsSubmitting(true);
     setError(null);
     
-    console.log('=== SUBMIT ALL DATA DEBUG ===');
-    console.log('Raw data received:', data);
-    console.log('Data type:', typeof data);
-    console.log('Data keys:', Object.keys(data));
-    console.log('Form data:', formData);
-    console.log('Nationality:', nationality);
+    // console.log('=== SUBMIT ALL DATA DEBUG ===');
+    // console.log('Raw data received:', data);
+    // console.log('Data type:', typeof data);
+    // console.log('Data keys:', Object.keys(data));
+    // console.log('Form data:', formData);
+    // console.log('Nationality:', nationality);
     
     const combinedData: any = { ...formData, ...data };
     
@@ -700,8 +700,8 @@ export default function GeneralInfoPage() {
     mappedData.bankName = bank?.BankName || '';
     
     // Debug: Log the request body
-    console.log('Mapped data before API call (camelCase):', mappedData);
-    console.log('=== END SUBMIT DEBUG ===');
+    // console.log('Mapped data before API call (camelCase):', mappedData);
+    // console.log('=== END SUBMIT DEBUG ===');
 
     const token = Cookies.get('token');
 
@@ -736,7 +736,7 @@ export default function GeneralInfoPage() {
             
             // Trigger sidebar refresh
             window.dispatchEvent(new Event('accountSetupDataChanged'));
-            console.log('Triggered accountSetupDataChanged event');
+            // console.log('Triggered accountSetupDataChanged event');
         } else {
             console.error('Account setup submission failed:', result);
             setError(result.message || "An unexpected error occurred.");
@@ -772,11 +772,11 @@ export default function GeneralInfoPage() {
     const accountData = statusResponse.data;
     
     // Debug: Log the actual account data structure
-    console.log('=== ACCOUNT STATUS DEBUG ===');
-    console.log('Account data:', accountData);
-    console.log('Account data keys:', Object.keys(accountData || {}));
-    console.log('Backend validation:', (statusResponse.data as any)?.validation);
-    console.log('=== END DEBUG ===');
+    // console.log('=== ACCOUNT STATUS DEBUG ===');
+    // console.log('Account data:', accountData);
+    // console.log('Account data keys:', Object.keys(accountData || {}));
+    // console.log('Backend validation:', (statusResponse.data as any)?.validation);
+    // console.log('=== END DEBUG ===');
     
     // Trust the backend's validation if it exists
     const backendValidation = (statusResponse.data as any)?.validation;
@@ -851,10 +851,10 @@ export default function GeneralInfoPage() {
     
     switch (viewMode) {
         case 'loading':
-            console.log('[DEBUG] Rendering loading view');
+            // console.log('[DEBUG] Rendering loading view');
             return <div className="text-center p-8">Loading...</div>
         case 'summary':
-            console.log('[DEBUG] Rendering summary view');
+            // console.log('[DEBUG] Rendering summary view');
             return <SummaryView summaryData={summary} onEdit={() => { 
                 setViewMode('form'); 
                 // Set the correct step based on whether we have age info
@@ -877,12 +877,12 @@ export default function GeneralInfoPage() {
                 </div>
               )
             }
-            console.log('[DEBUG] Rendering form view, step:', step, 'isAdult:', formData.isAdult);
+            // console.log('[DEBUG] Rendering form view, step:', step, 'isAdult:', formData.isAdult);
             if (step === 1) return <Step1 onNext={handleStep1Submit} existingData={formData} />
             if (step === 2 && formData.isAdult === true) return <Step2Adult onNext={submitAllData} onBack={handleBack} registerNumber={registerNumber || undefined} existingData={formData} isFeePaid={isFeePaid} />
             if (step === 2 && formData.isAdult === false) return <Step2Child onNext={submitAllData} onBack={handleBack} registerNumber={registerNumber || undefined} existingData={formData} />
             // Fallback to step 1 if state is inconsistent
-            console.log('[DEBUG] Falling back to Step1');
+            // console.log('[DEBUG] Falling back to Step1');
             return <Step1 onNext={handleStep1Submit} existingData={formData} />
     }
   }

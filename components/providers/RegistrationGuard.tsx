@@ -34,7 +34,6 @@ export default function RegistrationGuard({ children }: RegistrationGuardProps) 
 
         if (!token) {
           // No token found, allow user to browse the site (testing/guest mode)
-          console.log('No token found, allowing access for guest/testing.');
           setHasRegistration(true);
           setIsChecking(false);
           return;
@@ -42,15 +41,12 @@ export default function RegistrationGuard({ children }: RegistrationGuardProps) 
 
         // Token found, check for registration number
         const response = await getRegistrationNumber(token);
-        console.log('Registration check response:', response);
 
         if (response.success && response.registerNumber) {
           // User is registered
-          console.log('User has registration:', response.registerNumber);
           setHasRegistration(true);
         } else {
           // User is not registered, redirect to complete registration
-          console.log('User has no registration, redirecting to nationality selection');
           router.push('/auth/nationality');
           return;
         }

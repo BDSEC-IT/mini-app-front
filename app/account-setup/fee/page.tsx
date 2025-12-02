@@ -37,11 +37,11 @@ export default function FeePaymentPage() {
       const accountData = statusResponse.data;
       
       // Debug: Log the actual account data structure
-      console.log('=== FEE PAGE ACCOUNT STATUS DEBUG ===');
-      console.log('Account data:', accountData);
-      console.log('Account data keys:', Object.keys(accountData || {}));
-      console.log('Backend validation:', (statusResponse.data as any)?.validation);
-      console.log('=== END DEBUG ===');
+      // console.log('=== FEE PAGE ACCOUNT STATUS DEBUG ===');
+      // console.log('Account data:', accountData);
+      // console.log('Account data keys:', Object.keys(accountData || {}));
+      // console.log('Backend validation:', (statusResponse.data as any)?.validation);
+      // console.log('=== END DEBUG ===');
       
       // Trust the backend's validation if it exists
       const backendValidation = (statusResponse.data as any)?.validation;
@@ -88,15 +88,15 @@ export default function FeePaymentPage() {
       }
 
       // Debug: Test token with a known working endpoint first
-      console.log('=== TOKEN TEST DEBUG ===');
-      console.log('Testing token with getAccountStatusRequest first...');
+      // console.log('=== TOKEN TEST DEBUG ===');
+      // console.log('Testing token with getAccountStatusRequest first...');
       const testResponse = await getAccountStatusRequest(token);
-      console.log('Token test result:', testResponse.success ? 'SUCCESS' : 'FAILED');
-      console.log('=== END TOKEN TEST ===');
+      // console.log('Token test result:', testResponse.success ? 'SUCCESS' : 'FAILED');
+      // console.log('=== END TOKEN TEST ===');
 
       // If all validations pass, proceed with invoice creation
       const result = await createOrRenewInvoice(token)
-      console.log("resultInvoice",result)
+      // console.log("resultInvoice",result)
       if (result.success) {
         const digipayUrl = result.data?.data?.order?.digipayUrl;
         
@@ -164,7 +164,7 @@ export default function FeePaymentPage() {
         }
       }
       const userData=await checkInvoiceStatus(token)
-      console.log("userData",userData)
+      // console.log("userData",userData)
       if (userData.message === "MCSD Account found") {
         window.location.href = '/account-setup/opening-process';
         return;
@@ -176,11 +176,11 @@ export default function FeePaymentPage() {
       //   return;
       // }
       if(userData&& userData.data?.data?.registrationFee?.status){
-        console.log("ISPAID red",userData.data.data.registrationFee?.status === 'COMPLETED')
-      console.log("userData",userData)
+      //   console.log("ISPAID red",userData.data.data.registrationFee?.status === 'COMPLETED')
+      // console.log("userData",userData)
         setIsPaid(userData.data.data.registrationFee?.status === 'COMPLETED')
       }
-      console.log("INVuserData",userData)
+      // console.log("INVuserData",userData)
       // if(userData.success){
       //   setIsPaid(userData.data.registrationFee?.status === 'COMPLETED')
       // }

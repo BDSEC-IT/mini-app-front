@@ -191,7 +191,6 @@ export default function Exchange() {
   // Initialize data
   useEffect(() => {
     const init = async () => {
-      console.log('Exchange: Initializing data...');
       await Promise.all([
         fetchAccountInfo(),
         fetchStockHoldings(),
@@ -206,7 +205,6 @@ export default function Exchange() {
   // Force refresh balance when component mounts (in case it wasn't called before)
   useEffect(() => {
     const refreshBalance = async () => {
-      console.log('Exchange: Force refreshing balance...');
       await fetchAccountInfo();
     };
     
@@ -230,37 +228,30 @@ export default function Exchange() {
   const fetchAccountInfo = async () => {
     const token = Cookies.get('token');
     if (!token) {
-      console.log('No token found in cookies');
       return;
     }
     
     try {
       const result = await fetchIstockNominalBalance(token);
-      console.log('Account balance API result:', result);
       
       if (result.success && result.data) {
-        console.log('Balance data structure:', result.data);
         
         // Handle if data is an array
         if (Array.isArray(result.data)) {
           const mntBalance = result.data.find((item: any) => item.currency === 'MNT');
           if (mntBalance && mntBalance.balance !== undefined) {
             setAccountBalance(mntBalance.balance);
-            console.log('Set account balance to:', mntBalance.balance);
           } else {
-            console.log('No MNT balance found in array data');
             setAccountBalance(0);
           }
         } 
         // Handle if data is an object with balance property
         else if (typeof result.data === 'object' && result.data.balance !== undefined) {
           setAccountBalance(result.data.balance);
-          console.log('Set account balance to:', result.data.balance);
         }
         // Handle if data is an object with MNT property
         else if (typeof result.data === 'object' && result.data.MNT !== undefined) {
           setAccountBalance(result.data.MNT);
-          console.log('Set account balance to:', result.data.MNT);
         }
         // Handle other object structures
         else if (typeof result.data === 'object') {
@@ -268,17 +259,13 @@ export default function Exchange() {
           const possibleBalance = Object.values(result.data).find(val => typeof val === 'number');
           if (possibleBalance !== undefined) {
             setAccountBalance(possibleBalance as number);
-            console.log('Set account balance to:', possibleBalance);
           } else {
-            console.log('No balance found in object data:', result.data);
             setAccountBalance(0);
           }
         } else {
-          console.log('Unexpected data structure:', result.data);
           setAccountBalance(0);
         }
       } else {
-        console.log('API call failed or no data:', result);
         setAccountBalance(0);
       }
     } catch (error) {
@@ -290,19 +277,16 @@ export default function Exchange() {
   const fetchFeeInformation = async () => {
     const token = Cookies.get('token');
     if (!token) {
-      console.log('No token found in cookies');
       return;
     }
     
     try {
       const result = await getUserAccountInformation(token);
-      console.log('Account information API result:', result);
       
       if (result.success && result.data) {
         // Backend no longer returns FeeEquity here; default to 1%
         const feeEquityValue = '1';
         setFeeEquity(feeEquityValue);
-        console.log('Set fee equity to default:', feeEquityValue);
       }
     } catch (error) {
       console.error('Error fetching fee information:', error);
@@ -315,7 +299,6 @@ export default function Exchange() {
     if (!token) return;
     try {
       const result = await fetchIstockBalanceAsset(token);
-      console.log('Stock holdings result:', result);
       if (result.success && result.data) {
         setStockHoldings(result.data);
         // Calculate total stock balance
@@ -338,10 +321,8 @@ export default function Exchange() {
   const fetchStocks = async () => {
     try {
       const result = await fetchCompanies(1, 5000);
-      console.log('Companies API result:', result);
       
       if (result.success && result.data) {
-        console.log('Raw companies data:', result.data);
         
         const tradingStocks = result.data
           .filter(company => {
@@ -391,30 +372,20 @@ export default function Exchange() {
             createdAt: '',
             updatedAt: ''
           }));
-        
-        console.log('Processed trading stocks:', tradingStocks);
-        console.log('Total stocks after filtering:', tradingStocks.length);
-        
         setStocks(tradingStocks as StockData[]);
         
         // Try to find and select BDS as default, then fallback to others
-        console.log('=== STOCK SELECTION DEBUG ===');
-        console.log('Available stock symbols:', tradingStocks.map(s => s.Symbol));
         const bdsStock = tradingStocks.find(stock => stock.Symbol.includes('BDS'));
-        console.log('BDS stock found:', bdsStock ? `YES - ${bdsStock.Symbol}` : 'NO');
-        console.log('Total stocks available:', tradingStocks.length);
         
         const defaultStock = bdsStock ||
           tradingStocks.find(stock => ['KHAN', 'APU', 'MSM', 'TDB', 'SBN'].includes(stock.Symbol)) ||
           tradingStocks[0];
         
         if (defaultStock) {
-          console.log('Selected default stock:', defaultStock.Symbol);
           setSelectedStock(defaultStock);
           // Fetch real price data
           fetchStockPrice(defaultStock.Symbol);
         } else {
-          console.log('No stocks available');
         }
       }
     } catch (error) {
@@ -425,7 +396,6 @@ export default function Exchange() {
   const fetchStockPrice = async (symbol: string) => {
     try {
       const result = await fetchSpecificStockData(symbol);
-      console.log(`Fetching price for ${symbol}:`, result);
 
       if (result.success && result.data) {
         const stockData = Array.isArray(result.data) ? result.data[0] : result.data;
@@ -531,7 +501,6 @@ export default function Exchange() {
     try {
       // Try to get more data by adding parameters
       const enhancedUrl = `${symbol}-O-0000`;
-      console.log('Fetching orderbook for:', enhancedUrl);
       
       const [orderBookResult, completedResult] = await Promise.all([
         fetchEnhancedOrderBook(enhancedUrl, token || undefined, 20), // Request 20 entries
@@ -539,16 +508,10 @@ export default function Exchange() {
       ]);
 
       if (orderBookResult.success) {
-        console.log('OrderBook data received:', orderBookResult.data);
-        console.log('Buy orders count:', orderBookResult.data?.buy?.length || 0);
-        console.log('Sell orders count:', orderBookResult.data?.sell?.length || 0);
-        console.log('API source:', orderBookResult.source);
         setOrderBook(orderBookResult.data);
       } else {
-        console.log('Enhanced orderbook failed, trying regular orderbook...');
         // Fallback to regular orderbook API if enhanced fails
         const regularOrderBook = await fetchOrderBook(symbol);
-        console.log('Regular orderbook result:', regularOrderBook);
       }
       if (completedResult.success) {
         setCompletedOrders(completedResult.data.assetTradeList.slice(0, 10));

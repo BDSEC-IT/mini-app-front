@@ -111,12 +111,9 @@ class SocketIOService {
     }
 
     // Try to start the external socket connection first
-    console.log('🔌 Starting external socket connection...')
     const externalStarted = await this.startExternalSocket()
     if (externalStarted) {
-      console.log('✅ External socket connection started')
     } else {
-      console.log('⚠️ External socket connection failed to start')
     }
 
     try {
@@ -178,16 +175,13 @@ class SocketIOService {
 
       // Try each configuration
       for (const config of configs) {
-        console.log('🔌 Trying:', config.name)
         
         this.socket = io(config.url, config.options)
         
         const connected = await this.waitForConnection()
         if (connected) {
-          console.log('✅ Connected with:', config.name)
           return true
         } else {
-          console.log('❌ Failed with:', config.name)
         }
       }
 
@@ -207,7 +201,6 @@ class SocketIOService {
       }
 
       this.socket.on('connect', () => {
-        console.log('✅ Socket.IO: Connected')
         this.isConnected = true
         
         if (this.callbacks.connectionStatus) {
@@ -237,12 +230,6 @@ class SocketIOService {
       })
 
       this.socket.on('trading-data-update', (data) => {
-        console.log('📊 Socket.IO: Real-time update:', {
-          count: data.count || 0,
-          stocksReceived: data.data?.length || 0,
-          timestamp: data.timestamp,
-          firstStock: data.data?.[0]?.Symbol
-        })
         
         if (this.callbacks.tradingData) {
           // Extract the actual stock array from the wrapper
@@ -252,7 +239,6 @@ class SocketIOService {
       })
 
       this.socket.on('trading-status-update', (data) => {
-        console.log('📈 Socket.IO: trading-status-update received:', data)
         if (this.callbacks.stockUpdate) {
           this.callbacks.stockUpdate(data)
         }
