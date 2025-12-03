@@ -24,6 +24,10 @@
     "bondsList": "Бондын жагсаалт"
   },
   "common": {
+    "select": "Select",
+    "pleaseLogin": "Please login",
+    "yes": "Yes",
+    "no": "No",
     "noTransactions": "Гүйлгээ олдсонгүй",
     "loading": "Ачааллаж байна...",
     "error": "Алдаа гарлаа",
@@ -954,11 +958,6 @@
       "clickToUpload": "Зураг оруулах",
       "fileFormat": "PNG, JPG (хамгийн ихдээ 5MB)"
     }
-  },
-  "common": {
-    "select": "Сонгох",
-    "pleaseLogin": "Нэвтэрнэ үү",
-    "yes": "Тийм",
-    "no": "Үгүй"
   }
+
 }

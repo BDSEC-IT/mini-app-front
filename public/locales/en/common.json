@@ -60,7 +60,11 @@
     "locked": "Locked",
     "securitiesAccountRequired": "You must have a securities account to trade",
     "comingSoon": "Coming soon",
-    "openAccount": "Open Account"
+    "openAccount": "Open Account",
+    "select": "Select",
+    "pleaseLogin": "Please login",
+    "yes": "Yes",
+    "no": "No"
   },
 
   "profile": {
@@ -928,11 +932,6 @@
       "clickToUpload": "Click to upload",
       "fileFormat": "PNG, JPG (max 5MB)"
     }
-  },
-  "common": {
-    "select": "Select",
-    "pleaseLogin": "Please login",
-    "yes": "Yes",
-    "no": "No"
   }
+
 } 
