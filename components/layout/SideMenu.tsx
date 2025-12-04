@@ -28,7 +28,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from '@/contexts/ThemeContext'
 import LanguageToggle from '../ui/LanguageToggle'
-import { getUserAccountInformation, checkInvoiceStatus, hasCompletedForms, hasPaidRegistrationFee, hasActiveMCSDAccount, hasPendingMCSDAccount, getMCSDAccountError, type UserAccountResponse } from '@/lib/api'
+import { getUserAccountInformation, checkInvoiceStatus, hasCompletedForms, hasPaidRegistrationFee, hasActiveMCSDAccount, hasPendingMCSDAccount, getMCSDAccountError, getPartnerInfo, type UserAccountResponse } from '@/lib/api'
 
 interface SideMenuProps {
   isOpen: boolean
@@ -46,6 +46,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   const [hasExistingMcsdAccount, setHasExistingMcsdAccount] = useState(false);
   const [hasPaidFee, setHasPaidFeed] = useState<boolean>(false);
   const [mcsdError, setMcsdError] = useState<string | null>(null);
+  const [kycStatus, setKycStatus] = useState<'none' | 'pending' | 'confirmed'>('none');
   
 
 
@@ -55,15 +56,17 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
       setIsLoggedIn(prev => false);
       setIsGeneralInfoComplete(prev => false);
       setFeeInfoCompleted(prev => false);
+      setKycStatus('none');
       return;
     }
 
     setIsLoggedIn(prev => true);
 
     try {
-      const [infoRes, invoiceRes] = await Promise.all([
+      const [infoRes, invoiceRes, partnerRes] = await Promise.all([
         getUserAccountInformation(token),
-        checkInvoiceStatus(token)
+        checkInvoiceStatus(token),
+        getPartnerInfo(token)
       ]);
       if (infoRes.success) setAccountInfo(prev => infoRes.data);
       
@@ -78,6 +81,18 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
       setHasPaidFeed(prev => feePaid);
       setHasExistingMcsdAccount(prev => accountActive);
       setMcsdError(prev => errorMessage);
+
+      // Check KYC/Partner status
+      if (partnerRes.success && partnerRes.data && partnerRes.data.length > 0) {
+        const partner = partnerRes.data[0];
+        if (partner.state === 'confirmed') {
+          setKycStatus('confirmed');
+        } else {
+          setKycStatus('pending');
+        }
+      } else {
+        setKycStatus('none');
+      }
 
       // Fee completion detection from invoice endpoint
       const invoiceStatus = invoiceRes?.data?.status;
@@ -242,6 +257,20 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
                     <div className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === item.href ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
                       <item.icon size={18} className="mr-2.5" />
                       <span className="text-sm">{t(item.label)}</span>
+                      {/* Show KYC status badge for Online Client menu item */}
+                      {item.href === '/account-setup/kyc-additional-info' && (
+                        <span className="ml-auto">
+                          {kycStatus === 'confirmed' ? (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                              ✓
+                            </span>
+                          ) : kycStatus === 'pending' ? (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                              ⏳
+                            </span>
+                          ) : null}
+                        </span>
+                      )}
                     </div>
                   </Link>
                 ))}

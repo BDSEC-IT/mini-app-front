@@ -3000,6 +3000,87 @@ export interface MSEReportResponse {
   data: MSEReportData | null;
 }
 
+// Partner Info interface
+export interface PartnerInfo {
+  mitPrefix: string;
+  firstFeeCompBond: number | null;
+  firstFeeGovBond: number | null;
+  secondFeeComBondSell: number;
+  secondFeeStock: number;
+  secondFeeComBondBuy: number;
+  secondFeeGovBondBuy: number;
+  accountNumber: string;
+  suffix: string;
+  secondFeeGovBondSell: number;
+  accountId: number;
+  brokerCode: string;
+  firstFeeStock: number | null;
+  state: 'confirmed' | 'pending' | 'rejected' | string;
+  partnerId: number;
+}
+
+export interface PartnerInfoResponse {
+  success: boolean;
+  message?: string;
+  data: PartnerInfo[] | null;
+}
+
+// Send KYC Request - call this after completing both forms
+export const sendKycRequest = async (token: string): Promise<{ success: boolean; message: string; alreadySent?: boolean }> => {
+  const url = `${BASE_URL}/kyc/send-kyc-request`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({})
+    });
+    
+    const data = await response.json();
+    
+    if (response.status === 400 && data.message?.includes('already sent')) {
+      return { success: true, message: 'KYC request already sent', alreadySent: true };
+    }
+    
+    if (!response.ok) {
+      return { success: false, message: data.message || 'Failed to send KYC request' };
+    }
+    
+    return { success: true, message: 'KYC request sent successfully' };
+  } catch (error) {
+    console.error('Error sending KYC request:', error);
+    return { success: false, message: 'Error sending KYC request' };
+  }
+};
+
+// Get Partner Info - check if user can trade and get fee information
+export const getPartnerInfo = async (token: string): Promise<PartnerInfoResponse> => {
+  const url = `${BASE_URL}/istockApp/get-partner-info`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      return { success: false, message: `HTTP error! status: ${response.status}`, data: null };
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching partner info:', error);
+    return { success: false, message: 'Error fetching partner info', data: null };
+  }
+};
+
 // Fetch MSE Financial Report
 export const fetchMSEReport = async (
   companyCode: string,

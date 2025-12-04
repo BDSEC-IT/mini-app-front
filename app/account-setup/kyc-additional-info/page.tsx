@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ChevronRight, CheckCircle, Upload, Loader2 } from 'lucide-react';
+import { ArrowLeft, ChevronRight, CheckCircle, Upload, Loader2, Clock, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
 import { z } from 'zod';
-import { BASE_URL, getUserAccountInformation } from '@/lib/api';
+import { BASE_URL, getUserAccountInformation, sendKycRequest, getPartnerInfo, type PartnerInfo } from '@/lib/api';
 
 // ============ ZOD SCHEMAS ============
 
@@ -69,6 +69,8 @@ export default function KycAdditionalInfoPage() {
   const [currentStep, setCurrentStep] = useState<FormStep>('text');
   const [existingData, setExistingData] = useState<KycAdditionalData | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldError>({});
+  const [partnerInfo, setPartnerInfo] = useState<PartnerInfo | null>(null);
+  const [kycStatus, setKycStatus] = useState<'none' | 'pending' | 'confirmed'>('none');
   
   // Check if form was already submitted (has an ID means it's saved in DB)
   const isAlreadySubmitted = !!(existingData?.id);
@@ -172,11 +174,30 @@ export default function KycAdditionalInfoPage() {
       }
 
       // Fetch both user account info and existing KYC additional data in parallel
-      const [accountResult, kycResult, kycPicturesResult] = await Promise.all([
+      const [accountResult, kycResult, kycPicturesResult, partnerResult] = await Promise.all([
         getUserAccountInformation(token),
         fetchKycAdditionalData(token),
         fetchKycPictures(token),
+        getPartnerInfo(token),
       ]);
+
+      // Check partner info for KYC status
+      if (partnerResult.success && partnerResult.data && partnerResult.data.length > 0) {
+        const partner = partnerResult.data[0];
+        setPartnerInfo(partner);
+        if (partner.state === 'confirmed') {
+          setKycStatus('confirmed');
+        } else {
+          setKycStatus('pending');
+        }
+      } else {
+        // No partner info yet - check if form was submitted
+        if (kycResult?.id) {
+          setKycStatus('pending');
+        } else {
+          setKycStatus('none');
+        }
+      }
 
       // Get data from superAppAccount, MCSDStateRequest, and MCSDAccount for auto-fill
       const superApp = accountResult.success ? accountResult.data?.superAppAccount as any : null;
@@ -457,6 +478,13 @@ export default function KycAdditionalInfoPage() {
         return;
       }
 
+      // Step 3: Send KYC request to complete the registration
+      const kycRequestResult = await sendKycRequest(token);
+      if (!kycRequestResult.success && !kycRequestResult.alreadySent) {
+        console.warn('KYC request failed:', kycRequestResult.message);
+        // Don't block the user, just log the warning
+      }
+
       toast.success(t('kycAdditional.submitSuccess', 'Information saved successfully'));
       router.push('/profile');
     } catch (error) {
@@ -534,6 +562,39 @@ export default function KycAdditionalInfoPage() {
       </div>
 
       <div className="p-4">
+        {/* KYC Status Banner */}
+        {kycStatus === 'confirmed' && (
+          <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                  {t('kycAdditional.status.confirmed', 'Баталгаажсан')}
+                </p>
+                <p className="text-xs text-green-700 dark:text-green-300">
+                  {t('kycAdditional.status.confirmedDescription', 'Таны бүртгэл баталгаажсан. Та арилжаанд оролцох боломжтой.')}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {kycStatus === 'pending' && (
+          <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                  {t('kycAdditional.status.pending', 'Хянагдаж байна')}
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  {t('kycAdditional.status.pendingDescription', 'Таны хүсэлт хянагдаж байна. Удахгүй баталгаажна.')}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {currentStep === 'text' ? (
           <div className="space-y-4">
             {/* Personal Information */}

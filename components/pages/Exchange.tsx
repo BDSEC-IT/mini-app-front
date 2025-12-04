@@ -17,11 +17,13 @@ import {
   fetchOrderBook,
   fetchTodayCompletedOrders,
   getUserAccountInformation,
+  getPartnerInfo,
   BASE_URL,
   type StockData,
   type SecondaryOrderData,
   type EnhancedOrderBookData,
-  type CompletedOrderEntry
+  type CompletedOrderEntry,
+  type PartnerInfo
 } from '@/lib/api';
 import { ArrowLeftIcon, ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
@@ -179,6 +181,7 @@ export default function Exchange() {
   const [pendingOrder, setPendingOrder] = useState<any>(null);
   const [kycPending, setKycPending] = useState<boolean>(false);
   const [kycPendingMessage, setKycPendingMessage] = useState<string>('');
+  const [partnerInfo, setPartnerInfo] = useState<PartnerInfo | null>(null);
   
   // Form state
   const [orderSide, setOrderSide] = useState<OrderSide>('BUY');
@@ -196,8 +199,7 @@ export default function Exchange() {
         fetchStockHoldings(),
         fetchStocks(),
         fetchOrdersData(),
-        fetchFeeInformation(),
-        fetchKycStatus()
+        fetchPartnerInfoAndStatus()
       ]);
     };
     init();
@@ -275,32 +277,58 @@ export default function Exchange() {
     }
   };
 
-  const fetchFeeInformation = async () => {
+  // Fetch partner info to check trading status and get fees
+  const fetchPartnerInfoAndStatus = async () => {
     const token = Cookies.get('token');
     if (!token) {
+      setFeeEquity('1'); // Default fee
       return;
     }
     
     try {
-      const result = await getUserAccountInformation(token);
+      const result = await getPartnerInfo(token);
       
-      if (result.success && result.data) {
-        // Backend no longer returns FeeEquity here; default to 1%
-        const feeEquityValue = '1';
-        setFeeEquity(feeEquityValue);
+      if (result.success && result.data && result.data.length > 0) {
+        const partner = result.data[0];
+        setPartnerInfo(partner);
+        
+        // Set fee from partner info (secondFeeStock is the equity trading fee percentage)
+        const stockFee = partner.secondFeeStock?.toString() || '1';
+        setFeeEquity(stockFee);
+        
+        // Check if user can trade
+        if (partner.state === 'confirmed') {
+          // User is confirmed, can trade
+          setKycPending(false);
+          setKycPendingMessage('');
+        } else {
+          // User's partner account is not confirmed
+          setKycPending(true);
+          setKycPendingMessage(t('exchange.partnerNotConfirmed', 'Таны данс баталгаажаагүй байна. Захиалга өгөх боломжгүй.'));
+        }
+      } else {
+        // No partner info - user hasn't completed KYC or it's pending
+        setFeeEquity('1');
+        
+        // Check KYC status to show appropriate message
+        await checkKycStatus(token);
       }
     } catch (error) {
-      console.error('Error fetching fee information:', error);
-      setFeeEquity('1'); // Default to 1% if fetch fails
+      console.error('Error fetching partner info:', error);
+      setFeeEquity('1');
+      
+      // Fallback to checking KYC status
+      const token = Cookies.get('token');
+      if (token) {
+        await checkKycStatus(token);
+      }
     }
   };
 
-  const fetchKycStatus = async () => {
-    const token = Cookies.get('token');
-    if (!token) return;
-
+  // Helper function to check KYC status when partner info is not available
+  const checkKycStatus = async (token: string) => {
     try {
-      // Check KYC pictures status (PENDING, APPROVED, REJECTED)
+      // Check KYC pictures status
       const kycPicturesRes = await fetch(`${BASE_URL}/kyc/pictures`, {
         method: 'GET',
         headers: {
@@ -316,7 +344,7 @@ export default function Exchange() {
         return;
       }
 
-      // Check KYC additional (online client) status
+      // Check KYC additional status
       const kycAdditionalRes = await fetch(`${BASE_URL}/kyc/additional`, {
         method: 'GET',
         headers: {
@@ -326,7 +354,6 @@ export default function Exchange() {
       });
       const kycAdditionalData = await kycAdditionalRes.json();
       
-      // If KYC additional exists with an ID and status is not approved, it's pending
       if (kycAdditionalData.success && kycAdditionalData.data?.id) {
         const status = kycAdditionalData.data.status;
         if (!status || status === 'PENDING' || status === 'pending') {
@@ -336,11 +363,18 @@ export default function Exchange() {
         }
       }
 
-      // No pending requests
+      // If no KYC data at all, user needs to complete KYC
+      if (!kycPicturesData.data && !kycAdditionalData.data) {
+        setKycPending(true);
+        setKycPendingMessage(t('exchange.kycRequired', 'Арилжаанд оролцохын тулд KYC бүртгүүлнэ үү'));
+        return;
+      }
+
+      // No pending requests found
       setKycPending(false);
       setKycPendingMessage('');
     } catch (error) {
-      console.error('Error fetching KYC status:', error);
+      console.error('Error checking KYC status:', error);
     }
   };
 

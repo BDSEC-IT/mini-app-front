@@ -856,7 +856,9 @@
     "sellAction": "Зарах",
     "kycPending": "Таны KYC хүсэлт хянагдаж байна",
     "onlineClientPending": "Таны онлайн харилцагч хүсэлт хянагдаж байна",
-    "kycPendingDefault": "Таны хүсэлт хянагдаж байна. Захиалга өгөх боломжгүй."
+    "kycPendingDefault": "Таны хүсэлт хянагдаж байна. Захиалга өгөх боломжгүй.",
+    "partnerNotConfirmed": "Таны данс баталгаажаагүй байна. Захиалга өгөх боломжгүй.",
+    "kycRequired": "Арилжаанд оролцохын тулд KYC бүртгүүлнэ үү"
   },
   "kycAdditional": {
     "fetchError": "Мэдээлэл ачаалахад алдаа гарлаа",
@@ -866,6 +868,12 @@
     "alreadySubmitted": "Мэдээлэл илгээгдсэн",
     "alreadySubmittedDescription": "Таны нэмэлт KYC мэдээлэл амжилттай илгээгдлээ.",
     "informationSubmitted": "Мэдээлэл илгээгдсэн",
+    "status": {
+      "confirmed": "Баталгаажсан",
+      "confirmedDescription": "Таны бүртгэл баталгаажсан. Та арилжаанд оролцох боломжтой.",
+      "pending": "Хянагдаж байна",
+      "pendingDescription": "Таны хүсэлт хянагдаж байна. Удахгүй баталгаажна."
+    },
     "step": {
       "personalInfo": "Хувийн мэдээлэл",
       "documents": "Баримт бичиг"

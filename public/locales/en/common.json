@@ -829,7 +829,9 @@
     "sellAction": "Sell",
     "kycPending": "Your KYC request is being reviewed",
     "onlineClientPending": "Your online client request is being reviewed",
-    "kycPendingDefault": "Your request is being reviewed. You cannot place orders."
+    "kycPendingDefault": "Your request is being reviewed. You cannot place orders.",
+    "partnerNotConfirmed": "Your account is not confirmed. You cannot place orders.",
+    "kycRequired": "Please complete KYC to participate in trading"
   },
   "kycAdditional": {
     "fetchError": "Failed to load data",
@@ -839,6 +841,12 @@
     "alreadySubmitted": "Information Submitted",
     "alreadySubmittedDescription": "Your additional KYC information has been submitted successfully.",
     "informationSubmitted": "Information Submitted",
+    "status": {
+      "confirmed": "Confirmed",
+      "confirmedDescription": "Your registration is confirmed. You can now participate in trading.",
+      "pending": "Pending Review",
+      "pendingDescription": "Your request is being reviewed. It will be confirmed shortly."
+    },
     "step": {
       "personalInfo": "Personal Information",
       "documents": "Documents"
