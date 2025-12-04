@@ -706,7 +706,7 @@ export default function GeneralInfoPage() {
       registryNumber: (data as any).registerNumber || (data as any).childRegisterNumber,
       firstName: data.firstName,
       lastName: data.lastName,
-      homePhone: data.homePhone,
+      homePhone: data.homePhone || '', // Ensure empty string instead of null
       gender: data.gender,
       birthDate: data.birthDate,
       occupation: (data as any).occupation,
@@ -806,7 +806,7 @@ export default function GeneralInfoPage() {
     if (backendValidation && backendValidation.isValid === false) {
         console.error('Backend validation failed:', backendValidation);
         setError("Account setup is incomplete. Please complete your account setup first.");
-        alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+        alert("Алдаа: Дансны мэдээлэл бүрэн бөглөөгүй байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
         return;
     }
     
@@ -838,7 +838,7 @@ export default function GeneralInfoPage() {
             console.error('Account status validation failed. Missing fields:', missingFields);
             console.error('Account data:', accountData);
             setError("Account setup is incomplete. Some required fields are missing. Please complete your account setup first.");
-            alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+            alert("Алдаа: Дансны мэдээлэл бүрэн бөглөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
             return;
         }
     }

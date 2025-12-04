@@ -48,7 +48,7 @@ export default function FeePaymentPage() {
       if (backendValidation && backendValidation.isValid === false) {
         console.error('Backend validation failed:', backendValidation);
         setError("Account setup is incomplete. Please complete your account setup first.");
-        alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+        alert("Алдаа: Дансны мэдээлэл бүрэн бөглөөгүй байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
         setIsProcessing(false);
         return;
       }
@@ -81,7 +81,7 @@ export default function FeePaymentPage() {
           console.error('Account status validation failed. Missing fields:', missingFields);
           console.error('Account data:', accountData);
           setError("Account setup is incomplete. Some required fields are missing. Please complete your account setup first.");
-          alert("Алдаа: Дансны мэдээлэл бүрэн бөгөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+          alert("Алдаа: Дансны мэдээлэл бүрэн бөглөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
           setIsProcessing(false);
           return;
         }

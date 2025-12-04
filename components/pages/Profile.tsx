@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { getUserAccountInformation, getAccountStatusRequest, checkInvoiceStatus, hasActiveMCSDAccount, type UserAccountResponse } from '@/lib/api'
-import { User, X, Mail, Phone, Flag, Calendar, AlertTriangle, CheckCircle, XCircle, CreditCard, Clock, RefreshCw } from 'lucide-react'
+import { getUserAccountInformation, getAccountStatusRequest, checkInvoiceStatus, hasActiveMCSDAccount, getPartnerInfo, type UserAccountResponse, type PartnerInfo } from '@/lib/api'
+import { User, X, Mail, Phone, Flag, Calendar, AlertTriangle, CheckCircle, XCircle, CreditCard, Clock, RefreshCw, UserCheck } from 'lucide-react'
 import Cookies from 'js-cookie'
 import Link from 'next/link'
 import { BackgroundGradient } from "@/components/ui/background-gradient";
@@ -15,6 +15,8 @@ const Profile = () => {
   const [accountInfo, setAccountInfo] = useState<UserAccountResponse['data'] | null>(null)
   const [accountStatusData, setAccountStatusData] = useState<any>(null)
   const [invoiceData, setInvoiceData] = useState<any>(null)
+  const [partnerInfo, setPartnerInfo] = useState<PartnerInfo | null>(null)
+  const [kycStatus, setKycStatus] = useState<'none' | 'pending' | 'confirmed'>('none')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isCheckingInvoice, setIsCheckingInvoice] = useState(false)
@@ -25,11 +27,12 @@ const Profile = () => {
         setLoading(true)
         const token = Cookies.get('token')
         
-        // Fetch account info, status request, and invoice status in parallel
-        const [accountResponse, statusResponse, invoiceResponse] = await Promise.all([
+        // Fetch account info, status request, invoice status, and partner info in parallel
+        const [accountResponse, statusResponse, invoiceResponse, partnerResponse] = await Promise.all([
           getUserAccountInformation(token),
           getAccountStatusRequest(token!),
-          checkInvoiceStatus(token!)
+          checkInvoiceStatus(token!),
+          token ? getPartnerInfo(token) : Promise.resolve({ success: false, data: null })
         ]);
         
         if (accountResponse.success && accountResponse.data) {
@@ -47,6 +50,17 @@ const Profile = () => {
         } else {
           console.warn('Invoice status check failed or returned no data:', invoiceResponse)
           // Don't set error here - invoice data is optional, we can use accountInfo instead
+        }
+        
+        // Set partner info and KYC status
+        if (partnerResponse.success && partnerResponse.data && partnerResponse.data.length > 0) {
+          const partner = partnerResponse.data[0]; // Get the first partner info
+          setPartnerInfo(partner)
+          if (partner.state === 'confirmed') {
+            setKycStatus('confirmed')
+          } else if (partner.state === 'pending') {
+            setKycStatus('pending')
+          }
         }
       } catch (err) {
         console.error('Error fetching profile:', err)
@@ -225,6 +239,41 @@ const Profile = () => {
               </div>
             )}
           </div>
+          
+          {/* Online Client Status - Only show if user has active MCSD account */}
+          {hasActiveMcsdAccount && (
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="font-semibold text-base mb-4">{t('profile.onlineClientStatus', 'Онлайн харилцагч')}</h3>
+              {kycStatus === 'confirmed' ? (
+                <div className="flex items-center p-4 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+                  <CheckCircle className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-sm">{t('profile.onlineClientConfirmed', 'Баталгаажсан')}</p>
+                    <p className="text-xs mt-0.5 opacity-80">{t('profile.onlineClientConfirmedDesc', 'Та онлайнаар арилжаа хийх боломжтой')}</p>
+                  </div>
+                </div>
+              ) : kycStatus === 'pending' ? (
+                <div className="flex items-center p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                  <Clock className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-sm">{t('profile.onlineClientPending', 'Хүлээгдэж байна')}</p>
+                    <p className="text-xs mt-0.5 opacity-80">{t('profile.onlineClientPendingDesc', 'Таны хүсэлт шалгагдаж байна')}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center p-4 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
+                  <UserCheck className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{t('profile.onlineClientNotStarted', 'Бүртгэлгүй')}</p>
+                    <p className="text-xs mt-0.5 opacity-80">{t('profile.onlineClientNotStartedDesc', 'Онлайн харилцагч болохын тулд KYC бөглөнө үү')}</p>
+                  </div>
+                  <Link href="/account-setup/kyc-additional-info" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded">
+                    {t('profile.completeKyc', 'Бөглөх')}
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
           
           {/* Contact Information */}
           <div className="p-6 border-t border-gray-200 dark:border-gray-700">
