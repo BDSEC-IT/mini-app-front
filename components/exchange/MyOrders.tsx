@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../ui';
 import { CancelOrderModal } from './CancelOrderModal';
+import { OrderDetailModal } from './OrderDetailModal';
 
 type OrderTab = 'active' | 'completed' | 'cancelled';
 
@@ -19,8 +20,9 @@ interface OrderData {
   quantity: number;
   price: number;
   symbol?: string;
-  createdDate?: string;
+  createdDate: string;
   cumQty?: number;
+  date?: string;
   leavesQty?: number;
   executions?: Execution[];
 }
@@ -47,6 +49,8 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
   const { t } = useTranslation('common');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<OrderData | null>(null);
+  const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 5;
 
@@ -80,10 +84,20 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
     setShowCancelModal(true);
   };
 
+  const handleOrderDetailClick = (order: OrderData) => {
+    setSelectedOrderId(order.id);
+    setShowOrderDetailModal(true);
+  };
+
   const handleConfirmCancel = () => {
     if (orderToCancel) {
       onCancelOrder(orderToCancel.id);
     }
+  };
+
+  const handleOrderCancelled = () => {
+    // Refresh orders or handle order cancellation
+    window.location.reload();
   };
 
   // Calculate fee-adjusted total
@@ -110,7 +124,18 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${year}/${month}/${day} ${hours}:${minutes}`;
   };
-
+  const formatExecutionDate = (dateString: string) => {
+    const date = new Date(dateString);
+    // Add 8 hours for timezone
+    date.setHours(date.getHours() );
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  };
   // Check if order is partial
   const isPartialOrder = (order: OrderData) => {
     if (order.cumQty === undefined || order.cumQty === 0) return false;
@@ -161,7 +186,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
           </div>
         ) : paginatedOrders.length > 0 ? (
           <div className="divide-y divide-gray-100 dark:divide-gray-800">
-            {paginatedOrders.map((order) => {
+            {orders.sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()).map((order) => {
               const totalWithFee = calculateTotal(order);
               const isPartial = isPartialOrder(order);
 
@@ -184,9 +209,12 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
                           {order.buySell === 'BUY' ? t('exchange.buy', 'Авах') : t('exchange.sell', 'Зарах')}
                         </span>
                         {isPartial && (
-                          <span className="text-[10px] text-amber-600 dark:text-amber-400">
-                            {t('exchange.partial', 'Хэсэгчилэн биелсэн')} ({order.cumQty}/{order.quantity})
-                          </span>
+                          <button
+                            onClick={() => handleOrderDetailClick(order)}
+                            className="text-[10px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline decoration-amber-600 dark:decoration-amber-400 underline-offset-2 cursor-pointer"
+                          >
+                            {t('exchange.partial', 'Хэсэгчлэн биелсэн')} ({order.cumQty}/{order.quantity})
+                          </button>
                         )}
                       </div>
 
@@ -198,7 +226,9 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
                       {/* Date */}
                       {order.createdDate && (
                         <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-                          {formatDateTime(order.createdDate)}
+                      {formatExecutionDate(
+                        order.createdDate
+                      )}
                         </div>
                       )}
 
@@ -273,6 +303,13 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
         onConfirm={handleConfirmCancel}
         order={orderToCancel}
         formatNumber={formatNumber}
+      />
+
+      <OrderDetailModal
+        isOpen={showOrderDetailModal}
+        onClose={() => setShowOrderDetailModal(false)}
+        orderId={selectedOrderId}
+        onOrderCancelled={handleOrderCancelled}
       />
     </div>
   );
