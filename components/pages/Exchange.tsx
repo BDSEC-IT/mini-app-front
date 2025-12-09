@@ -182,6 +182,7 @@ export default function Exchange() {
   const [kycPending, setKycPending] = useState<boolean>(false);
   const [kycPendingMessage, setKycPendingMessage] = useState<string>('');
   const [partnerInfo, setPartnerInfo] = useState<PartnerInfo | null>(null);
+  const [initialLoading, setInitialLoading] = useState<boolean>(true);
   
   // Form state
   const [orderSide, setOrderSide] = useState<OrderSide>('BUY');
@@ -191,30 +192,32 @@ export default function Exchange() {
   const [orderDuration, setOrderDuration] = useState('GTC'); // GTC, DAY, GTD
   const [expireDate, setExpireDate] = useState<string>(''); // For GTD orders
 
+  // Track if URL params have been processed
+  const urlParamsProcessedRef = React.useRef(false);
+
   // Initialize data
   useEffect(() => {
     const init = async () => {
-      await Promise.all([
-        fetchAccountInfo(),
-        fetchStockHoldings(),
-        fetchStocks(),
-        fetchOrdersData(),
-        fetchPartnerInfoAndStatus()
-      ]);
+      try {
+        await Promise.all([
+          fetchAccountInfo(),
+          fetchStockHoldings(),
+          fetchStocks(),
+          fetchOrdersData(),
+          fetchPartnerInfoAndStatus()
+        ]);
+      } finally {
+        setInitialLoading(false);
+      }
     };
     init();
-  }, []);
 
-  // Force refresh balance when component mounts (in case it wasn't called before)
-  useEffect(() => {
-    const refreshBalance = async () => {
-      await fetchAccountInfo();
-    };
-    
-    // Refresh immediately and then every 30 seconds
-    refreshBalance();
-    const interval = setInterval(refreshBalance, 30000);
-    return () => clearInterval(interval);
+    // Set up balance refresh interval (30 seconds)
+    const balanceInterval = setInterval(() => {
+      fetchAccountInfo();
+    }, 30000);
+
+    return () => clearInterval(balanceInterval);
   }, []);
 
   // Auto-refresh order book when stock changes
@@ -404,7 +407,7 @@ export default function Exchange() {
 
   const fetchStocks = async () => {
     try {
-      const result = await fetchCompanies(1, 5000);
+      const result = await fetchCompanies(1, 500); // Get enough stocks to include all trading symbols
       
       if (result.success && result.data) {
         
@@ -457,20 +460,7 @@ export default function Exchange() {
             updatedAt: ''
           }));
         setStocks(tradingStocks as StockData[]);
-        
-        // Try to find and select BDS as default, then fallback to others
-        const bdsStock = tradingStocks.find(stock => stock.Symbol.includes('BDS'));
-        
-        const defaultStock = bdsStock ||
-          tradingStocks.find(stock => ['KHAN', 'APU', 'MSM', 'TDB', 'SBN'].includes(stock.Symbol)) ||
-          tradingStocks[0];
-        
-        if (defaultStock) {
-          setSelectedStock(defaultStock);
-          // Fetch real price data
-          fetchStockPrice(defaultStock.Symbol);
-        } else {
-        }
+        // Stock selection is now handled in the URL params useEffect
       }
     } catch (error) {
       console.error('Error fetching stocks:', error);
@@ -510,29 +500,137 @@ export default function Exchange() {
     const side = searchParams.get('side');
     const priceParam = searchParams.get('price');
 
-    if (symbol && side) {
-      // Find the stock
-      const stock = stocks.find(s => s.Symbol === symbol || s.Symbol.startsWith(symbol));
+    // Process URL params first (highest priority)
+    const processUrlParams = async () => {
+      if (symbol && side && !urlParamsProcessedRef.current) {
+      // Remove -O-0000 suffix from URL symbol to match stock symbols
+      const cleanSymbol = symbol.replace('-O-0000', '').trim();
+
+      // Find the stock - match exact symbol or base symbol
+      const stock = stocks.find(s => {
+        const stockSymbol = s.Symbol.trim();
+        return stockSymbol === cleanSymbol ||
+               stockSymbol === symbol ||
+               stockSymbol.startsWith(cleanSymbol) ||
+               cleanSymbol.startsWith(stockSymbol);
+      });
+
       if (stock) {
+        // Mark as processed
+        urlParamsProcessedRef.current = true;
+
+        // Always update stock
         setSelectedStock(stock);
         fetchStockPrice(stock.Symbol);
-      }
 
-      // Set order side
-      if (side === 'BUY' || side === 'SELL') {
-        setOrderSide(side as OrderSide);
-      }
+        // Set order side
+        if (side === 'BUY' || side === 'SELL') {
+          setOrderSide(side as OrderSide);
+        }
 
-      // Set price if provided
-      if (priceParam) {
-        setPrice(priceParam);
-        setOrderType('Нөхцөлт'); // Set to limit order
-      }
+        // Set price if provided
+        if (priceParam) {
+          setPrice(priceParam);
+          setOrderType('Нөхцөлт'); // Set to limit order
+        }
 
-      // Clear URL parameters after setting
-      window.history.replaceState({}, '', '/exchange');
-    }
-  }, [stocks, searchParams]);
+        // Clear URL parameters after processing
+        setTimeout(() => {
+          window.history.replaceState({}, '', '/exchange');
+        }, 100);
+      } else {
+        // Try to fetch the specific stock data
+        try {
+          const stockResult = await fetchSpecificStockData(cleanSymbol);
+          if (stockResult.success && stockResult.data) {
+            const stockData = Array.isArray(stockResult.data) ? stockResult.data[0] : stockResult.data;
+            if (stockData) {
+              // Create a stock object from the fetched data
+              const newStock: StockData = {
+                id: 0,
+                Symbol: cleanSymbol,
+                mnName: '',
+                enName: '',
+                PreviousClose: stockData.PreviousClose || stockData.ClosingPrice || 0,
+                Changes: stockData.Changes || 0,
+                Changep: stockData.Changep || 0,
+                pkId: 0,
+                Volume: stockData.Volume || 0,
+                Turnover: stockData.Turnover || 0,
+                MDSubOrderBookType: '',
+                LastTradedPrice: stockData.LastTradedPrice || 0,
+                ClosingPrice: stockData.ClosingPrice || 0,
+                OpeningPrice: stockData.OpeningPrice || 0,
+                VWAP: 0,
+                MDEntryTime: '',
+                trades: 0,
+                HighPrice: stockData.HighPrice || 0,
+                LowPrice: stockData.LowPrice || 0,
+                MarketSegmentID: '',
+                sizemd: '',
+                MDEntryPx: 0,
+                sizemd2: '',
+                MDEntryPx2: 0,
+                HighestBidPrice: 0,
+                LowestOfferPrice: 0,
+                AuctionClearingPrice: 0,
+                Imbalance: 0,
+                BuyOrderVWAP: 0,
+                SellOrderVWAP: 0,
+                BuyOrderQty: 0,
+                SellOrderQty: 0,
+                OpenIndicator: '',
+                CloseIndicator: '',
+                TradeCondition: '',
+                securityType: '',
+                dates: '',
+                createdAt: '',
+                updatedAt: ''
+              };
+
+              // Add to stocks list
+              setStocks(prev => [...prev, newStock]);
+              setSelectedStock(newStock);
+
+              // Set order side and price
+              if (side === 'BUY' || side === 'SELL') {
+                setOrderSide(side as OrderSide);
+              }
+              if (priceParam) {
+                setPrice(priceParam);
+                setOrderType('Нөхцөлт');
+              }
+            }
+          }
+        } catch (error) {
+          // Silent fail - will fall back to default stock
+        }
+
+        // Mark as processed
+        urlParamsProcessedRef.current = true;
+        // Clear params
+        window.history.replaceState({}, '', '/exchange');
+      }
+      } else if (!symbol && !side && !selectedStock && stocks.length > 0 && !urlParamsProcessedRef.current) {
+        // Only set default stock if:
+        // 1. No URL params at all
+        // 2. No stock selected yet
+        // 3. Haven't processed URL params (prevents setting default after URL params clear)
+        const bdsStock = stocks.find(stock => stock.Symbol.includes('BDS'));
+        const defaultStock = bdsStock ||
+          stocks.find(stock => ['KHAN', 'APU', 'MSM', 'TDB', 'SBN'].includes(stock.Symbol)) ||
+          stocks[0];
+
+        if (defaultStock) {
+          setSelectedStock(defaultStock);
+          fetchStockPrice(defaultStock.Symbol);
+        }
+      }
+    };
+
+    // Call the async function
+    processUrlParams();
+  }, [stocks, searchParams, selectedStock]);
 
   const fetchOrdersData = async () => {
     const token = Cookies.get('token');
@@ -541,9 +639,20 @@ export default function Exchange() {
       setLoadingOrders(true);
       const result = await fetchSecondaryOrders(token);
       if (result.success && result.data) {
-        // Enhance orders with execution data for accurate cumQty
-        const enhancedOrders = await Promise.all(
-          result.data.map(async (order) => {
+        // Sort orders by date in descending order (newest first)
+        const sortedOrders = result.data.sort((a: any, b: any) => {
+          const dateA = new Date(a.createdDate || a.createdAt || a.date || 0).getTime();
+          const dateB = new Date(b.createdDate || b.createdAt || b.date || 0).getTime();
+          return dateB - dateA; // Descending order
+        });
+        setOrders(sortedOrders);
+
+        // Fetch execution details in background for active orders only (non-blocking)
+        // This prevents blocking the UI while loading
+        sortedOrders
+          .filter(order => order.statusname === 'Active' || order.statusname === 'PartiallyFilled')
+          .slice(0, 10) // Only fetch details for first 10 active orders
+          .forEach(async (order) => {
             try {
               const statusResult = await fetchSecondaryOrderStatus(order.id, token);
               if (statusResult.success && statusResult.data?.executions) {
@@ -551,27 +660,22 @@ export default function Exchange() {
                   (sum: number, exec: any) => sum + (exec.execQty || 0),
                   0
                 );
-                return {
-                  ...order,
-                  cumQty: totalExecuted,
-                  leavesQty: order.quantity - totalExecuted,
-                  executions: statusResult.data.executions
-                };
+                // Update the specific order in state
+                setOrders(prev => prev.map(o =>
+                  o.id === order.id
+                    ? {
+                        ...o,
+                        cumQty: totalExecuted,
+                        leavesQty: o.quantity - totalExecuted,
+                        executions: statusResult.data.executions
+                      }
+                    : o
+                ));
               }
             } catch (e) {
               console.error('Error fetching status for order', order.id, ':', e);
             }
-            return order;
-          })
-        );
-
-        // Sort orders by date in descending order (newest first)
-        const sortedOrders = enhancedOrders.sort((a: any, b: any) => {
-          const dateA = new Date(a.createdDate || a.createdAt || a.date || 0).getTime();
-          const dateB = new Date(b.createdDate || b.createdAt || b.date || 0).getTime();
-          return dateB - dateA; // Descending order
-        });
-        setOrders(sortedOrders);
+          });
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -901,6 +1005,29 @@ export default function Exchange() {
         selectedStock={selectedStock}
         onSelectStock={handleSelectStock}
       />
+    );
+  }
+
+  // Show loading state while initial data loads OR no stock selected yet
+  if (initialLoading || (!selectedStock && stocks.length === 0)) {
+    return (
+      <div className="w-full bg-white dark:bg-gray-900 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 dark:border-indigo-400 mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">{t('exchange.loading', 'Уншиж байна...')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If stocks loaded but no stock selected, show error state
+  if (!selectedStock && stocks.length > 0) {
+    return (
+      <div className="w-full bg-white dark:bg-gray-900 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">{t('exchange.noStockSelected', 'Хувьцаа сонгоно уу')}</p>
+        </div>
+      </div>
     );
   }
 
