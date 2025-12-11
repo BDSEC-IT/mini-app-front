@@ -64,7 +64,9 @@
     "securitiesAccountRequired": "Та арилжаанд оролцохын тулд үнэт цаасны данстай байх шаардлагатай",
     "comingSoon": "Тун удахгүй",
     "openAccount": "Данс нээх",
-    "noData": "Мэдээлэл байхгүй байна"
+    "noData": "Мэдээлэл байхгүй байна",
+    "total": "Нийт",
+    "items": "захиалга"
   },
   "stockTable": {
     "stocksList": "Хөрөнгийн жагсаалт",
@@ -1005,7 +1007,7 @@
   "allOrders": {
     "title": "Миний захиалгууд",
     "totalOrders": "Нийт {{count}} захиалга",
-    "searchPlaceholder": "Хувьцаа хайх...",
+    "searchPlaceholder": "Симболоор хайх...",
     "stockSymbol": "Хувьцааны код",
     "allStocks": "Бүх хувьцаа",
     "all": "Бүгд",

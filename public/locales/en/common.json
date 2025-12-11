@@ -66,7 +66,9 @@
     "select": "Select",
     "pleaseLogin": "Please login",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "total": "Total",
+    "items": "orders"
   },
 
   "profile": {
@@ -981,7 +983,7 @@
   "allOrders": {
     "title": "My Orders",
     "totalOrders": "Total {{count}} orders",
-    "searchPlaceholder": "Search stock...",
+    "searchPlaceholder": "Search by symbol...",
     "stockSymbol": "Stock Symbol",
     "allStocks": "All Stocks",
     "all": "All",

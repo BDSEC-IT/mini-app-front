@@ -158,30 +158,58 @@ export default function AllOrdersPage() {
 
     try {
       const { dateFrom, dateTo } = getDateRange();
+      const statusname = getStatusFilter();
+      
+      // When filtering for partial orders client-side on 'all' tab, fetch more results
+      const isPartialFilterActive = (statusFilter === 'partial' && orderTab === 'all');
+      const effectivePageSize = isPartialFilterActive ? 500 : pageSize; // Increased to 500
+      const effectivePage = isPartialFilterActive ? 1 : currentPage;
+      
       const params: SecondaryOrderParams = {
         symbol: symbolFilter !== 'all' ? symbolFilter : undefined,
-        statusname: getStatusFilter(),
+        ...(statusname && { statusname }), // Only include if defined
         buySell: buySellFilter !== 'all' ? buySellFilter : undefined,
         dateFrom,
         dateTo,
-        page: currentPage,
-        pageSize,
+        page: effectivePage,
+        pageSize: effectivePageSize,
         orderBy: sortField,
         orderDir: sortDir,
       };
 
       const result = await fetchSecondaryOrdersPaginated(params, token);
       
+      console.log('🔍 DEBUG:', {
+        orderTab,
+        statusFilter,
+        isPartialFilterActive,
+        resultCount: result.data?.length,
+        params
+      });
+      
       if (result.success && result.data) {
-        // Filter for partial orders if that filter is selected
         let filteredData = result.data;
-        if (statusFilter === 'partial') {
+        
+        // Filter for partial orders if that filter is selected AND we're on 'all' tab
+        if (isPartialFilterActive) {
+          console.log('🔍 BEFORE FILTER:', result.data.length);
+          console.log('🔍 SAMPLE DATA:', result.data.slice(0, 3).map(o => ({
+            symbol: o.symbol,
+            cumQty: o.cumQty,
+            quantity: o.quantity,
+            status: o.statusname
+          })));
+          
           filteredData = result.data.filter(order => {
-            const status = order.statusname?.toLowerCase();
-            if (status === 'partiallyfilled') return true;
-            if (order.cumQty === undefined || order.cumQty === 0) return false;
-            return order.cumQty > 0 && order.cumQty < order.quantity;
+            // A partial order is one that has SOME fills but not complete
+            // This includes orders with any status where 0 < cumQty < quantity
+            const isPartial = (order.cumQty > 0 && order.cumQty < order.quantity);
+            if (isPartial) {
+              console.log('✅ FOUND PARTIAL:', order.symbol, order.cumQty, '/', order.quantity);
+            }
+            return isPartial;
           });
+          console.log('🔍 AFTER FILTER:', filteredData.length);
         }
         
         // Sort orders by date locally as well (server-side may not work perfectly)
@@ -194,7 +222,11 @@ export default function AllOrdersPage() {
         setOrders(sortedOrders);
         
         // Use metadata if available, otherwise infer from data
-        if (result.metadata) {
+        if (statusFilter === 'partial' && orderTab === 'all') {
+          // For client-side filtering, set total based on filtered results
+          setTotalPages(1); // All results on one page for client-side filtering
+          setTotalItems(filteredData.length);
+        } else if (result.metadata) {
           setTotalPages(Math.ceil(result.metadata.totalRecordCount / result.metadata.pageSize));
           setTotalItems(result.metadata.totalRecordCount);
         } else if (result.pagination) {
@@ -208,33 +240,35 @@ export default function AllOrdersPage() {
           setTotalItems(currentPage * pageSize - (pageSize - result.data.length));
         }
 
-        // Fetch execution details for active orders (non-blocking)
-        sortedOrders
-          .filter(order => order.statusname === 'pending' || order.statusname === 'Active' || order.statusname === 'PartiallyFilled')
-          .slice(0, 5)
-          .forEach(async (order) => {
-            try {
-              const statusResult = await fetchSecondaryOrderStatus(order.id, token);
-              if (statusResult.success && statusResult.data?.executions) {
-                const totalExecuted = statusResult.data.executions.reduce(
-                  (sum: number, exec: any) => sum + (exec.execQty || 0),
-                  0
-                );
-                setOrders(prev => prev.map(o =>
-                  o.id === order.id
-                    ? {
-                        ...o,
-                        cumQty: totalExecuted,
-                        leavesQty: o.quantity - totalExecuted,
-                        executions: statusResult.data.executions
-                      }
-                    : o
-                ));
+        // Fetch execution details for active orders (non-blocking) - skip if already fetched for partial filter
+        if (!(statusFilter === 'partial' && orderTab === 'all')) {
+          sortedOrders
+            .filter(order => order.statusname === 'pending' || order.statusname === 'Active' || order.statusname === 'PartiallyFilled')
+            .slice(0, 5)
+            .forEach(async (order) => {
+              try {
+                const statusResult = await fetchSecondaryOrderStatus(order.id, token);
+                if (statusResult.success && statusResult.data?.executions) {
+                  const totalExecuted = statusResult.data.executions.reduce(
+                    (sum: number, exec: any) => sum + (exec.execQty || 0),
+                    0
+                  );
+                  setOrders(prev => prev.map(o =>
+                    o.id === order.id
+                      ? {
+                          ...o,
+                          cumQty: totalExecuted,
+                          leavesQty: o.quantity - totalExecuted,
+                          executions: statusResult.data.executions
+                        }
+                      : o
+                  ));
+                }
+              } catch (e) {
+                console.error('Error fetching status for order', order.id);
               }
-            } catch (e) {
-              console.error('Error fetching status for order', order.id);
-            }
-          });
+            });
+        }
       } else {
         setOrders([]);
         setTotalPages(1);
@@ -502,7 +536,8 @@ export default function AllOrdersPage() {
                 }
               }}
               placeholder={t('allOrders.searchPlaceholder', 'Хувьцааны код хайх... (BDS, APU, etc)')}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-bdsec dark:focus:ring-indigo-500"
+              style={{ fontSize: '16px' }}
             />
             {searchQuery && (
               <button
@@ -529,7 +564,11 @@ export default function AllOrdersPage() {
             ].map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setOrderTab(tab.key as OrderTab)}
+                onClick={() => {
+                  setOrderTab(tab.key as OrderTab);
+                  // Reset status filter when changing tabs
+                  setStatusFilter('all');
+                }}
                 className={`flex-1 px-3 py-2 text-xs font-medium rounded-md transition-all ${
                   orderTab === tab.key
                     ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
