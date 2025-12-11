@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import { Button } from '../ui';
 import { CancelOrderModal } from './CancelOrderModal';
 import { OrderDetailModal } from './OrderDetailModal';
+import { History } from 'lucide-react';
 
 type OrderTab = 'active' | 'completed' | 'cancelled';
 
@@ -35,6 +37,7 @@ interface MyOrdersProps {
   formatNumber: (num: number) => string;
   onCancelOrder: (orderId: string) => void;
   feeEquity?: string | null;
+  selectedSymbol?: string; // New: Filter by this symbol
 }
 
 export const MyOrders: React.FC<MyOrdersProps> = ({
@@ -44,9 +47,11 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
   setOrderTab,
   formatNumber,
   onCancelOrder,
-  feeEquity
+  feeEquity,
+  selectedSymbol
 }) => {
   const { t } = useTranslation('common');
+  const router = useRouter();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<OrderData | null>(null);
   const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
@@ -54,17 +59,47 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 5;
 
-  const filteredOrders = orders
+  // Filter by selected symbol first, then by status
+  const symbolFilteredOrders = selectedSymbol
+    ? orders.filter(order => {
+        const orderSymbol = order.symbol?.split('-')[0]?.toUpperCase() || '';
+        const targetSymbol = selectedSymbol.split('-')[0]?.toUpperCase() || '';
+        return orderSymbol === targetSymbol;
+      })
+    : orders;
+
+  const filteredOrders = symbolFilteredOrders
     .filter(order => {
-      if (orderTab === 'active') return order.statusname === 'pending';
-      if (orderTab === 'completed') return order.statusname === 'completed' || order.statusname === 'expired';
-      if (orderTab === 'cancelled') return order.statusname === 'cancelled';
+      const status = order.statusname?.toLowerCase();
+      if (orderTab === 'active') {
+        // Active includes pending, Active, and PartiallyFilled
+        return status === 'pending' || status === 'active' || status === 'partiallyfilled';
+      }
+      if (orderTab === 'completed') {
+        return status === 'completed' || status === 'filled' || status === 'expired';
+      }
+      if (orderTab === 'cancelled') {
+        return status === 'cancelled';
+      }
       return false;
     })
     .sort((a, b) => {
       if (!a.createdDate || !b.createdDate) return 0;
       return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
     });
+
+  // Get counts for tabs (based on symbol-filtered orders)
+  const tabCounts = {
+    active: symbolFilteredOrders.filter(o => {
+      const s = o.statusname?.toLowerCase();
+      return s === 'pending' || s === 'active' || s === 'partiallyfilled';
+    }).length,
+    completed: symbolFilteredOrders.filter(o => {
+      const s = o.statusname?.toLowerCase();
+      return s === 'completed' || s === 'filled' || s === 'expired';
+    }).length,
+    cancelled: symbolFilteredOrders.filter(o => o.statusname?.toLowerCase() === 'cancelled').length
+  };
 
   // Pagination
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
@@ -136,24 +171,45 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
     const seconds = String(date.getSeconds()).padStart(2, '0');
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   };
-  // Check if order is partial
+  // Check if order is partial (by status or by cumQty)
   const isPartialOrder = (order: OrderData) => {
+    // Check by statusname first
+    const status = order.statusname?.toLowerCase();
+    if (status === 'partiallyfilled') return true;
+    // Then check by cumQty
     if (order.cumQty === undefined || order.cumQty === 0) return false;
     return order.cumQty > 0 && order.cumQty < order.quantity;
+  };
+
+  // Navigate to all orders page
+  const handleViewAllOrders = () => {
+    router.push('/all-orders');
   };
 
   return (
     <div className="bg-white dark:bg-gray-900 mx-3 mt-3 mb-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-        <h3 className="text-base font-medium text-gray-900 dark:text-white mb-3">
-          {t('exchange.myOrders', 'Миний захиалгууд')}
-        </h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-medium text-gray-900 dark:text-white">
+            {selectedSymbol 
+              ? t('exchange.myOrdersForStock', '{{symbol}} захиалгууд', { symbol: selectedSymbol.split('-')[0] })
+              : t('exchange.myOrders', 'Миний захиалгууд')
+            }
+          </h3>
+          <button
+            onClick={handleViewAllOrders}
+            className="flex items-center gap-1.5 text-xs text-bdsec dark:text-indigo-400 hover:text-bdsec/80 dark:hover:text-indigo-300 transition-colors"
+          >
+            <History className="w-3.5 h-3.5" />
+            {t('exchange.viewAllOrders', 'Бүх түүх')}
+          </button>
+        </div>
         <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
           {[
-            { key: 'active', label: t('exchange.activeOrders', 'Идэвхтэй'), count: orders.filter(o => o.statusname === 'pending').length },
-            { key: 'completed', label: t('exchange.completedOrdersTab', 'Биелсэн'), count: orders.filter(o => o.statusname === 'completed' || o.statusname === 'expired').length },
-            { key: 'cancelled', label: t('exchange.cancelledOrders', 'Цуцлагдсан'), count: orders.filter(o => o.statusname === 'cancelled').length }
+            { key: 'active', label: t('exchange.activeOrders', 'Идэвхтэй'), count: tabCounts.active },
+            { key: 'completed', label: t('exchange.completedOrdersTab', 'Биелсэн'), count: tabCounts.completed },
+            { key: 'cancelled', label: t('exchange.cancelledOrders', 'Цуцлагдсан'), count: tabCounts.cancelled }
           ].map((tab) => (
             <button
               key={tab.key}
@@ -186,7 +242,7 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
           </div>
         ) : paginatedOrders.length > 0 ? (
           <div className="divide-y divide-gray-100 dark:divide-gray-800">
-            {orders.sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime()).map((order) => {
+            {paginatedOrders.map((order) => {
               const totalWithFee = calculateTotal(order);
               const isPartial = isPartialOrder(order);
 

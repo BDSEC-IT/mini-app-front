@@ -616,10 +616,23 @@ export default function Exchange() {
         // 1. No URL params at all
         // 2. No stock selected yet
         // 3. Haven't processed URL params (prevents setting default after URL params clear)
-        const bdsStock = stocks.find(stock => stock.Symbol.includes('BDS'));
-        const defaultStock = bdsStock ||
-          stocks.find(stock => ['KHAN', 'APU', 'MSM', 'TDB', 'SBN'].includes(stock.Symbol)) ||
-          stocks[0];
+        
+        // Check if there's a selected stock from localStorage (from dashboard)
+        const storedSymbol = typeof window !== 'undefined' ? localStorage.getItem('selectedStock') : null;
+        let defaultStock = null;
+        
+        if (storedSymbol) {
+          // Try to find the stock from localStorage
+          defaultStock = stocks.find(stock => stock.Symbol === storedSymbol || stock.Symbol.split('-')[0] === storedSymbol.split('-')[0]);
+        }
+        
+        // If no stock in localStorage or not found, fall back to default logic
+        if (!defaultStock) {
+          const bdsStock = stocks.find(stock => stock.Symbol.includes('BDS'));
+          defaultStock = bdsStock ||
+            stocks.find(stock => ['KHAN', 'APU', 'MSM', 'TDB', 'SBN'].includes(stock.Symbol)) ||
+            stocks[0];
+        }
 
         if (defaultStock) {
           setSelectedStock(defaultStock);
@@ -1181,6 +1194,7 @@ export default function Exchange() {
         formatNumber={formatNumber}
         onCancelOrder={handleCancelOrder}
         feeEquity={feeEquity}
+        selectedSymbol={selectedStock?.Symbol}
       />
     </div>
   );

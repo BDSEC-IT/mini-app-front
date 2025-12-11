@@ -63,10 +63,17 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
     setIsLoggedIn(prev => true);
 
     try {
-      const [infoRes, invoiceRes, partnerRes] = await Promise.all([
+      const [infoRes, invoiceRes, partnerRes, kycRes] = await Promise.all([
         getUserAccountInformation(token),
         checkInvoiceStatus(token),
-        getPartnerInfo(token)
+        getPartnerInfo(token),
+        fetch(`https://api.bdsec.mn/kyc/additional`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }).then(res => res.json()).catch(() => ({ success: false }))
       ]);
       if (infoRes.success) setAccountInfo(prev => infoRes.data);
       
@@ -82,7 +89,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
       setHasExistingMcsdAccount(prev => accountActive);
       setMcsdError(prev => errorMessage);
 
-      // Check KYC/Partner status
+      // Check KYC/Partner status - must check BOTH partner info AND kyc data
       if (partnerRes.success && partnerRes.data && partnerRes.data.length > 0) {
         const partner = partnerRes.data[0];
         if (partner.state === 'confirmed') {
@@ -91,7 +98,12 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
           setKycStatus('pending');
         }
       } else {
-        setKycStatus('none');
+        // No partner info yet - check if KYC form was submitted
+        if (kycRes.success && kycRes.data?.id) {
+          setKycStatus('pending');
+        } else {
+          setKycStatus('none');
+        }
       }
 
       // Fee completion detection from invoice endpoint

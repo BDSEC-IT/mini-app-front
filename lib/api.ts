@@ -2147,6 +2147,87 @@ async function istockFetch(path: string, token?: string) {
   }
 }
 
+// ================= Paginated API Params Interfaces =================
+
+export interface SecondaryOrderParams {
+  symbol?: string;
+  orderType?: string;
+  buySell?: 'BUY' | 'SELL';
+  statusname?: 'pending' | 'completed' | 'cancelled' | 'expired';
+  timeInForce?: string;
+  isChannel?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  pageSize?: number;
+  orderBy?: string;
+  orderDir?: 'asc' | 'desc';
+}
+
+export interface SecurityTransactionParams {
+  symbol?: string;
+  buySell?: 'BUY' | 'SELL';
+  code?: string;
+  name?: string;
+  exchangeId?: number;
+  assetId?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  pageSize?: number;
+  orderBy?: string;
+  orderDir?: 'asc' | 'desc';
+}
+
+export interface CashTransactionParams {
+  symbol?: string;
+  description?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  pageSize?: number;
+  orderBy?: string;
+  orderDir?: 'asc' | 'desc';
+}
+
+export interface CsdTransactionParams {
+  code?: string;
+  description?: string;
+  typeCode?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  pageSize?: number;
+  orderBy?: string;
+  orderDir?: 'asc' | 'desc';
+}
+
+export interface PaginatedResponse<T> {
+  success: boolean;
+  data: T[];
+  pagination?: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+  metadata?: {
+    totalRecordCount: number;
+    currentPage: number;
+    pageSize: number;
+  };
+  message?: string;
+}
+
+// Helper to build query string from params
+function buildQueryString(params: Record<string, any>): string {
+  const query = Object.entries(params)
+    .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+  return query ? `?${query}` : '';
+}
+
 
 export const fetchIstockNominalBalance = async (token?: string) => {
   return istockFetch('nominal-balance', token)
@@ -2160,12 +2241,52 @@ export const fetchIstockSecurityTransactions = async (token?: string) => {
   return istockFetch('security-transaction-history', token)
 }
 
+// Paginated version of fetchIstockSecurityTransactions with filters
+export const fetchSecurityTransactionsPaginated = async (
+  params: SecurityTransactionParams,
+  token?: string
+): Promise<PaginatedResponse<any>> => {
+  const queryString = buildQueryString({
+    symbol: params.symbol,
+    buySell: params.buySell,
+    code: params.code,
+    name: params.name,
+    exchangeId: params.exchangeId,
+    assetId: params.assetId,
+    dateFrom: params.dateFrom,
+    dateTo: params.dateTo,
+    page: params.page || 1,
+    pageSize: params.pageSize || 10,
+    orderBy: params.orderBy,
+    orderDir: params.orderDir,
+  });
+  return istockFetch(`security-transaction-history${queryString}`, token);
+}
+
 export const fetchIstockYieldAnalysis = async (token?: string) => {
   return istockFetch('yield-analysis', token)
 }
 
 export const fetchIstockCashTransactions = async (token?: string) => {
   return istockFetch('transaction-cash', token)
+}
+
+// Paginated version of fetchIstockCashTransactions with filters
+export const fetchCashTransactionsPaginated = async (
+  params: CashTransactionParams,
+  token?: string
+): Promise<PaginatedResponse<any>> => {
+  const queryString = buildQueryString({
+    symbol: params.symbol,
+    description: params.description,
+    dateFrom: params.dateFrom,
+    dateTo: params.dateTo,
+    page: params.page || 1,
+    pageSize: params.pageSize || 10,
+    orderBy: params.orderBy,
+    orderDir: params.orderDir,
+  });
+  return istockFetch(`transaction-cash${queryString}`, token);
 }
 
 export const fetchIstockCsdTransactions = async (token?: string, forceRefresh = false) => {
@@ -2179,6 +2300,25 @@ export const fetchIstockCsdTransactions = async (token?: string, forceRefresh = 
     _csdCache = { data: result, ts: Date.now() }
   }
   return result
+}
+
+// Paginated version of fetchIstockCsdTransactions with filters
+export const fetchCsdTransactionsPaginated = async (
+  params: CsdTransactionParams,
+  token?: string
+): Promise<PaginatedResponse<any>> => {
+  const queryString = buildQueryString({
+    code: params.code,
+    description: params.description,
+    typeCode: params.typeCode,
+    dateFrom: params.dateFrom,
+    dateTo: params.dateTo,
+    page: params.page || 1,
+    pageSize: params.pageSize || 10,
+    orderBy: params.orderBy,
+    orderDir: params.orderDir,
+  });
+  return istockFetch(`csd-transaction-history${queryString}`, token);
 }
 
 // ================= Secondary Order Types =================
@@ -2215,6 +2355,28 @@ export interface SecondaryOrderResponse {
 
 export const fetchSecondaryOrders = async (token?: string): Promise<SecondaryOrderResponse> => {
   return istockFetch('secondary-order', token)
+}
+
+// Paginated version of fetchSecondaryOrders with filters
+export const fetchSecondaryOrdersPaginated = async (
+  params: SecondaryOrderParams,
+  token?: string
+): Promise<PaginatedResponse<SecondaryOrderData>> => {
+  const queryString = buildQueryString({
+    symbol: params.symbol,
+    orderType: params.orderType,
+    buySell: params.buySell,
+    statusname: params.statusname,
+    timeInForce: params.timeInForce,
+    isChannel: params.isChannel,
+    dateFrom: params.dateFrom,
+    dateTo: params.dateTo,
+    page: params.page || 1,
+    pageSize: params.pageSize || 10,
+    orderBy: params.orderBy,
+    orderDir: params.orderDir,
+  });
+  return istockFetch(`secondary-order${queryString}`, token);
 }
 
 export const fetchSecondaryOrderStatus = async (orderId: number, token?: string) => {

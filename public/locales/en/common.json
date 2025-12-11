@@ -24,6 +24,8 @@
     "bondsList": "Bonds List"
   },
   "common": {
+    "yes": "Yes",
+    "no": "No",
     "noTransactions": "No transactions found",
     "loading": "Loading...",
     "error": "Error occurred",
@@ -321,6 +323,7 @@
     "bondInfo": "Bond Information",
     "buyAction": "BUY",
     "sellAction": "SELL",
+    "viewOrderHistory": "View Order History",
 
     "loading": "Loading...",
     "refreshData": "Refresh Data",
@@ -856,7 +859,16 @@
     "amount": "Amount",
     "marketPrice": "Market Price",
     "conditional": "Conditional",
-    "untilCancelled": "Until Cancelled (GTC)"
+    "untilCancelled": "Until Cancelled (GTC)",
+    "viewAllOrders": "View All",
+    "myOrdersForStock": "{{symbol}} Orders",
+    "statusPending": "Pending",
+    "statusPartial": "Partial",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "statusExpired": "Expired",
+    "cancelSuccess": "Order cancelled successfully",
+    "cancelError": "Failed to cancel order"
   },
   "kycAdditional": {
     "fetchError": "Failed to load data",
@@ -965,6 +977,49 @@
       "clickToUpload": "Click to upload",
       "fileFormat": "PNG, JPG (max 5MB)"
     }
+  },
+  "allOrders": {
+    "title": "My Orders",
+    "totalOrders": "Total {{count}} orders",
+    "searchPlaceholder": "Search stock...",
+    "stockSymbol": "Stock Symbol",
+    "allStocks": "All Stocks",
+    "all": "All",
+    "active": "Active",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "filters": "Filters",
+    "orderSide": "Order Side",
+    "buy": "Buy",
+    "sell": "Sell",
+    "dateRange": "Date Range",
+    "allTime": "All Time",
+    "last7Days": "Last 7 Days",
+    "last30Days": "Last 30 Days",
+    "last90Days": "Last 90 Days",
+    "customRange": "Custom Range",
+    "from": "From",
+    "to": "To",
+    "clearFilters": "Clear",
+    "applyFilters": "Apply",
+    "noOrders": "No orders found",
+    "noOrdersDescription": "You haven't placed any orders yet",
+    "goToExchange": "Go to Exchange",
+    "fetchError": "Failed to fetch orders",
+    "orderDetails": "Order Details",
+    "symbol": "Symbol",
+    "side": "Side",
+    "price": "Price",
+    "quantity": "Quantity",
+    "filledQty": "Filled",
+    "remainingQty": "Remaining",
+    "status": "Status",
+    "orderDate": "Date",
+    "close": "Close",
+    "cancelOrder": "Cancel",
+    "pending": "Pending",
+    "partial": "Partially Filled",
+    "expired": "Expired"
   }
 
 } 
