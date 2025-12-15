@@ -92,8 +92,6 @@ export default function RechargeBalance() {
         url.searchParams.append('status', queryStatus);
       }
 
-      // console.log('Fetching history:', url.toString());
-
       const response = await fetch(url.toString(), {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -105,7 +103,6 @@ export default function RechargeBalance() {
         throw new Error();
       }
       const data: RechargeHistoryResponse = await response.json();
-      // console.log('History response:', data);
       
       if (data.success) {
         setHistory(data.data.items || []);
@@ -199,10 +196,7 @@ export default function RechargeBalance() {
         }
         redirectUrl: string;
       } = data.data;
-      
-      console.log(realData);
       toast.success(t('recharge.success'));
-      console.log('Recharge request successful', realData.redirectUrl);
       router.push(realData.redirectUrl);
       setAmount('');
     } catch (error) {

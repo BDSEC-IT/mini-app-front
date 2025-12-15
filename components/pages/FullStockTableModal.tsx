@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, ArrowDown, ArrowUp, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, ArrowDown, ArrowUp, ChevronDown, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { StockData } from '@/lib/api'; // Assuming StockData type is exported from here
 
@@ -30,15 +30,23 @@ const FullStockTableModal: React.FC<FullStockTableModalProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language || 'mn';
+  const [searchTerm, setSearchTerm] = useState('');
 
-  
+  // Filter stocks by search term
+  const searchFilteredStocks = React.useMemo(() => {
+    if (!searchTerm) return filteredStocks;
+    return filteredStocks.filter(stock =>
+      stock.Symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (getCompanyName(stock) || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [filteredStocks, searchTerm, getCompanyName]);
 
   // Re-implement sortedStocks and renderCategoryStocks locally for the modal
   // This ensures the modal is self-contained and doesn't rely on parent's memoized functions directly
   const sortedModalStocks = React.useMemo(() => {
-    if (!sortConfig.key) return filteredStocks;
+    if (!sortConfig.key) return searchFilteredStocks;
 
-    return [...filteredStocks].sort((a, b) => {
+    return [...searchFilteredStocks].sort((a, b) => {
       const aValue = a[sortConfig.key!];
       const bValue = b[sortConfig.key!];
 
@@ -83,6 +91,13 @@ const FullStockTableModal: React.FC<FullStockTableModalProps> = ({
             {formatPrice(stock.LastTradedPrice, isBondCategory)}
           </td>
           <td className="px-2 py-2 text-right text-sm">
+            <span className={`font-medium ${
+              Number(stock.Changes) > 0 ? 'text-green-500' : Number(stock.Changes) < 0 ? 'text-red-500' : 'text-gray-500'
+            }`}>
+              {Number(stock.Changes) > 0 ? '+' : ''}{typeof stock.Changes === 'number' ? stock.Changes.toFixed(2) : '-'}
+            </span>
+          </td>
+          <td className="px-2 py-2 text-right text-sm">
             <div className="flex items-center justify-end">
               {stock.Changep !== null && stock.Changep !== undefined ? (
                 <>
@@ -93,8 +108,8 @@ const FullStockTableModal: React.FC<FullStockTableModalProps> = ({
                   </span>
                   {stock.Changep !== 0 && (
                     <span className="ml-1">
-                      {stock.Changep > 0 ? 
-                        <ArrowUp size={12} className="text-green-500" /> : 
+                      {stock.Changep > 0 ?
+                        <ArrowUp size={12} className="text-green-500" /> :
                         <ArrowDown size={12} className="text-red-500" />
                       }
                     </span>
@@ -102,13 +117,6 @@ const FullStockTableModal: React.FC<FullStockTableModalProps> = ({
                 </>
               ) : '-'}
             </div>
-          </td>
-          <td className="px-2 py-2 text-right text-sm">
-            <span className={`font-medium ${
-              stock.Changes > 0 ? 'text-green-500' : stock.Changes < 0 ? 'text-red-500' : 'text-gray-500'
-            }`}>
-              {stock.Changes > 0 ? '+' : ''}{stock.Changes?.toFixed(2) || '-'}
-            </span>
           </td>
           <td className="px-2 py-2 text-right text-sm font-normal">
             {stock.Volume?.toLocaleString() || '-'}
@@ -151,9 +159,29 @@ const FullStockTableModal: React.FC<FullStockTableModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
       <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full h-full max-w-full max-h-[98vh] overflow-hidden flex flex-col">
-        <div className="flex justify-end items-center p-4 border-b border-gray-200 dark:border-gray-700">
-          <button 
-            onClick={onClose} 
+        <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2 flex-1 max-w-sm">
+            <div className="flex items-center border rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800 flex-1">
+              <Search size={14} className="text-gray-500 dark:text-gray-400 mr-2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-transparent outline-none w-full text-sm text-gray-900 dark:text-gray-100"
+                placeholder={t('common.search')}
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="ml-2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
             className="h-8 w-8 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <X size={16} className="text-gray-600 dark:text-gray-400" />
@@ -179,13 +207,13 @@ const FullStockTableModal: React.FC<FullStockTableModalProps> = ({
                   </div>
                 </th>
                 <th className="px-2 py-3 text-right">
-                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('Changep')}>
-                    {t('allStocks.changePercentage')}
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('Changes')}>
+                    {t('allStocks.changes')}
                   </div>
                 </th>
                 <th className="px-2 py-3 text-right">
-                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('Changes')}>
-                    {t('allStocks.changes')}
+                  <div className="flex items-center justify-end cursor-pointer text-sm font-medium text-gray-600 dark:text-gray-400" onClick={() => handleSort('Changep')}>
+                    {t('allStocks.changePercentage')}
                   </div>
                 </th>
                 <th className="px-2 py-3 text-right">

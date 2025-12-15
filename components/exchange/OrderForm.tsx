@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { AlertCircle } from 'lucide-react';
 import { Button, Input, Select } from '../ui';
 
 type OrderSide = 'BUY' | 'SELL';
@@ -20,6 +21,7 @@ interface OrderFormProps {
   accountBalance: number | null;
   selectedStockHolding: any;
   calculateTotal: () => number;
+  calculateNetTotal: () => number;
   formatNumber: (num: number) => string;
   getMaxQuantity: () => number;
   adjustPriceByStep: (currentPrice: string, direction: 'up' | 'down') => string;
@@ -30,6 +32,8 @@ interface OrderFormProps {
   placing: boolean;
   onPlaceOrder: () => void;
   feeEquity: string | null;
+  kycPending?: boolean;
+  kycPendingMessage?: string;
 }
 
 export const OrderForm: React.FC<OrderFormProps> = ({
@@ -48,6 +52,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   accountBalance,
   selectedStockHolding,
   calculateTotal,
+  calculateNetTotal,
   formatNumber,
   getMaxQuantity,
   adjustPriceByStep,
@@ -57,7 +62,9 @@ export const OrderForm: React.FC<OrderFormProps> = ({
   setShowPriceSteps,
   placing,
   onPlaceOrder,
-  feeEquity
+  feeEquity,
+  kycPending = false,
+  kycPendingMessage = ''
 }) => {
   const { t } = useTranslation('common');
   const [showDatePicker, setShowDatePicker] = React.useState(false);
@@ -131,7 +138,6 @@ export const OrderForm: React.FC<OrderFormProps> = ({
     }
     return dates;
   };
-  
   const dateOptions = generateDateOptions();
   return (
     <div className="bg-white dark:bg-gray-900  mt-3 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-6">
@@ -140,7 +146,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
         <Select
           value={orderType}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setOrderType(e.target.value)}
-          className="text-xs py-2"
+          className="text-xs py-2 outline-none"
         >
           <option value="Зах зээлийн">{t('exchange.market', 'Зах зээл')}</option>
           <option value="Нөхцөлт">{t('exchange.limit', 'Нөхцөлт')}</option>
@@ -269,7 +275,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
               }
             }}
             placeholder={t('exchange.quantity', 'Тоо ширхэг')}
-            className={`w-full ${quantity ? 'pr-16' : ''}`}
+            className={`w-full text-[16px] outline-none ${quantity ? 'pr-16' : ''}`}
             min="1"
             max={getMaxQuantity()}
             step="1"
@@ -281,7 +287,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           )}
         </div>
       </div>
-
+      
       {/* Price Input for Limit Orders */}
       {orderType === 'Нөхцөлт' && (
         <div className="mb-4">
@@ -300,7 +306,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 onChange={handlePriceChange}
                 onBlur={handlePriceBlur}
                 placeholder={t('exchange.price')}
-                className={`w-full rounded ${price ? 'pr-8' : ''}`}
+                className={`w-full rounded outline-none text-[16px] ${price ? 'pr-8' : ''}`}
                 step={selectedStock ? getPriceStep(selectedStock.PreviousClose || 0) : 0.01}
               />
               {price && (
@@ -319,7 +325,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           </div>
           <div className="flex items-center justify-between mt-2">
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {t('exchange.step')}: {selectedStock ? getPriceStep(selectedStock.PreviousClose || 0) : 0.01}₮
+              {t('exchange.step')}: {getPriceStep((price && !isNaN(Number(price)) && Number(price) > 0) ? Number(price) : (selectedStock ? selectedStock.PreviousClose || 0 : 0.01))}₮
             </span>
             <Button
               variant="secondary"
@@ -334,12 +340,12 @@ export const OrderForm: React.FC<OrderFormProps> = ({
 
       {/* Total Summary with Color Styling */}
       <div className="mb-3">
-        {/* <div className="flex justify-between text-sm items-center mb-2">
+        <div className="flex justify-between text-sm items-center mb-2">
           <span className="text-gray-700 dark:text-gray-300 font-medium">{t('exchange.total')}:</span>
           <span className="font-bold text-gray-900 dark:text-white">
             {formatNumber(calculateTotal())}₮
           </span>
-        </div> */}
+        </div>
         {feeEquity && (
           <>
             <div className="flex justify-between text-xs py-1 border-t border-gray-200 dark:border-gray-700">
@@ -355,29 +361,41 @@ export const OrderForm: React.FC<OrderFormProps> = ({
                 {t('exchange.netTotal', 'Шимтгэл тооцсон нийт дүн')}:
               </span>
               <span className="text-blue-800 dark:text-blue-300 font-bold">
-                {formatNumber(calculateTotal())}₮
+                {formatNumber(calculateNetTotal())}₮
               </span>
             </div>
           </>
         )}
       </div>
 
+      {/* KYC Pending Warning */}
+      {kycPending && (
+        <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              {kycPendingMessage || t('exchange.kycPendingDefault', 'Таны хүсэлт хянагдаж байна. Захиалга өгөх боломжгүй.')}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Submit Button with Glow Effect */}
       <div className="relative mb-2">
         <Button
           variant={orderSide === 'BUY' ? 'success' : 'danger'}
           onClick={onPlaceOrder}
-          disabled={placing || !quantity || (orderType === 'Нөхцөлт' && !price)}
+          disabled={placing || !quantity || (orderType === 'Нөхцөлт' && !price) || kycPending}
           className={`relative w-full py-3 text-sm font-bold transition-all duration-200 transform hover:scale-[1.02] ${
-            placing || !quantity || (orderType === 'Нөхцөлт' && !price)
+            placing || !quantity || (orderType === 'Нөхцөлт' && !price) || kycPending
               ? 'bg-gray-400 cursor-not-allowed hover:bg-gray-400 transform-none'
               : ''
           }`}
           style={{
-            filter: !(placing || !quantity || (orderType === 'Нөхцөлт' && !price))
+            filter: !(placing || !quantity || (orderType === 'Нөхцөлт' && !price) || kycPending)
               ? `drop-shadow(0 0 12px ${orderSide === 'BUY' ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)'})`
               : 'none',
-            textShadow: !(placing || !quantity || (orderType === 'Нөхцөлт' && !price))
+            textShadow: !(placing || !quantity || (orderType === 'Нөхцөлт' && !price) || kycPending)
               ? `0 0 8px ${orderSide === 'BUY' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.8)'}, 0 0 16px ${orderSide === 'BUY' ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`
               : 'none'
           }}

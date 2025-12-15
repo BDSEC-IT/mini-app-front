@@ -1,5 +1,5 @@
 import React from 'react'
-import { Activity, ArrowDown, ArrowUp, RefreshCw } from 'lucide-react'
+import { RefreshCw, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { useRef, useEffect, useState } from 'react'
@@ -148,6 +148,12 @@ const OrderBookComponent = ({
     router.push(`/exchange?${params.toString()}`);
   };
 
+  // Handler for viewing order history for this stock
+  const handleViewOrderHistory = () => {
+    const symbolOnly = selectedSymbol.split('-')[0];
+    router.push(`/all-orders?symbol=${symbolOnly}`);
+  };
+
   // Regular order book display for non-bond securities
   return (
     <div 
@@ -160,8 +166,7 @@ const OrderBookComponent = ({
         orderBookInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
       }`}>
         <div>
-          <h2 className="text-lg font-semibold flex items-center">
-            <Activity size={16} className="mr-2 text-gray-600 dark:text-gray-400" />
+          <h2 className="text-base sm:text-lg font-medium">
             {t('dashboard.orderBook')} - {selectedSymbol.split('-')[0]}
           </h2>
           <div className="text-xs text-gray-500 dark:text-gray-400">{t('dashboard.orderBookExplanation')}</div>
@@ -178,6 +183,15 @@ const OrderBookComponent = ({
         </div>
         
         <div className="flex items-center gap-2">
+          <Button
+            onClick={handleViewOrderHistory}
+            size="icon"
+            variant="outline"
+            className="h-10 w-10 rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:ring-indigo-500"
+            title={t('dashboard.viewOrderHistory', 'Захиалгын түүх харах')}
+          >
+            <History size={16} className="text-gray-600 dark:text-gray-400" />
+          </Button>
           {onRefresh && (
             <Button
               onClick={onRefresh}
@@ -198,14 +212,15 @@ const OrderBookComponent = ({
 
         {/* Buy Orders */}
         <div className="overflow-hidden">
-          <div className="px-3 py-2 bg-green-50 dark:bg-green-900/10">
-            <div className="grid grid-cols-2 text-right">
-                <h3 className="text-sm font-medium text-gray-500">{t('dashboard.buyQuantity')}</h3>
-              <h3 className="text-sm font-medium text-green-500 flex justify-end">
-                <ArrowUp size={12} className="mr-1 text-green-500" />
-                {t('dashboard.buy')}
-              </h3>
-
+          <div className="px-3 py-1.5 bg-green-50 dark:bg-green-900/10">
+            <h3 className="text-sm font-medium text-green-500 text-center">
+              {t('dashboard.buyAction', 'Авах')}
+            </h3>
+          </div>
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex justify-center gap-4">
+              <h3 className="text-xs font-medium text-gray-500 w-14 text-right">{t('dashboard.buyQuantity')}</h3>
+              <h3 className="text-xs font-medium text-gray-500 w-20 text-right">{t('exchange.price', 'Үнэ')}</h3>
             </div>
           </div>
 
@@ -216,15 +231,14 @@ const OrderBookComponent = ({
               sortedBuyOrders.map((order, index) => (
                 <div
                   key={`buy-${order.id}-${index}`}
-                  className="grid grid-cols-2 text-right text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+                  className="flex justify-center gap-4 py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
-                  <span className="bg-green-50 dark:bg-green-900/10 px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
+                  <span className="text-gray-700 dark:text-gray-300 text-xs w-14 text-right tabular-nums">
                     {(order.MDEntrySize || 0).toLocaleString()}
                   </span>
-                  <span className="text-green-500 font-medium justify-self-end text-xs sm:text-sm">
+                  <span className="text-green-500 font-semibold text-sm w-20 text-right tabular-nums">
                     {formatOrderPrice(order.MDEntryPx, selectedSymbol)}
                   </span>
-                  
                 </div>
               ))
             ) : (
@@ -234,15 +248,17 @@ const OrderBookComponent = ({
             )}
           </div>
         </div>
-          {/* Sell Orders */}
+        {/* Sell Orders */}
         <div className="overflow-hidden">
-          <div className="px-3 py-2 bg-red-50 dark:bg-red-900/10">
-            <div className="grid grid-cols-2 text-right">
-              <h3 className="text-sm font-medium text-red-500 flex items-center">
-                <ArrowDown size={12} className="mr-1 text-red-500" />
-                {t('dashboard.sell')}
-              </h3>
-              <h3 className="text-sm font-medium text-gray-500">{t('dashboard.sellQuantity')}</h3>
+          <div className="px-3 py-1.5 bg-red-50 dark:bg-red-900/10">
+            <h3 className="text-sm font-medium text-red-500 text-center">
+              {t('dashboard.sellAction', 'Зарах')}
+            </h3>
+          </div>
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex justify-center gap-4">
+              <h3 className="text-xs font-medium text-gray-500 w-20 text-right">{t('exchange.price', 'Үнэ')}</h3>
+              <h3 className="text-xs font-medium text-gray-500 w-14 text-right">{t('dashboard.sellQuantity')}</h3>
             </div>
           </div>
 
@@ -253,12 +269,12 @@ const OrderBookComponent = ({
               sortedSellOrders.map((order, index) => (
                 <div
                   key={`sell-${order.id}-${index}`}
-                  className="grid grid-cols-2 text-right text-sm py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
+                  className="flex justify-center gap-4 py-2 border-b border-dashed border-gray-200 dark:border-gray-700 last:border-0"
                 >
-                  <span className="text-red-500 mr-5 font-medium justify-self-end text-xs sm:text-sm">
-                    {formatOrderPrice(order.MDEntryPx, selectedSymbol)} ₮
+                  <span className="text-red-500 font-semibold text-sm w-20 text-right tabular-nums">
+                    {formatOrderPrice(order.MDEntryPx, selectedSymbol)}
                   </span>
-                  <span className="bg-red-50 dark:bg-red-900/10 px-2 rounded text-gray-700 dark:text-gray-300 text-xs justify-self-end">
+                  <span className="text-gray-700 dark:text-gray-300 text-xs w-14 text-right tabular-nums">
                     {(order.MDEntrySize || 0).toLocaleString()}
                   </span>
                 </div>
@@ -274,19 +290,19 @@ const OrderBookComponent = ({
 
       {/* Quick Trade Buttons - Full Width at Bottom (Mobile Optimized) */}
       {canTrade && (
-        <div className="mt-3 grid grid-cols-2 gap-3">
+        <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(100px,1fr))] gap-3 ">
           {/* Buy Button with Best Ask Price */}
           <button
             onClick={handleQuickBuy}
             disabled={!bestAsk}
-            className="flex flex-col items-center justify-center py-2 rounded-xl bg-green-500 hover:bg-green-600 active:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
+            className="flex flex-col items-center justify-center  rounded-xl bg-green-500 hover:bg-green-600 active:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
             style={{
               maxHeight: '50px', // iOS recommended touch target
               filter: bestAsk ? 'drop-shadow(0 4px 12px rgba(34, 197, 94, 0.4))' : 'none'
             }}
-            title={bestAsk ? `Авах - ${formatPrice(bestAsk)}₮` : 'Захиалга байхгүй'}
+            title={bestAsk ? `${t('dashboard.buy', 'Авах')} - ${formatPrice(bestAsk)}₮` : t('dashboard.noOrders', 'Захиалга байхгүй')}
           >
-            <span className="text-md font-bold tracking-wide">АВАХ</span>
+            <span className="text-medium font-bold tracking-wide">{t('dashboard.buyAction', 'АВАХ').toUpperCase()}</span>
             {bestAsk && (
               <span className="text-sm mt-1 font-semibold opacity-95">
                 {formatPrice(bestAsk)}₮
@@ -298,14 +314,14 @@ const OrderBookComponent = ({
           <button
             onClick={handleQuickSell}
             disabled={!bestBid}
-            className="flex flex-col items-center justify-center py-2 rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
+            className="flex flex-col items-center justify-center  rounded-xl bg-red-500 hover:bg-red-600 active:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
             style={{
               maxHeight: '50px', // iOS recommended touch target
               filter: bestBid ? 'drop-shadow(0 4px 12px rgba(239, 68, 68, 0.4))' : 'none'
             }}
-            title={bestBid ? `Зарах - ${formatPrice(bestBid)}₮` : 'Захиалга байхгүй'}
+            title={bestBid ? `${t('dashboard.sell', 'Зарах')} - ${formatPrice(bestBid)}₮` : t('dashboard.noOrders', 'Захиалга байхгүй')}
           >
-            <span className="text-md font-bold tracking-wide">ЗАРАХ</span>
+            <span className="text-md font-bold tracking-wide">{t('dashboard.sellAction', 'ЗАРАХ').toUpperCase()}</span>
             {bestBid && (
               <span className="text-sm mt-1 font-semibold opacity-95">
                 {formatPrice(bestBid)}₮

@@ -6,7 +6,6 @@ import { LanguageProvider } from '@/contexts/LanguageContext'
 import { I18nextProvider } from 'react-i18next'
 import i18n from '@/lib/i18n'
 import TokenProvider from './TokenProvider'
-import RegistrationGuard from './RegistrationGuard'
 import { Toaster } from 'react-hot-toast'
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
@@ -25,31 +24,29 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <LanguageProvider>
           <TokenProvider>
-            <RegistrationGuard>
-              <Toaster
-                position="top-center"
-                toastOptions={{
-                  duration: 4000,
-                  style: {
-                    background: '#363636',
-                    color: '#fff',
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
+                },
+                success: {
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#fff',
                   },
-                  success: {
-                    iconTheme: {
-                      primary: '#10b981',
-                      secondary: '#fff',
-                    },
+                },
+                error: {
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
                   },
-                  error: {
-                    iconTheme: {
-                      primary: '#ef4444',
-                      secondary: '#fff',
-                    },
-                  },
-                }}
-              />
-              {children}
-            </RegistrationGuard>
+                },
+              }}
+            />
+            {children}
           </TokenProvider>
         </LanguageProvider>
       </ThemeProvider>

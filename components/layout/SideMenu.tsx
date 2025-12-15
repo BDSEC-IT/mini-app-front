@@ -20,6 +20,7 @@ import {
   BanknoteArrowDown,
   ArrowUpDown,
   Wallet2,
+  UserCheck,
 } from 'lucide-react'
 import Cookies from 'js-cookie'
 import { useTranslation } from 'react-i18next'
@@ -27,7 +28,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTheme } from '@/contexts/ThemeContext'
 import LanguageToggle from '../ui/LanguageToggle'
-import { getUserAccountInformation, checkInvoiceStatus, type UserAccountResponse } from '@/lib/api'
+import { getUserAccountInformation, checkInvoiceStatus, hasCompletedForms, hasPaidRegistrationFee, hasActiveMCSDAccount, hasPendingMCSDAccount, getMCSDAccountError, getPartnerInfo, type UserAccountResponse } from '@/lib/api'
 
 interface SideMenuProps {
   isOpen: boolean
@@ -40,11 +41,12 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   const { theme, setTheme } = useTheme()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [accountInfo, setAccountInfo] = useState<UserAccountResponse['data'] | null>(null)
-    console.log("accountInfopls",accountInfo)
   const [isGeneralInfoComplete, setIsGeneralInfoComplete] = useState<boolean | null>(null);
   const [feeInfoCompleted, setFeeInfoCompleted] = useState<boolean | null>(null);
   const [hasExistingMcsdAccount, setHasExistingMcsdAccount] = useState(false);
   const [hasPaidFee, setHasPaidFeed] = useState<boolean>(false);
+  const [mcsdError, setMcsdError] = useState<string | null>(null);
+  const [kycStatus, setKycStatus] = useState<'none' | 'pending' | 'confirmed'>('none');
   
 
 
@@ -54,51 +56,57 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
       setIsLoggedIn(prev => false);
       setIsGeneralInfoComplete(prev => false);
       setFeeInfoCompleted(prev => false);
+      setKycStatus('none');
       return;
     }
 
     setIsLoggedIn(prev => true);
 
     try {
-      const [infoRes, invoiceRes] = await Promise.all([
+      const [infoRes, invoiceRes, partnerRes, kycRes] = await Promise.all([
         getUserAccountInformation(token),
-        checkInvoiceStatus(token)
+        checkInvoiceStatus(token),
+        getPartnerInfo(token),
+        fetch(`https://api.bdsec.mn/kyc/additional`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }).then(res => res.json()).catch(() => ({ success: false }))
       ]);
-      console.log("infoRes",infoRes)
-      console.log("invoiceRes",invoiceRes)
       if (infoRes.success) setAccountInfo(prev => infoRes.data);
       
-      // Super app accounts (multiple merchants supported)
-      const accounts = infoRes.data?.superAppAccounts || [];
-      const primary = accounts.find((a: any) => a.registerConfirmed) || accounts[0];
+      // Use DRY helper functions for all status checks
+      const formsComplete = hasCompletedForms(infoRes.data);
+      const feePaid = hasPaidRegistrationFee(infoRes.data);
+      const accountActive = hasActiveMCSDAccount(infoRes.data);
+      const accountPending = hasPendingMCSDAccount(infoRes.data);
+      const errorMessage = getMCSDAccountError(infoRes.data);
+      
+      setIsGeneralInfoComplete(prev => formsComplete);
+      setHasPaidFeed(prev => feePaid);
+      setHasExistingMcsdAccount(prev => accountActive);
+      setMcsdError(prev => errorMessage);
 
-      // Check if user already has paid registration fee (from registrationFees)
-      const paidFee = accounts.some((a: any) => a?.registrationFees?.some((f: any) => f?.status === 'COMPLETED'));
-      if (paidFee) {
-        setHasPaidFeed(prev => true);
+      // Check KYC/Partner status - must check BOTH partner info AND kyc data
+      if (partnerRes.success && partnerRes.data && partnerRes.data.length > 0) {
+        const partner = partnerRes.data[0];
+        if (partner.state === 'confirmed') {
+          setKycStatus('confirmed');
+        } else {
+          setKycStatus('pending');
+        }
+      } else {
+        // No partner info yet - check if KYC form was submitted
+        if (kycRes.success && kycRes.data?.id) {
+          setKycStatus('pending');
+        } else {
+          setKycStatus('none');
+        }
       }
 
-      // Check if user already has an existing MCSD account by Id
-      const hasExistingMcsd = !!(infoRes.success && accounts.some((a: any) => !!a.MCSDAccountId));
-      setHasExistingMcsdAccount(prev => hasExistingMcsd);
-      
-      
-      // Enhanced general info completion detection
-      let isGeneralComplete = false;
-      
-      // Check if we have account status data from the nested endpoint (user account info)
-      const mcsdRequest = (primary?.MCSDStateRequest && Array.isArray(primary.MCSDStateRequest) ? primary.MCSDStateRequest[0] : null) as any;
-      const hasNestedAccountData = !!(infoRes.success && mcsdRequest && typeof mcsdRequest === 'object' && (
-        (mcsdRequest.FirstName && mcsdRequest.LastName) ||
-        mcsdRequest.RegistryNumber ||
-        mcsdRequest.id
-      ));
-      
-      isGeneralComplete = hasNestedAccountData;
-      
-      setIsGeneralInfoComplete(prev => isGeneralComplete);
-
-      // Fee completion detection
+      // Fee completion detection from invoice endpoint
       const invoiceStatus = invoiceRes?.data?.status;
       const feeCompleted = invoiceRes.success && invoiceStatus === 'PAID';
       setFeeInfoCompleted(prev => feeCompleted);
@@ -115,7 +123,6 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
     fetchStatus();
     
     const handleAccountSetupChange = () => {
-      // console.log('SideMenu: Account setup data changed event triggered');
       // Add a small delay to avoid excessive calls
       setTimeout(() => fetchStatus(), 100);
     };
@@ -134,13 +141,15 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   ]
   
   // Add Orders menu item for logged-in users with MCSD account
-  const accountOpened = !!accountInfo?.superAppAccounts?.some((a: any) => !!a.MCSDAccountId);
+  // CRITICAL: Only consider account opened if DGStatus === 'COMPLETED'
+  const accountOpened = hasActiveMCSDAccount(accountInfo);
   const advancedMenuItems = accountOpened ? [
     { href: '/exchange', icon: ArrowUpDown, label: 'nav.orders' },
     { href: '/balance', icon: Wallet2, label: 'nav.balance' },
     { href: '/portfolio', icon: TrendingUp, label: 'nav.portfolio' },
     { href: '/balance/recharge', icon: BanknoteArrowUp, label: 'nav.recharge' },
     { href: '/balance/withdrawal', icon: BanknoteArrowDown, label: 'nav.withdrawal' },
+    { href: '/account-setup/kyc-additional-info', icon: UserCheck, label: 'menu.onlineClient' },
     ...menuItems
   ] : menuItems;
   
@@ -174,7 +183,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`sticky inset-0  bg-black/50 z-40 o transition-opacity duration-300  ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
       <div
@@ -197,7 +206,7 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
           </div>
         </div>
                 {/* Simple scrollable container */}
-        <div className="overflow-y-auto" style={{ height: 'calc(100vh - 120px)' }}>
+        <div className="overflow-y-auto h-[calc(100vh-180px)] pb-10">
           <nav className="p-3">
             <ul className="space-y-1.5">
             {isLoggedIn && (
@@ -222,10 +231,28 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
                   <div className="mr-2.5">{renderStatusIcon(hasPaidFee)}</div>
                   <span className="text-sm">{t('profile.accountFee')}</span>
                 </Link>
-                {hasPaidFee && (
+                {/* Third link: Show if fee paid OR if account exists (even if pending) */}
+                {/* Always show if fee is paid, even if account not completed yet - this shows red status */}
+                {(hasPaidFee || hasExistingMcsdAccount || mcsdError) && (
                   <Link href="/account-setup/opening-process" onClick={onClose} className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === '/account-setup/opening-process' ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}> 
-                    <div className="mr-2.5"><CircleDashed size={18} /></div>
+                    <div className="mr-2.5">
+                      {hasExistingMcsdAccount ? (
+                        // Green: Account is COMPLETED
+                        <CircleCheck size={18} className="text-green-500" />
+                      ) : (hasPaidFee && !hasExistingMcsdAccount) || mcsdError ? (
+                        // Red: Fee paid but account not completed, OR has error
+                        <CircleAlert size={18} className="text-red-500" />
+                      ) : (
+                        // Gray: Pending
+                        <CircleDashed size={18} className="text-gray-400" />
+                      )}
+                    </div>
                     <span className="text-sm">{t('profile.accountProcess')}</span>
+                    {(mcsdError || (hasPaidFee && !hasExistingMcsdAccount)) && (
+                      <span className="ml-auto text-xs text-red-500" title={mcsdError || 'Waiting for account activation'}>
+                        ⚠️
+                      </span>
+                    )}
                   </Link>
                 )}
               </li>
@@ -237,11 +264,25 @@ const SideMenu = ({ isOpen, onClose }: SideMenuProps) => {
                 <div className="mb-2 px-2">
                   <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('menu.mySection', 'My Section')}</h3>
                 </div>
-                {advancedMenuItems.slice(0, 5).map((item) => (
+                {advancedMenuItems.slice(0, 6).map((item) => (
                   <Link href={item.href} onClick={onClose} key={item.href}>
                     <div className={`flex items-center p-2.5 rounded-lg transition-colors ${pathname === item.href ? 'bg-bdsec/10 text-bdsec dark:bg-indigo-500/10 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
                       <item.icon size={18} className="mr-2.5" />
                       <span className="text-sm">{t(item.label)}</span>
+                      {/* Show KYC status badge for Online Client menu item */}
+                      {item.href === '/account-setup/kyc-additional-info' && (
+                        <span className="ml-auto">
+                          {kycStatus === 'confirmed' ? (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                              ✓
+                            </span>
+                          ) : kycStatus === 'pending' ? (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                              ⏳
+                            </span>
+                          ) : null}
+                        </span>
+                      )}
                     </div>
                   </Link>
                 ))}

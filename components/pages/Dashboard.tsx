@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Search, ChevronDown } from 'lucide-react'
 import { TradingViewChart } from '../ui/TradingViewChart'
 import { useTheme } from '@/contexts/ThemeContext'
-import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, getUserAccountInformation, type OrderBookEntry, type StockData, BASE_URL } from '@/lib/api'
+import { fetchOrderBook, fetchAllStocks, fetchAllStocksWithCompanyInfo, fetchStockDataWithCompanyInfo, getUserAccountInformation, hasActiveMCSDAccount, fetch52WeekHighLowBySymbol, type OrderBookEntry, type StockData, type WeekHighLowData, BASE_URL } from '@/lib/api'
 import socketIOService from '@/lib/socketio'
 import { StockHeader } from './dashboard/StockHeader'
 import { OrderBook } from './dashboard/OrderBook'
@@ -13,6 +13,7 @@ import { StockList } from './dashboard/StockList'
 import { getStockFilterDate, shouldDisplayStock, getDisplayPeriodDescription, isDuringTradingHours, filterTodaysFreshStocks, isTodaysFreshData } from '@/lib/trading-time-utils'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'next/navigation'
 import Cookies from 'js-cookie'
 
 // Custom hook for intersection observer
@@ -43,21 +44,19 @@ const useInView = (threshold = 0.1) => {
 
 
 
-// Client-only wrapper component
+// Client-only wrapper component - removed null return to prevent flash
 function ClientOnly({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) return null
   return <>{children}</>
 }
 
-const DashboardContent = () => {
+interface DashboardContentProps {
+  initialStocks?: StockData[]
+}
+
+const DashboardContent = ({ initialStocks = [] }: DashboardContentProps) => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language || 'mn';
+  const searchParams = useSearchParams();
   
   // Helper: Format symbol display
   const formatSymbolDisplay = (symbol: string): string => {
@@ -74,16 +73,19 @@ const DashboardContent = () => {
     return currentLanguage === 'mn' ? stock.mnName : stock.enName;
   };
 
-  const [selectedSymbol, setSelectedSymbol] = useState('BDS'); // Default to BDS
+  // Get symbol from URL parameter or localStorage, default to BDS
+  const symbolFromUrl = searchParams.get('symbol');
+  const symbolFromStorage = typeof window !== 'undefined' ? localStorage.getItem('selectedStock') : null;
+  const [selectedSymbol, setSelectedSymbol] = useState(symbolFromUrl || symbolFromStorage || 'BDS');
   const { theme } = useTheme()
   const [activeFilter, setActiveFilter] = useState('mostActive')
   const [orderBookData, setOrderBookData] = useState<OrderBookEntry[]>([])
-  const [stocksLoading, setStocksLoading] = useState(true)
+  const [stocksLoading, setStocksLoading] = useState(initialStocks.length === 0)
   const [orderBookLoading, setOrderBookLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<string>('')
-  const [allStocks, setAllStocks] = useState<StockData[]>([])
-  const [filteredStocks, setFilteredStocks] = useState<StockData[]>([])
+  const [allStocks, setAllStocks] = useState<StockData[]>(initialStocks)
+  const [filteredStocks, setFilteredStocks] = useState<StockData[]>(initialStocks)
   const [searchTerm, setSearchTerm] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -99,6 +101,8 @@ const DashboardContent = () => {
   const [updateQueue, setUpdateQueue] = useState<StockData[]>([])
   const throttleRef = useRef<NodeJS.Timeout | null>(null)
   const [canTrade, setCanTrade] = useState(false)
+  const [weekStats, setWeekStats] = useState<WeekHighLowData | null>(null)
+  const [weekStatsLoading, setWeekStatsLoading] = useState(false)
 
   // Throttled update function to reduce visual glitching
   const processUpdateQueue = useCallback(() => {
@@ -133,7 +137,7 @@ const DashboardContent = () => {
       });
 
       if (updatedCount > 0) {
-        console.log(`🏠 Dashboard: Processed ${updatedCount} stock updates`);
+      
         setLastUpdated(new Date().toLocaleTimeString());
       }
 
@@ -183,14 +187,56 @@ const DashboardContent = () => {
   // Check if current data is fresh or historical  
   const isDataFresh = displayStockData ? isTodaysFreshData(displayStockData.MDEntryTime) : false;
 
+  useEffect(() => {
+    if (!selectedSymbol) return;
+    if (isBond) {
+      setWeekStats(null);
+      setWeekStatsLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchWeekStats = async () => {
+      setWeekStatsLoading(true);
+      try {
+        const baseSymbol = selectedSymbol.split('-')[0];
+        const fullSymbol = `${baseSymbol}-O-0000`;
+        const data = await fetch52WeekHighLowBySymbol(fullSymbol);
+        if (isMounted) {
+          setWeekStats(data);
+        }
+      } catch (error) {
+        console.error('Error fetching 52-week stats:', error);
+        if (isMounted) {
+          setWeekStats(null);
+        }
+      } finally {
+        if (isMounted) {
+          setWeekStatsLoading(false);
+        }
+      }
+    };
+
+    fetchWeekStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedSymbol, isBond]);
+
   // Fetch all stocks data with company information
   const fetchStocksData = useCallback(async () => {
-    console.log('=== Dashboard: fetchStocksData START ===');
+
+    // Skip if we already have initial stocks
+    if (initialStocks.length > 0 && allStocks.length > 0) {
+      
+      return;
+    }
+    
     setStocksLoading(true)
     try {
-      console.log('Calling fetchAllStocksWithCompanyInfo...');
+     
       const response = await fetchAllStocksWithCompanyInfo()
-      console.log('fetchStocksData response:', response.success, response.data ? response.data.length : 0, 'stocks');
       
       if (response.success && response.data) {
         setAllStocks(response.data)
@@ -201,33 +247,30 @@ const DashboardContent = () => {
     } finally {
       setStocksLoading(false)
     }
-    console.log('=== Dashboard: fetchStocksData END ===');
-  }, [])
+    
+  }, [initialStocks, allStocks])
 
   // Fetch specific stock data for the selected symbol with company information
   const fetchSelectedStockData = useCallback(async () => {
-    console.log('=== Dashboard: fetchSelectedStockData START ===');
-    console.log('Selected symbol:', selectedSymbol);
+   
+    
     
     try {
       // Construct the full symbol directly to avoid circular dependency
       const baseSymbol = selectedSymbol.split('-')[0]; // Extract base symbol like 'BDS' from 'BDS-O-0000'
       const fullSymbol = `${baseSymbol}-O-0000`;
-      console.log('Using full symbol for API call:', fullSymbol);
-      console.log('Calling fetchStockDataWithCompanyInfo...');
+    
       const response = await fetchStockDataWithCompanyInfo(fullSymbol)
-      console.log('Response received:', response.success, response.data ? 'has data' : 'no data');
+
       
       if (response.success && response.data) {
         const stockData = Array.isArray(response.data) ? response.data[0] : response.data
-        console.log('Stock data:', stockData);
         setSelectedStockData(stockData)
       }
     } catch (err) {
       console.error('Error fetching selected stock data:', err)
     }
     
-    console.log('=== Dashboard: fetchSelectedStockData END ===');
   }, [selectedSymbol])
 
   const fetchCompanyDetails = useCallback(async () => {
@@ -295,9 +338,8 @@ const DashboardContent = () => {
       try {
         const accountInfo = await getUserAccountInformation(token);
         if (accountInfo.success && accountInfo.data) {
-          // Check if user has MCSD account with COMPLETED status
-          const hasActiveAccount = accountInfo.data.MCSDAccount &&
-                                   accountInfo.data.MCSDAccount.DGStatus === 'COMPLETED';
+          // CRITICAL: Trading allowed only if MCSDAccount exists and DGStatus === 'COMPLETED'
+          const hasActiveAccount = hasActiveMCSDAccount(accountInfo.data);
           setCanTrade(hasActiveAccount);
         }
       } catch (error) {
@@ -309,11 +351,18 @@ const DashboardContent = () => {
     checkTradingStatus();
   }, []);
 
+  // Update selected symbol when URL parameter changes
+  useEffect(() => {
+    const symbolParam = searchParams.get('symbol');
+    if (symbolParam && symbolParam !== selectedSymbol) {
+     
+      setSelectedSymbol(symbolParam);
+    }
+  }, [searchParams, selectedSymbol]);
+
   // Fetch data when component mounts or selectedSymbol changes
   useEffect(() => {
-    console.log('=== Dashboard: useEffect triggered ===');
-    console.log('fetchStocksData function:', typeof fetchStocksData);
-    console.log('fetchSelectedStockData function:', typeof fetchSelectedStockData);
+  
 
     fetchStocksData()
     fetchSelectedStockData()
@@ -322,16 +371,16 @@ const DashboardContent = () => {
   // Initialize Socket.IO for real-time updates
   useEffect(() => {
     const initializeSocketIO = async () => {
-      console.log('🏠 Dashboard: Initializing Socket.IO...');
+     
       
       const connected = await socketIOService.connect();
       if (connected) {
-        console.log('🏠 Dashboard: Socket.IO connected successfully');
+      
         socketIOService.joinTradingRoom();
         
         // Listen for real-time trading data updates
         socketIOService.onTradingDataUpdate((data: StockData[]) => {
-          console.log('🏠 Dashboard: Real-time update received:', data?.length, 'stocks');
+        
           
           // Queue updates instead of immediately applying them
           const dataArray = Array.isArray(data) ? data : [data];
@@ -356,7 +405,6 @@ const DashboardContent = () => {
           });
         });
       } else {
-        console.log('🏠 Dashboard: Socket.IO connection failed, using periodic refresh');
         // Fallback to periodic refresh every 20 seconds
         const interval = setInterval(() => {
           fetchStocksData();
@@ -543,6 +591,8 @@ const DashboardContent = () => {
   const handleStockSelect = (symbol: string) => {
     // Always set the new symbol, even if it's the same
     setSelectedSymbol(symbol)
+    // Save selected stock to localStorage
+    localStorage.setItem('selectedStock', symbol)
     // Clear search and close search dropdown
     setSearchTerm('')
     setIsSearchOpen(false)
@@ -703,7 +753,7 @@ const DashboardContent = () => {
                               {getCompanyName(stock)}
                             </div>
                           </div>
-                          {stock.Changep !== undefined && (
+                          {stock.Changep != null && typeof stock.Changep === 'number' && !isNaN(stock.Changep) && (
                             <div className={`ml-2 text-[10px] font-semibold ${
                               stock.Changep >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                             }`}>
@@ -744,7 +794,7 @@ const DashboardContent = () => {
             chartInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
         >
-          <div className="h-[400px] sm:h-[400px] md:h-[420px] lg:h-[440px] rounded-md bg-transparent">
+          <div className="h-[400px] sm:h-[400px] md:h-[420px] lg:h-[440px] rounded-md bg-transparent mb-6 md:mb-8">
             <div className="relative w-full h-full  ">
               {displayStockData && (
                 <TradingViewChart 
@@ -847,7 +897,7 @@ const DashboardContent = () => {
       
       )}
     
-      <div ref={orderBookRef}>
+      <div ref={orderBookRef} className="relative mt-6 md:mt-10 lg:mt-12">
         <OrderBook
           selectedSymbol={selectedSymbol}
           loading={orderBookLoading}
@@ -862,7 +912,10 @@ const DashboardContent = () => {
         <StockDetails
           selectedSymbol={selectedSymbol}
           details={companyDetails}
-          infoLabel={isBond ? 'Bond Info' : 'Компанийн мэдээлэл'}
+          infoLabel={isBond ? t('dashboard.bondInfo', 'Bond Info') : t('dashboard.companyInfo', 'Компанийн мэдээлэл')}
+          stockData={displayStockData}
+          weekStats={weekStats}
+          weekStatsLoading={weekStatsLoading}
         />
       </div>
       
@@ -870,10 +923,10 @@ const DashboardContent = () => {
   )
 }
 
-const Dashboard = () => {
+const Dashboard = ({ initialStocks }: DashboardContentProps) => {
   return (
     <ClientOnly>
-      <DashboardContent />
+      <DashboardContent initialStocks={initialStocks} />
     </ClientOnly>
   )
 }

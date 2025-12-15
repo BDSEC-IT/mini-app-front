@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'next/navigation';
 import Cookies from 'js-cookie';
-import { 
+import {
   fetchSecondaryOrders,
+  fetchSecondaryOrderStatus,
   placeSecondaryOrder,
   cancelSecondaryOrder,
   fetchIstockNominalBalance,
@@ -16,10 +17,13 @@ import {
   fetchOrderBook,
   fetchTodayCompletedOrders,
   getUserAccountInformation,
+  getPartnerInfo,
+  BASE_URL,
   type StockData,
   type SecondaryOrderData,
   type EnhancedOrderBookData,
-  type CompletedOrderEntry
+  type CompletedOrderEntry,
+  type PartnerInfo
 } from '@/lib/api';
 import { ArrowLeftIcon, ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
@@ -56,6 +60,7 @@ interface OrderConfirmationModalProps {
     quantity: string;
     price?: string;
     total: number;
+    netTotal: number;
   };
   feeEquity: string | null;
 }
@@ -68,10 +73,6 @@ const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen,
   // Calculate fee and net total
   const feePercent = parseFloat(feeEquity || '1');
   const feeAmount = orderData.total * (feePercent / 100);
-  const netTotal = orderData.side === 'BUY' 
-    ? orderData.total + feeAmount 
-    : orderData.total - feeAmount;
-  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg max-w-sm w-full p-6">
@@ -115,7 +116,7 @@ const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen,
               {t('exchange.netTotal', 'Шимтгэл тооцсон нийт дүн')}:
             </span>
             <span className="text-lg font-extrabold text-gray-900 dark:text-white" style={{ fontFamily: 'system-ui, -apple-system, sans-serif', letterSpacing: '0.01em' }}>
-              {netTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}₮
+              {orderData.netTotal}₮
             </span>
           </div>
         </div>
@@ -123,13 +124,13 @@ const OrderConfirmationModal: React.FC<OrderConfirmationModalProps> = ({ isOpen,
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             {t('exchange.cancel', 'Цуцлах')}
           </button>
           <button
             onClick={onConfirm}
-            className={`flex-1 py-2 px-4 rounded-lg text-white ${
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold text-white ${
               orderData.side === 'BUY' ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
             }`}
           >
@@ -178,6 +179,10 @@ export default function Exchange() {
   const [feeEquity, setFeeEquity] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<any>(null);
+  const [kycPending, setKycPending] = useState<boolean>(false);
+  const [kycPendingMessage, setKycPendingMessage] = useState<string>('');
+  const [partnerInfo, setPartnerInfo] = useState<PartnerInfo | null>(null);
+  const [initialLoading, setInitialLoading] = useState<boolean>(true);
   
   // Form state
   const [orderSide, setOrderSide] = useState<OrderSide>('BUY');
@@ -187,32 +192,32 @@ export default function Exchange() {
   const [orderDuration, setOrderDuration] = useState('GTC'); // GTC, DAY, GTD
   const [expireDate, setExpireDate] = useState<string>(''); // For GTD orders
 
+  // Track if URL params have been processed
+  const urlParamsProcessedRef = React.useRef(false);
+
   // Initialize data
   useEffect(() => {
     const init = async () => {
-      console.log('Exchange: Initializing data...');
-      await Promise.all([
-        fetchAccountInfo(),
-        fetchStockHoldings(),
-        fetchStocks(),
-        fetchOrdersData(),
-        fetchFeeInformation()
-      ]);
+      try {
+        await Promise.all([
+          fetchAccountInfo(),
+          fetchStockHoldings(),
+          fetchStocks(),
+          fetchOrdersData(),
+          fetchPartnerInfoAndStatus()
+        ]);
+      } finally {
+        setInitialLoading(false);
+      }
     };
     init();
-  }, []);
 
-  // Force refresh balance when component mounts (in case it wasn't called before)
-  useEffect(() => {
-    const refreshBalance = async () => {
-      console.log('Exchange: Force refreshing balance...');
-      await fetchAccountInfo();
-    };
-    
-    // Refresh immediately and then every 30 seconds
-    refreshBalance();
-    const interval = setInterval(refreshBalance, 30000);
-    return () => clearInterval(interval);
+    // Set up balance refresh interval (30 seconds)
+    const balanceInterval = setInterval(() => {
+      fetchAccountInfo();
+    }, 30000);
+
+    return () => clearInterval(balanceInterval);
   }, []);
 
   // Auto-refresh order book when stock changes
@@ -229,37 +234,30 @@ export default function Exchange() {
   const fetchAccountInfo = async () => {
     const token = Cookies.get('token');
     if (!token) {
-      console.log('No token found in cookies');
       return;
     }
     
     try {
       const result = await fetchIstockNominalBalance(token);
-      console.log('Account balance API result:', result);
       
       if (result.success && result.data) {
-        console.log('Balance data structure:', result.data);
         
         // Handle if data is an array
         if (Array.isArray(result.data)) {
           const mntBalance = result.data.find((item: any) => item.currency === 'MNT');
           if (mntBalance && mntBalance.balance !== undefined) {
             setAccountBalance(mntBalance.balance);
-            console.log('Set account balance to:', mntBalance.balance);
           } else {
-            console.log('No MNT balance found in array data');
             setAccountBalance(0);
           }
         } 
         // Handle if data is an object with balance property
         else if (typeof result.data === 'object' && result.data.balance !== undefined) {
           setAccountBalance(result.data.balance);
-          console.log('Set account balance to:', result.data.balance);
         }
         // Handle if data is an object with MNT property
         else if (typeof result.data === 'object' && result.data.MNT !== undefined) {
           setAccountBalance(result.data.MNT);
-          console.log('Set account balance to:', result.data.MNT);
         }
         // Handle other object structures
         else if (typeof result.data === 'object') {
@@ -267,17 +265,13 @@ export default function Exchange() {
           const possibleBalance = Object.values(result.data).find(val => typeof val === 'number');
           if (possibleBalance !== undefined) {
             setAccountBalance(possibleBalance as number);
-            console.log('Set account balance to:', possibleBalance);
           } else {
-            console.log('No balance found in object data:', result.data);
             setAccountBalance(0);
           }
         } else {
-          console.log('Unexpected data structure:', result.data);
           setAccountBalance(0);
         }
       } else {
-        console.log('API call failed or no data:', result);
         setAccountBalance(0);
       }
     } catch (error) {
@@ -286,25 +280,104 @@ export default function Exchange() {
     }
   };
 
-  const fetchFeeInformation = async () => {
+  // Fetch partner info to check trading status and get fees
+  const fetchPartnerInfoAndStatus = async () => {
     const token = Cookies.get('token');
     if (!token) {
-      console.log('No token found in cookies');
+      setFeeEquity('1'); // Default fee
       return;
     }
     
     try {
-      const result = await getUserAccountInformation(token);
-      console.log('Account information API result:', result);
+      const result = await getPartnerInfo(token);
       
-      if (result.success && result.data) {
-        const feeEquityValue = result.data.FeeEquity || '1';
-        setFeeEquity(feeEquityValue);
-        console.log('Set fee equity to:', feeEquityValue);
+      if (result.success && result.data && result.data.length > 0) {
+        const partner = result.data[0];
+        setPartnerInfo(partner);
+        
+        // Set fee from partner info (secondFeeStock is the equity trading fee percentage)
+        const stockFee = partner.secondFeeStock?.toString() || '1';
+        setFeeEquity(stockFee);
+        
+        // Check if user can trade
+        if (partner.state === 'confirmed') {
+          // User is confirmed, can trade
+          setKycPending(false);
+          setKycPendingMessage('');
+        } else {
+          // User's partner account is not confirmed
+          setKycPending(true);
+          setKycPendingMessage(t('exchange.partnerNotConfirmed', 'Таны данс баталгаажаагүй байна. Захиалга өгөх боломжгүй.'));
+        }
+      } else {
+        // No partner info - user hasn't completed KYC or it's pending
+        setFeeEquity('1');
+        
+        // Check KYC status to show appropriate message
+        await checkKycStatus(token);
       }
     } catch (error) {
-      console.error('Error fetching fee information:', error);
-      setFeeEquity('1'); // Default to 1% if fetch fails
+      console.error('Error fetching partner info:', error);
+      setFeeEquity('1');
+      
+      // Fallback to checking KYC status
+      const token = Cookies.get('token');
+      if (token) {
+        await checkKycStatus(token);
+      }
+    }
+  };
+
+  // Helper function to check KYC status when partner info is not available
+  const checkKycStatus = async (token: string) => {
+    try {
+      // Check KYC pictures status
+      const kycPicturesRes = await fetch(`${BASE_URL}/kyc/pictures`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const kycPicturesData = await kycPicturesRes.json();
+      
+      if (kycPicturesData.success && kycPicturesData.data?.status === 'PENDING') {
+        setKycPending(true);
+        setKycPendingMessage(t('exchange.kycPending', 'Таны KYC хүсэлт хянагдаж байна'));
+        return;
+      }
+
+      // Check KYC additional status
+      const kycAdditionalRes = await fetch(`${BASE_URL}/kyc/additional`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const kycAdditionalData = await kycAdditionalRes.json();
+      
+      if (kycAdditionalData.success && kycAdditionalData.data?.id) {
+        const status = kycAdditionalData.data.status;
+        if (!status || status === 'PENDING' || status === 'pending') {
+          setKycPending(true);
+          setKycPendingMessage(t('exchange.onlineClientPending', 'Таны онлайн харилцагч хүсэлт хянагдаж байна'));
+          return;
+        }
+      }
+
+      // If no KYC data at all, user needs to complete KYC
+      if (!kycPicturesData.data && !kycAdditionalData.data) {
+        setKycPending(true);
+        setKycPendingMessage(t('exchange.kycRequired', 'Арилжаанд оролцохын тулд KYC бүртгүүлнэ үү'));
+        return;
+      }
+
+      // No pending requests found
+      setKycPending(false);
+      setKycPendingMessage('');
+    } catch (error) {
+      console.error('Error checking KYC status:', error);
     }
   };
 
@@ -313,7 +386,6 @@ export default function Exchange() {
     if (!token) return;
     try {
       const result = await fetchIstockBalanceAsset(token);
-      console.log('Stock holdings result:', result);
       if (result.success && result.data) {
         setStockHoldings(result.data);
         // Calculate total stock balance
@@ -335,11 +407,9 @@ export default function Exchange() {
 
   const fetchStocks = async () => {
     try {
-      const result = await fetchCompanies(1, 5000);
-      console.log('Companies API result:', result);
+      const result = await fetchCompanies(1, 500); // Get enough stocks to include all trading symbols
       
       if (result.success && result.data) {
-        console.log('Raw companies data:', result.data);
         
         const tradingStocks = result.data
           .filter(company => {
@@ -389,31 +459,8 @@ export default function Exchange() {
             createdAt: '',
             updatedAt: ''
           }));
-        
-        console.log('Processed trading stocks:', tradingStocks);
-        console.log('Total stocks after filtering:', tradingStocks.length);
-        
         setStocks(tradingStocks as StockData[]);
-        
-        // Try to find and select BDS as default, then fallback to others
-        console.log('=== STOCK SELECTION DEBUG ===');
-        console.log('Available stock symbols:', tradingStocks.map(s => s.Symbol));
-        const bdsStock = tradingStocks.find(stock => stock.Symbol.includes('BDS'));
-        console.log('BDS stock found:', bdsStock ? `YES - ${bdsStock.Symbol}` : 'NO');
-        console.log('Total stocks available:', tradingStocks.length);
-        
-        const defaultStock = bdsStock ||
-          tradingStocks.find(stock => ['KHAN', 'APU', 'MSM', 'TDB', 'SBN'].includes(stock.Symbol)) ||
-          tradingStocks[0];
-        
-        if (defaultStock) {
-          console.log('Selected default stock:', defaultStock.Symbol);
-          setSelectedStock(defaultStock);
-          // Fetch real price data
-          fetchStockPrice(defaultStock.Symbol);
-        } else {
-          console.log('No stocks available');
-        }
+        // Stock selection is now handled in the URL params useEffect
       }
     } catch (error) {
       console.error('Error fetching stocks:', error);
@@ -423,7 +470,6 @@ export default function Exchange() {
   const fetchStockPrice = async (symbol: string) => {
     try {
       const result = await fetchSpecificStockData(symbol);
-      console.log(`Fetching price for ${symbol}:`, result);
 
       if (result.success && result.data) {
         const stockData = Array.isArray(result.data) ? result.data[0] : result.data;
@@ -454,29 +500,150 @@ export default function Exchange() {
     const side = searchParams.get('side');
     const priceParam = searchParams.get('price');
 
-    if (symbol && side) {
-      // Find the stock
-      const stock = stocks.find(s => s.Symbol === symbol || s.Symbol.startsWith(symbol));
+    // Process URL params first (highest priority)
+    const processUrlParams = async () => {
+      if (symbol && side && !urlParamsProcessedRef.current) {
+      // Remove -O-0000 suffix from URL symbol to match stock symbols
+      const cleanSymbol = symbol.replace('-O-0000', '').trim();
+
+      // Find the stock - match exact symbol or base symbol
+      const stock = stocks.find(s => {
+        const stockSymbol = s.Symbol.trim();
+        return stockSymbol === cleanSymbol ||
+               stockSymbol === symbol ||
+               stockSymbol.startsWith(cleanSymbol) ||
+               cleanSymbol.startsWith(stockSymbol);
+      });
+
       if (stock) {
+        // Mark as processed
+        urlParamsProcessedRef.current = true;
+
+        // Always update stock
         setSelectedStock(stock);
         fetchStockPrice(stock.Symbol);
-      }
 
-      // Set order side
-      if (side === 'BUY' || side === 'SELL') {
-        setOrderSide(side as OrderSide);
-      }
+        // Set order side
+        if (side === 'BUY' || side === 'SELL') {
+          setOrderSide(side as OrderSide);
+        }
 
-      // Set price if provided
-      if (priceParam) {
-        setPrice(priceParam);
-        setOrderType('Нөхцөлт'); // Set to limit order
-      }
+        // Set price if provided
+        if (priceParam) {
+          setPrice(priceParam);
+          setOrderType('Нөхцөлт'); // Set to limit order
+        }
 
-      // Clear URL parameters after setting
-      window.history.replaceState({}, '', '/exchange');
-    }
-  }, [stocks, searchParams]);
+        // Clear URL parameters after processing
+        setTimeout(() => {
+          window.history.replaceState({}, '', '/exchange');
+        }, 100);
+      } else {
+        // Try to fetch the specific stock data
+        try {
+          const stockResult = await fetchSpecificStockData(cleanSymbol);
+          if (stockResult.success && stockResult.data) {
+            const stockData = Array.isArray(stockResult.data) ? stockResult.data[0] : stockResult.data;
+            if (stockData) {
+              // Create a stock object from the fetched data
+              const newStock: StockData = {
+                id: 0,
+                Symbol: cleanSymbol,
+                mnName: '',
+                enName: '',
+                PreviousClose: stockData.PreviousClose || stockData.ClosingPrice || 0,
+                Changes: stockData.Changes || 0,
+                Changep: stockData.Changep || 0,
+                pkId: 0,
+                Volume: stockData.Volume || 0,
+                Turnover: stockData.Turnover || 0,
+                MDSubOrderBookType: '',
+                LastTradedPrice: stockData.LastTradedPrice || 0,
+                ClosingPrice: stockData.ClosingPrice || 0,
+                OpeningPrice: stockData.OpeningPrice || 0,
+                VWAP: 0,
+                MDEntryTime: '',
+                trades: 0,
+                HighPrice: stockData.HighPrice || 0,
+                LowPrice: stockData.LowPrice || 0,
+                MarketSegmentID: '',
+                sizemd: '',
+                MDEntryPx: 0,
+                sizemd2: '',
+                MDEntryPx2: 0,
+                HighestBidPrice: 0,
+                LowestOfferPrice: 0,
+                AuctionClearingPrice: 0,
+                Imbalance: 0,
+                BuyOrderVWAP: 0,
+                SellOrderVWAP: 0,
+                BuyOrderQty: 0,
+                SellOrderQty: 0,
+                OpenIndicator: '',
+                CloseIndicator: '',
+                TradeCondition: '',
+                securityType: '',
+                dates: '',
+                createdAt: '',
+                updatedAt: ''
+              };
+
+              // Add to stocks list
+              setStocks(prev => [...prev, newStock]);
+              setSelectedStock(newStock);
+
+              // Set order side and price
+              if (side === 'BUY' || side === 'SELL') {
+                setOrderSide(side as OrderSide);
+              }
+              if (priceParam) {
+                setPrice(priceParam);
+                setOrderType('Нөхцөлт');
+              }
+            }
+          }
+        } catch (error) {
+          // Silent fail - will fall back to default stock
+        }
+
+        // Mark as processed
+        urlParamsProcessedRef.current = true;
+        // Clear params
+        window.history.replaceState({}, '', '/exchange');
+      }
+      } else if (!symbol && !side && !selectedStock && stocks.length > 0 && !urlParamsProcessedRef.current) {
+        // Only set default stock if:
+        // 1. No URL params at all
+        // 2. No stock selected yet
+        // 3. Haven't processed URL params (prevents setting default after URL params clear)
+        
+        // Check if there's a selected stock from localStorage (from dashboard)
+        const storedSymbol = typeof window !== 'undefined' ? localStorage.getItem('selectedStock') : null;
+        let defaultStock = null;
+        
+        if (storedSymbol) {
+          // Try to find the stock from localStorage
+          defaultStock = stocks.find(stock => stock.Symbol === storedSymbol || stock.Symbol.split('-')[0] === storedSymbol.split('-')[0]);
+        }
+        
+        // If no stock in localStorage or not found, fall back to default logic
+        if (!defaultStock) {
+          const bdsStock = stocks.find(stock => stock.Symbol.includes('BDS'));
+          defaultStock = bdsStock ||
+            stocks.find(stock => ['KHAN', 'APU', 'MSM', 'TDB', 'SBN'].includes(stock.Symbol)) ||
+            stocks[0];
+        }
+
+        if (defaultStock) {
+          setSelectedStock(defaultStock);
+          fetchStockPrice(defaultStock.Symbol);
+        }
+      }
+    };
+
+    // Call the async function
+    processUrlParams();
+  }, [stocks, searchParams, selectedStock]);
 
   const fetchOrdersData = async () => {
     const token = Cookies.get('token');
@@ -487,11 +654,41 @@ export default function Exchange() {
       if (result.success && result.data) {
         // Sort orders by date in descending order (newest first)
         const sortedOrders = result.data.sort((a: any, b: any) => {
-          const dateA = new Date(a.createdAt || a.date || 0).getTime();
-          const dateB = new Date(b.createdAt || b.date || 0).getTime();
+          const dateA = new Date(a.createdDate || a.createdAt || a.date || 0).getTime();
+          const dateB = new Date(b.createdDate || b.createdAt || b.date || 0).getTime();
           return dateB - dateA; // Descending order
         });
         setOrders(sortedOrders);
+
+        // Fetch execution details in background for active orders only (non-blocking)
+        // This prevents blocking the UI while loading
+        sortedOrders
+          .filter(order => order.statusname === 'Active' || order.statusname === 'PartiallyFilled')
+          .slice(0, 10) // Only fetch details for first 10 active orders
+          .forEach(async (order) => {
+            try {
+              const statusResult = await fetchSecondaryOrderStatus(order.id, token);
+              if (statusResult.success && statusResult.data?.executions) {
+                const totalExecuted = statusResult.data.executions.reduce(
+                  (sum: number, exec: any) => sum + (exec.execQty || 0),
+                  0
+                );
+                // Update the specific order in state
+                setOrders(prev => prev.map(o =>
+                  o.id === order.id
+                    ? {
+                        ...o,
+                        cumQty: totalExecuted,
+                        leavesQty: o.quantity - totalExecuted,
+                        executions: statusResult.data.executions
+                      }
+                    : o
+                ));
+              }
+            } catch (e) {
+              console.error('Error fetching status for order', order.id, ':', e);
+            }
+          });
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -505,7 +702,6 @@ export default function Exchange() {
     try {
       // Try to get more data by adding parameters
       const enhancedUrl = `${symbol}-O-0000`;
-      console.log('Fetching orderbook for:', enhancedUrl);
       
       const [orderBookResult, completedResult] = await Promise.all([
         fetchEnhancedOrderBook(enhancedUrl, token || undefined, 20), // Request 20 entries
@@ -513,16 +709,10 @@ export default function Exchange() {
       ]);
 
       if (orderBookResult.success) {
-        console.log('OrderBook data received:', orderBookResult.data);
-        console.log('Buy orders count:', orderBookResult.data?.buy?.length || 0);
-        console.log('Sell orders count:', orderBookResult.data?.sell?.length || 0);
-        console.log('API source:', orderBookResult.source);
         setOrderBook(orderBookResult.data);
       } else {
-        console.log('Enhanced orderbook failed, trying regular orderbook...');
         // Fallback to regular orderbook API if enhanced fails
         const regularOrderBook = await fetchOrderBook(symbol);
-        console.log('Regular orderbook result:', regularOrderBook);
       }
       if (completedResult.success) {
         setCompletedOrders(completedResult.data.assetTradeList.slice(0, 10));
@@ -597,7 +787,8 @@ export default function Exchange() {
       type: orderType,
       quantity: quantity,
       price: orderType === 'Нөхцөлт' ? price : undefined,
-      total: calculateTotal()
+      total: calculateTotal(),
+      netTotal: calculateNetTotal()
     };
 
     setPendingOrder(orderData);
@@ -720,10 +911,18 @@ export default function Exchange() {
 
   const calculateTotal = () => {
     const qty = parseFloat(quantity) || 0;
-    const orderPrice = orderType === 'Зах зээлийн' 
+    const orderPrice = orderType === 'Зах зээлийн'
       ? (selectedStock?.PreviousClose || selectedStock?.LastTradedPrice || 0)
       : (parseFloat(price) || 0);
-    return (qty * orderPrice * 1.001); // Include 0.1% fee
+    const total = qty * orderPrice;
+    return total;
+  }
+  const calculateNetTotal = () => {
+    const feePercent = parseFloat(feeEquity || '1');
+    const total= calculateTotal();
+    const feeAmount = total * (feePercent / 100);
+    const netTotal = orderSide === 'BUY' ? total + feeAmount : total - feeAmount;
+    return netTotal;
   };
 
   const adjustPriceByStep = (currentPrice: string, direction: 'up' | 'down') => {
@@ -781,7 +980,7 @@ export default function Exchange() {
           <button onClick={() => setShowPriceSteps(false)} className="mr-3">
             <ArrowLeftIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </button>
-          <h1 className="text-lg font-medium text-gray-900 dark:text-white">{t('exchange.priceSteps', 'Үнийн алхам')}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('exchange.priceSteps', 'Үнийн алхам')}</h1>
         </div>
         <div className="p-4">
           <div className="grid grid-cols-2 gap-4 mb-4 text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -819,6 +1018,29 @@ export default function Exchange() {
         selectedStock={selectedStock}
         onSelectStock={handleSelectStock}
       />
+    );
+  }
+
+  // Show loading state while initial data loads OR no stock selected yet
+  if (initialLoading || (!selectedStock && stocks.length === 0)) {
+    return (
+      <div className="w-full bg-white dark:bg-gray-900 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 dark:border-indigo-400 mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">{t('exchange.loading', 'Уншиж байна...')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If stocks loaded but no stock selected, show error state
+  if (!selectedStock && stocks.length > 0) {
+    return (
+      <div className="w-full bg-white dark:bg-gray-900 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">{t('exchange.noStockSelected', 'Хувьцаа сонгоно уу')}</p>
+        </div>
+      </div>
     );
   }
 
@@ -870,7 +1092,7 @@ export default function Exchange() {
           <div className="flex mb-3 items-center gap-6">
             <button
               onClick={() => setActiveTab('orderbook')}
-              className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+              className={`px-4 py-2 text-sm font-bold transition-colors relative ${
                 activeTab === 'orderbook'
                   ? 'text-blue-600 dark:text-blue-400'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -883,7 +1105,7 @@ export default function Exchange() {
             </button>
             <button
               onClick={() => setActiveTab('chart')}
-              className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+              className={`px-4 py-2 text-sm font-bold transition-colors relative ${
                 activeTab === 'chart'
                   ? 'text-blue-600 dark:text-blue-400'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -935,6 +1157,7 @@ export default function Exchange() {
             accountBalance={accountBalance}
             selectedStockHolding={selectedStockHolding}
             calculateTotal={calculateTotal}
+            calculateNetTotal={calculateNetTotal}
             formatNumber={formatNumber}
             getMaxQuantity={getMaxQuantity}
             adjustPriceByStep={adjustPriceByStep}
@@ -945,6 +1168,8 @@ export default function Exchange() {
             placing={placing}
             onPlaceOrder={handlePlaceOrder}
             feeEquity={feeEquity}
+            kycPending={kycPending}
+            kycPendingMessage={kycPendingMessage}
           />
 
           {/* Order Confirmation Modal */}
@@ -969,6 +1194,7 @@ export default function Exchange() {
         formatNumber={formatNumber}
         onCancelOrder={handleCancelOrder}
         feeEquity={feeEquity}
+        selectedSymbol={selectedStock?.Symbol}
       />
     </div>
   );

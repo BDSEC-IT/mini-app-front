@@ -175,7 +175,6 @@ const FAQ = () => {
         }
         
         const typesData = await typesResponse.json()
-        console.log('FAQ Types API response:', typesData)
         
         // Fetch FAQ items using the proxy
         const itemsResponse = await fetch(`${FAQ_API_BASE_URL}`)
@@ -186,7 +185,6 @@ const FAQ = () => {
         }
         
         const itemsData = await itemsResponse.json()
-        console.log('FAQ Items API response:', itemsData)
         
         // Check if we have valid data
         if (!typesData.data || !Array.isArray(typesData.data)) {
@@ -203,7 +201,6 @@ const FAQ = () => {
         setFaqItems(itemsData.data)
       } catch (err) {
         console.error('Error fetching FAQ data:', err)
-        console.log('Using sample data as fallback')
         // Use sample data as fallback
         setFaqTypes(SAMPLE_FAQ_TYPES)
         setFaqItems(SAMPLE_FAQ_ITEMS)

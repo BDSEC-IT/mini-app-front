@@ -6,15 +6,22 @@ import { Home, Wallet, TrendingUp, Building, Lock, Landmark, Newspaper, BarChart
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
-import { getUserAccountInformation, type UserAccountResponse } from '@/lib/api'
+import { getUserAccountInformation, hasActiveMCSDAccount, type UserAccountResponse } from '@/lib/api'
 import Cookies from 'js-cookie'
 
 const BottomNavigation = () => {
   const pathname = usePathname()
   const { t } = useTranslation()
 
-  // Window width state must be defined first
-  const [winW, setWinW] = useState(typeof window !== 'undefined' ? window.innerWidth : 0)
+  // Use 390 as default SSR value to prevent hydration mismatch (common mobile width)
+  const [winW, setWinW] = useState(390)
+  const [mounted, setMounted] = useState(false)
+
+  // Update window width after mount to get actual value
+  useEffect(() => {
+    setMounted(true)
+    setWinW(window.innerWidth)
+  }, [])
 
   // Responsive icon and text sizing
   const iconSize = Math.max(16, Math.min(22, winW * 0.055));
@@ -24,6 +31,7 @@ const BottomNavigation = () => {
   const [accountInfo, setAccountInfo] = useState<UserAccountResponse['data'] | null>(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [safeInsetBottom, setSafeInsetBottom] = useState<number>(0)
   const [showTooltip, setShowTooltip] = useState<'balance' | 'portfolio' | 'news' | 'exchange' | null>(null)
   
   useEffect(() => {
@@ -44,8 +52,31 @@ const BottomNavigation = () => {
     }
     checkAccountStatus()
   }, [])
+
+  // Freeze safe-area inset bottom on mount to prevent bouncing on iOS/SuperApp webviews
+  useEffect(() => {
+    const measureInset = () => {
+      try {
+        const el = document.createElement('div')
+        el.style.cssText = 'position:fixed;pointer-events:none;visibility:hidden;padding-bottom:env(safe-area-inset-bottom);'
+        document.body.appendChild(el)
+        const val = parseFloat(getComputedStyle(el).paddingBottom || '0') || 0
+        document.body.removeChild(el)
+        // Clamp to reasonable range
+        setSafeInsetBottom(Math.max(0, Math.min(40, val)))
+      } catch (_) {
+        setSafeInsetBottom(0)
+      }
+    }
+    measureInset()
+    // Recompute only on orientation change which genuinely alters inset
+    const onOrient = () => measureInset()
+    window.addEventListener('orientationchange', onOrient)
+    return () => window.removeEventListener('orientationchange', onOrient)
+  }, [])
   
-  const accountOpened = !!accountInfo?.superAppAccounts?.some((a: any) => !!a.MCSDAccountId);
+  // CRITICAL: Only consider account opened if DGStatus === 'COMPLETED'
+  const accountOpened = hasActiveMCSDAccount(accountInfo);
 
   const handleMenuClick = (e: React.MouseEvent, type: 'balance' | 'portfolio' | 'news' | 'exchange') => {
     if (!isLoggedIn || !accountOpened) {
@@ -134,26 +165,29 @@ const BottomNavigation = () => {
   
   const renderNavItem = useCallback((item: typeof basicNavItems[0] | typeof advancedNavItems[0]) => {
       const isButton = accountOpened;
-      const className = `flex flex-col items-center ${isActive(item.href) ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`;
+      // Use brighter colors only on exchange page
+      const baseColor = pathname === '/exchange' ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400';
+      const className = `flex flex-col items-center ${isActive(item.href) ? 'text-bdsec dark:text-indigo-400' : baseColor}`;
       
       // Specific icon size for Newspaper icon to ensure consistency
       const iconSizeToUse = item.name === 'news' ? Math.max(16, Math.min(20, winW * 0.05)) : iconSize;
+      const strokeWidth = pathname === '/exchange' ? 2.5 : 2;
 
       if (isButton) {
           return (
               <div className="relative" key={item.name}>
-                  <button onClick={(e) => handleMenuClick(e, item.name as any)} className={`${className} hover:text-bdsec dark:hover:text-indigo-400`}>
-                      <item.icon size={iconSizeToUse} />
-                      <span className={`${textSize} mt-1`}>{item.label}</span>
+                  <button onClick={(e) => handleMenuClick(e, item.name as any)} className={`${className} hover:text-bdsec dark:hover:text-indigo-400 ${pathname === '/exchange' ? 'px-2 py-1' : ''} rounded-lg transition-colors`}>
+                      <item.icon size={iconSizeToUse} strokeWidth={strokeWidth} />
+                      <span className={`${textSize} mt-1 ${pathname === '/exchange' ? 'font-medium' : ''}`}>{item.label}</span>
                   </button>
               </div>
           );
       }
 
       return (
-          <Link href={item.href} className={className} key={item.name}>
-              <item.icon size={iconSizeToUse} />
-              <span className={`${textSize} mt-1`}>{item.label}</span>
+          <Link href={item.href} className={`${className} ${pathname === '/exchange' ? 'px-2 py-1' : ''} rounded-lg transition-colors`} key={item.name}>
+              <item.icon size={iconSizeToUse} strokeWidth={strokeWidth} />
+              <span className={`${textSize} mt-1 ${pathname === '/exchange' ? 'font-medium' : ''}`}>{item.label}</span>
           </Link>
       );
   }, [accountOpened, isActive, handleMenuClick, iconSize, textSize, winW]);
@@ -180,11 +214,23 @@ const BottomNavigation = () => {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-none" style={{ paddingBottom: 'env(safe-area-inset-bottom)', minHeight: BAR_H }}>
-      <div className="relative" style={{ height: BAR_H }}>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-none will-change-transform" style={{ paddingBottom: `${safeInsetBottom}px`, minHeight: BAR_H, transform: 'translateZ(0)' }} suppressHydrationWarning>
+      <div className="relative" style={{ height: BAR_H }} suppressHydrationWarning>
         {pathname === '/exchange' ? (
-          // Simple flat background for exchange page
-          <div className="absolute inset-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700" />
+          // Modern gradient background for exchange page with rounded top corners and glow effect
+          <>
+            {/* Main background with rounded corners */}
+            <div className="absolute inset-0 overflow-hidden rounded-t-[28px]">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/98 via-white to-white dark:from-gray-900/98 dark:via-gray-900 dark:to-gray-900" />
+              <div className="absolute inset-0 backdrop-blur-md" />
+            </div>
+            {/* Border */}
+            {/* <div className="absolute top-0 left-0 right-0 h-[10px] bg-gray-200/80 dark:bg-gray-700/80 rounded-t-[28px]" /> */}
+            {/* Subtle top glow line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-bdsec/30 dark:via-indigo-500/30 to-transparent" />
+            {/* Inner shadow for depth */}
+            <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-100/20 to-transparent dark:from-gray-800/20 dark:to-transparent pointer-events-none rounded-t-[28px]" />
+          </>
         ) : (
           // Curved background for other pages
           <div className="absolute inset-0 flex items-start">
@@ -198,7 +244,7 @@ const BottomNavigation = () => {
           </div>
         )}
 
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none mx-6">
           {/* Conditionally hide exchange button when on /exchange page */}
           {pathname !== '/exchange' && (
             <div className={`absolute left-1/2 -translate-x-1/2 translate-y-1 z-30 pointer-events-auto`} style={{ top: -topOffset - buttonSize/2 }}>
@@ -238,12 +284,12 @@ const BottomNavigation = () => {
               </div>
             </div>
           )}
-          <div className={`absolute bottom-2 inset-x-0 flex items-center px-4 pointer-events-auto z-30 ${
+          <div className={`absolute bottom-2 inset-x-0 flex items-center px-5 pointer-events-auto z-30 ${
             pathname === '/exchange' ? 'justify-evenly' : 'justify-between'
           }`}>
-            <Link href="/" className={`flex flex-col items-center ${isActive('/') ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400'}`}>
-                <Home size={iconSize} />
-                <span className={`${textSize} mt-1`}>{t('nav.home')}</span>
+            <Link href="/" className={`flex flex-col items-center ${pathname === '/exchange' ? 'px-2 py-1' : ''} rounded-lg transition-colors ${isActive('/') ? 'text-bdsec dark:text-indigo-400' : pathname === '/exchange' ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400'}`}>
+                <Home size={iconSize} strokeWidth={pathname === '/exchange' ? 2.5 : 2} />
+                <span className={`${textSize} mt-1 ${pathname === '/exchange' ? 'font-medium' : ''}`}>{t('nav.home')}</span>
             </Link>
             {renderNavItem(itemsToShow[0])}
             {pathname !== '/exchange' && <div style={{ width: buttonSize }} />}

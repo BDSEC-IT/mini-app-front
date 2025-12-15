@@ -559,7 +559,6 @@ const StockListComponent = ({
 
 // Memoize the component to prevent unnecessary re-renders
 export const StockList = React.memo(StockListComponent, (prevProps, nextProps) => {
-  console.log(prevProps, nextProps)
   // Simplified comparison to reduce computation and prevent over-optimization
   if (prevProps.loading !== nextProps.loading) return false;
   if (prevProps.activeFilter !== nextProps.activeFilter) return false;

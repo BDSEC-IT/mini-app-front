@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import { Button } from '../ui';
 import { CancelOrderModal } from './CancelOrderModal';
+import { OrderDetailModal } from './OrderDetailModal';
+import { History } from 'lucide-react';
 
 type OrderTab = 'active' | 'completed' | 'cancelled';
+
+interface Execution {
+  execPrice: number;
+  execQty: number;
+  execDate: string;
+  execAmount: number;
+}
 
 interface OrderData {
   id: string;
@@ -11,6 +21,12 @@ interface OrderData {
   buySell: 'BUY' | 'SELL';
   quantity: number;
   price: number;
+  symbol?: string;
+  createdDate: string;
+  cumQty?: number;
+  date?: string;
+  leavesQty?: number;
+  executions?: Execution[];
 }
 
 interface MyOrdersProps {
@@ -21,6 +37,7 @@ interface MyOrdersProps {
   formatNumber: (num: number) => string;
   onCancelOrder: (orderId: string) => void;
   feeEquity?: string | null;
+  selectedSymbol?: string; // New: Filter by this symbol
 }
 
 export const MyOrders: React.FC<MyOrdersProps> = ({
@@ -30,22 +47,81 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
   setOrderTab,
   formatNumber,
   onCancelOrder,
-  feeEquity
+  feeEquity,
+  selectedSymbol
 }) => {
   const { t } = useTranslation('common');
+  const router = useRouter();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<OrderData | null>(null);
+  const [showOrderDetailModal, setShowOrderDetailModal] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 5;
 
-  const filteredOrders = orders.filter(order => {
-    if (orderTab === 'active') return order.statusname === 'pending';
-    if (orderTab === 'completed') return order.statusname === 'completed';
-    if (orderTab === 'cancelled') return order.statusname === 'cancelled';
-    return false;
-  });
+  // Filter by selected symbol first, then by status
+  const symbolFilteredOrders = selectedSymbol
+    ? orders.filter(order => {
+        const orderSymbol = order.symbol?.split('-')[0]?.toUpperCase() || '';
+        const targetSymbol = selectedSymbol.split('-')[0]?.toUpperCase() || '';
+        return orderSymbol === targetSymbol;
+      })
+    : orders;
+
+  const filteredOrders = symbolFilteredOrders
+    .filter(order => {
+      const status = order.statusname?.toLowerCase();
+      if (orderTab === 'active') {
+        // Active includes pending, Active, and PartiallyFilled
+        return status === 'pending' || status === 'active' || status === 'partiallyfilled';
+      }
+      if (orderTab === 'completed') {
+        return status === 'completed' || status === 'filled' || status === 'expired';
+      }
+      if (orderTab === 'cancelled') {
+        return status === 'cancelled';
+      }
+      return false;
+    })
+    .sort((a, b) => {
+      if (!a.createdDate || !b.createdDate) return 0;
+      return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
+    });
+
+  // Get counts for tabs (based on symbol-filtered orders)
+  const tabCounts = {
+    active: symbolFilteredOrders.filter(o => {
+      const s = o.statusname?.toLowerCase();
+      return s === 'pending' || s === 'active' || s === 'partiallyfilled';
+    }).length,
+    completed: symbolFilteredOrders.filter(o => {
+      const s = o.statusname?.toLowerCase();
+      return s === 'completed' || s === 'filled' || s === 'expired';
+    }).length,
+    cancelled: symbolFilteredOrders.filter(o => o.statusname?.toLowerCase() === 'cancelled').length
+  };
+
+  // Pagination
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * ordersPerPage,
+    currentPage * ordersPerPage
+  );
+
+  // Reset to page 1 when tab changes
+  const handleTabChange = (tab: OrderTab) => {
+    setOrderTab(tab);
+    setCurrentPage(1);
+  };
 
   const handleCancelClick = (order: OrderData) => {
     setOrderToCancel(order);
     setShowCancelModal(true);
+  };
+
+  const handleOrderDetailClick = (order: OrderData) => {
+    setSelectedOrderId(order.id);
+    setShowOrderDetailModal(true);
   };
 
   const handleConfirmCancel = () => {
@@ -54,12 +130,17 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
     }
   };
 
+  const handleOrderCancelled = () => {
+    // Refresh orders or handle order cancellation
+    window.location.reload();
+  };
+
   // Calculate fee-adjusted total
   const calculateTotal = (order: OrderData) => {
     const baseTotal = order.quantity * order.price;
     const feePercent = parseFloat(feeEquity || '1');
     const feeAmount = baseTotal * (feePercent / 100);
-    
+
     if (order.buySell === 'BUY') {
       return baseTotal + feeAmount;
     } else {
@@ -67,28 +148,76 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
     }
   };
 
+  // Format date and time from createdDate
+  const formatDateTime = (dateString?: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}/${month}/${day} ${hours}:${minutes}`;
+  };
+  const formatExecutionDate = (dateString: string) => {
+    const date = new Date(dateString);
+    // Add 8 hours for timezone
+    date.setHours(date.getHours() );
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  };
+  // Check if order is partial (by status or by cumQty)
+  const isPartialOrder = (order: OrderData) => {
+    // Check by statusname first
+    const status = order.statusname?.toLowerCase();
+    if (status === 'partiallyfilled') return true;
+    // Then check by cumQty
+    if (order.cumQty === undefined || order.cumQty === 0) return false;
+    return order.cumQty > 0 && order.cumQty < order.quantity;
+  };
+
+  // Navigate to all orders page
+  const handleViewAllOrders = () => {
+    router.push('/all-orders');
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-900 mx-3 mt-3 mb-6 rounded-lg border border-gray-200 dark:border-gray-700">
-      {/* Header - More Compact */}
-      <div className="px-3 py-2">
-        <div className="flex items-center justify-between mb-1.5">
-          <h3 className="text-[14px] font-medium text-gray-700 dark:text-gray-300">
-            {t('exchange.myOrders', 'Миний захиалгууд')}
+    <div className="bg-white dark:bg-gray-900 mx-3 mt-3 mb-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-medium text-gray-900 dark:text-white">
+            {selectedSymbol 
+              ? t('exchange.myOrdersForStock', '{{symbol}} захиалгууд', { symbol: selectedSymbol.split('-')[0] })
+              : t('exchange.myOrders', 'Миний захиалгууд')
+            }
           </h3>
+          <button
+            onClick={handleViewAllOrders}
+            className="flex items-center gap-1.5 text-xs text-bdsec dark:text-indigo-400 hover:text-bdsec/80 dark:hover:text-indigo-300 transition-colors"
+          >
+            <History className="w-3.5 h-3.5" />
+            {t('exchange.viewAllOrders', 'Бүх түүх')}
+          </button>
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
           {[
-            { key: 'active', label: t('exchange.activeOrders', 'Идэвхтэй'), count: orders.filter(o => o.statusname === 'pending').length },
-            { key: 'completed', label: t('exchange.completedOrdersTab', 'Биелсэн'), count: orders.filter(o => o.statusname === 'completed').length },
-            { key: 'cancelled', label: t('exchange.cancelledOrders', 'Цуцлагдсан'), count: orders.filter(o => o.statusname === 'cancelled').length }
+            { key: 'active', label: t('exchange.activeOrders', 'Идэвхтэй'), count: tabCounts.active },
+            { key: 'completed', label: t('exchange.completedOrdersTab', 'Биелсэн'), count: tabCounts.completed },
+            { key: 'cancelled', label: t('exchange.cancelledOrders', 'Цуцлагдсан'), count: tabCounts.cancelled }
           ].map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setOrderTab(tab.key as OrderTab)}
-              className={`px-2 py-0.5 text-[12px] mb-3 font-medium rounded transition-colors ${
+              onClick={() => handleTabChange(tab.key as OrderTab)}
+              className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                 orderTab === tab.key
-                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               {tab.label} ({tab.count})
@@ -97,66 +226,129 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
         </div>
       </div>
       
-      {/* Order Content - Compact */}
-      <div className="px-3 pb-2">
+      {/* Order Content */}
+      <div className="p-3">
         {loading ? (
           <div className="space-y-2">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center justify-between py-1.5 px-2 mb-1 bg-gray-50 dark:bg-gray-800/30 rounded">
-                <div className="flex-1">
-                  <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                  <div className="h-3 w-28 bg-gray-200 dark:bg-gray-700 rounded mt-1 animate-pulse"></div>
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg animate-pulse">
+                <div className="flex justify-between mb-2">
+                  <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
                 </div>
-                <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
               </div>
             ))}
           </div>
-        ) : filteredOrders.length > 0 ? (
-          filteredOrders.map((order) => {
-            const baseTotal = order.quantity * order.price;
-            const totalWithFee = calculateTotal(order);
-            const feePercent = parseFloat(feeEquity || '1');
-            
-            return (
-              <div key={order.id} className="flex items-center justify-between py-1.5 px-2 mb-1 bg-gray-50 dark:bg-gray-800/30 rounded text-[10px] hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
-                <div className="flex-1">
-                  <div>
-                    <span className={`font-medium px-1.5 py-0.5 rounded ${
-                      order.buySell === 'BUY'
-                        ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20'
-                        : 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/20'
-                    }`}>
-                      {order.buySell === 'BUY' ? t('exchange.buy', 'АВАХ') : t('exchange.sell', 'ЗАРАХ')}
-                    </span>
-                    <span className="ml-1.5 text-gray-500 dark:text-gray-400">
-                      ({feePercent}% {t('exchange.fee', 'шимтгэл')})
-                    </span>
-                  </div>
-                  <div className="text-gray-600 dark:text-gray-300 mt-1">
-                    {order.quantity} × {order.price.toLocaleString()}₮
+        ) : paginatedOrders.length > 0 ? (
+          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            {paginatedOrders.map((order) => {
+              const totalWithFee = calculateTotal(order);
+              const isPartial = isPartialOrder(order);
+
+              return (
+                <div key={order.id} className="py-3 first:pt-0 last:pb-0">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      {/* Top row: Symbol + Type */}
+                      <div className="flex items-center gap-2">
+                        {order.symbol && (
+                          <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {order.symbol.split('-')[0]}
+                          </span>
+                        )}
+                        <span className={`text-[10px] font-medium ${
+                          order.buySell === 'BUY'
+                            ? 'text-green-600 dark:text-green-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}>
+                          {order.buySell === 'BUY' ? t('exchange.buy', 'Авах') : t('exchange.sell', 'Зарах')}
+                        </span>
+                        {isPartial && (
+                          <button
+                            onClick={() => handleOrderDetailClick(order)}
+                            className="text-[10px] text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 underline decoration-amber-600 dark:decoration-amber-400 underline-offset-2 cursor-pointer"
+                          >
+                            {t('exchange.partial', 'Хэсэгчлэн биелсэн')} ({order.cumQty}/{order.quantity})
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Middle row: Quantity × Price */}
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {order.quantity.toLocaleString()} ш × {order.price.toLocaleString()}₮
+                      </div>
+
+                      {/* Date */}
+                      {order.createdDate && (
+                        <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                      {formatExecutionDate(
+                        order.createdDate
+                      )}
+                        </div>
+                      )}
+
+                      {/* Execution breakdown for partial orders */}
+                      {isPartial && order.executions && order.executions.length > 0 && (
+                        <div className="mt-1.5 text-[10px] text-gray-500 dark:text-gray-400">
+                          <span className="text-gray-400 dark:text-gray-500">Биелсэн: </span>
+                          {order.executions.map((exec, idx) => (
+                            <span key={idx}>
+                              {exec.execQty.toLocaleString()}×{exec.execPrice.toLocaleString()}
+                              {idx < order.executions!.length - 1 && ', '}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right side: Total + Cancel */}
+                    <div className="flex flex-col items-end gap-1 ml-3 flex-shrink-0">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white tabular-nums">
+                        {formatNumber(totalWithFee)}₮
+                      </span>
+                      {orderTab === 'active' && (
+                        <button
+                          onClick={() => handleCancelClick(order)}
+                          className="text-[10px] text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                        >
+                          Цуцлах
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-0.5">
-                  <span className="text-gray-900 dark:text-gray-100 font-bold">
-                    {formatNumber(totalWithFee)}₮
-                  </span>
-                  {orderTab === 'active' && (
-                    <button
-                      onClick={() => handleCancelClick(order)}
-                      className="w-5 h-5 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 text-sm font-bold transition-colors"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         ) : (
-          <div className="text-center py-2 text-gray-500 dark:text-gray-400 text-[10px]">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
             {orderTab === 'active' && t('exchange.noActiveOrders', 'Идэвхтэй захиалга байхгүй')}
             {orderTab === 'completed' && t('exchange.noCompletedOrders', 'Биелсэн захиалга байхгүй')}
             {orderTab === 'cancelled' && t('exchange.noCancelledOrders', 'Цуцлагдсан захиалга байхгүй')}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-3 mt-3 border-t border-gray-100 dark:border-gray-800">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="text-xs px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              ←
+            </button>
+            <span className="text-xs text-gray-600 dark:text-gray-400 min-w-[60px] text-center">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="text-xs px-3 py-1.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              →
+            </button>
           </div>
         )}
       </div>
@@ -167,6 +359,13 @@ export const MyOrders: React.FC<MyOrdersProps> = ({
         onConfirm={handleConfirmCancel}
         order={orderToCancel}
         formatNumber={formatNumber}
+      />
+
+      <OrderDetailModal
+        isOpen={showOrderDetailModal}
+        onClose={() => setShowOrderDetailModal(false)}
+        orderId={selectedOrderId}
+        onOrderCancelled={handleOrderCancelled}
       />
     </div>
   );

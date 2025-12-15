@@ -10,7 +10,6 @@
  */
 export function isTodaysFreshData(mdEntryTime: string | undefined): boolean {
   if (!mdEntryTime) {
-    console.log('isTodaysFreshData: No mdEntryTime provided');
     return false;
   }
   
@@ -18,22 +17,14 @@ export function isTodaysFreshData(mdEntryTime: string | undefined): boolean {
     const entryDate = new Date(mdEntryTime);
     const today = new Date();
     
-    console.log('isTodaysFreshData check:');
-    console.log('- mdEntryTime:', mdEntryTime);
-    console.log('- entryDate:', entryDate.toDateString());
-    console.log('- today:', today.toDateString());
-    
     // Check if it's the same date (ignore time)
     const isFresh = (
       entryDate.getFullYear() === today.getFullYear() &&
       entryDate.getMonth() === today.getMonth() &&
       entryDate.getDate() === today.getDate()
     );
-    
-    console.log('- isFresh:', isFresh);
     return isFresh;
   } catch (error) {
-    console.log('isTodaysFreshData error:', error);
     return false;
   }
 }
@@ -218,16 +209,11 @@ export function shouldDisplayStock(
   targetDate: string,
   isBond: boolean = false
 ): boolean {
-  // Bonds are always displayed regardless of trading time logic
-  if (isBond) {
-    return true;
-  }
-  
-  // For stocks, check if MDEntryTime matches the target date
+  // For both stocks and bonds, check if MDEntryTime matches the target date
   if (!stockMDEntryTime) {
     return false;
   }
-  
+
   const stockDate = stockMDEntryTime.slice(0, 10); // Extract YYYY-MM-DD part
   return stockDate === targetDate;
 }

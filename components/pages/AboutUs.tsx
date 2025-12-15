@@ -104,18 +104,18 @@ const AboutUs = () => {
   const [heroRef, heroInView] = useInView(0.1)
   const [statsRef, statsInView] = useInView(0.3)
   const [chartsRef, chartsInView] = useInView(0.2)
-
+  
   const chartData = {
     underwriter: [
-      { value: 30.1, sublabel: 'Тэрбум ₮', otherValue: 208.9 },
-      { value: 57.7, sublabel: 'Тэрбум₮', otherValue: 48.9 },
+      { value: 39.3, sublabel: 'Тэрбум ₮', otherValue: 223.1 },
+      { value: 61.5, sublabel: 'Тэрбум₮', otherValue: 48.9 },
       { value: 77.5, sublabel: 'Их наяд ₮', otherValue: 1.71 },
     ],
     broker: [
-      { year: '2021', value: 37, label: '1.04', sublabel: 'Их наяд ₮', otherValue: 2.8 },
-      { year: '2022', value: 18, label: '207.8', sublabel: 'Тэрбум ₮', otherValue: 1.2 },
-      { year: '2023', value: 26.8, label: '389.2', sublabel: 'Тэрбум ₮', otherValue: 1.45 },
-      { year: '2024', value: 37, label: '1.04', sublabel: 'Их наяд ₮', otherValue: 2.8 },
+      { year: '2021', value: 37, label: '1.04', sublabel: 'Их наяд ₮', otherValue: 2.8 , otherLabel:'Их наяд ₮'},
+      { year: '2022', value: 18, label: '207.8', sublabel: 'Тэрбум ₮', otherValue: 1.2 , otherLabel:'Их наяд ₮' },
+      { year: '2023', value: 26.8, label: '389.2', sublabel: 'Тэрбум ₮', otherValue: 1.45 , otherLabel:'Их наяд ₮' },
+      { year: '2024', value: 37, label: '1.04', sublabel: 'Их наяд ₮', otherValue: 2.8 , otherLabel:'Их наяд ₮' },
     ],
   }
 
@@ -168,7 +168,7 @@ const AboutUs = () => {
         </div>
 
         {/* Clean company showcase */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Company image - more compact */}
           <div className={`lg:col-span-3 transition-all duration-1000 delay-200 ${heroInView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -190,65 +190,65 @@ const AboutUs = () => {
                   <TrendingUp className="w-4 h-4 text-bdsec dark:text-indigo-400" />
                   Зах зээлийн хөдөлгөөн
                 </h3>
-                
-                {/* Top Gainers - 4 stocks */}
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300">Өсөлт</h4>
-                  </div>
-                  
-                  {isLoading ? (
-                    <div className="flex justify-center py-3">
-                      <div className="animate-spin w-4 h-4 border-2 border-bdsec dark:border-indigo-400 border-t-transparent rounded-full"></div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {topGainers.slice(0, 2).map((stock, index) => (
-                        <div key={`gainer-${stock.Symbol}-${index}`} className="flex justify-between items-center p-2 bg-green-50 dark:bg-green-500/10 rounded-md hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors">
-                          <div>
-                            <div className="text-xs font-medium text-gray-900 dark:text-white">{stock.Symbol.split('-')[0]}</div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">{formatPrice(stock.LastTradedPrice)} ₮</div>
-                          </div>
-                          <div className="text-green-600 dark:text-green-400 text-xs font-semibold">+{stock.Changep.toFixed(2)}%</div>
+                <div className='w-full grid grid-cols-2 gap-4'>
+                      {/* Top Gainers - 4 stocks */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300">Өсөлт</h4>
+                      </div>
+                      
+                      {isLoading ? (
+                        <div className="flex justify-center py-3">
+                          <div className="animate-spin w-4 h-4 border-2 border-bdsec dark:border-indigo-400 border-t-transparent rounded-full"></div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Top Losers - 4 stocks */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300">Бууралт</h4>
-                  </div>
-                  
-                  {isLoading ? (
-                    <div className="flex justify-center py-3">
-                      <div className="animate-spin w-4 h-4 border-2 border-bdsec dark:border-indigo-400 border-t-transparent rounded-full"></div>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {topLosers.slice(0, 2).map((stock, index) => (
-                        <div key={`loser-${stock.Symbol}-${index}`} className="flex justify-between items-center p-2 bg-red-50 dark:bg-red-500/10 rounded-md hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors">
-                          <div>
-                            <div className="text-xs font-medium text-gray-900 dark:text-white">{stock.Symbol.split('-')[0]}</div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">{formatPrice(stock.LastTradedPrice)} ₮</div>
-                          </div>
-                          <div className="text-red-600 dark:text-red-400 text-xs font-semibold">{stock.Changep.toFixed(2)}%</div>
+                      ) : (
+                        <div className="space-y-2">
+                          {topGainers.slice(0, 5).map((stock, index) => (
+                            <div key={`gainer-${stock.Symbol}-${index}`} className="flex justify-between items-center p-2 bg-green-50 dark:bg-green-500/10 rounded-md hover:bg-green-100 dark:hover:bg-green-500/20 transition-colors">
+                              <div>
+                                <div className="text-xs font-medium text-gray-900 dark:text-white">{stock.Symbol.split('-')[0]}</div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400">{formatPrice(stock.LastTradedPrice)} ₮</div>
+                              </div>
+                              <div className="text-green-600 dark:text-green-400 text-xs font-semibold">+{stock.Changep.toFixed(2)}%</div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
+                      {/* Top Losers - 4 stocks */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300">Бууралт</h4>
+                      </div>
+                      
+                      {isLoading ? (
+                        <div className="flex justify-center py-3">
+                          <div className="animate-spin w-4 h-4 border-2 border-bdsec dark:border-indigo-400 border-t-transparent rounded-full"></div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {topLosers.slice(0, 5).map((stock, index) => (
+                            <div key={`loser-${stock.Symbol}-${index}`} className="flex justify-between items-center p-2 bg-red-50 dark:bg-red-500/10 rounded-md hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors">
+                              <div>
+                                <div className="text-xs font-medium text-gray-900 dark:text-white">{stock.Symbol.split('-')[0]}</div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400">{formatPrice(stock.LastTradedPrice)} ₮</div>
+                              </div>
+                              <div className="text-red-600 dark:text-red-400 text-xs font-semibold">{stock.Changep.toFixed(2)}%</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                </div>                               
               </div>
             </div>
           </div>
         </div>
       </div>
       {/* Minimal Statistics Section */}
-      <div ref={statsRef} className="px-4 md:px-6 py-6">
+      <div ref={statsRef} className="px-4 md:px-6 pb-6">
         <div className={`mb-6 transition-all duration-1000 ${statsInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             Манай амжилтууд
@@ -347,12 +347,13 @@ const AboutUs = () => {
             {selectedType === 'broker' &&
               chartData.broker.map((item, idx) => (
                 <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                  <div className="text-center">
+                  <div className="flex justify-start">
                     <CircularProgress
                       value={item.value}
                       label={item.label}
                       sublabel={item.sublabel}
                       otherValue={item.otherValue}
+                      otherLabel={item.otherLabel}
                       bottomLabel={item.year}
                       variant="broker"
                     />
@@ -453,7 +454,7 @@ const AboutUs = () => {
               {[
                 { name: 'Facebook', icon: Facebook, url: 'https://www.facebook.com/BDSecJSC' },
                 { name: 'YouTube', icon: Youtube, url: 'https://www.youtube.com/@bdsecjsc9617' },
-                { name: 'Instagram', icon: Instagram, url: 'https://www.instagram.com/bdsec_jsc/' },
+                { name: 'Instagram', icon: Instagram, url: 'https://www.instagram.com/bdsec.brokerage/' },
                 { name: 'LinkedIn', icon: Linkedin, url: 'https://www.linkedin.com/company/bdsec-jsc/' },
               ].map((social) => (
                 <a

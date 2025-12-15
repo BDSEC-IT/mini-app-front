@@ -57,8 +57,11 @@ export default function Orders() {
 
     try {
       const result = await getUserAccountInformation(token);
-      if (result.success && result.data?.MCSDAccount?.accountId) {
-        setAccountId(result.data.MCSDAccount.accountId);
+      if (result.success && result.data?.superAppAccount) {
+        const acc = result.data.superAppAccount;
+        if (acc.MCSDAccount?.DGStatus === 'COMPLETED' && acc.MCSDAccountId) {
+          setAccountId(acc.MCSDAccountId as number);
+        }
       }
     } catch (error) {
       console.error('Error fetching account info:', error);
@@ -350,12 +353,12 @@ export default function Orders() {
               </div>
               <div className="text-left">
                 <div className="text-sm font-medium text-gray-900 dark:text-white">
-                  {selectedStock ? selectedStock.Symbol : 'Хувьцаа сонгох'}
+                  {selectedStock ? selectedStock.Symbol : t('orders.selectStock', 'Хувьцаа сонгох')}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
                   {selectedStock 
                     ? (i18n.language === 'mn' ? selectedStock.mnName : selectedStock.enName)
-                    : 'Арилжаа хийх хувьцааг сонгоно уу'
+                    : t('orders.selectStockPlaceholder', 'Арилжаа хийх хувьцааг сонгоно уу')
                   }
                 </div>
               </div>
@@ -410,7 +413,7 @@ export default function Orders() {
           <div className="grid grid-cols-2 gap-1 mb-4">
             <button
               onClick={() => setOrderSide('BUY')}
-              className={`py-3 rounded font-medium text-sm transition-all ${
+              className={`py-3 rounded font-bold text-sm transition-all ${
                 orderSide === 'BUY'
                   ? 'bg-green-500 text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
@@ -420,7 +423,7 @@ export default function Orders() {
             </button>
             <button
               onClick={() => setOrderSide('SELL')}
-              className={`py-3 rounded font-medium text-sm transition-all ${
+              className={`py-3 rounded font-bold text-sm transition-all ${
                 orderSide === 'SELL'
                   ? 'bg-red-500 text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
@@ -495,7 +498,7 @@ export default function Orders() {
           <button
             onClick={handlePlaceOrder}
             disabled={placing || !accountId || !selectedStock || !quantity || (orderType === 'CONDITIONAL' && !price)}
-            className={`w-full py-3 rounded-lg font-medium text-white transition-all ${
+            className={`w-full py-3 rounded-lg font-bold text-white transition-all ${
               placing || !accountId || !selectedStock || !quantity || (orderType === 'CONDITIONAL' && !price)
                 ? 'bg-gray-400 cursor-not-allowed'
                 : orderSide === 'BUY'
@@ -568,7 +571,7 @@ export default function Orders() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Хувьцааны код эсвэл нэр хайх..."
+                  placeholder={t('orders.searchStockPlaceholder', 'Хувьцааны код эсвэл нэр хайх...')}
                   className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   autoFocus
                 />

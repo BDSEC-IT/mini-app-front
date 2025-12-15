@@ -421,7 +421,7 @@ export function TradingViewChart({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setChartType('line')}
-              className={`text-center text-sm font-medium px-4 py-2 rounded-full transition-colors ${
+              className={`text-center text-sm font-bold px-4 py-2 rounded-full transition-colors ${
                 chartType === 'line'
                   ? 'bg-bdsec dark:bg-indigo-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -431,7 +431,7 @@ export function TradingViewChart({
             </button>
             <button
               onClick={() => setChartType('candlestick')}
-              className={`text-sm font-medium px-4 py-2 rounded-full transition-colors ${
+              className={`text-sm font-bold px-4 py-2 rounded-full transition-colors ${
                 chartType === 'candlestick'
                   ? 'bg-bdsec dark:bg-indigo-500 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -468,7 +468,7 @@ export function TradingViewChart({
         />
       </div>
       <div className="h-[50px] flex justify-center items-center border-t border-gray-200 dark:border-gray-700 border-opacity-70 pt-2 pb-2 rounded-md mt-2">
-        <div className="flex justify-center items-center gap-2 sm:gap-2">
+   <div className="flex justify-center items-center gap-2 sm:gap-2 relative z-10 overflow-visible w-full py-2">
           {[
             { id: '1M', label: '1M' },
             { id: '3M', label: '3M' },
@@ -477,10 +477,10 @@ export function TradingViewChart({
           ].map((periodOption) => (
             <button
               key={periodOption.id}
-              className={` text-xs font-medium px-5 py-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+              className={`text-xs font-bold px-5 py-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
                 activePeriod === periodOption.id 
-                  ? 'bg-bdsec dark:bg-indigo-500 text-white   ' 
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700  '
+                  ? 'bg-bdsec dark:bg-indigo-500 text-white' 
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               onClick={() => setActivePeriod(periodOption.id)}
             >

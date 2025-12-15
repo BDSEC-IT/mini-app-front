@@ -44,7 +44,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       try {
         localStorage.setItem('language', language)
         i18n.changeLanguage(language)
-        console.log(`Language changed to: ${language}`)
         
         // Force refresh translations
         document.dispatchEvent(new Event('languageChanged'))
@@ -56,7 +55,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const toggleLanguage = () => {
     const newLanguage = language === 'mn' ? 'en' : 'mn'
-    console.log(`Toggling language from ${language} to ${newLanguage}`)
     setLanguage(newLanguage)
   }
 

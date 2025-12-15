@@ -46,7 +46,7 @@ export default function PayPage() {
         if (missingFields.length > 0) {
           console.error('Account status validation failed. Missing fields:', missingFields);
           console.error('Account data:', accountData);
-          setError("Дансны мэдээлэл бүрэн бөгөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
+          setError("Дансны мэдээлэл бүрэн бөглөөгүй байна. Зарим талбарууд хоосон байна. Эхлээд дансны мэдээллээ бүрэн бөглөнө үү.");
           setTimeout(() => router.push('/account-setup/general'), 3000);
           return;
         }

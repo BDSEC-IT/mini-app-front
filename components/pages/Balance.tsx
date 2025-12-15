@@ -238,53 +238,79 @@ export default function Balance() {
     );
   };
 
-  const renderFundContent = () => (
-    <div className="p-2.5 space-y-1.5">
-      {(nominalBalance?.mcsdBalance?.length ? nominalBalance.mcsdBalance : [
-        { account: null, currency: 'MNT', amount: 0, code: '9998', withdrawalBalance: 0 },
-        { account: null, currency: 'USD', amount: 0, code: '8889', withdrawalBalance: 0 },
-        { account: null, currency: 'DIV', amount: 0, code: '9992', withdrawalBalance: 0 }
-      ]).map((item, index) => (
-        <div 
-          key={index} 
-          className="relative w-full p-2.5 overflow-hidden transition-colors duration-150 border rounded-lg border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
-        >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-bdsec to-indigo-600 dark:from-indigo-600 dark:to-indigo-800 flex items-center justify-center">
-                <span className="text-xs font-bold text-white">
-                  {item.currency === 'MNT' ? '₮' : item.currency === 'USD' ? '$' : '₮'}
-                </span>
+  const renderFundContent = () => {
+    const p: any = nominalBalance || {};
+    const mcsd = Array.isArray(p.mcsdBalance) ? p.mcsdBalance : [];
+    const findByCode = (code: string) => mcsd.find((x: any) => (x.code || '').toString() === code);
+    const mntEntry = findByCode('9998');
+    const usdEntry = mcsd.find((x: any) => (x.currency || '').toString().toLowerCase() === 'usd' || (x.code || '').toString() === '8889');
+    const divEntry = findByCode('9992');
+
+    const csdCash = p.csdCashBalance?.lastBalance ?? null;
+    const divCash = p.divCashBalance?.lastBalance ?? null;
+
+    const rows = [
+      {
+        currency: 'MNT',
+        amount: csdCash != null ? csdCash : (mntEntry?.amount ?? 0),
+        code: '9998'
+      },
+      {
+        currency: 'USD',
+        amount: usdEntry?.amount ?? 0,
+        code: '8889'
+      },
+      {
+        currency: 'Ногдол ашгийн мөнгө',
+        amount: divCash != null ? divCash : (divEntry?.amount ?? 0),
+        code: '9992'
+      }
+    ];
+
+    return (
+      <div className="p-2.5 space-y-1.5">
+        {rows.map((item, index) => (
+          <div 
+            key={index} 
+            className="relative w-full p-2.5 overflow-hidden transition-colors duration-150 border rounded-lg border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-bdsec to-indigo-600 dark:from-indigo-600 dark:to-indigo-800 flex items-center justify-center">
+                  <span className="text-xs font-bold text-white">
+                    {item.currency === 'MNT' ? '₮' : item.currency === 'USD' ? '$' : '₮'}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-xs font-bold text-gray-900 dark:text-white truncate">{item.currency}</h3>
+                  <p className="text-[9px] text-gray-500 dark:text-gray-400">ҮЦТХТ</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h3 className="text-xs font-bold text-gray-900 dark:text-white truncate">{item.currency || item.code}</h3>
-                <p className="text-[9px] text-gray-500 dark:text-gray-400">ҮЦТХТ</p>
+              <div className="text-right flex-shrink-0 ml-2">
+                <p className="text-xs font-bold text-gray-900 dark:text-white">
+                  {showBalance ? `${formatCurrency(item.amount || 0)}` : '***,***'}
+                </p>
+                <p className="text-[9px] text-gray-500 dark:text-gray-400">
+                  {item.currency === 'Ногдол ашгийн мөнгө' ? '₮' : item.currency}
+                </p>
               </div>
             </div>
-            <div className="text-right flex-shrink-0 ml-2">
-              <p className="text-xs font-bold text-gray-900 dark:text-white">
-                {showBalance ? `${formatCurrency(item.amount || 0)}` : '***,***'}
-              </p>
-              <p className="text-[9px] text-gray-500 dark:text-gray-400">
-                {item.currency ? item.currency.toUpperCase() : '₮'}
-              </p>
+            
+            <div className="flex items-center justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
+              <button
+                onClick={() => {
+                  router.push('/balance/history?type=csd');
+                }}
+                className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Хуулга
+              </button>
             </div>
           </div>
-          
-          <div className="flex items-center justify-end pt-2 border-t border-gray-100 dark:border-gray-800">
-            <button
-              onClick={() => {
-                router.push('/balance/history?type=csd');
-              }}
-              className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              Хуулга
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+        ))}
+      </div>
+    );
+  };
 
   // Main loading state
   if (isLoading) {

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { StockData, BondData } from '@/lib/api'
 
 interface StockTableProps {
@@ -11,16 +12,19 @@ interface StockTableProps {
 const StockTable = ({ 
   data, 
   type, 
-  title = type === 'stock' ? 'Хөрөнгийн жагсаалт' : 'Бондын жагсаалт',
+  title,
   formatNumber = (num: number) => num.toLocaleString('mn-MN')
 }: StockTableProps) => {
+  const { t } = useTranslation();
+  const defaultTitle = type === 'stock' ? t('stockTable.stocksList', 'Хөрөнгийн жагсаалт') : t('stockTable.bondsList', 'Бондын жагсаалт');
+  const displayTitle = title || defaultTitle;
   // Use useState for sortable columns if needed later
   
   // Check for empty data
   if (!data || data.length === 0) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg p-4 text-center text-gray-500 dark:text-gray-400">
-        Мэдээлэл байхгүй байна
+        {t('common.noData', 'Мэдээлэл байхгүй байна')}
       </div>
     )
   }
@@ -29,7 +33,7 @@ const StockTable = ({
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mt-4">
       <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {title}
+          {displayTitle}
         </h3>
       </div>
       
@@ -87,10 +91,10 @@ const StockTable = ({
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
                     {item.mnName}
                   </td>
-                  <td className="px-4 py-3 text-sm text-right font-medium text-gray-900 dark:text-white">
+                  <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900 dark:text-white">
                     {formatNumber(item.LastTradedPrice)}₮
                   </td>
-                  <td className={`px-4 py-3 text-sm text-right font-medium ${
+                  <td className={`px-4 py-3 text-sm text-right font-semibold ${
                     item.Changes > 0 
                       ? 'text-green-600 dark:text-green-400' 
                       : item.Changes < 0 
@@ -119,10 +123,10 @@ const StockTable = ({
                   <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
                     {bond.Issuer}
                   </td>
-                  <td className="px-4 py-3 text-sm text-right font-medium text-gray-900 dark:text-white">
+                  <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900 dark:text-white">
                     {bond.Interest}
                   </td>
-                  <td className="px-4 py-3 text-sm text-right font-medium text-gray-900 dark:text-white">
+                  <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900 dark:text-white">
                     {/* This is the critical change: multiply the NominalValue by 1000 for bonds */}
                     {bond.NominalValue ? formatNumber(bond.NominalValue * 1000) : '0'}₮
                   </td>

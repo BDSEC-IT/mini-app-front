@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'next/navigation'
-import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight } from 'lucide-react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { ArrowDown, ArrowUp, ChevronDown, Search, X, Filter, SlidersHorizontal, ChevronRight, Maximize2 } from 'lucide-react'
 import { fetchAllStocks, type StockData } from '@/lib/api'
 import socketIOService from '@/lib/socketio'
 // import { testBackendDevConfig } from '@/lib/simple-socket-test' // Disabled
@@ -22,6 +22,7 @@ const AllStocks = () => {
   const { t, i18n } = useTranslation()
   const currentLanguage = i18n.language || 'mn';
   const searchParams = useSearchParams()
+  const router = useRouter()
 
 
   
@@ -71,9 +72,9 @@ const AllStocks = () => {
     { id: 'I', name: t('allStocks.categoryI'), mnName: t('allStocks.categoryI') },
     { id: 'II', name: t('allStocks.categoryII'), mnName: t('allStocks.categoryII') },
     { id: 'III', name: t('allStocks.categoryIII'), mnName: t('allStocks.categoryIII') },
-    { id: 'FUND', name: 'Хөрөнгө оруулалтын сан', mnName: 'Хөрөнгө оруулалтын сан' },
-    { id: 'BOND', name: 'Компанийн бонд', mnName: 'Компанийн бонд' },
-    { id: 'IABS', name: 'Хөрөнгөөр баталгаажсан үнэт цаас', mnName: 'Хөрөнгөөр баталгаажсан үнэт цаас' }
+    { id: 'FUND', name: t('allStocks.categoryFund'), mnName: t('allStocks.categoryFund') },
+    { id: 'BOND', name: t('allStocks.categoryBond'), mnName: t('allStocks.categoryBond') },
+    { id: 'IABS', name: t('allStocks.categoryIABS'), mnName: t('allStocks.categoryIABS') }
   ], [t]);
 
   // Fetch all stocks data
@@ -175,11 +176,20 @@ const getStockCategory = (stock: StockData): string => {
   if (stock.securityType === 'IABS') {
     return 'IABS';
   }
+  if(stock.securityType === 'BOND' || stock.securityType === 'TBOND'){
+    return 'BOND';
+  }
 
-  if (!stock.MarketSegmentID) return '';
+
+  if (!stock.MarketSegmentID || stock.MarketSegmentID === null) return '';
 
   // Case-insensitive check with string comparison
   const segment = stock.MarketSegmentID.toString().trim().toUpperCase();
+  
+  // Don't show/render if segment is null or "N/A"
+  if (segment === 'N/A' || segment === 'NA' || segment === '' || segment === 'NULL' || !segment) {
+    return '';
+  }
   
   // Check various patterns
   if (segment === 'I' || segment === 'I CLASSIFICATION' || segment === 'I АНГИЛАЛ' || segment.startsWith('I ')) {
@@ -203,16 +213,12 @@ const getStockCategory = (stock: StockData): string => {
   }
   else if (segment === 'MAIN' || segment === 'MAIN MARKET' || segment.includes('MAIN')) {
     // MAIN market segment - treat as category I by default
-    return 'I';
-  }
-  else if (segment === 'N/A' || segment === 'NA' || segment === '' || segment === 'NULL') {
-    // Unknown/undefined market segment - treat as category I by default
-    return 'I';
+    return 'BOND';
   }
   
   // Only log truly unknown segments to avoid spam
   if (segment && segment !== 'MAIN' && segment !== 'N/A' && segment !== 'BD') {
-    console.log('Unknown MarketSegmentID:', segment);
+  
   }
   return 'I'; // Default to category I instead of empty string
 };
@@ -304,7 +310,7 @@ const getStockCategory = (stock: StockData): string => {
         
         // Use Socket.IO for real-time updates
         socketIOService.onTradingDataUpdate((data: StockData[]) => {
-          console.log('📊 Socket.IO: Processing real-time data:', data?.length, 'stocks')
+    
           
           setAllStocks(prevStocks => {
             const updatedStocks = [...prevStocks];
@@ -334,14 +340,12 @@ const getStockCategory = (stock: StockData): string => {
                 // Determine flash color based on price change
                 if (newPrice > oldPrice) {
                   newBlinkingRows.set(update.Symbol, 'gain');
-                  console.log(`📈 ${update.Symbol}: ${oldPrice} → ${newPrice} (GAIN)`)
                 } else if (newPrice < oldPrice) {
                   newBlinkingRows.set(update.Symbol, 'loss');
-                  console.log(`📉 ${update.Symbol}: ${oldPrice} → ${newPrice} (LOSS)`)
+              
                 } else {
                   // Even if price didn't change, still flash to show it's updating
                   newBlinkingRows.set(update.Symbol, 'gain');
-                  console.log(`🔄 ${update.Symbol}: Updated (no price change)`)
                 }
 
                 // Update the stock data
@@ -355,8 +359,6 @@ const getStockCategory = (stock: StockData): string => {
 
             // Apply flashing effects to all updated rows
             if (newBlinkingRows.size > 0) {
-              console.log('✨ Socket.IO: Flashing rows:', Array.from(newBlinkingRows.keys()))
-              
               setBlinkingRows(prev => {
                 const nextMap = new Map(prev);
                 newBlinkingRows.forEach((value, key) => nextMap.set(key, value));
@@ -374,8 +376,6 @@ const getStockCategory = (stock: StockData): string => {
                 }, 800);
               });
             }
-
-            console.log(`🎯 Socket.IO: Updated ${updatedCount} stocks with real-time data`)
             return updatedStocks;
           });
           
@@ -388,16 +388,12 @@ const getStockCategory = (stock: StockData): string => {
         const pollingResult = await realTimePollingService.connect();
         
         if (pollingResult) {
-          console.log('✅ Polling service connected successfully!');
           realTimePollingService.joinTradingRoom();
           
           // Use polling for real-time-like updates
           realTimePollingService.onTradingDataUpdate((data: StockData[]) => {
-            console.log('📊 Polling data received:', data?.length || 0, 'stocks');
             
             setAllStocks(prevStocks => {
-              console.log('📊 Processing polled stock updates:')
-              console.log('  Previous stocks count:', prevStocks.length)
               
               const updatedStocks = [...prevStocks];
               const newBlinkingRows = new Map<string, 'gain' | 'loss'>();
@@ -406,7 +402,6 @@ const getStockCategory = (stock: StockData): string => {
 
               // Ensure data is an array
               const dataArray = Array.isArray(data) ? data : [data];
-              console.log('  Processing array with', dataArray.length, 'items')
 
               dataArray.forEach((update, index) => {
                 if (!update || !update.Symbol) return;
@@ -430,11 +425,9 @@ const getStockCategory = (stock: StockData): string => {
                   if (newPrice > oldPrice) {
                     newBlinkingRows.set(update.Symbol, 'gain');
                     priceChangedCount++;
-                    console.log(`  🟢 ${update.Symbol} GAIN: ${oldPrice} -> ${newPrice}`)
                   } else if (newPrice < oldPrice) {
                     newBlinkingRows.set(update.Symbol, 'loss');
                     priceChangedCount++;
-                    console.log(`  🔴 ${update.Symbol} LOSS: ${oldPrice} -> ${newPrice}`)
                   }
 
                   updatedStocks[stockIndex] = {
@@ -447,7 +440,6 @@ const getStockCategory = (stock: StockData): string => {
 
               // Apply blinking effects
               if (newBlinkingRows.size > 0) {
-                console.log('✨ Applying blink effects to:', Array.from(newBlinkingRows.keys()))
                 setBlinkingRows(prev => {
                   const nextMap = new Map(prev);
                   newBlinkingRows.forEach((value, key) => nextMap.set(key, value));
@@ -463,8 +455,6 @@ const getStockCategory = (stock: StockData): string => {
                   }, 500);
                 });
               }
-
-              console.log('📈 Polling update summary:', updatedCount, 'updates,', priceChangedCount, 'price changes')
               return updatedStocks;
             });
             
@@ -481,7 +471,6 @@ const getStockCategory = (stock: StockData): string => {
 
     // Listen for connection status changes
     socketIOService.onConnectionStatusChange((connected) => {
-      console.log('📡 Socket.IO connection status changed:', connected);
       if (connected) {
         socketIOService.joinTradingRoom();
       }
@@ -489,45 +478,21 @@ const getStockCategory = (stock: StockData): string => {
 
     // Listen for trading data updates
     socketIOService.onTradingDataUpdate((data: StockData[]) => {
-      console.log('🏢 AllStocks received trading data update:')
-      console.log('  Raw data type:', typeof data)
-      console.log('  Is array:', Array.isArray(data))
-      console.log('  Data length/size:', Array.isArray(data) ? data.length : 'N/A')
-      console.log('  Full data:', data)
-      
       setAllStocks(prevStocks => {
-        console.log('📊 Processing stock updates:')
-        console.log('  Previous stocks count:', prevStocks.length)
-        
-        const updatedStocks = [...prevStocks];
+          const updatedStocks = [...prevStocks];
         const newBlinkingRows = new Map<string, 'gain' | 'loss'>();
         let updatedCount = 0;
         let priceChangedCount = 0;
 
         // Ensure data is an array
         const dataArray = Array.isArray(data) ? data : [data];
-        console.log('  Processing array with', dataArray.length, 'items')
 
         dataArray.forEach((update, index) => {
-          console.log(`  [${index}] Processing update for:`, {
-            Symbol: update?.Symbol,
-            LastTradedPrice: update?.LastTradedPrice,
-            Changes: update?.Changes,
-            Changep: update?.Changep
-          })
-          
-          if (!update || !update.Symbol) {
-            console.log(`  [${index}] ⚠️ Skipping invalid update (no symbol)`)
-            return;
-          }
-          
           const stockIndex = updatedStocks.findIndex(s => s.Symbol === update.Symbol);
           if (stockIndex !== -1) {
             const oldPrice = updatedStocks[stockIndex].LastTradedPrice || 0;
             const newPrice = update.LastTradedPrice || 0;
             const oldChange = updatedStocks[stockIndex].Changep || 0;
-
-            console.log(`  [${index}] ${update.Symbol}: ${oldPrice} -> ${newPrice}`)
 
             // Store previous values for price and change
             setPreviousStockValues(prev => ({
@@ -542,13 +507,10 @@ const getStockCategory = (stock: StockData): string => {
             if (newPrice > oldPrice) {
               newBlinkingRows.set(update.Symbol, 'gain');
               priceChangedCount++;
-              console.log(`  [${index}] 🟢 ${update.Symbol} GAIN: ${oldPrice} -> ${newPrice}`)
-            } else if (newPrice < oldPrice) {
+                       } else if (newPrice < oldPrice) {
               newBlinkingRows.set(update.Symbol, 'loss');
               priceChangedCount++;
-              console.log(`  [${index}] 🔴 ${update.Symbol} LOSS: ${oldPrice} -> ${newPrice}`)
             } else if (oldPrice !== 0) {
-              console.log(`  [${index}] ⚪ ${update.Symbol} NO CHANGE: ${oldPrice}`)
             }
 
             updatedStocks[stockIndex] = {
@@ -557,18 +519,11 @@ const getStockCategory = (stock: StockData): string => {
             };
             updatedCount++;
           } else {
-            console.log(`  [${index}] ⚠️ Stock ${update.Symbol} not found in current list`)
           }
         });
 
-        console.log('📈 Update summary:')
-        console.log('  Total updates processed:', updatedCount)
-        console.log('  Price changes detected:', priceChangedCount)
-        console.log('  Blinking stocks:', Array.from(newBlinkingRows.keys()))
-
         // Apply blinking rows and set timeouts to remove them
         if (newBlinkingRows.size > 0) {
-          console.log('✨ Applying blink effects to:', Array.from(newBlinkingRows.keys()))
           setBlinkingRows(prev => {
             const nextMap = new Map(prev);
             newBlinkingRows.forEach((value, key) => nextMap.set(key, value));
@@ -585,16 +540,13 @@ const getStockCategory = (stock: StockData): string => {
           });
         }
 
-        console.log('✅ Stock update complete')
         return updatedStocks;
       });
       
-      console.log('🕒 Setting last update time')
       setLastUpdate(new Date());
     });
 
     return () => {
-      console.log('🔌 Cleaning up real-time connections...');
       socketIOService.disconnect();
       realTimePollingService.disconnect();
     };
@@ -626,11 +578,18 @@ const getStockCategory = (stock: StockData): string => {
     
     return stocks.map((stock) => {
       const blinkClass = blinkingRows.get(stock.Symbol);
+      
+      // Handler for row click
+      const handleRowClick = () => {
+        const cleanSymbol = stock.Symbol.split('-')[0];
+        router.push(`/?symbol=${cleanSymbol}`);
+      };
 
       return (
         <tr 
           key={stock.Symbol} 
-          className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+          onClick={handleRowClick}
+          className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200 cursor-pointer"
           style={blinkClass ? {
             animation: blinkClass === 'gain' 
               ? 'flash-green 800ms ease-out' 
@@ -638,23 +597,34 @@ const getStockCategory = (stock: StockData): string => {
           } : {}}
         >
           <td className="px-2 py-2 whitespace-nowrap">
-            <a href={`/stocks/${stock.Symbol}`} className="flex flex-col">
+            <div className="flex flex-col">
               <span className="font-medium text-xs">{stock.Symbol}</span>
               <span className="text-[10px] text-gray-500">{getCompanyName(stock)}</span>
-            </a>
+            </div>
           </td>
           <td className="px-2 py-2 text-right">
             {formatPrice(stock.LastTradedPrice, isBondCategory)}
+          </td>
+          <td className="px-2 py-2 text-right">
+            <span className={
+              Number(stock.Changes) > 0
+                ? 'text-green-500'
+                : Number(stock.Changes) < 0
+                  ? 'text-red-500'
+                  : ''
+            }>
+              {Number(stock.Changes) > 0 ? '+' : ''}{Number(stock.Changes || 0).toFixed(2)}
+            </span>
           </td>
           <td className="px-2 py-2 text-right">
             <div className="flex items-center justify-end">
               {stock.Changep !== null && stock.Changep !== undefined ? (
                 <>
                   <span className={
-                    stock.Changep > 0 
-                      ? 'text-green-500' 
-                      : stock.Changep < 0 
-                        ? 'text-red-500' 
+                    stock.Changep > 0
+                      ? 'text-green-500'
+                      : stock.Changep < 0
+                        ? 'text-red-500'
                         : ''
                   }>
                     {stock.Changep > 0 ? '+' : ''}{stock.Changep.toFixed(2)}%
@@ -667,17 +637,6 @@ const getStockCategory = (stock: StockData): string => {
                 </>
               ) : '-'}
             </div>
-          </td>
-          <td className="px-2 py-2 text-right">
-            <span className={
-              Number(stock.Changes) > 0 
-                ? 'text-green-500' 
-                : Number(stock.Changes) < 0 
-                  ? 'text-red-500' 
-                  : ''
-            }>
-              {Number(stock.Changes) > 0 ? '+' : ''}{Number(stock.Changes || 0).toFixed(2)}
-            </span>
           </td>
           <td className="px-2 py-2 text-right">
             {stock.Volume?.toLocaleString() || '-'}
@@ -769,17 +728,17 @@ const getStockCategory = (stock: StockData): string => {
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
-                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
-                      %
-                      {sortConfig.key === 'Changep' && (
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
+                      {t('dashboard.change')}
+                      {sortConfig.key === 'Changes' && (
                         sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
                       )}
                     </div>
                   </th>
                   <th className="px-2 py-3 text-right">
-                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changes')}>
-                      {t('dashboard.change')}
-                      {sortConfig.key === 'Changes' && (
+                    <div className="flex items-center justify-end cursor-pointer" onClick={() => handleSort('Changep')}>
+                      %
+                      {sortConfig.key === 'Changep' && (
                         sortConfig.direction === 'asc' ? <ChevronDown size={16} /> : <ChevronDown size={16} className="transform rotate-180" />
                       )}
                     </div>
@@ -896,7 +855,7 @@ const getStockCategory = (stock: StockData): string => {
               >
                 <ChevronRight className="transform rotate-180" size={18} />
               </a>
-              <h1 className="text-base font-bold">{t('allStocks.title')}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('allStocks.title')}</h1>
             </div>
             <div className="text-[10px] text-right text-gray-500">
               {activeTab === 'active' && displayPeriodDescription && (
@@ -927,20 +886,22 @@ const getStockCategory = (stock: StockData): string => {
               onClick={() => setIsFullTableModalOpen(true)}
               className="flex items-center gap-1 text-sm text-bdsec dark:text-indigo-400"
             >
+              <Maximize2 size={14} />
               {t('allStocks.seeFullTable')}
             </button>
           </div>
           
           {/* Search Bar */}
           <div className="mb-4 relative">
-            <div className="flex items-center border rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800 h-10">
+            <div className="flex items-center border rounded-lg px-3 py-2 bg-gray-100 dark:bg-gray-800 h-10  focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <Search size={16} className="text-gray-600 dark:text-gray-400 mr-2" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={handleSearch}
-                className="bg-transparent outline-none w-full text-sm text-gray-900 dark:text-gray-100"
+                className="bg-transparent outline-none w-full text-[16px] text-gray-900 dark:text-gray-100"
                 placeholder={t('common.search')}
+                autoFocus
               />
               {searchTerm && (
                 <button onClick={clearSearch} className="ml-2 h-6 w-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
@@ -1044,9 +1005,9 @@ const getStockCategory = (stock: StockData): string => {
               {renderCategorySection('I', t('allStocks.categoryI'), 'bg-blue-50 dark:bg-blue-900/30', 'text-blue-800 dark:text-blue-200')}
               {renderCategorySection('II', t('allStocks.categoryII'), 'bg-purple-50 dark:bg-purple-900/30', 'text-purple-800 dark:text-purple-200')}
               {renderCategorySection('III', t('allStocks.categoryIII'), 'bg-gray-50 dark:bg-gray-800/60', 'text-gray-800 dark:text-gray-200')}
-              {renderCategorySection('FUND', 'Хөрөнгө оруулалтын сан', 'bg-green-50 dark:bg-green-900/30', 'text-green-800 dark:text-green-200')}
-              {renderCategorySection('IABS', 'Хөрөнгөөр баталгаажсан үнэт цаас', 'bg-teal-50 dark:bg-teal-900/30', 'text-teal-800 dark:text-teal-200')}
-              {renderCategorySection('BOND', 'Компанийн бонд', 'bg-orange-50 dark:bg-orange-900/30', 'text-orange-800 dark:text-orange-200')}
+              {renderCategorySection('FUND', t('allStocks.categoryFund'), 'bg-green-50 dark:bg-green-900/30', 'text-green-800 dark:text-green-200')}
+              {renderCategorySection('IABS', t('allStocks.categoryIABS'), 'bg-teal-50 dark:bg-teal-900/30', 'text-teal-800 dark:text-teal-200')}
+              {renderCategorySection('BOND', t('allStocks.categoryBond'), 'bg-orange-50 dark:bg-orange-900/30', 'text-orange-800 dark:text-orange-200')}
             </div>
           ) : (
             <div className="text-center py-12">
