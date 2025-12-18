@@ -1,5 +1,5 @@
 import React from 'react'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { useRef, useEffect, useState } from 'react'
@@ -148,6 +148,12 @@ const OrderBookComponent = ({
     router.push(`/exchange?${params.toString()}`);
   };
 
+  // Handler for viewing order history for this stock
+  const handleViewOrderHistory = () => {
+    const symbolOnly = selectedSymbol.split('-')[0];
+    router.push(`/all-orders?symbol=${symbolOnly}`);
+  };
+
   // Regular order book display for non-bond securities
   return (
     <div 
@@ -177,6 +183,15 @@ const OrderBookComponent = ({
         </div>
         
         <div className="flex items-center gap-2">
+          <Button
+            onClick={handleViewOrderHistory}
+            size="icon"
+            variant="outline"
+            className="h-10 w-10 rounded-lg border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:ring-indigo-500"
+            title={t('dashboard.viewOrderHistory', 'Захиалгын түүх харах')}
+          >
+            <History size={16} className="text-gray-600 dark:text-gray-400" />
+          </Button>
           {onRefresh && (
             <Button
               onClick={onRefresh}

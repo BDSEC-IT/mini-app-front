@@ -17,10 +17,13 @@ import {
   fetchOrderBook,
   fetchTodayCompletedOrders,
   getUserAccountInformation,
+  getPartnerInfo,
+  BASE_URL,
   type StockData,
   type SecondaryOrderData,
   type EnhancedOrderBookData,
   type CompletedOrderEntry,
+  type PartnerInfo
 } from '@/lib/api';
 import { ArrowLeftIcon, ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
@@ -176,6 +179,10 @@ export default function Exchange() {
   const [feeEquity, setFeeEquity] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<any>(null);
+  const [kycPending, setKycPending] = useState<boolean>(false);
+  const [kycPendingMessage, setKycPendingMessage] = useState<string>('');
+  const [partnerInfo, setPartnerInfo] = useState<PartnerInfo | null>(null);
+  const [initialLoading, setInitialLoading] = useState<boolean>(true);
   
   // Form state
   const [orderSide, setOrderSide] = useState<OrderSide>('BUY');
@@ -185,30 +192,32 @@ export default function Exchange() {
   const [orderDuration, setOrderDuration] = useState('GTC'); // GTC, DAY, GTD
   const [expireDate, setExpireDate] = useState<string>(''); // For GTD orders
 
+  // Track if URL params have been processed
+  const urlParamsProcessedRef = React.useRef(false);
+
   // Initialize data
   useEffect(() => {
     const init = async () => {
-      await Promise.all([
-        fetchAccountInfo(),
-        fetchStockHoldings(),
-        fetchStocks(),
-        fetchOrdersData(),
-        fetchFeeInformation()
-      ]);
+      try {
+        await Promise.all([
+          fetchAccountInfo(),
+          fetchStockHoldings(),
+          fetchStocks(),
+          fetchOrdersData(),
+          fetchPartnerInfoAndStatus()
+        ]);
+      } finally {
+        setInitialLoading(false);
+      }
     };
     init();
-  }, []);
 
-  // Force refresh balance when component mounts (in case it wasn't called before)
-  useEffect(() => {
-    const refreshBalance = async () => {
-      await fetchAccountInfo();
-    };
-    
-    // Refresh immediately and then every 30 seconds
-    refreshBalance();
-    const interval = setInterval(refreshBalance, 30000);
-    return () => clearInterval(interval);
+    // Set up balance refresh interval (30 seconds)
+    const balanceInterval = setInterval(() => {
+      fetchAccountInfo();
+    }, 30000);
+
+    return () => clearInterval(balanceInterval);
   }, []);
 
   // Auto-refresh order book when stock changes
@@ -271,23 +280,104 @@ export default function Exchange() {
     }
   };
 
-  const fetchFeeInformation = async () => {
+  // Fetch partner info to check trading status and get fees
+  const fetchPartnerInfoAndStatus = async () => {
     const token = Cookies.get('token');
     if (!token) {
+      setFeeEquity('1'); // Default fee
       return;
     }
     
     try {
-      const result = await getUserAccountInformation(token);
+      const result = await getPartnerInfo(token);
       
-      if (result.success && result.data) {
-        // Backend no longer returns FeeEquity here; default to 1%
-        const feeEquityValue = '1';
-        setFeeEquity(feeEquityValue);
+      if (result.success && result.data && result.data.length > 0) {
+        const partner = result.data[0];
+        setPartnerInfo(partner);
+        
+        // Set fee from partner info (secondFeeStock is the equity trading fee percentage)
+        const stockFee = partner.secondFeeStock?.toString() || '1';
+        setFeeEquity(stockFee);
+        
+        // Check if user can trade
+        if (partner.state === 'confirmed') {
+          // User is confirmed, can trade
+          setKycPending(false);
+          setKycPendingMessage('');
+        } else {
+          // User's partner account is not confirmed
+          setKycPending(true);
+          setKycPendingMessage(t('exchange.partnerNotConfirmed', 'Таны данс баталгаажаагүй байна. Захиалга өгөх боломжгүй.'));
+        }
+      } else {
+        // No partner info - user hasn't completed KYC or it's pending
+        setFeeEquity('1');
+        
+        // Check KYC status to show appropriate message
+        await checkKycStatus(token);
       }
     } catch (error) {
-      console.error('Error fetching fee information:', error);
-      setFeeEquity('1'); // Default to 1% if fetch fails
+      console.error('Error fetching partner info:', error);
+      setFeeEquity('1');
+      
+      // Fallback to checking KYC status
+      const token = Cookies.get('token');
+      if (token) {
+        await checkKycStatus(token);
+      }
+    }
+  };
+
+  // Helper function to check KYC status when partner info is not available
+  const checkKycStatus = async (token: string) => {
+    try {
+      // Check KYC pictures status
+      const kycPicturesRes = await fetch(`${BASE_URL}/kyc/pictures`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const kycPicturesData = await kycPicturesRes.json();
+      
+      if (kycPicturesData.success && kycPicturesData.data?.status === 'PENDING') {
+        setKycPending(true);
+        setKycPendingMessage(t('exchange.kycPending', 'Таны KYC хүсэлт хянагдаж байна'));
+        return;
+      }
+
+      // Check KYC additional status
+      const kycAdditionalRes = await fetch(`${BASE_URL}/kyc/additional`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const kycAdditionalData = await kycAdditionalRes.json();
+      
+      if (kycAdditionalData.success && kycAdditionalData.data?.id) {
+        const status = kycAdditionalData.data.status;
+        if (!status || status === 'PENDING' || status === 'pending') {
+          setKycPending(true);
+          setKycPendingMessage(t('exchange.onlineClientPending', 'Таны онлайн харилцагч хүсэлт хянагдаж байна'));
+          return;
+        }
+      }
+
+      // If no KYC data at all, user needs to complete KYC
+      if (!kycPicturesData.data && !kycAdditionalData.data) {
+        setKycPending(true);
+        setKycPendingMessage(t('exchange.kycRequired', 'Арилжаанд оролцохын тулд KYC бүртгүүлнэ үү'));
+        return;
+      }
+
+      // No pending requests found
+      setKycPending(false);
+      setKycPendingMessage('');
+    } catch (error) {
+      console.error('Error checking KYC status:', error);
     }
   };
 
@@ -317,7 +407,7 @@ export default function Exchange() {
 
   const fetchStocks = async () => {
     try {
-      const result = await fetchCompanies(1, 5000);
+      const result = await fetchCompanies(1, 500); // Get enough stocks to include all trading symbols
       
       if (result.success && result.data) {
         
@@ -370,20 +460,7 @@ export default function Exchange() {
             updatedAt: ''
           }));
         setStocks(tradingStocks as StockData[]);
-        
-        // Try to find and select BDS as default, then fallback to others
-        const bdsStock = tradingStocks.find(stock => stock.Symbol.includes('BDS'));
-        
-        const defaultStock = bdsStock ||
-          tradingStocks.find(stock => ['KHAN', 'APU', 'MSM', 'TDB', 'SBN'].includes(stock.Symbol)) ||
-          tradingStocks[0];
-        
-        if (defaultStock) {
-          setSelectedStock(defaultStock);
-          // Fetch real price data
-          fetchStockPrice(defaultStock.Symbol);
-        } else {
-        }
+        // Stock selection is now handled in the URL params useEffect
       }
     } catch (error) {
       console.error('Error fetching stocks:', error);
@@ -423,29 +500,150 @@ export default function Exchange() {
     const side = searchParams.get('side');
     const priceParam = searchParams.get('price');
 
-    if (symbol && side) {
-      // Find the stock
-      const stock = stocks.find(s => s.Symbol === symbol || s.Symbol.startsWith(symbol));
+    // Process URL params first (highest priority)
+    const processUrlParams = async () => {
+      if (symbol && side && !urlParamsProcessedRef.current) {
+      // Remove -O-0000 suffix from URL symbol to match stock symbols
+      const cleanSymbol = symbol.replace('-O-0000', '').trim();
+
+      // Find the stock - match exact symbol or base symbol
+      const stock = stocks.find(s => {
+        const stockSymbol = s.Symbol.trim();
+        return stockSymbol === cleanSymbol ||
+               stockSymbol === symbol ||
+               stockSymbol.startsWith(cleanSymbol) ||
+               cleanSymbol.startsWith(stockSymbol);
+      });
+
       if (stock) {
+        // Mark as processed
+        urlParamsProcessedRef.current = true;
+
+        // Always update stock
         setSelectedStock(stock);
         fetchStockPrice(stock.Symbol);
-      }
 
-      // Set order side
-      if (side === 'BUY' || side === 'SELL') {
-        setOrderSide(side as OrderSide);
-      }
+        // Set order side
+        if (side === 'BUY' || side === 'SELL') {
+          setOrderSide(side as OrderSide);
+        }
 
-      // Set price if provided
-      if (priceParam) {
-        setPrice(priceParam);
-        setOrderType('Нөхцөлт'); // Set to limit order
-      }
+        // Set price if provided
+        if (priceParam) {
+          setPrice(priceParam);
+          setOrderType('Нөхцөлт'); // Set to limit order
+        }
 
-      // Clear URL parameters after setting
-      window.history.replaceState({}, '', '/exchange');
-    }
-  }, [stocks, searchParams]);
+        // Clear URL parameters after processing
+        setTimeout(() => {
+          window.history.replaceState({}, '', '/exchange');
+        }, 100);
+      } else {
+        // Try to fetch the specific stock data
+        try {
+          const stockResult = await fetchSpecificStockData(cleanSymbol);
+          if (stockResult.success && stockResult.data) {
+            const stockData = Array.isArray(stockResult.data) ? stockResult.data[0] : stockResult.data;
+            if (stockData) {
+              // Create a stock object from the fetched data
+              const newStock: StockData = {
+                id: 0,
+                Symbol: cleanSymbol,
+                mnName: '',
+                enName: '',
+                PreviousClose: stockData.PreviousClose || stockData.ClosingPrice || 0,
+                Changes: stockData.Changes || 0,
+                Changep: stockData.Changep || 0,
+                pkId: 0,
+                Volume: stockData.Volume || 0,
+                Turnover: stockData.Turnover || 0,
+                MDSubOrderBookType: '',
+                LastTradedPrice: stockData.LastTradedPrice || 0,
+                ClosingPrice: stockData.ClosingPrice || 0,
+                OpeningPrice: stockData.OpeningPrice || 0,
+                VWAP: 0,
+                MDEntryTime: '',
+                trades: 0,
+                HighPrice: stockData.HighPrice || 0,
+                LowPrice: stockData.LowPrice || 0,
+                MarketSegmentID: '',
+                sizemd: '',
+                MDEntryPx: 0,
+                sizemd2: '',
+                MDEntryPx2: 0,
+                HighestBidPrice: 0,
+                LowestOfferPrice: 0,
+                AuctionClearingPrice: 0,
+                Imbalance: 0,
+                BuyOrderVWAP: 0,
+                SellOrderVWAP: 0,
+                BuyOrderQty: 0,
+                SellOrderQty: 0,
+                OpenIndicator: '',
+                CloseIndicator: '',
+                TradeCondition: '',
+                securityType: '',
+                dates: '',
+                createdAt: '',
+                updatedAt: ''
+              };
+
+              // Add to stocks list
+              setStocks(prev => [...prev, newStock]);
+              setSelectedStock(newStock);
+
+              // Set order side and price
+              if (side === 'BUY' || side === 'SELL') {
+                setOrderSide(side as OrderSide);
+              }
+              if (priceParam) {
+                setPrice(priceParam);
+                setOrderType('Нөхцөлт');
+              }
+            }
+          }
+        } catch (error) {
+          // Silent fail - will fall back to default stock
+        }
+
+        // Mark as processed
+        urlParamsProcessedRef.current = true;
+        // Clear params
+        window.history.replaceState({}, '', '/exchange');
+      }
+      } else if (!symbol && !side && !selectedStock && stocks.length > 0 && !urlParamsProcessedRef.current) {
+        // Only set default stock if:
+        // 1. No URL params at all
+        // 2. No stock selected yet
+        // 3. Haven't processed URL params (prevents setting default after URL params clear)
+        
+        // Check if there's a selected stock from localStorage (from dashboard)
+        const storedSymbol = typeof window !== 'undefined' ? localStorage.getItem('selectedStock') : null;
+        let defaultStock = null;
+        
+        if (storedSymbol) {
+          // Try to find the stock from localStorage
+          defaultStock = stocks.find(stock => stock.Symbol === storedSymbol || stock.Symbol.split('-')[0] === storedSymbol.split('-')[0]);
+        }
+        
+        // If no stock in localStorage or not found, fall back to default logic
+        if (!defaultStock) {
+          const bdsStock = stocks.find(stock => stock.Symbol.includes('BDS'));
+          defaultStock = bdsStock ||
+            stocks.find(stock => ['KHAN', 'APU', 'MSM', 'TDB', 'SBN'].includes(stock.Symbol)) ||
+            stocks[0];
+        }
+
+        if (defaultStock) {
+          setSelectedStock(defaultStock);
+          fetchStockPrice(defaultStock.Symbol);
+        }
+      }
+    };
+
+    // Call the async function
+    processUrlParams();
+  }, [stocks, searchParams, selectedStock]);
 
   const fetchOrdersData = async () => {
     const token = Cookies.get('token');
@@ -454,9 +652,20 @@ export default function Exchange() {
       setLoadingOrders(true);
       const result = await fetchSecondaryOrders(token);
       if (result.success && result.data) {
-        // Enhance orders with execution data for accurate cumQty
-        const enhancedOrders = await Promise.all(
-          result.data.map(async (order) => {
+        // Sort orders by date in descending order (newest first)
+        const sortedOrders = result.data.sort((a: any, b: any) => {
+          const dateA = new Date(a.createdDate || a.createdAt || a.date || 0).getTime();
+          const dateB = new Date(b.createdDate || b.createdAt || b.date || 0).getTime();
+          return dateB - dateA; // Descending order
+        });
+        setOrders(sortedOrders);
+
+        // Fetch execution details in background for active orders only (non-blocking)
+        // This prevents blocking the UI while loading
+        sortedOrders
+          .filter(order => order.statusname === 'Active' || order.statusname === 'PartiallyFilled')
+          .slice(0, 10) // Only fetch details for first 10 active orders
+          .forEach(async (order) => {
             try {
               const statusResult = await fetchSecondaryOrderStatus(order.id, token);
               if (statusResult.success && statusResult.data?.executions) {
@@ -464,27 +673,22 @@ export default function Exchange() {
                   (sum: number, exec: any) => sum + (exec.execQty || 0),
                   0
                 );
-                return {
-                  ...order,
-                  cumQty: totalExecuted,
-                  leavesQty: order.quantity - totalExecuted,
-                  executions: statusResult.data.executions
-                };
+                // Update the specific order in state
+                setOrders(prev => prev.map(o =>
+                  o.id === order.id
+                    ? {
+                        ...o,
+                        cumQty: totalExecuted,
+                        leavesQty: o.quantity - totalExecuted,
+                        executions: statusResult.data.executions
+                      }
+                    : o
+                ));
               }
             } catch (e) {
               console.error('Error fetching status for order', order.id, ':', e);
             }
-            return order;
-          })
-        );
-
-        // Sort orders by date in descending order (newest first)
-        const sortedOrders = enhancedOrders.sort((a: any, b: any) => {
-          const dateA = new Date(a.createdDate || a.createdAt || a.date || 0).getTime();
-          const dateB = new Date(b.createdDate || b.createdAt || b.date || 0).getTime();
-          return dateB - dateA; // Descending order
-        });
-        setOrders(sortedOrders);
+          });
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -817,6 +1021,29 @@ export default function Exchange() {
     );
   }
 
+  // Show loading state while initial data loads OR no stock selected yet
+  if (initialLoading || (!selectedStock && stocks.length === 0)) {
+    return (
+      <div className="w-full bg-white dark:bg-gray-900 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 dark:border-indigo-400 mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">{t('exchange.loading', 'Уншиж байна...')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If stocks loaded but no stock selected, show error state
+  if (!selectedStock && stocks.length > 0) {
+    return (
+      <div className="w-full bg-white dark:bg-gray-900 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">{t('exchange.noStockSelected', 'Хувьцаа сонгоно уу')}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-white dark:bg-gray-900 min-h-screen pb-24">
       {/* Trading Header - Price Focused */}
@@ -941,6 +1168,8 @@ export default function Exchange() {
             placing={placing}
             onPlaceOrder={handlePlaceOrder}
             feeEquity={feeEquity}
+            kycPending={kycPending}
+            kycPendingMessage={kycPendingMessage}
           />
 
           {/* Order Confirmation Modal */}
@@ -965,6 +1194,7 @@ export default function Exchange() {
         formatNumber={formatNumber}
         onCancelOrder={handleCancelOrder}
         feeEquity={feeEquity}
+        selectedSymbol={selectedStock?.Symbol}
       />
     </div>
   );

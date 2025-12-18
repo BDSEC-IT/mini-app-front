@@ -32,6 +32,8 @@
     "bondsList": "Bonds List"
   },
   "common": {
+    "yes": "Yes",
+    "no": "No",
     "noTransactions": "No transactions found",
     "loading": "Loading...",
     "error": "Error occurred",
@@ -73,7 +75,12 @@
     "securitiesAccountRequired": "You must have a securities account to trade",
     "comingSoon": "Coming soon",
     "openAccount": "Open Account",
-    "noDataTransaction": "No transaction history available"
+    "select": "Select",
+    "pleaseLogin": "Please login",
+    "yes": "Yes",
+    "no": "No",
+    "total": "Total",
+    "items": "orders"
   },
 
   "profile": {
@@ -188,6 +195,14 @@
     "statusPending": "Pending",
     "payNow": "Pay Now",
     "continueToProfile": "Continue to Profile",
+    "onlineClientStatus": "Online Client Status",
+    "onlineClientConfirmed": "Confirmed",
+    "onlineClientConfirmedDesc": "You can trade online",
+    "onlineClientPending": "Pending",
+    "onlineClientPendingDesc": "Your request is being reviewed",
+    "onlineClientNotStarted": "Not registered",
+    "onlineClientNotStartedDesc": "Complete KYC to become an online client",
+    "completeKyc": "Complete",
     "paymentRequired": "Payment is required before submitting",
     "payRegistrationFee": "Pay Registration Fee",
     "accountSetupProgress": "Account Setup Progress",
@@ -233,7 +248,8 @@
     "withdraw": "Withdraw Money",
     "recharge": "Recharge Balance",
     "mySection": "My Section",
-    "general": "General"
+    "general": "General",
+    "onlineClient": "Online Client - KYC"
   },
   "pagination": {
     "previous": "Previous",
@@ -321,6 +337,7 @@
     "bondInfo": "Bond Information",
     "buyAction": "BUY",
     "sellAction": "SELL",
+    "viewOrderHistory": "View Order History",
 
     "loading": "Loading...",
     "refreshData": "Refresh Data",
@@ -843,6 +860,189 @@
     "noTrades": "No trades",
     "time": "Time",
     "buyAction": "Buy",
-    "sellAction": "Sell"
+    "sellAction": "Sell",
+    "kycPending": "Your KYC request is being reviewed",
+    "onlineClientPending": "Your online client request is being reviewed",
+    "kycPendingDefault": "Your request is being reviewed. You cannot place orders.",
+    "partnerNotConfirmed": "Your account is not confirmed. You cannot place orders.",
+    "kycRequired": "Please complete KYC to participate in trading",
+    "partial": "Partially filled",
+    "status": "Status",
+    "orderType": "Order Type",
+    "timeInForce": "Time in Force",
+    "avgPrice": "Average Price",
+    "fee": "Fee",
+    "executions": "Executions",
+    "completedQty": "Completed",
+    "remainingQty": "Remaining",
+    "cancelConfirm": "Confirm Cancel",
+    "orderDetails": "Order Details",
+    "executionReport": "Execution Report",
+    "date": "Date",
+    "amount": "Amount",
+    "marketPrice": "Market Price",
+    "conditional": "Conditional",
+    "untilCancelled": "Until Cancelled (GTC)",
+    "viewAllOrders": "View All",
+    "myOrdersForStock": "{{symbol}} Orders",
+    "statusPending": "Pending",
+    "statusPartial": "Partial",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "statusExpired": "Expired",
+    "cancelSuccess": "Order cancelled successfully",
+    "cancelError": "Failed to cancel order"
+  },
+  "kycAdditional": {
+    "fetchError": "Failed to load data",
+    "submitSuccess": "Information saved successfully",
+    "submitError": "Failed to save information",
+    "imageUploadWarning": "Form saved but image upload failed",
+    "alreadySubmitted": "Information Submitted",
+    "alreadySubmittedDescription": "Your additional KYC information has been submitted successfully.",
+    "informationSubmitted": "Information Submitted",
+    "status": {
+      "confirmed": "Confirmed",
+      "confirmedDescription": "Your registration is confirmed. You can now participate in trading.",
+      "pending": "Pending Review",
+      "pendingDescription": "Your request is being reviewed. It will be confirmed shortly."
+    },
+    "step": {
+      "personalInfo": "Personal Information",
+      "documents": "Documents"
+    },
+    "section": {
+      "personalInfo": "Personal Information",
+      "incomeInfo": "Income Information",
+      "employmentInfo": "Employment Information",
+      "emergencyContact": "Emergency Contact"
+    },
+    "field": {
+      "education": "Education",
+      "monthlyIncome": "Monthly Income",
+      "incomeSource": "Income Source",
+      "businessSector": "Business Sector",
+      "employmentStatus": "Employment Status",
+      "jobTitle": "Job Title",
+      "workPlaceName": "Workplace Name",
+      "workPhone": "Work Phone",
+      "relationship": "Relationship",
+      "isPEP": "Are you a Politically Exposed Person?",
+      "pepDescription": "PEP - Politically Exposed Person"
+    },
+    "placeholder": {
+      "register": "e.g. AA12345678",
+      "phone": "e.g. 99112233",
+      "email": "e.g. example@email.com",
+      "businessSector": "Enter business sector",
+      "jobTitle": "Enter job title",
+      "workPlaceName": "Enter workplace name",
+      "workPhone": "Enter work phone"
+    },
+    "validation": {
+      "familyNameRequired": "Last name is required",
+      "nameRequired": "First name is required",
+      "registerMin6": "Register number must be at least 6 characters",
+      "registerMax10": "Register number must be at most 10 characters",
+      "birthdayRequired": "Birth date is required",
+      "phoneMin8": "Phone number must be at least 8 digits",
+      "emailInvalid": "Please enter a valid email address",
+      "emergencyWhoRequired": "Please select relationship",
+      "lastNameRequired": "Last name is required",
+      "firstNameRequired": "First name is required",
+      "imageOnly": "Please select an image file",
+      "fileTooLarge": "File size must be less than 5MB"
+    },
+    "income": {
+      "below500k": "Below ₮500,000",
+      "500kTo1m": "₮500,001 - ₮1,000,000",
+      "1mTo3m": "₮1,000,001 - ₮3,000,000",
+      "3mTo5m": "₮3,000,001 - ₮5,000,000",
+      "above5m": "Above ₮5,000,001"
+    },
+    "incomeSource": {
+      "salary": "Salary",
+      "business": "Business",
+      "investment": "Investment",
+      "pension": "Pension",
+      "other": "Other"
+    },
+    "education": {
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "vocational": "Vocational",
+      "bachelor": "Bachelor's",
+      "master": "Master's",
+      "doctorate": "Doctorate"
+    },
+    "employment": {
+      "fullTime": "Full-time",
+      "partTime": "Part-time",
+      "selfEmployed": "Self-employed",
+      "unemployed": "Unemployed",
+      "retired": "Retired",
+      "student": "Student"
+    },
+    "emergencyWho": {
+      "parent": "Parent",
+      "sibling": "Sibling (older)",
+      "youngerSibling": "Sibling (younger)",
+      "spouse": "Spouse",
+      "friend": "Friend",
+      "other": "Other"
+    },
+    "imageUpload": {
+      "title": "Upload Documents (Optional)",
+      "description": "Uploading your ID documents helps speed up your registration.",
+      "idFront": "National ID - Front",
+      "idBack": "National ID - Back",
+      "selfie": "Selfie Photo",
+      "clickToUpload": "Click to upload",
+      "fileFormat": "PNG, JPG (max 5MB)"
+    }
+  },
+  "allOrders": {
+    "title": "My Orders",
+    "totalOrders": "Total {{count}} orders",
+    "searchPlaceholder": "Search by symbol...",
+    "stockSymbol": "Stock Symbol",
+    "allStocks": "All Stocks",
+    "all": "All",
+    "active": "Active",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "filters": "Filters",
+    "orderSide": "Order Side",
+    "buy": "Buy",
+    "sell": "Sell",
+    "dateRange": "Date Range",
+    "allTime": "All Time",
+    "last7Days": "Last 7 Days",
+    "last30Days": "Last 30 Days",
+    "last90Days": "Last 90 Days",
+    "customRange": "Custom Range",
+    "from": "From",
+    "to": "To",
+    "clearFilters": "Clear",
+    "applyFilters": "Apply",
+    "noOrders": "No orders found",
+    "noOrdersDescription": "You haven't placed any orders yet",
+    "goToExchange": "Go to Exchange",
+    "fetchError": "Failed to fetch orders",
+    "orderDetails": "Order Details",
+    "symbol": "Symbol",
+    "side": "Side",
+    "price": "Price",
+    "quantity": "Quantity",
+    "filledQty": "Filled",
+    "remainingQty": "Remaining",
+    "status": "Status",
+    "orderDate": "Date",
+    "close": "Close",
+    "cancelOrder": "Cancel",
+    "pending": "Pending",
+    "partial": "Partially Filled",
+    "expired": "Expired"
   }
+
 } 

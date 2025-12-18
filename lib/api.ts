@@ -2147,6 +2147,87 @@ async function istockFetch(path: string, token?: string) {
   }
 }
 
+// ================= Paginated API Params Interfaces =================
+
+export interface SecondaryOrderParams {
+  symbol?: string;
+  orderType?: string;
+  buySell?: 'BUY' | 'SELL';
+  statusname?: 'pending' | 'completed' | 'cancelled' | 'expired';
+  timeInForce?: string;
+  isChannel?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  pageSize?: number;
+  orderBy?: string;
+  orderDir?: 'asc' | 'desc';
+}
+
+export interface SecurityTransactionParams {
+  symbol?: string;
+  buySell?: 'BUY' | 'SELL';
+  code?: string;
+  name?: string;
+  exchangeId?: number;
+  assetId?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  pageSize?: number;
+  orderBy?: string;
+  orderDir?: 'asc' | 'desc';
+}
+
+export interface CashTransactionParams {
+  symbol?: string;
+  description?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  pageSize?: number;
+  orderBy?: string;
+  orderDir?: 'asc' | 'desc';
+}
+
+export interface CsdTransactionParams {
+  code?: string;
+  description?: string;
+  typeCode?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  pageSize?: number;
+  orderBy?: string;
+  orderDir?: 'asc' | 'desc';
+}
+
+export interface PaginatedResponse<T> {
+  success: boolean;
+  data: T[];
+  pagination?: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+  metadata?: {
+    totalRecordCount: number;
+    currentPage: number;
+    pageSize: number;
+  };
+  message?: string;
+}
+
+// Helper to build query string from params
+function buildQueryString(params: Record<string, any>): string {
+  const query = Object.entries(params)
+    .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+  return query ? `?${query}` : '';
+}
+
 
 export const fetchIstockNominalBalance = async (token?: string) => {
   return istockFetch('nominal-balance', token)
@@ -2160,12 +2241,52 @@ export const fetchIstockSecurityTransactions = async (token?: string) => {
   return istockFetch('security-transaction-history', token)
 }
 
+// Paginated version of fetchIstockSecurityTransactions with filters
+export const fetchSecurityTransactionsPaginated = async (
+  params: SecurityTransactionParams,
+  token?: string
+): Promise<PaginatedResponse<any>> => {
+  const queryString = buildQueryString({
+    symbol: params.symbol,
+    buySell: params.buySell,
+    code: params.code,
+    name: params.name,
+    exchangeId: params.exchangeId,
+    assetId: params.assetId,
+    dateFrom: params.dateFrom,
+    dateTo: params.dateTo,
+    page: params.page || 1,
+    pageSize: params.pageSize || 10,
+    orderBy: params.orderBy,
+    orderDir: params.orderDir,
+  });
+  return istockFetch(`security-transaction-history${queryString}`, token);
+}
+
 export const fetchIstockYieldAnalysis = async (token?: string) => {
   return istockFetch('yield-analysis', token)
 }
 
 export const fetchIstockCashTransactions = async (token?: string) => {
   return istockFetch('transaction-cash', token)
+}
+
+// Paginated version of fetchIstockCashTransactions with filters
+export const fetchCashTransactionsPaginated = async (
+  params: CashTransactionParams,
+  token?: string
+): Promise<PaginatedResponse<any>> => {
+  const queryString = buildQueryString({
+    symbol: params.symbol,
+    description: params.description,
+    dateFrom: params.dateFrom,
+    dateTo: params.dateTo,
+    page: params.page || 1,
+    pageSize: params.pageSize || 10,
+    orderBy: params.orderBy,
+    orderDir: params.orderDir,
+  });
+  return istockFetch(`transaction-cash${queryString}`, token);
 }
 
 export const fetchIstockCsdTransactions = async (token?: string, forceRefresh = false) => {
@@ -2179,6 +2300,25 @@ export const fetchIstockCsdTransactions = async (token?: string, forceRefresh = 
     _csdCache = { data: result, ts: Date.now() }
   }
   return result
+}
+
+// Paginated version of fetchIstockCsdTransactions with filters
+export const fetchCsdTransactionsPaginated = async (
+  params: CsdTransactionParams,
+  token?: string
+): Promise<PaginatedResponse<any>> => {
+  const queryString = buildQueryString({
+    code: params.code,
+    description: params.description,
+    typeCode: params.typeCode,
+    dateFrom: params.dateFrom,
+    dateTo: params.dateTo,
+    page: params.page || 1,
+    pageSize: params.pageSize || 10,
+    orderBy: params.orderBy,
+    orderDir: params.orderDir,
+  });
+  return istockFetch(`csd-transaction-history${queryString}`, token);
 }
 
 // ================= Secondary Order Types =================
@@ -2215,6 +2355,28 @@ export interface SecondaryOrderResponse {
 
 export const fetchSecondaryOrders = async (token?: string): Promise<SecondaryOrderResponse> => {
   return istockFetch('secondary-order', token)
+}
+
+// Paginated version of fetchSecondaryOrders with filters
+export const fetchSecondaryOrdersPaginated = async (
+  params: SecondaryOrderParams,
+  token?: string
+): Promise<PaginatedResponse<SecondaryOrderData>> => {
+  const queryString = buildQueryString({
+    symbol: params.symbol,
+    orderType: params.orderType,
+    buySell: params.buySell,
+    statusname: params.statusname,
+    timeInForce: params.timeInForce,
+    isChannel: params.isChannel,
+    dateFrom: params.dateFrom,
+    dateTo: params.dateTo,
+    page: params.page || 1,
+    pageSize: params.pageSize || 10,
+    orderBy: params.orderBy,
+    orderDir: params.orderDir,
+  });
+  return istockFetch(`secondary-order${queryString}`, token);
 }
 
 export const fetchSecondaryOrderStatus = async (orderId: number, token?: string) => {
@@ -2999,6 +3161,87 @@ export interface MSEReportResponse {
   message: string;
   data: MSEReportData | null;
 }
+
+// Partner Info interface
+export interface PartnerInfo {
+  mitPrefix: string;
+  firstFeeCompBond: number | null;
+  firstFeeGovBond: number | null;
+  secondFeeComBondSell: number;
+  secondFeeStock: number;
+  secondFeeComBondBuy: number;
+  secondFeeGovBondBuy: number;
+  accountNumber: string;
+  suffix: string;
+  secondFeeGovBondSell: number;
+  accountId: number;
+  brokerCode: string;
+  firstFeeStock: number | null;
+  state: 'confirmed' | 'pending' | 'rejected' | string;
+  partnerId: number;
+}
+
+export interface PartnerInfoResponse {
+  success: boolean;
+  message?: string;
+  data: PartnerInfo[] | null;
+}
+
+// Send KYC Request - call this after completing both forms
+export const sendKycRequest = async (token: string): Promise<{ success: boolean; message: string; alreadySent?: boolean }> => {
+  const url = `${BASE_URL}/kyc/send-kyc-request`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({})
+    });
+    
+    const data = await response.json();
+    
+    if (response.status === 400 && data.message?.includes('already sent')) {
+      return { success: true, message: 'KYC request already sent', alreadySent: true };
+    }
+    
+    if (!response.ok) {
+      return { success: false, message: data.message || 'Failed to send KYC request' };
+    }
+    
+    return { success: true, message: 'KYC request sent successfully' };
+  } catch (error) {
+    console.error('Error sending KYC request:', error);
+    return { success: false, message: 'Error sending KYC request' };
+  }
+};
+
+// Get Partner Info - check if user can trade and get fee information
+export const getPartnerInfo = async (token: string): Promise<PartnerInfoResponse> => {
+  const url = `${BASE_URL}/istockApp/get-partner-info`;
+  
+  try {
+    const response = await fetchWithTimeout(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (!response.ok) {
+      return { success: false, message: `HTTP error! status: ${response.status}`, data: null };
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching partner info:', error);
+    return { success: false, message: 'Error fetching partner info', data: null };
+  }
+};
 
 // Fetch MSE Financial Report
 export const fetchMSEReport = async (

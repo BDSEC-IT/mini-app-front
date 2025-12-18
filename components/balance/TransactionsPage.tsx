@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { ArrowLeft, ChevronDown, TrendingUp, TrendingDown, Filter, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Filter, X } from 'lucide-react';
 import { formatCurrency } from '@/utils/balanceUtils';
 import { SkeletonTransaction } from './SkeletonComponents';
 import { useTranslation } from 'react-i18next';
@@ -248,6 +248,18 @@ export default function TransactionsPage({
   onCustomEndChange
 }: TransactionsPageProps) {
   
+  const { t } = useTranslation();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const filterPanelRef = useRef<HTMLDivElement>(null);
+  const itemsPerPage = 10;
+
+  // Toggle sort direction
+  const toggleSort = () => {
+    setSortDir(prev => prev === 'desc' ? 'asc' : 'desc');
+  };
+  
   const filterTransactionsByDate = useMemo(() => (transaction: SecurityTransaction | CSDTransaction | CashTransaction) => {
     if (dateRangeOption === 'all') return true;
     const txDate = new Date(transaction.transactionDate);
@@ -275,7 +287,6 @@ export default function TransactionsPage({
     if (transactionType !== 'security') return [];
     
     return securityTransactions
-      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
       .filter((transaction) => {
         // filter by selected asset symbol if provided
         if (selectedAssetSymbol) {
@@ -289,14 +300,18 @@ export default function TransactionsPage({
         if (transactionFilter === 'expense') return transaction.buySell === 'buy';
         return true;
       })
-      .filter(filterTransactionsByDate);
-  }, [securityTransactions, selectedAssetSymbol, transactionFilter, transactionType, filterTransactionsByDate]);
+      .filter(filterTransactionsByDate)
+      .sort((a, b) => {
+        const dateA = new Date(a.transactionDate).getTime();
+        const dateB = new Date(b.transactionDate).getTime();
+        return sortDir === 'desc' ? dateB - dateA : dateA - dateB;
+      });
+  }, [securityTransactions, selectedAssetSymbol, transactionFilter, transactionType, filterTransactionsByDate, sortDir]);
 
   const filteredCsdTransactions = useMemo(() => {
     if (transactionType !== 'csd') return [];
     
     return csdTransactions
-      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
       .filter((transaction) => {
         if (selectedAssetSymbol) {
           const sym = selectedAssetSymbol.toLowerCase();
@@ -311,28 +326,31 @@ export default function TransactionsPage({
         if (transactionFilter === 'expense') return transaction.debitAmt > 0;
         return true;
       })
-      .filter(filterTransactionsByDate);
-  }, [csdTransactions, selectedAssetSymbol, transactionFilter, transactionType, filterTransactionsByDate]);
+      .filter(filterTransactionsByDate)
+      .sort((a, b) => {
+        const dateA = new Date(a.transactionDate).getTime();
+        const dateB = new Date(b.transactionDate).getTime();
+        return sortDir === 'desc' ? dateB - dateA : dateA - dateB;
+      });
+  }, [csdTransactions, selectedAssetSymbol, transactionFilter, transactionType, filterTransactionsByDate, sortDir]);
 
   const filteredCashTransactions = useMemo(() => {
     if (transactionType !== 'cash') return [];
     
     return cashTransactions
-      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
       .filter((transaction) => {
         // For cash transactions, we don't filter by symbol
         if (transactionFilter === 'income') return (transaction.debitAmt || 0) > 0;
         if (transactionFilter === 'expense') return (transaction.creditAmt || 0) > 0;
         return true;
       })
-      .filter(filterTransactionsByDate);
-  }, [cashTransactions, transactionFilter, transactionType, filterTransactionsByDate]);
-
-  const { t } = useTranslation();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
-  const filterPanelRef = useRef<HTMLDivElement>(null);
-  const itemsPerPage = 10;
+      .filter(filterTransactionsByDate)
+      .sort((a, b) => {
+        const dateA = new Date(a.transactionDate).getTime();
+        const dateB = new Date(b.transactionDate).getTime();
+        return sortDir === 'desc' ? dateB - dateA : dateA - dateB;
+      });
+  }, [cashTransactions, transactionFilter, transactionType, filterTransactionsByDate, sortDir]);
 
   // Close filter panel when clicking outside
   useEffect(() => {
@@ -457,7 +475,7 @@ export default function TransactionsPage({
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
-                  📊 Үнэт цаас
+                  Үнэт цаас
                 </button>
                 <button
                   onClick={() => handleTypeChange('cash')}
@@ -467,7 +485,7 @@ export default function TransactionsPage({
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                   }`}
                 >
-                  💰 Номинал
+                  Номинал
                 </button>
               </div>
             </div>
@@ -597,16 +615,32 @@ export default function TransactionsPage({
           <h1 className="text-base font-semibold text-gray-900 dark:text-white">
             Хуулга
           </h1>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="relative flex items-center justify-center w-9 h-9 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-          >
-            <Filter className="w-5 h-5" />
-            {/* Active Filter Indicator */}
-            {(transactionFilter !== 'all' || dateRangeOption !== 'all' || selectedAssetSymbol) && (
-              <span className="absolute top-1 right-1 w-2 h-2 bg-bdsec dark:bg-indigo-500 rounded-full"></span>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Sort Button */}
+            <button
+              onClick={toggleSort}
+              className="relative flex items-center justify-center w-9 h-9 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              title={sortDir === 'desc' ? 'Өсөхөөр эрэмбэлэх' : 'Буурахаар эрэмбэлэх'}
+            >
+              {sortDir === 'desc' ? (
+                <ChevronDown className="w-5 h-5 text-bdsec dark:text-indigo-400" />
+              ) : (
+                <ChevronUp className="w-5 h-5 text-bdsec dark:text-indigo-400" />
+              )}
+            </button>
+            
+            {/* Filter Button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="relative flex items-center justify-center w-9 h-9 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+            >
+              <Filter className="w-5 h-5" />
+              {/* Active Filter Indicator */}
+              {(transactionFilter !== 'all' || dateRangeOption !== 'all' || selectedAssetSymbol) && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-bdsec dark:bg-indigo-500 rounded-full"></span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Compact Filter Bar - Always Visible */}
@@ -617,8 +651,8 @@ export default function TransactionsPage({
               onClick={() => setShowFilters(!showFilters)}
               className="flex-shrink-0 px-3 py-1.5 bg-bdsec/10 dark:bg-indigo-500/20 text-bdsec dark:text-indigo-400 rounded-full text-sm font-medium flex items-center gap-1.5 hover:bg-bdsec/20 dark:hover:bg-indigo-500/30 transition-colors"
             >
-              {transactionType === 'security' ? '📊 Үнэт цаас' : 
-               transactionType === 'cash' ? '💰 Номинал' : '🏦 ҮЦТХТ'}
+              {transactionType === 'security' ? 'Үнэт цаас' : 
+               transactionType === 'cash' ? 'Номинал' : 'ҮЦТХТ'}
             </button>
 
             {/* Selected Symbol Chip */}

@@ -32,6 +32,10 @@
     "bondsList": "Бондын жагсаалт"
   },
   "common": {
+    "select": "Select",
+    "pleaseLogin": "Please login",
+    "yes": "Тийм",
+    "no": "Үгүй",
     "noTransactions": "Гүйлгээ олдсонгүй",
     "loading": "Ачааллаж байна...",
     "error": "Алдаа гарлаа",
@@ -73,7 +77,8 @@
     "comingSoon": "Тун удахгүй",
     "openAccount": "Данс нээх",
     "noData": "Мэдээлэл байхгүй байна",
-    "noDataTransaction": "Гүйлгээний түүх байхгүй байна"
+    "total": "Нийт",
+    "items": "захиалга"
   },
   "stockTable": {
     "stocksList": "Хөрөнгийн жагсаалт",
@@ -245,6 +250,14 @@
     "statusPending": "Хүлээгдэж байна",
     "payNow": "Одоо төлөх",
     "continueToProfile": "Профайл руу үргэлжлүүлэх",
+    "onlineClientStatus": "Онлайн харилцагч",
+    "onlineClientConfirmed": "Баталгаажсан",
+    "onlineClientConfirmedDesc": "Та онлайнаар арилжаа хийх боломжтой",
+    "onlineClientPending": "Хүлээгдэж байна",
+    "onlineClientPendingDesc": "Таны хүсэлт шалгагдаж байна",
+    "onlineClientNotStarted": "Бүртгэлгүй",
+    "onlineClientNotStartedDesc": "Онлайн харилцагч болохын тулд KYC бөглөнө үү",
+    "completeKyc": "Бөглөх",
     "paymentRequired": "Үнэт цаасны данс нээхийн тулд дансны хураамж төлнө үү",
     "payRegistrationFee": "Бүртгэлийн хураамж төлөх",
     "accountSetupProgress": "Данс нээх явц",
@@ -288,7 +301,8 @@
     "withdraw": "Мөнгө хүсэх",
     "recharge": "Данс цэнэглэх",
     "mySection": "Миний хэсэг",
-    "general": "Ерөнхий"
+    "general": "Ерөнхий",
+    "onlineClient": "Онлайн харилцагч - KYC"
   },
   "pagination": {
     "previous": "Өмнөх",
@@ -380,6 +394,7 @@
     "noOrders": "Захиалга байхгүй",
     "buyAction": "АВАХ",
     "sellAction": "ЗАРАХ",
+    "viewOrderHistory": "Захиалгын түүх харах",
     "loading": "Ачааллаж байна...",
     "refreshData": "Өгөгдөл шинэчлэх",
     "turnover": "Эргэлт",
@@ -860,6 +875,15 @@
     "noActiveOrders": "Идэвхтэй захиалга байхгүй",
     "noCompletedOrders": "Биелсэн захиалга байхгүй",
     "noCancelledOrders": "Цуцлагдсан захиалга байхгүй",
+    "viewAllOrders": "Бүх түүх",
+    "myOrdersForStock": "{{symbol}} захиалгууд",
+    "statusPending": "Идэвхтэй",
+    "statusPartial": "Хэсэгчлэн",
+    "statusCompleted": "Биелсэн",
+    "statusCancelled": "Цуцлагдсан",
+    "statusExpired": "Дууссан",
+    "cancelSuccess": "Захиалга амжилттай цуцлагдлаа",
+    "cancelError": "Захиалга цуцлахад алдаа гарлаа",
     "cancelOrderTitle": "Захиалга цуцлах",
     "cancelOrderConfirm": "Та дараах захиалгыг цуцлахдаа итгэлтэй байна уу?",
     "type": "Төрөл",
@@ -872,4 +896,4 @@
     "buyAction": "Худалдан авах",
     "sellAction": "Зарах"
   }
-} 
+}
