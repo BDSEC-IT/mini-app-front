@@ -20,7 +20,7 @@ import {
   type StockData,
   type SecondaryOrderData,
   type EnhancedOrderBookData,
-  type CompletedOrderEntry
+  type CompletedOrderEntry,
 } from '@/lib/api';
 import { ArrowLeftIcon, ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';

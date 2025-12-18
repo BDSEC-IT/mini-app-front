@@ -1,12 +1,14 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef,useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, ChartOptions } from 'chart.js'
 import { Doughnut } from 'react-chartjs-2'
+import { PieChart,  Table } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { formatCurrency, calculatePercentage } from '@/lib/chartUtils'
 import type { AssetBalance, YieldAnalysis } from '@/lib/api'
+import { ta } from 'zod/v4/locales'
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend)
@@ -27,7 +29,8 @@ export const AssetAllocationChart = ({
   const { t } = useTranslation()
   const { theme } = useTheme()
   const chartRef = useRef<ChartJS<'doughnut'>>(null)
-
+  const [tab, setTab] = useState('donught');
+  const [showCenter, setShowCenter] = useState(true);
   // Process data for the chart
   const processedData = yieldAnalysis
     .filter(asset => asset.totalNow > 0)
@@ -84,7 +87,7 @@ const colors = processedData.map((_, index) => {
       },
       tooltip: {
         enabled: showBalance,
-        backgroundColor: theme === 'dark' ? 'rgba(17, 24, 39, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: theme === 'dark' ? 'rgba(17, 24, 39, 1)' : 'rgba(255, 255, 255, 1)',
         titleColor: theme === 'dark' ? '#f9fafb' : '#111827',
         bodyColor: theme === 'dark' ? '#d1d5db' : '#374151',
         borderColor: theme === 'dark' ? '#374151' : '#d1d5db',
@@ -111,6 +114,10 @@ const colors = processedData.map((_, index) => {
       if (chartRef.current) {
         chartRef.current.canvas.style.cursor = elements.length > 0 ? 'pointer' : 'default'
       }
+    },
+    onClick: (event, elements) => {
+      setShowCenter(elements.length === 0);
+      console.log(showCenter);
     },
   }
 
@@ -140,24 +147,32 @@ const colors = processedData.map((_, index) => {
   return (
     <div className={`${className}`}>
       <div className="flex flex-col lg:flex-row gap-6">
+        {/* Tab Navigation */}
+        <div className='ml-auto'>
+          <button>
+            <PieChart onClick={() => setTab('donught')} className={`mr-4 cursor-pointer w-5 h-5 ${tab === 'donught' ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'}`} />
+          </button>
+          <button>
+            <Table onClick={() => setTab('table')} className={`cursor-pointer w-5 h-5 ${tab === 'table' ? 'text-bdsec dark:text-indigo-400' : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'}`} />
+          </button>
+        </div>
         {/* Chart */}
+        {tab === 'donught' ?              
         <div className="flex-1 relative h-64">
           <Doughnut ref={chartRef} data={chartData} options={options} />
-          
           {/* Center text */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center">
-              <div className="text-sm text-gray-500 dark:text-gray-400">{t('portfolio.totalValue')}</div>
-              <div className="text-lg font-bold text-gray-900 dark:text-white">
-                {showBalance ? formatCurrency(totalValue) : '***,***'} ₮
+            <div className={` absolute inset-0 flex items-center justify-center pointer-events-none ${showCenter ? '' : 'hidden'}`}>
+              <div className="text-center">
+                <div className="text-sm text-gray-500 dark:text-gray-400">{t('portfolio.totalValue')}</div>
+                <div className="text-lg font-bold text-gray-900 dark:text-white">
+                  {showBalance ? formatCurrency(totalValue) : '***,***'} ₮
+                </div>
               </div>
             </div>
-          </div>
         </div>
-
-        {/* Custom Legend */}
-        <div className="flex-1 min-w-0">
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+        : 
+         <div className="flex-1 min-w-0">
+          <div className="space-y-2 max-h-64 overflow-y-auto [-webkit-overflow-scrolling: touch]">
             {processedData.map((asset, index) => {
               const percentage = calculatePercentage(asset.totalNow, totalValue)
               return (
@@ -189,6 +204,8 @@ const colors = processedData.map((_, index) => {
             })}
           </div>
         </div>
+        }
+        {/* Custom Legend */}
       </div>
     </div>
   )
