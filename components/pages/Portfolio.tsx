@@ -59,10 +59,11 @@ interface PortfolioData {
 
 export default function Portfolio() {
   const { t } = useTranslation();
+  const showBalanceLocal = localStorage.getItem('showBalance') || localStorage.setItem('showBalance', 'true');
   const [portfolioData, setPortfolioData] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showBalance, setShowBalance] = useState(true);
+  const [showBalance, setShowBalance] = useState(showBalanceLocal === 'true');
   const [refreshing, setRefreshing] = useState(false);
   useEffect(() => {
     fetchPortfolioData();
@@ -293,7 +294,11 @@ export default function Portfolio() {
                 <RefreshCw className={`h-4 w-4 text-gray-600 dark:text-gray-200 ${refreshing ? 'animate-spin' : ''}`} />
               </button>
               <button
-                onClick={() => setShowBalance(!showBalance)}
+                onClick={() => {
+                  const newShowBalance = !showBalance;
+                  setShowBalance(newShowBalance);
+                  localStorage.setItem('showBalance', newShowBalance.toString());
+                }}
                 className="p-2 rounded-lg  transition-colors border border-gray-700 dark:border-gray-200"
               >
                 {showBalance ? (

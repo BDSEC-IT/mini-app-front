@@ -33,7 +33,7 @@ const Header = () => {
     : '/images/light_bdsec_drlars (2).png';
 
   return (
-    <header className="sticky top-0 z-20 mx-auto max-w-[1400px] px-3 sm:px-4 md:px-6 lg:px-8 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+    <header className="fixed top-0 z-20 mx-auto max-w-[1400px] w-screen px-3 sm:px-4 md:px-6 lg:px-8 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between h-14 sm:h-16">
         <div className="flex items-center">
           <Link href="/">

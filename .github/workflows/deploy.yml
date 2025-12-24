@@ -49,18 +49,27 @@ jobs:
         # Clean up build cache for this specific image
         docker builder prune -f --filter type=exec.cachemount --filter=unused-for=24h
 
+        # Set environment-specific secrets
+        if [ "$BRANCH_NAME" = "test" ]; then
+          API_URL="${{ secrets.NEXT_PUBLIC_API_URL_TEST }}"
+          BASE_URL="${{ secrets.NEXT_PUBLIC_BASE_URL_TEST }}"
+        else
+          API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}"
+          BASE_URL="${{ secrets.NEXT_PUBLIC_BASE_URL }}"
+        fi
+
         echo "🐳 Building Docker image..."
         docker build --pull -t "$CONTAINER_NAME" \
-          --build-arg NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}" \
-          --build-arg NEXT_PUBLIC_BASE_URL="${{ secrets.NEXT_PUBLIC_BASE_URL }}" \
+          --build-arg NEXT_PUBLIC_API_URL="$API_URL" \
+          --build-arg NEXT_PUBLIC_BASE_URL="$BASE_URL" \
           .
 
         echo "🚀 Running new container on host port $HOST_PORT"
         docker run -d \
           --name "$CONTAINER_NAME" \
           -p "127.0.0.1:$HOST_PORT:3000" \
-          -e NEXT_PUBLIC_API_URL="${{ secrets.NEXT_PUBLIC_API_URL }}" \
-          -e NEXT_PUBLIC_BASE_URL="${{ secrets.NEXT_PUBLIC_BASE_URL }}" \
+          -e NEXT_PUBLIC_API_URL="$API_URL" \
+          -e NEXT_PUBLIC_BASE_URL="$BASE_URL" \
           --restart unless-stopped \
           "$CONTAINER_NAME"
 
