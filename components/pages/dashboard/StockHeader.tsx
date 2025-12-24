@@ -115,10 +115,10 @@ export const StockHeader = ({
           {/* Last Updated - Label on one line, Date/Time on line below */}
           {chartLoading && !selectedStockData?.MDEntryTime ? (
             <div className="flex flex-col gap-0.5">
-              <span className="text-[8px] text-gray-600 dark:text-gray-400">Сүүлд шинэчлэгдсэн</span>
+              <span className="text-[8px] text-gray-600 dark:text-gray-400">{t('dashboard.lastUpdated')}</span>
               <div className="flex items-center gap-2">
                 <span className="inline-block w-3 h-3 border-2 border-gray-300 border-t-bdsec dark:border-t-white rounded-full animate-spin"></span>
-                <span className="text-xs text-gray-600 dark:text-gray-400">Ачаалж байна...</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">{t('dashboard.loading')}</span>
               </div>
             </div>
           ) : selectedStockData?.MDEntryTime ? (
@@ -129,7 +129,7 @@ export const StockHeader = ({
               
               return (
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-xs text-gray-600 dark:text-gray-400">Сүүлд шинэчлэгдсэн</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">{t('dashboard.lastUpdated')}</span>
                   <span className="text-xs text-gray-600 dark:text-gray-400">
                     {datePart} {timePart}
                   </span>
@@ -138,8 +138,8 @@ export const StockHeader = ({
             })()
           ) : (
             <div className="flex flex-col gap-0.5">
-              <span className="text-xs text-gray-600 dark:text-gray-400">Сүүлд шинэчлэгдсэн</span>
-              <span className="text-xs text-gray-600 dark:text-gray-400">Мэдээлэл байхгүй</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{t('dashboard.lastUpdated')}</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{t('dashboard.noData')}</span>
             </div>
           )}
         </div>

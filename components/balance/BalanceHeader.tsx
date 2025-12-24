@@ -23,6 +23,7 @@ export default function BalanceHeader({
 }: BalanceHeaderProps) {
   const { t } = useTranslation();
 const router = useRouter();
+
   return (
     <div className="relative overflow-hidden p-6 rounded-xl m-4 text-white">
       {/* Aurora Effect Background - Indigo/Blue Theme */}
@@ -73,13 +74,13 @@ const router = useRouter();
           className="flex-1 py-2 px-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 hover:border-white/50 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 text-sm font-medium"
         >
           {/* <Plus className="w-4 h-4" /> */}
-          <span>Данс цэнэглэх</span>
+          <span>{t('balance.recharge')}</span>
         </button>
         <button
           onClick={() => router.push('/balance/withdrawal')}
           className="flex-1 py-2 px-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 hover:border-white/50 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 text-sm font-medium"
         >
-          <span>Мөнгө хүсэх</span>
+          <span>{t('balance.withdrawal')}</span>
         </button>
       </div>
     </div>
