@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Check, Info } from 'lucide-react'
 import Link from 'next/link'
 
+
 export default function AccountSetupBrokerPage() {
   const { t } = useTranslation()
   const router = useRouter()
