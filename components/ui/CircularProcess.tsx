@@ -237,7 +237,7 @@ export default function CircularProgress({
           </div>
            <div className="text-left mb-2">
             <span className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-              {bottomLabel} он:
+              {bottomLabel}:
             </span>
             <p className="text-bdsec dark:text-indigo-400 text-xl font-bold leading-tight">
               {label}

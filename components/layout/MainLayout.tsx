@@ -14,7 +14,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { theme } = useTheme();
 
   return (
-    <div className="relative bg-white dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
+    <div className="relative pt-14 sm:pt-16 bg-white dark:bg-gray-900 text-gray-900 dark:text-white overflow-x-hidden">
       <Header />
       <main className="pb-26 sm:pb-30 px-0 overflow-x-hidden">
         {children}

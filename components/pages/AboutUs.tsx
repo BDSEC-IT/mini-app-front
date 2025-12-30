@@ -107,15 +107,15 @@ const AboutUs = () => {
   
   const chartData = {
     underwriter: [
-      { value: 39.3, sublabel: 'Тэрбум ₮', otherValue: 223.1 },
-      { value: 61.5, sublabel: 'Тэрбум₮', otherValue: 48.9 },
-      { value: 77.5, sublabel: 'Их наяд ₮', otherValue: 1.71 },
+      { value: 39.3, sublabel: t('about.billion'), otherValue: 223.1 },
+      { value: 61.5, sublabel: t('about.billion'), otherValue: 48.9 },
+      { value: 77.5, sublabel: t('about.trillion'), otherValue: 1.71 },
     ],
     broker: [
-      { year: '2021', value: 37, label: '1.04', sublabel: 'Их наяд ₮', otherValue: 2.8 , otherLabel:'Их наяд ₮'},
-      { year: '2022', value: 18, label: '207.8', sublabel: 'Тэрбум ₮', otherValue: 1.2 , otherLabel:'Их наяд ₮' },
-      { year: '2023', value: 26.8, label: '389.2', sublabel: 'Тэрбум ₮', otherValue: 1.45 , otherLabel:'Их наяд ₮' },
-      { year: '2024', value: 37, label: '1.04', sublabel: 'Их наяд ₮', otherValue: 2.8 , otherLabel:'Их наяд ₮' },
+      { year: '2021', value: 37, label: '1.04', sublabel: t('about.trillion'), otherValue: 2.8 , otherLabel:t('about.trillion') },
+      { year: '2022', value: 18, label: '207.8', sublabel: t('about.trillion'), otherValue: 1.2 , otherLabel:t('about.trillion') },
+      { year: '2023', value: 26.8, label: '389.2', sublabel: t('about.billion'), otherValue: 1.45 , otherLabel:t('about.trillion') },
+      { year: '2024', value: 37, label: '1.04', sublabel: t('about.trillion'), otherValue: 2.8 , otherLabel:t('about.trillion') },
     ],
   }
 
@@ -163,7 +163,7 @@ const AboutUs = () => {
             {t('about.title')}
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-            Монгол Улсын хөрөнгийн зах зээлд 34 жил үйл ажиллагаа явуулж буй тэргүүлэгч компани
+            {t('about.description')}
           </p>
         </div>
 
@@ -188,14 +188,14 @@ const AboutUs = () => {
               <div className="p-4">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-bdsec dark:text-indigo-400" />
-                  Зах зээлийн хөдөлгөөн
+                  {t('about.marketMovement')}
                 </h3>
                 <div className='w-full grid grid-cols-2 gap-4'>
                       {/* Top Gainers - 4 stocks */}
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300">Өсөлт</h4>
+                        <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300">{t('about.growth')}</h4>
                       </div>
                       
                       {isLoading ? (
@@ -220,7 +220,7 @@ const AboutUs = () => {
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                        <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300">Бууралт</h4>
+                        <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300">Fall</h4>
                       </div>
                       
                       {isLoading ? (
@@ -251,7 +251,7 @@ const AboutUs = () => {
       <div ref={statsRef} className="px-4 md:px-6 pb-6">
         <div className={`mb-6 transition-all duration-1000 ${statsInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Манай амжилтууд
+            {t('about.ourAchievements')}
           </h2>
         </div>
 
@@ -260,25 +260,25 @@ const AboutUs = () => {
             { 
               number: 34, 
               suffix: '', 
-              label: 'жилийн туршлага',
+              label: t('about.years'),
               icon: Award,
             },
             { 
               number: 344, 
               suffix: '+', 
-              label: 'мянган харилцагч',
+              label: t('about.customers_too'),
               icon: Users,
             },
             { 
               number: 3, 
               suffix: '', 
-              label: 'салбар',
+              label:t('about.branches'),
               icon: Building2,
             },
             { 
               number: 2.0, 
               suffix: '', 
-              label: 'их наяд хөрөнгө',
+              label: t('about.billionAssets'),
               icon: TrendingUp,
               decimals: 1
             }
@@ -312,7 +312,7 @@ const AboutUs = () => {
         <div className={`transition-all duration-1000 ${chartsInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              {t('about.bdsec_did')}
+              {t('about.services')}
             </h2>
 
             {/* Simple Toggle Buttons */}
@@ -326,7 +326,7 @@ const AboutUs = () => {
                   }`}
                   onClick={() => setSelectedType('underwriter')}
                 >
-                  Андеррайтер
+                  {t('about.underwriter')}
                 </button>
                 <button
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
@@ -336,7 +336,7 @@ const AboutUs = () => {
                   }`}
                   onClick={() => setSelectedType('broker')}
                 >
-                  Брокер
+                  {t('about.broker')}
                 </button>
               </div>
             </div>
@@ -383,7 +383,7 @@ const AboutUs = () => {
                           {labels[idx]}
                         </div>
                         <div className="text-xs text-gray-600 dark:text-gray-400">
-                          Зах зээлийн хувь
+                          {t('about.marketShare')}
                         </div>
                       </div>
                     </div>
@@ -410,7 +410,7 @@ const AboutUs = () => {
               >
                 <Phone className="w-4 h-4 text-bdsec dark:text-indigo-400" />
                 <div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Утас</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">{t('about.phone')}</div>
                   <div className="text-sm font-medium text-gray-900 dark:text-white">976-7555-1919</div>
                 </div>
               </a>
@@ -423,7 +423,7 @@ const AboutUs = () => {
               >
                 <Globe className="w-4 h-4 text-bdsec dark:text-indigo-400" />
                 <div>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">Вэбсайт</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">{t('about.website')}</div>
                   <div className="text-sm font-medium text-gray-900 dark:text-white">www.bdsec.mn</div>
                 </div>
               </a>
@@ -433,7 +433,7 @@ const AboutUs = () => {
                 <div className="flex items-start gap-3">
                   <Building2 className="w-4 h-4 text-bdsec dark:text-indigo-400 mt-1" />
                   <div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">Хаяг</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">{t('about.address')}</div>
                     <p className="text-sm text-gray-900 dark:text-white leading-relaxed">
                       {t('about.addressLine1')}<br />
                       {t('about.addressLine2')}
@@ -447,7 +447,7 @@ const AboutUs = () => {
           {/* Social Media */}
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Сошиал хуудаснууд
+              {t('about.socialPlatforms')}
             </h2>
             
             <div className="grid grid-cols-2 gap-2">
