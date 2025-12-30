@@ -1,7 +1,7 @@
 import { AccountSetupFormData, mongolianBanks } from './schemas';
 
 // API base URL
-export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/apitest';
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://miniapp.bdsec.mn/api';
 export const BDSEC_MAIN =  'https://new.bdsec.mn'
 
 // Bank codes for Mongolia
@@ -2230,7 +2230,15 @@ function buildQueryString(params: Record<string, any>): string {
 
 
 export const fetchIstockNominalBalance = async (token?: string) => {
-  return istockFetch('nominal-balance', token)
+  const result = await istockFetch('nominal-balance', token)
+  // Handle nested data structure: response.data.data contains the actual balance
+  if (result && result.success && result.data) {
+    return {
+      ...result,
+      data: result.data?.data || result.data
+    }
+  }
+  return result
 }
 
 export const fetchIstockBalanceAsset = async (token?: string) => {
@@ -2968,9 +2976,12 @@ export const fetchNominalBalance = async (token: string): Promise<{ success: boo
       };
     }
     
+    // Handle nested data structure: response.data.data contains the actual balance
+    const balanceData = responseData.data?.data || responseData.data;
+    
     return {
       success: true,
-      data: responseData.data,
+      data: balanceData,
       message: responseData.message
     };
   } catch (error) {

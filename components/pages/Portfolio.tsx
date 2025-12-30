@@ -109,9 +109,12 @@ export default function Portfolio() {
 
       // Check if all API calls were successful
       if (assetResult.success && nominalResult.success && transactionResult.success && yieldResult.success) {
+        // Handle nested data structure for nominal balance: response.data.data contains the actual balance
+        const nominalBalanceData = nominalResult.data?.data || nominalResult.data;
+        
         const portfolioData = {
           assetBalances: assetResult.data || [],
-          nominalBalance: nominalResult.data,
+          nominalBalance: nominalBalanceData,
           transactionHistory: transactionResult.data || [],
           yieldAnalysis: yieldResult.data || []
         };
