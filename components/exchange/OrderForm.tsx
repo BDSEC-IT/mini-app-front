@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle } from 'lucide-react';
+import Link from 'next/link';
 import { Button, Input, Select } from '../ui';
 
 type OrderSide = 'BUY' | 'SELL';
@@ -250,12 +251,22 @@ export const OrderForm: React.FC<OrderFormProps> = ({
           <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
             {t('exchange.balance')}:
           </span>
-          <span className="text-sm text-gray-900 dark:text-white font-bold">
-            {orderSide === 'BUY'
-              ? (accountBalance !== null ? `${formatNumber(accountBalance)}₮` : '...')
-              : `${selectedStockHolding?.quantity || 0} ${t('exchange.shares')}`
-            }
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-900 dark:text-white font-bold">
+              {orderSide === 'BUY'
+                ? (accountBalance !== null ? `${formatNumber(accountBalance)}₮` : '...')
+                : `${selectedStockHolding?.quantity || 0} ${t('exchange.shares')}`
+              }
+            </span>
+            {orderSide === 'BUY' && (
+              <Link 
+                href="/balance/recharge"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline font-medium"
+              >
+                {t('exchange.rechargeBalance', 'Цэнэглэх')}
+              </Link>
+            )}
+          </div>
         </div>
         
         {/* Quantity Input */}

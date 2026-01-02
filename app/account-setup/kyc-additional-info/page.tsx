@@ -595,7 +595,9 @@ export default function KycAdditionalInfoPage() {
           </div>
         )}
 
-        {currentStep === 'text' ? (
+        {kycStatus !== 'confirmed' && (
+          <>
+            {currentStep === 'text' ? (
           <div className="space-y-4">
             {/* Personal Information */}
             <div className="bg-white dark:bg-dark-bg-secondary rounded-lg p-3 border border-gray-200 dark:border-gray-700">
@@ -1235,6 +1237,8 @@ export default function KycAdditionalInfoPage() {
             </button>
           )}
         </div>
+          </>
+        )}
       </div>
     </div>
   );

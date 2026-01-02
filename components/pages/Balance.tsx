@@ -107,7 +107,7 @@ export default function Balance() {
                     }}
                     className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
-                    {t('balance.statement').toLowerCase()}
+                    {t('balance.statement')}
                     <ChevronLeft className="w-3 h-3 inline-block ml-1 transform rotate-180 text-indigo-600" />
                   </button>
                 </div>
@@ -306,7 +306,7 @@ export default function Balance() {
                 }}
                 className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-[10px] font-semibold rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
-                {t('balance.statement').toLowerCase()}
+                {t('balance.statement')}
                 <ChevronLeft className="w-3 h-3 inline-block ml-1 transform rotate-180 text-indigo-600" />
               </button>
             </div>

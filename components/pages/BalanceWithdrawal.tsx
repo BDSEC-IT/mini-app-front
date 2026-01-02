@@ -688,7 +688,7 @@ export default function BalanceWithdrawal() {
     return (
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          {selectedType === 'NOMINAL' ? t('withdrawal.nominalRequestHistory', 'Номинал мөнгө хүссэн түүх') : t('withdrawal.csdRequestHistory', 'ҮЦТХТ мөнгө хүссэн түүх')}
+          {selectedType === 'NOMINAL' ? t('withdrawal.nominalRequestHistory', 'Бэлэн мөнгө хүссэн түүх') : t('withdrawal.csdRequestHistory', 'ҮЦТХТ мөнгө хүссэн түүх')}
         </h3>
         
         {typeWithdrawals.length === 0 ? (

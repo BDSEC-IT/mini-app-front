@@ -51,7 +51,7 @@ export default function RegisterPage() {
   const getPlaceholder = () => {
     if (nationality === '496') {
       // Mongolia - use Mongolian registration number format
-      return 'AX01234567'
+      return 'Таний регистрийн дугаар'
     } else {
       // Other countries - use descriptive text
       return t('auth.enterRegisterNumber', 'Enter your register number')

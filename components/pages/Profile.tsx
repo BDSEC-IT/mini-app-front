@@ -126,6 +126,34 @@ const Profile = () => {
   const hasMcsdAccountId = !!primary?.MCSDAccountId || !!primary?.MCSDAccount;
   const hasMcsdAccount = hasActiveMcsdAccount; // Keep for backward compatibility
 
+  // Check if user has entered registration number
+  const hasRegistrationNumber = () => {
+    // Check primary account register field
+    if (primary?.register && primary.register.trim() !== '') {
+      return true;
+    }
+    
+    // Check account status data
+    if (accountStatusData) {
+      if (accountStatusData.RegistryNumber && accountStatusData.RegistryNumber.trim() !== '') {
+        return true;
+      }
+      if (accountStatusData.registerNumber && accountStatusData.registerNumber.trim() !== '') {
+        return true;
+      }
+    }
+    
+    // Check nested MCSD request
+    const mcsdRequest = primary?.MCSDStateRequest as any;
+    if (mcsdRequest && typeof mcsdRequest === 'object') {
+      if (mcsdRequest.RegistryNumber && mcsdRequest.RegistryNumber.trim() !== '') {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
   // Simplified completion checks - only use backend API data
   const isGeneralInfoComplete = () => {
     // Complete if we have actual account status data with proper status
@@ -192,49 +220,71 @@ const Profile = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {!hasMcsdAccountId && (
-                  <div className="flex items-center p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800/50">
-                    <AlertTriangle className="h-5 w-5 mr-3 flex-shrink-0" />
-                    <p className="font-medium text-sm">{t('profile.mcsdAccountNeededDetail')}</p>
-                  </div>
-                )}
-                <div className="flex items-center">
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-4 ${isGeneralInfoComplete() ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
-                    {isGeneralInfoComplete() ? <CheckCircle className="h-5 w-5" /> : '1'}
-                  </div>
-                  <p className={`font-medium ${isGeneralInfoComplete() ? 'text-green-600 dark:text-green-400' : ''}`}>{t('profile.generalInfo')}</p>
-                  {!isGeneralInfoComplete() && (
-                    <Link href="/account-setup/general" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">{t('profile.completeGeneralInfo')}</Link>
-                  )}
-                </div>
-                <div className="flex items-center">
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-4 ${isPaymentComplete() ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
-                    {isPaymentComplete() ? <CheckCircle className="h-5 w-5" /> : '2'}
-                  </div>
-                  <p className={`font-medium ${isPaymentComplete() ? 'text-green-600 dark:text-green-400' : ''}`}>{t('profile.accountFee')}</p>
-                  {!isPaymentComplete() && (
-                    <Link href="/account-setup/fee" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">{t('profile.payFee')}</Link>
-                  )}
-                </div>
-                {isPaymentComplete() && hasMcsdAccountId && !hasActiveMcsdAccount && (
-                  <div className="flex items-center">
-                    <div className="h-8 w-8 rounded-full flex items-center justify-center mr-4 bg-orange-500 text-white">
-                      <Clock className="h-5 w-5" />
+                {!hasRegistrationNumber() ? (
+                  // Show only begin step if no registration number
+                  <>
+                    <div className="flex items-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                      <AlertTriangle className="h-5 w-5 mr-3 flex-shrink-0" />
+                      <p className="font-medium text-sm">{t('profile.registrationNumberRequired', 'Үнэт цаасны данс нээхийн тулд эхлээд регистрийн дугаараа оруулна уу')}</p>
                     </div>
-                    <p className="font-medium text-orange-600 dark:text-orange-400">{t('profile.openingProcess', 'Данс нээх үйл явц')}</p>
-                    <Link href="/account-setup/opening-process" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">
-                      {t('profile.viewProcess', 'Харах')}
-                    </Link>
-                  </div>
-                )}
-                {isPaymentComplete() && !hasMcsdAccountId && (
-                  <div className="flex items-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
-                    <Clock className="h-5 w-5 mr-3 flex-shrink-0" />
-                    <p className="font-medium text-sm">{t('profile.waitingAccountCreation', 'Данс үүсгэгдэж байна...')}</p>
-                    <Link href="/account-setup/opening-process" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">
-                      {t('profile.viewProcess', 'Харах')}
-                    </Link>
-                  </div>
+                    <div className="flex items-center">
+                      <div className="h-8 w-8 rounded-full flex items-center justify-center mr-4 bg-gray-200 dark:bg-gray-700">
+                        0
+                      </div>
+                      <p className="font-medium">{t('profile.enterRegistrationNumber', 'Регистрийн дугаар оруулах')}</p>
+                      <Link href="/auth/nationality" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 rounded">
+                        {t('profile.begin', 'Эхлэх')}
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  // Show normal steps only if registration number exists
+                  <>
+                    {!hasMcsdAccountId && (
+                      <div className="flex items-center p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800/50">
+                        <AlertTriangle className="h-5 w-5 mr-3 flex-shrink-0" />
+                        <p className="font-medium text-sm">{t('profile.mcsdAccountNeededDetail')}</p>
+                      </div>
+                    )}
+                    <div className="flex items-center">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-4 ${isGeneralInfoComplete() ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                        {isGeneralInfoComplete() ? <CheckCircle className="h-5 w-5" /> : '1'}
+                      </div>
+                      <p className={`font-medium ${isGeneralInfoComplete() ? 'text-green-600 dark:text-green-400' : ''}`}>{t('profile.generalInfo')}</p>
+                      {!isGeneralInfoComplete() && (
+                        <Link href="/account-setup/general" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">{t('profile.completeGeneralInfo')}</Link>
+                      )}
+                    </div>
+                    <div className="flex items-center">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center mr-4 ${isPaymentComplete() ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
+                        {isPaymentComplete() ? <CheckCircle className="h-5 w-5" /> : '2'}
+                      </div>
+                      <p className={`font-medium ${isPaymentComplete() ? 'text-green-600 dark:text-green-400' : ''}`}>{t('profile.accountFee')}</p>
+                      {!isPaymentComplete() && (
+                        <Link href="/account-setup/fee" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">{t('profile.payFee')}</Link>
+                      )}
+                    </div>
+                    {isPaymentComplete() && hasMcsdAccountId && !hasActiveMcsdAccount && (
+                      <div className="flex items-center">
+                        <div className="h-8 w-8 rounded-full flex items-center justify-center mr-4 bg-orange-500 text-white">
+                          <Clock className="h-5 w-5" />
+                        </div>
+                        <p className="font-medium text-orange-600 dark:text-orange-400">{t('profile.openingProcess', 'Данс нээх үйл явц')}</p>
+                        <Link href="/account-setup/opening-process" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">
+                          {t('profile.viewProcess', 'Харах')}
+                        </Link>
+                      </div>
+                    )}
+                    {isPaymentComplete() && !hasMcsdAccountId && (
+                      <div className="flex items-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                        <Clock className="h-5 w-5 mr-3 flex-shrink-0" />
+                        <p className="font-medium text-sm">{t('profile.waitingAccountCreation', 'Данс үүсгэгдэж байна...')}</p>
+                        <Link href="/account-setup/opening-process" className="ml-auto text-xs px-3 py-1.5 bg-blue-100 text-blue-800 rounded">
+                          {t('profile.viewProcess', 'Харах')}
+                        </Link>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
